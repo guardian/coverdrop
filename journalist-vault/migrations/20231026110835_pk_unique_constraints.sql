@@ -1,0 +1,5 @@
+CREATE UNIQUE INDEX trusted_organization_pks_unqiue_pk_json ON trusted_organization_pks(pk_json);
+CREATE UNIQUE INDEX journalist_provisioning_pks_unqiue_pk_json ON journalist_provisioning_pks(pk_json);
+CREATE UNIQUE INDEX journalist_id_keypairs_unqiue_pk_json ON journalist_id_keypairs(keypair_json);
+CREATE UNIQUE INDEX journalist_msg_keypairs_unqiue_pk_json ON journalist_msg_keypairs(keypair_json);
+CREATE UNIQUE INDEX unregistered_journalist_id_keypairs_unqiue_pk_json ON unregistered_journalist_id_keypairs(keypair_json);

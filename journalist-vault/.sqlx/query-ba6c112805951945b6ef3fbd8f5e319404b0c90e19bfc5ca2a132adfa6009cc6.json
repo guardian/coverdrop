@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT into candidate_journalist_id_key_pair\n            (key_pair_json, added_at)\n            VALUES (?1, ?2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "ba6c112805951945b6ef3fbd8f5e319404b0c90e19bfc5ca2a132adfa6009cc6"
+}

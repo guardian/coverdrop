@@ -1,0 +1,26 @@
+{
+  "configurations" : [
+    {
+      "id" : "66446E54-F888-4BAF-8F76-B4F9C6B653CF",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testRepetitionMode" : "retryOnFailure",
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:reference.xcodeproj",
+        "identifier" : "A0657BC129376B4700B4E500",
+        "name" : "referenceTests"
+      }
+    }
+  ],
+  "version" : 1
+}

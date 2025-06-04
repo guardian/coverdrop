@@ -1,0 +1,23 @@
+[Unit]
+Description=CoverDrop U2J Appender Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/systemd/u2j-appender
+ExecStart=/var/u2j-appender/bootstrap.sh
+
+# In order to deal with sharp bursts of connections during
+# push notifications we need to increase the number of file
+# descriptiors available to the systemd service so it can create
+# the sockets.
+#
+# 65535 should be sufficient and is within recommended limits
+# for a modern web server.
+#
+# The default for this value is 1024
+LimitNOFILE=65535
+
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO j2u_processed_dead_drops (\n                    dead_drop_id,\n                    processed_at\n                ) VALUES\n                ($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3571f251bd01e575d1a81acdb959fa2460806517207314f235ddb45f1f3ee247"
+}

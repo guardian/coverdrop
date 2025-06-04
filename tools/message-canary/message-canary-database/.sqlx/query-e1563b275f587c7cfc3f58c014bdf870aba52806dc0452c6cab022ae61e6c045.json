@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO user_to_journalist_messages (\n                    user_id,\n                    journalist_id,\n                    sent_at,\n                    message\n                ) VALUES\n                ($1, $2, $3, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Text",
+        "Timestamptz",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e1563b275f587c7cfc3f58c014bdf870aba52806dc0452c6cab022ae61e6c045"
+}

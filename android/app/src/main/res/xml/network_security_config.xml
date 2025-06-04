@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config>
+        <domain includeSubdomains="true">secure-messaging-api-staging.guardianapis.com</domain>
+        <domain includeSubdomains="true">secure-messaging-msg-staging.guardianapis.com</domain>
+        <trust-anchors>
+            <!-- expires Sun, 18 Mar 2029 10:00:00 GMT -->
+            <certificates src="@raw/trusted_root_global_sign" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,16 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shortened head shape -->
+  <path d="M100 10 C160 10 180 80 160 150 C150 180 50 180 40 150 C20 80 40 10 100 10 Z" fill="#5a3c3c" />
+
+  <!-- Symmetrical ovoid faceplate -->
+  <ellipse cx="100" cy="105" rx="55" ry="40" fill="#C2A85F" />
+
+  <!-- Vertical stripe constrained within faceplate -->
+  <rect x="95" y="75" width="10" height="60" fill="#E0D28D" />
+
+  <!-- Large center circle -->
+  <circle cx="130" cy="105" r="16" fill="#1F1F1F" />
+
+  <!-- Medium side circle -->
+  <circle cx="73" cy="105" r="7" fill="#1F1F1F" />
+</svg>

@@ -1,0 +1,136 @@
+plugins {
+    id "com.android.library"
+    id "org.jetbrains.kotlin.android"
+    id "org.jetbrains.kotlin.plugin.compose"
+    id "kotlin-kapt"
+    id "com.google.dagger.hilt.android"
+    id "signing"
+}
+
+apply plugin: 'maven-publish'
+apply from: '../android-lint.gradle'
+apply from: '../android-force-deps-upgrades.gradle'
+
+Properties prodConfig = new Properties()
+prodConfig.load(project.rootProject.file("coverdrop-prod.properties").newDataInputStream())
+
+android {
+    namespace 'com.theguardian.coverdrop.ui'
+    compileSdk libs.versions.compileSdk.get().toInteger()
+
+    defaultConfig {
+        minSdk libs.versions.minSdk.get().toInteger()
+        targetSdk libs.versions.targetSdk.get().toInteger()
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
+
+        // These values are used in the integration tests. Running them against the production environment
+        // is useful for the CI tests as we do not need to spin up local services.
+        buildConfigField "String", "API_BASE_URL", prodConfig.getProperty("coverdrop.apiBaseUrl")
+        buildConfigField "String", "MESSAGING_BASE_URL", prodConfig.getProperty("coverdrop.fastlyBaseUrl")
+        buildConfigField "String", "TRUSTED_ORG_PKS", prodConfig.getProperty("coverdrop.trustedOrgPks")
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = libs.versions.java.get().toInteger()
+    }
+
+    buildFeatures {
+        compose true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion libs.versions.compose.compiler.get()
+    }
+
+    packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
+    // work-around: https://issuetracker.google.com/issues/217593040#comment6
+    kotlinOptions {
+        freeCompilerArgs += [
+                "-Xjvm-default=all",
+        ]
+    }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+
+            // Disabled while Dokka is broken for Java 17: https://github.com/Kotlin/dokka/issues/2956
+            // this should come with little downsides, as we ship the sources jar
+            // withJavadocJar()
+        }
+    }
+}
+
+dependencies {
+    implementation project(":core")
+    implementation platform(libs.androidx.compose.bom)
+
+    kapt libs.hilt.compiler
+
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.compose.material
+    implementation libs.androidx.compose.runtimeLiveData
+    implementation libs.androidx.compose.uiTooling
+    implementation libs.androidx.constraintlayout.compose
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.hilt.navigation.compose
+    implementation libs.androidx.material.icons.core
+    implementation libs.androidx.material.icons.extended
+    implementation libs.androidx.lifecycle.livedata.ktx
+    implementation libs.androidx.lifecycle.runtime.compose
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.viewmodel.compose
+    implementation libs.androidx.navigation.compose
+    implementation libs.accompanist.pager.indicators
+    implementation libs.accompanist.pager
+    implementation libs.hilt.android
+
+    debugImplementation libs.androidx.compose.uiToolingPreview
+}
+
+kapt {
+    correctErrorTypes true
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId 'com.theguardian.coverdrop'
+                artifactId 'ui'
+                version '0.0.1'
+            }
+        }
+        repositories {
+            maven {
+                url "$buildDir/repo"
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications
+}

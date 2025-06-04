@@ -1,0 +1,31 @@
+[package]
+name = "cover-traffic"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+clap.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+common = { path = "../../common" }
+
+[package.metadata.deb]
+maintainer = "CoverDrop Team <coverdrop@guardian.co.uk>"
+copyright = "2023, The Guardian"
+extended-description = "CoverDrop CoverTraffic Service"
+revision = ""
+depends = "$auto"
+priority = "optional"
+assets = [
+    # binary
+    ["target/release/cover-traffic", "/usr/bin/", "755"],
+    # assets
+    ["systemd/bootstrap.sh", "/var/cover-traffic/", "755"],
+]
+maintainer-scripts = "systemd/"
+systemd-units = { enable = true }

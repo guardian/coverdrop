@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT pk_json FROM organization_pks",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pk_json",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "408c52d563f6d06a0ffbc934c0af0f159bf40ab78b121560d0684b6d647f4f73"
+}

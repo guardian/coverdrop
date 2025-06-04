@@ -1,0 +1,26 @@
+android {
+    lintOptions {
+        // This enables all `warning` level Lint checks
+        warningsAsErrors true
+
+        // We update the `targetSdk` in sync with the main app
+        disable("OldTargetApi")
+
+        // We update dependencies in sync with the main app
+        disable("GradleDependency")
+
+        // For the `@aar` imports we cannot use the Gradle catalogue yet
+        disable("UseTomlInstead")
+
+        // Disable performance/UI lints that are not important for the reference app
+        disable("VectorPath", "MonochromeLauncherIcon")
+
+        // This prevents the linter to fail if there are incompatible with extra lint rules
+        // provided by the library which target an incompatible lint API version
+        // See: https://issuetracker.google.com/issues/311218673 (different versions, same problem)
+        disable("ObsoleteLintCustomCheck")
+
+        abortOnError true
+        checkDependencies true
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM vault_setup_bundle",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "19bf6cd85938188ba9eaee26fe3bf22453e0735b104768c26af3fd9e81d69975"
+}

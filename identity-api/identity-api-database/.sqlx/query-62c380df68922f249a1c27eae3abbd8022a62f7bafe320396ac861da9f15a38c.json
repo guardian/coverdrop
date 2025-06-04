@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO journalist_provisioning_key_pairs\n                (organization_pk_id, key_pair_json, added_at)\n                VALUES\n                (?1, ?2, ?3)\n                ON CONFLICT DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "62c380df68922f249a1c27eae3abbd8022a62f7bafe320396ac861da9f15a38c"
+}

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    id AS \"user_id: i32\",\n                    key_pair_json AS \"key_pair_json: Value\"\n                FROM users\n                ORDER BY id ASC\n                LIMIT $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "key_pair_json: Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "31c377887a9c68ea5fc3c737d488413f34273859123ddcf16ce7ecf0ceeaa985"
+}

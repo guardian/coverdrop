@@ -1,0 +1,8 @@
+{
+  "public_key": {
+    "key": "302c333f5915ba7d38ccc44d428ff878ae5d93e2573a3e1eb0c5f317d9502769",
+    "certificate": "028b57a2d8259cdde96b6eca10b051399f7701e65b61b18f9bad57e745f6f4e1d7252abcffdb3e732b9a52dc97197ea5e542cfac8e4081a74a35ea1c1fa46304",
+    "not_valid_after": "2023-10-31T19:16:04.510430Z"
+  },
+  "secret_key": "dff945ddc320336a714a015835faee944628f370e30dd5b285a998666c4046af"
+}

@@ -1,0 +1,24 @@
+[advisories]
+ignore = [
+    # `sodiumoxide` is not in active development mode, but it will
+    # be patched if security issues arise. Fore more details, see
+    # https://rustsec.org/advisories/RUSTSEC-2021-0137
+    "RUSTSEC-2021-0137",
+
+    # `rsa` is a transitive dependency of `sqlx-mysql`. Due to a non-constant
+    # time implementation, information about the private key is leaked through
+    # timing information which is observable over the network.
+    # https://rustsec.org/advisories/RUSTSEC-2023-0071.html
+    # This does not affect us, as we do not use `sqlx-mysql`; however, it shows up
+    # in the lockfile. This is a known issue with the way cargo deals with weak
+    # dependencies. The issue is tracked here:
+    # https://github.com/rust-lang/cargo/issues/10801
+    "RUSTSEC-2023-0071",
+
+    # This is a potential vuln in SQLx which is currently not addresses, see more
+    # https://github.com/launchbadge/sqlx/issues/3440
+    #
+    # As soon as this vuln is addressed we will apply the appropriate patches, but for now
+    # it is mitigated by our Axum server having limits on the size of POST bodies to 2 MiB.
+    "RUSTSEC-2024-0363",
+]

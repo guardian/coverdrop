@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO organization_pks (added_at, pk_json)\n                    VALUES ($1, $2) ON CONFLICT DO NOTHING\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "79c5018f70bc33fede3541bf95fe57df874beeeafe5279997fca10bbef1d54b7"
+}

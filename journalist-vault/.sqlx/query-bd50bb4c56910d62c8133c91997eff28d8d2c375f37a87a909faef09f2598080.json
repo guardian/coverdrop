@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_msg_key_pairs.id           AS \"id: i64\",\n                journalist_msg_key_pairs.key_pair_json AS \"msg_key_pair_json: String\",\n                journalist_msg_key_pairs.added_at     AS \"added_at: DateTime<Utc>\",\n                journalist_id_key_pairs.key_pair_json  AS \"id_key_pair_json: String\",\n                journalist_provisioning_pks.pk_json  AS \"provisioning_pk_json: String\",\n                anchor_organization_pks.pk_json     AS \"org_pk_json: String\"\n            FROM journalist_msg_key_pairs\n            JOIN journalist_id_key_pairs\n                ON journalist_id_key_pairs.id = journalist_msg_key_pairs.id_key_pair_id\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id\n            JOIN anchor_organization_pks\n                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id\n            WHERE journalist_msg_key_pairs.epoch IS NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "msg_key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "added_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "id_key_pair_json: String",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "org_pk_json: String",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bd50bb4c56910d62c8133c91997eff28d8d2c375f37a87a909faef09f2598080"
+}

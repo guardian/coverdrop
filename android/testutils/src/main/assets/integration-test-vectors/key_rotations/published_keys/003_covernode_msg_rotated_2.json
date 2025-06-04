@@ -1,0 +1,91 @@
+{
+  "journalist_profiles": [
+    {
+      "id": "static_test_journalist",
+      "display_name": "Static Test Journalist",
+      "sort_name": "journalist static test",
+      "description": "static test journalist",
+      "is_desk": false,
+      "tag": "6a139e67",
+      "status": "VISIBLE"
+    }
+  ],
+  "default_journalist_id": null,
+  "keys": [
+    {
+      "org_pk": {
+        "key": "73ee6a1a04bcb962b95feb5396932550de8ed29320103bd62356d482f6eb2d5c",
+        "certificate": "6a083e504c149df7bef6cd420ba13a2f7dcb6664d0dc5ade80121dcfa8311bd5cb8fe9accfb6cb07e0c1fac11c2dc621680a1accead5cd660759b7b7b015a400",
+        "not_valid_after": "2024-10-02T19:06:19.921207Z"
+      },
+      "covernodes": [
+        {
+          "provisioning_pk": {
+            "key": "1c704cad39284b8a9269a3d6357f21e596b2eeed820ba3524df2544174b4f70f",
+            "certificate": "3f9a8a7345dcd5ffe96beab355e3662a3da70d60bc70971f0f4e3ca312f211d99f95d9164ff668fd402df2baa508d0d7d4817c3692756d65b52cab296dc7c008",
+            "not_valid_after": "2024-03-20T19:06:21.272197Z"
+          },
+          "covernodes": {
+            "covernode_001": [
+              {
+                "id_pk": {
+                  "key": "a3604db7eeb3a7f1c3bb4257cea7fc8404d8d3887597951f92ecdc06b560887c",
+                  "certificate": "9dc6d11644aa0f4181ac25f081e39ccb098616b943c4464dd6ba7bfdce442f6649945afca70d41268bbdfe4cf58d9d1940edb23015b16dca10ca8ccc37b1dd03",
+                  "not_valid_after": "2023-11-17T19:06:41.887306543Z"
+                },
+                "msg_pks": []
+              },
+              {
+                "id_pk": {
+                  "key": "504560a698983c7864b20fc1d4ee115901a38e7d958f5e40accbed0497ecad17",
+                  "certificate": "a6d80476390948c98396fac7c401ffc6678065bb30e3e3ec3a58dc44982a742de0b06310303e3939dae0b428ed92d77bb61fb4d964d87b402fc4b1956c01310e",
+                  "not_valid_after": "2023-11-01T19:06:21.976033Z"
+                },
+                "msg_pks": [
+                  {
+                    "key": "2e8dee14ed603ddec18179b93f37e5241816a9a4abbc425848f8a81380f1f627",
+                    "certificate": "a660cdf8f5966030ac8b41a9791f11deb6f59263d7f1266e879565118e9c8f741bd67ab96f3d5520455458626c053b69ec68e6e21bd84bce8b9bbbc13652650c",
+                    "not_valid_after": "2023-11-01T19:06:21.976033Z"
+                  },
+                  {
+                    "key": "be00c0b4e05543d30a0667ccd897b3df7fe668bd99c965e00afc88eb6a5fa770",
+                    "certificate": "2c30f7e1d1359af64c310ec7e4dd4401ee5928dfd543a157e88a10b9ebd6bd770755eaa3c925a473e020316055b84eccb52ec826c76ab2f535a1a61cfa14170f",
+                    "not_valid_after": "2023-10-26T19:06:39.760511335Z"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "journalists": [
+        {
+          "provisioning_pk": {
+            "key": "947d712a3ce4758b6313630696d3d8e18d635a0ecfb64f8c4e90fbf8a339356d",
+            "certificate": "7fcbc31ff56e10c7515bf517763675a3df2079f3da62ee2e408fb4bb7174062bcc74a70df9102bf440a879c2f3f4c2c83f88226228d540fa09067911a2a11d00",
+            "not_valid_after": "2024-03-20T19:06:20.603185Z"
+          },
+          "journalists": {
+            "static_test_journalist": [
+              {
+                "id_pk": {
+                  "key": "8abc860f468c9968f23b7b128e4cb77ca043a2f367c1a1a8806ad2a19c90a7eb",
+                  "certificate": "910e26c0e81e7ecb3e6f0b207ff427c6afbadec8e4c3f8499d5b894a4c7079497250e7b0c1825f4eeed89046f96c7315596c8fe9584403c49de730e415f40606",
+                  "not_valid_after": "2023-11-29T19:06:19Z"
+                },
+                "msg_pks": [
+                  {
+                    "key": "3c9c29f0dfeae677ae6b46754b3550913158c574e426d238a2d5ade526484f05",
+                    "certificate": "9f6695f38a6403dc96c96e964d19c9009f484215688dfd48b19c8cd4e3b7e3afca05367d2e3d17662b4fe2f6d5f9f24df00523b67db469c48f4dc0cec91cd00e",
+                    "not_valid_after": "2023-11-03T19:06:40.525155209Z"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "max_epoch": 12
+}

@@ -1,0 +1,45 @@
+{
+  "configurations" : [
+    {
+      "id" : "CF3E2AC6-8FAD-4CB6-AE3D-B0F3C1C6241B",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "mallocScribbleEnabled" : true,
+    "mallocStackLoggingOptions" : {
+      "loggingType" : "liveAllocations"
+    },
+    "preferredScreenCaptureFormat" : "screenshot",
+    "testRepetitionMode" : "retryOnFailure",
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepNever",
+    "userAttachmentLifetime" : "keepNever"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "skippedTests" : [
+        "DeletedAllMessagesUITest",
+        "MessageStatusUITest",
+        "NavigationUITest",
+        "NewPassphraseUITest",
+        "OnboardingViewUITests",
+        "SecurityAlertTest",
+        "SelectRecipientUITests",
+        "SendMessageUITest",
+        "StatusMessageTests",
+        "UserLoginUITest"
+      ],
+      "target" : {
+        "containerPath" : "container:reference.xcodeproj",
+        "identifier" : "A02DA2B3296D73E800235965",
+        "name" : "referenceUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

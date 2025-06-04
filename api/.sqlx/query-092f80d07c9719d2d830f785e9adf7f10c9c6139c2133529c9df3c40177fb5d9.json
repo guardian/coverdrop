@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id \n                FROM covernode_id_pks\n                WHERE decode(pk_json #>>'{key}', 'hex') = $1 AND covernode_id = $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "092f80d07c9719d2d830f785e9adf7f10c9c6139c2133529c9df3c40177fb5d9"
+}

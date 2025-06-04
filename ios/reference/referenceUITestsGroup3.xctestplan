@@ -1,0 +1,39 @@
+{
+  "configurations" : [
+    {
+      "id" : "0DCB9B63-8D9A-40D5-8AFE-7967D094EC7D",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "preferredScreenCaptureFormat" : "screenshot",
+    "repeatInNewRunnerProcess" : true,
+    "testRepetitionMode" : "retryOnFailure",
+    "testTimeoutsEnabled" : true,
+    "uiTestingScreenshotsLifetime" : "keepNever"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "skippedTests" : [
+        "AboutPageUITest",
+        "AppForegroundUITest",
+        "ExpiredMessagesTest",
+        "InboxUITest",
+        "KeyExpiryUITest",
+        "LogoutUITest",
+        "NavigationUITest",
+        "SecurityAlertTest"
+      ],
+      "target" : {
+        "containerPath" : "container:reference.xcodeproj",
+        "identifier" : "A02DA2B3296D73E800235965",
+        "name" : "referenceUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

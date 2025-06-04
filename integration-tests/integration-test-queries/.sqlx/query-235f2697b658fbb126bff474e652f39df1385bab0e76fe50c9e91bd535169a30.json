@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "--  This query builds 2 CTEs, the first gets all the available keys order by epoch id\n-- the keys_ordered_by_transaction_timestamp_cond get all keys ordered by transaction_commit_timestamp\n-- each query then assigns each row a row number based on the ordering\n-- we then do a full outer join across both results keys_ordered_by_transaction_timestamp_ts which will only return results missing from either table.\n-- We expect the ordering by commit timestamp and the ordering by epoch to be the keys_ordered_by_transaction_timestamp_me\n-- keys_ordered_by_transaction_timestamp_ the query keys_ordered_by_transaction_timestamp_ould return no results.\n\nWITH all_keys AS (\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM organization_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM covernode_provisioning_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM covernode_id_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM covernode_msg_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM journalist_provisioning_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM journalist_id_pks\n    UNION ALL\n    SELECT id,\n        pk_json,\n        xmin,\n        pg_xact_commit_timestamp(xmin) as transaction_timestamp,\n        epoch\n    FROM journalist_msg_pks\n),\nkeys_ordered_by_epoch AS (\n    SELECT *,\n        ROW_NUMBER() OVER (\n            ORDER BY epoch\n        ) AS row_num\n    FROM all_keys\n),\nkeys_ordered_by_transaction_timestamp AS (\n    SELECT *,\n        ROW_NUMBER() OVER (\n            ORDER BY transaction_timestamp\n        ) AS row_num\n    FROM all_keys\n)\nSELECT keys_ordered_by_epoch.id AS keys_ordered_by_epoch_id,\n    keys_ordered_by_epoch.row_num AS keys_ordered_by_epoch_row_num,\n    keys_ordered_by_epoch.transaction_timestamp AS keys_ordered_by_epoch_transaction_timestamp,\n    keys_ordered_by_epoch.epoch AS keys_ordered_by_epoch_epoch,\n    keys_ordered_by_epoch.pk_json AS keys_ordered_by_epoch_pk_json,\n    keys_ordered_by_transaction_timestamp.id AS keys_ordered_by_transaction_timestamp_id,\n    keys_ordered_by_transaction_timestamp.row_num AS keys_ordered_by_transaction_timestamp_row_num,\n    keys_ordered_by_transaction_timestamp.transaction_timestamp AS keys_ordered_by_transaction_timestamp_transaction_timestamp,\n    keys_ordered_by_transaction_timestamp.epoch AS keys_ordered_by_transaction_timestamp_epoch,\n    keys_ordered_by_transaction_timestamp.pk_json AS keys_ordered_by_transaction_timestamp_pk_json\nFROM keys_ordered_by_epoch keys_ordered_by_epoch\n    FULL OUTER JOIN keys_ordered_by_transaction_timestamp keys_ordered_by_transaction_timestamp ON keys_ordered_by_epoch.row_num = keys_ordered_by_transaction_timestamp.row_num\n    AND keys_ordered_by_epoch.id = keys_ordered_by_transaction_timestamp.id\n    AND keys_ordered_by_epoch.transaction_timestamp = keys_ordered_by_transaction_timestamp.transaction_timestamp\n    AND keys_ordered_by_epoch.epoch = keys_ordered_by_transaction_timestamp.epoch\n    AND keys_ordered_by_epoch.row_num = keys_ordered_by_transaction_timestamp.row_num\n    AND keys_ordered_by_epoch.pk_json = keys_ordered_by_transaction_timestamp.pk_json\nWHERE keys_ordered_by_epoch.row_num is NULL\n    OR keys_ordered_by_transaction_timestamp.row_num is NULL;\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "keys_ordered_by_epoch_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "keys_ordered_by_epoch_row_num",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "keys_ordered_by_epoch_transaction_timestamp",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "keys_ordered_by_epoch_epoch",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "keys_ordered_by_epoch_pk_json",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 5,
+        "name": "keys_ordered_by_transaction_timestamp_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "keys_ordered_by_transaction_timestamp_row_num",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "keys_ordered_by_transaction_timestamp_transaction_timestamp",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "keys_ordered_by_transaction_timestamp_epoch",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "keys_ordered_by_transaction_timestamp_pk_json",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "235f2697b658fbb126bff474e652f39df1385bab0e76fe50c9e91bd535169a30"
+}

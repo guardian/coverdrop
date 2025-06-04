@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            timestamp AS \"timestamp: DateTime<Utc>\",\n            level AS \"level: String\",\n            target AS \"target: String\",\n            message AS \"message: String\"\n        FROM log_entries\n        WHERE session_id >= ?1 AND session_id <= ?2\n        ORDER BY timestamp ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "level: String",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "target: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "message: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5c0f2229c6f28d8c93f55ea01325a96b7e9624cad228e88823612c7fd68bfd27"
+}

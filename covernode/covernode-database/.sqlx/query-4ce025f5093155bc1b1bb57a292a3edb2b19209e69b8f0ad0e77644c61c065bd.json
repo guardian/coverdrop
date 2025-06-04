@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    pk_upload_form_json AS \"pk_upload_form_json: String\",\n                    key_pair_json AS \"key_pair_json: String\",\n                    created_at AS \"created_at: DateTime<Utc>\"\n                FROM setup_bundle\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "pk_upload_form_json: String",
+        "ordinal": 0,
+        "type_info": "Null"
+      },
+      {
+        "name": "key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4ce025f5093155bc1b1bb57a292a3edb2b19209e69b8f0ad0e77644c61c065bd"
+}

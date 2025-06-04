@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO anchor_organization_pks (pk_json, added_at)\n            SELECT ?1, ?2\n            WHERE NOT EXISTS (\n                SELECT pk_json FROM anchor_organization_pks\n                WHERE json_extract(pk_json, '$.key') = json_extract(?1, '$.key')\n                AND json_extract(pk_json, '$.certificate') = json_extract(?1, '$.certificate')\n                AND json_extract(pk_json, '$.not_valid_after') = json_extract(?1, '$.not_valid_after')\n            );\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "50b86e59ff26f513b3ce5dbd831e61a31697c2568d03059a4d2360ae091af85e"
+}

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id AS \"provisioning_pk_id\"\n                FROM journalist_provisioning_pks\n                WHERE decode(pk_json #>>'{key}', 'hex') = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "provisioning_pk_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f8b8d6ad6ce1d71f129a3f606d6927faa692d9eed3016da484a1ebe6b260eb51"
+}

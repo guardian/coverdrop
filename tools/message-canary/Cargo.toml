@@ -1,0 +1,40 @@
+[package]
+name = "message-canary"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+aws-config.workspace = true
+axum.workspace = true
+chrono.workspace = true
+clap.workspace = true
+rand.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+metrics.workspace = true
+
+common.path = "../../common"
+journalist-vault.path = "../../journalist-vault"
+message-canary-database.path = "./message-canary-database"
+
+
+[package.metadata.deb]
+maintainer = "CoverDrop Team <coverdrop@guardian.co.uk>"
+copyright = "2024, The Guardian"
+extended-description = "CoverDrop MessageCanary Service"
+revision = ""
+depends = "$auto"
+priority = "optional"
+assets = [
+    # binary
+    ["target/release/message-canary", "/usr/bin/", "755"],
+    # assets
+    ["systemd/bootstrap.sh", "/var/message-canary/", "755"],
+]
+maintainer-scripts = "systemd/"
+systemd-units = { enable = true, start = false }

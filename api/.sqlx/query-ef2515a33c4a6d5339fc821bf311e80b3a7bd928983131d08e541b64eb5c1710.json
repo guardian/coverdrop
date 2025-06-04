@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO system_status_events (\n                status,\n                description,\n                timestamp\n            )\n            VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ef2515a33c4a6d5339fc821bf311e80b3a7bd928983131d08e541b64eb5c1710"
+}

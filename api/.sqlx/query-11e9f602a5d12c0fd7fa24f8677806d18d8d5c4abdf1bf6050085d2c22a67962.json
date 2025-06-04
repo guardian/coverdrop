@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT MAX(added_at) AS \"added_at: DateTime<Utc>\"\n                FROM journalist_provisioning_pks\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "added_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "11e9f602a5d12c0fd7fa24f8677806d18d8d5c4abdf1bf6050085d2c22a67962"
+}

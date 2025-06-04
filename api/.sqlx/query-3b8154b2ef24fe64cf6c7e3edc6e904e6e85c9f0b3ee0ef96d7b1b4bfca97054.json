@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    EXISTS(\n                        SELECT *\n                        FROM organization_pks\n                        WHERE pk_json = $1\n                    ) AS \"org_pk_exists!: bool\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "org_pk_exists!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3b8154b2ef24fe64cf6c7e3edc6e904e6e85c9f0b3ee0ef96d7b1b4bfca97054"
+}

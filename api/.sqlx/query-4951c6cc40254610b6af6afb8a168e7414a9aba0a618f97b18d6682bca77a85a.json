@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO admin_pks (org_pk_id, not_valid_after, pk_json)\n                    VALUES ($1, $2, $3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4951c6cc40254610b6af6afb8a168e7414a9aba0a618f97b18d6682bca77a85a"
+}

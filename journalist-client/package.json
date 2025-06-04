@@ -1,0 +1,56 @@
+{
+  "name": "journalist-client",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "createEuiIcons": "node scripts/createEuiIcons.js",
+    "createAppIcons": "tauri icon ./src-tauri/icons/base.svg",
+    "prepare": "cd .. && husky journalist-client/.husky",
+    "check-format": "prettier --check \"{src,src-tauri}/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"{src,src-tauri}/**/*.{ts,tsx}\"",
+    "lint": "eslint src/** src-tauri/** --no-error-on-unmatched-pattern",
+    "typecheck": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*": "prettier --ignore-unknown --write",
+    "*.tsx": "eslint --fix"
+  },
+  "dependencies": {
+    "@elastic/datemath": "^5.0.3",
+    "@elastic/eui": "^99.1.0",
+    "@emotion/css": "^11.13.5",
+    "@emotion/react": "^11.14.0",
+    "@guardian/libs": "^10.0.0",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.2.0",
+    "@tauri-apps/plugin-notification": "^2.2.1",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-window-state": "^2.2.2",
+    "moment": "^2.30.1",
+    "radash": "^12.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.20.1",
+    "eslint-plugin-react": "^7.37.4",
+    "globals": "^15.15.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.4.3",
+    "prettier": "3.5.1",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.2.6"
+  }
+}

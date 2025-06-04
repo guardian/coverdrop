@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM journalist_id_key_pairs\n            WHERE key_pair_json->'public_key'->>'not_valid_after' < $1;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ba6a4a80328206bb300bc269bbf1202f199a65553349f43106919c43a40f241c"
+}

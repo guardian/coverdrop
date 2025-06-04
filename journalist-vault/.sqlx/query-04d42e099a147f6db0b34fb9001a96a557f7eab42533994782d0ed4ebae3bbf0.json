@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                MAX(added_at) AS \"added_at: DateTime<Utc>\"\n            FROM journalist_msg_key_pairs\n            WHERE epoch IS NOT NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "added_at: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "04d42e099a147f6db0b34fb9001a96a557f7eab42533994782d0ed4ebae3bbf0"
+}

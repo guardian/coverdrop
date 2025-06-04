@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO u2j_processed_dead_drops (\n                    dead_drop_id,\n                    processed_at\n                ) VALUES\n                ($1, $2)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4745fd6381d358ed4ce7ad48a68a42da88fd5947c6faecebb542bbedb04d0a1a"
+}

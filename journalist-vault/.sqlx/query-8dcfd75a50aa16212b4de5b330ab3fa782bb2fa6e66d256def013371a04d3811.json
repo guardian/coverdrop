@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                max_dead_drop_id AS \"max_dead_drop_id: DeadDropId\"\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "max_dead_drop_id: DeadDropId",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8dcfd75a50aa16212b4de5b330ab3fa782bb2fa6e66d256def013371a04d3811"
+}

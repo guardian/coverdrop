@@ -1,0 +1,1482 @@
+
+# cargo-vet audits file
+
+[[audits.addr2line]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.22.0"
+notes = "looks good"
+
+[[audits.addr2line]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.22.0 -> 0.21.0"
+
+[[audits.anyhow]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "1.0.72"
+notes = "Documentation improvements"
+
+[[audits.async-lock]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "2.8.0"
+
+[[audits.aws-sdk-s3]]
+who = "philmcmahon <philip.mcmahon@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "1.63.0"
+
+[[audits.aws-smithy-types-convert]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.60.8"
+
+[[audits.axum]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.1 -> 0.8.3"
+
+[[audits.axum-core]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.5.0 -> 0.5.2"
+
+[[audits.axum-extra]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.9.6"
+
+[[audits.axum-extra]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.10.1"
+
+[[audits.axum-macros]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.5.0"
+
+[[audits.axum-metrics]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+
+[[audits.base64]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.21.7 -> 0.22.1"
+notes = "looks good https://github.com/marshallpierce/rust-base64/compare/v0.21.7...v0.22.1"
+
+[[audits.bollard]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.16.1"
+notes = "https://github.com/fussybeaver/bollard  looks good"
+
+[[audits.bollard-stubs]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "1.41.0 -> 1.44.0-rc.2"
+notes = "looks good"
+
+[[audits.cc]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "1.0.97 -> 1.0.99"
+notes = "Minor changes"
+
+[[audits.clap]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "4.4.10"
+
+[[audits.clap_builder]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "4.4.9"
+
+[[audits.curve25519-dalek]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "4.1.2 -> 4.1.3"
+notes = "Update fixes various lints and adds a black box to some of the math code to prevent LLVM from performing an optimisation that introduced a timing attack"
+
+[[audits.darling]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.20.1 -> 0.20.3"
+
+[[audits.darling_core]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.20.1 -> 0.20.3"
+
+[[audits.darling_macro]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.20.1 -> 0.20.3"
+notes = "Simply bumps a transitive dependency."
+
+[[audits.directories]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "5.0.1"
+
+[[audits.dirs]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "5.0.1"
+notes = "Adds helpers for platform specific directory locations, https://docs.rs/crate/dirs/latest/source/src/lib.rs, looks good"
+
+[[audits.dirs-sys]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.4.1"
+notes = "Adds compatability support for the dirs crate cross platforms https://docs.rs/crate/dirs-sys/latest/source/src/lib.rs, seems fine"
+
+[[audits.docker_credential]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "1.3.1"
+notes = "A Rust library for reading a user's Docker or Podman credentials from config , looks fine"
+
+[[audits.endian-type]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.1.2"
+
+[[audits.equivalent]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "1.0.1"
+
+[[audits.fastrand]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "2.0.1"
+
+[[audits.futures-io]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.3.28 -> 0.3.30"
+
+[[audits.futures-macro]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.3.28 -> 0.3.29"
+
+[[audits.futures-sink]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.3.28 -> 0.3.29"
+
+[[audits.futures-timer]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "3.0.2"
+
+[[audits.gimli]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.29.0"
+notes = "https://github.com/gimli-rs/gimli looks good"
+
+[[audits.human_format]]
+who = "Daniel Hugenroth <daniel.hugenroth@theguardian.com"
+criteria = "safe-to-deploy"
+version = "1.0.3"
+notes = "Used in an internal tool with trusted input"
+
+[[audits.hyper-named-pipe]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+notes = "Hyper client bindings for Windows Named Pipes, looks fine"
+
+[[audits.hyper-rustls]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.24.2 -> 0.26.0"
+notes = "https://github.com/rustls/hyper-rustls/compare/v/0.25.0...v/0.26.0 looks good"
+
+[[audits.hyperlocal-next]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.9.0"
+notes = "Hyper client and server bindings for Unix domain sockets, looks good"
+
+[[audits.io-lifetimes]]
+who = "Sam Cutler <sam.cutler@guardian.co.uk>"
+criteria = "safe-to-deploy"
+delta = "1.0.10 -> 1.0.11"
+notes = "Just some changes to some `unreachable!()` messages."
+
+[[audits.is-docker]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+
+[[audits.is-wsl]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+
+[[audits.jsonrpsee]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.19.0"
+
+[[audits.jsonrpsee-core]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.19.0"
+
+[[audits.jsonrpsee-proc-macros]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.19.0"
+
+[[audits.jsonrpsee-types]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.19.0"
+
+[[audits.libredox]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.0.1"
+notes = "This is required by the dirs create, and is to support redox-os within dirs"
+
+[[audits.metrics]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.16.0"
+
+[[audits.metrics]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.24.1"
+
+[[audits.metrics-macros]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.4.1"
+
+[[audits.metrics-util]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.19.0"
+
+[[audits.metrics_cloudwatch]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "3.0.0"
+
+[[audits.metrics_cloudwatch]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "4.0.0"
+
+[[audits.multer]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "3.1.0"
+
+[[audits.nibble_vec]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+
+[[audits.object]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.36.0"
+notes = "The object crate provides a unified interface to working with object files across platforms. It supports reading relocatable object files and executable files, and writing COFF/ELF/Mach-O/XCOFF relocatable object files and ELF/PE executable files. Looks good ..."
+
+[[audits.open]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "5.3.1"
+
+[[audits.openssl]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.10.54 -> 0.10.55"
+notes = "Updating package.lock, adds some more functions"
+
+[[audits.openssl]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.10.60 -> 0.10.66"
+
+[[audits.openssl]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.10.70 -> 0.10.72"
+
+[[audits.openssl-sys]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.88 -> 0.9.90"
+notes = "Moving around some clippy rules, cleaning up the build.rs, adding some functions"
+
+[[audits.openssl-sys]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.96 -> 0.9.103"
+
+[[audits.openssl-sys]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.105 -> 0.9.107"
+
+[[audits.option-ext]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.2.0"
+notes = "For supporting extra features on the Option type https://docs.rs/crate/option-ext/0.2.0/source/src/lib.rs, seems safe"
+
+[[audits.parse-display]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.9.1"
+notes = "looks good"
+
+[[audits.parse-display-derive]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.9.1"
+notes = "lookd good"
+
+[[audits.pathdiff]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.2.3"
+
+[[audits.portable-atomic]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "1.10.0"
+
+[[audits.proc-macro-crate]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "1.3.1"
+
+[[audits.proc-macro-hack]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.5.19"
+
+[[audits.quanta]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.12.5"
+
+[[audits.radix_trie]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.2.1"
+
+[[audits.rand_xoshiro]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.6.0"
+
+[[audits.raw-cpuid]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "11.3.0"
+
+[[audits.redox_users]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.4.3"
+notes = "This provides wrappers for user information for the redox-os https://sourcegraph.com/crates/redox_users@v0.4.3/-/blob/src/lib.rs look fine"
+
+[[audits.rpassword]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "7.3.1 -> 7.4.0"
+
+[[audits.rtoolbox]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.0.2 -> 0.0.3"
+
+[[audits.rustix]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.37.20 -> 0.37.25"
+
+[[audits.rustls]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.21.11 -> 0.22.4"
+notes = "https://github.com/rustls/rustls/compare/v/0.22.4...v/0.21.11 looks good ?"
+
+[[audits.rustls-native-certs]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.6.3 -> 0.7.0"
+notes = "Moved to use https://github.com/rustls/pki-types and updated types"
+
+[[audits.rustls-pemfile]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "1.0.2 -> 2.1.2"
+notes = "https://github.com/rustls/pemfile/compare/v/1.0.2...v/2.1.2 looks good"
+
+[[audits.rustls-pki-types]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "1.7.0"
+notes = "https://sourcegraph.com/crates/rustls-pki-types@v1.7.0/-/blob/src/server_name.rs looks good"
+
+[[audits.rustls-webpki]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.101.7 -> 0.102.4"
+notes = "looks good"
+
+[[audits.serde_with]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "3.0.0 -> 3.1.0"
+
+[[audits.serde_with]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "3.1.0 -> 3.8.1"
+notes = "looks good"
+
+[[audits.serde_with_macros]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "3.0.0 -> 3.1.0"
+notes = "Deletes needless `dbg!()` macro, bumps a few versions about the place."
+
+[[audits.serde_with_macros]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "3.1.0 -> 3.8.1"
+notes = "Updates to docs etc, looks fine"
+
+[[audits.serial_test]]
+who = "Marjan Kalanaki <marjan.kalanaki@guardian.co.uk>"
+criteria = "safe-to-run"
+delta = "2.0.0 -> 3.1.1"
+
+[[audits.serial_test_derive]]
+who = "Marjan Kalanaki <marjan.kalanaki@guardian.co.uk>"
+criteria = "safe-to-run"
+delta = "2.0.0 -> 3.1.1"
+
+[[audits.sketches-ddsketch]]
+who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+
+[[audits.socket2]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.4.9 -> 0.4.4"
+notes = "Removing code"
+
+[[audits.structmeta]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+notes = "https://github.com/frozenlib/structmeta/tree/master looks good"
+
+[[audits.structmeta-derive]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+notes = "looks good"
+
+[[audits.strum]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.25.0"
+
+[[audits.strum_macros]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.24.3 -> 0.25.2"
+
+[[audits.system-configuration]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.5.1"
+
+[[audits.system-configuration-sys]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.5.0"
+notes = "C bindings to a Apple framework. Little actual code."
+
+[[audits.t1ha]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.1.2"
+
+[[audits.testcontainers]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.14.0 -> 0.17.0"
+notes = "Quite major changes in testcontainers, looks good"
+
+[[audits.time]]
+who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.3.22 -> 0.3.23"
+
+[[audits.tokio-rustls]]
+who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
+criteria = "safe-to-deploy"
+delta = "0.24.1 -> 0.25.0"
+notes = "https://github.com/rustls/tokio-rustls/compare/v/0.24.1...v/0.25.0 moved to web_pki types , looks good"
+
+[[audits.untrusted]]
+who = "Mario Savarese <mario.savarese@guardian.co.uk>"
+criteria = "safe-to-deploy"
+version = "0.9.0"
+
+[[audits.webpki]]
+who = "Sam Cutler <sam.cutler@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.22.1 -> 0.22.2"
+notes = "Adding a budget to prevent DOS during path building"
+
+[[trusted.aho-corasick]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-03-28"
+end = "2024-07-17"
+
+[[trusted.anstream]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-16"
+end = "2024-11-29"
+
+[[trusted.anstyle]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-05-18"
+end = "2024-11-29"
+
+[[trusted.anstyle-parse]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-08"
+end = "2024-11-29"
+
+[[trusted.anstyle-query]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-04-13"
+end = "2024-11-29"
+
+[[trusted.anstyle-wincon]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-08"
+end = "2024-11-29"
+
+[[trusted.async-std]]
+criteria = "safe-to-deploy"
+user-id = 4333
+start = "2022-06-18"
+end = "2025-10-16"
+
+[[trusted.async-stream]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-06-07"
+end = "2025-10-16"
+
+[[trusted.async-stream-impl]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-08-13"
+end = "2025-10-16"
+
+[[trusted.async-trait]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-07-23"
+end = "2024-07-17"
+
+[[trusted.atomic-take]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2019-10-23"
+end = "2025-10-16"
+
+[[trusted.aws-config]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-credential-types]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-12-29"
+end = "2025-09-03"
+
+[[trusted.aws-runtime]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2023-04-06"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-autoscaling]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-11-14"
+
+[[trusted.aws-sdk-cloudwatch]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-10-07"
+
+[[trusted.aws-sdk-ec2]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-11-14"
+
+[[trusted.aws-sdk-kinesis]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-rds]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-11-14"
+
+[[trusted.aws-sdk-s3]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-12-09"
+
+[[trusted.aws-sdk-secretsmanager]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-11-14"
+
+[[trusted.aws-sdk-ses]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-ssm]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-23"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-sso]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-ssooidc]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-23"
+end = "2025-09-03"
+
+[[trusted.aws-sdk-sts]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-sigv4]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-async]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-checksums]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-07-20"
+end = "2025-11-27"
+
+[[trusted.aws-smithy-compression]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2024-05-21"
+end = "2025-10-07"
+
+[[trusted.aws-smithy-eventstream]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-11-27"
+
+[[trusted.aws-smithy-http]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-json]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-query]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-runtime]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2023-04-06"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-runtime-api]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2023-04-06"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-types]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-smithy-xml]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.aws-types]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2025-09-03"
+
+[[trusted.backtrace]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2023-06-29"
+end = "2025-06-13"
+
+[[trusted.bincode]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-08"
+end = "2025-10-16"
+
+[[trusted.bstr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-04-02"
+end = "2025-10-16"
+
+[[trusted.byteorder]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-06-09"
+end = "2024-07-17"
+
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-11-27"
+end = "2025-10-16"
+
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-11"
+end = "2025-10-16"
+
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-01"
+end = "2024-07-17"
+
+[[trusted.clap]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2024-07-17"
+
+[[trusted.clap_builder]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-28"
+end = "2024-11-29"
+
+[[trusted.clap_derive]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2024-07-17"
+
+[[trusted.clap_lex]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-04-15"
+end = "2024-07-17"
+
+[[trusted.env_logger]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-11-24"
+end = "2024-07-17"
+
+[[trusted.filetime]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-04-23"
+end = "2025-10-16"
+
+[[trusted.flate2]]
+criteria = "safe-to-deploy"
+user-id = 4333
+start = "2020-09-30"
+end = "2024-07-17"
+
+[[trusted.globset]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-04-15"
+end = "2024-07-17"
+
+[[trusted.h2]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-13"
+end = "2024-07-17"
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-04-02"
+end = "2025-10-16"
+
+[[trusted.headers]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-09-09"
+end = "2025-10-16"
+
+[[trusted.headers-core]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-06-11"
+end = "2025-10-16"
+
+[[trusted.http]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-04-05"
+end = "2024-07-17"
+
+[[trusted.http-body]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-10-01"
+end = "2025-10-18"
+
+[[trusted.http-body-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2022-10-25"
+end = "2025-06-13"
+
+[[trusted.httparse]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-07-03"
+end = "2024-07-17"
+
+[[trusted.hyper]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-01"
+end = "2025-10-18"
+
+[[trusted.hyper-tls]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-19"
+end = "2024-07-17"
+
+[[trusted.hyper-util]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2022-01-15"
+end = "2025-06-13"
+
+[[trusted.ignore]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-04-15"
+end = "2025-10-16"
+
+[[trusted.indexmap]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2020-01-15"
+end = "2025-10-16"
+
+[[trusted.is-terminal]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2022-01-22"
+end = "2025-05-03"
+
+[[trusted.is_terminal_polyfill]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2024-05-02"
+end = "2026-01-09"
+
+[[trusted.itoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2024-07-17"
+
+[[trusted.js-sys]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-29"
+end = "2025-10-16"
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2021-01-27"
+end = "2025-10-16"
+
+[[trusted.libm]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-05-14"
+end = "2025-10-16"
+
+[[trusted.libm]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2022-02-06"
+end = "2025-10-16"
+
+[[trusted.linux-raw-sys]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2021-06-12"
+end = "2024-07-17"
+
+[[trusted.lock_api]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-05-04"
+end = "2024-07-17"
+
+[[trusted.memchr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-07-07"
+end = "2024-07-17"
+
+[[trusted.mime]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-09-09"
+end = "2024-07-17"
+
+[[trusted.mio]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-05-15"
+end = "2024-07-17"
+
+[[trusted.notify]]
+criteria = "safe-to-deploy"
+user-id = 51017
+start = "2020-01-07"
+end = "2025-10-16"
+
+[[trusted.num_cpus]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-06-10"
+end = "2024-07-17"
+
+[[trusted.openssl-src]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-02-25"
+end = "2024-07-17"
+
+[[trusted.ordered-float]]
+criteria = "safe-to-deploy"
+user-id = 2017 # Matt Brubeck (mbrubeck)
+start = "2019-03-13"
+end = "2025-10-16"
+
+[[trusted.parking_lot]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-05-04"
+end = "2024-07-17"
+
+[[trusted.parking_lot_core]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-05-04"
+end = "2024-07-17"
+
+[[trusted.paste]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-19"
+end = "2024-07-17"
+
+[[trusted.pretty_env_logger]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-08-16"
+end = "2024-07-17"
+
+[[trusted.proc-macro2]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-23"
+end = "2024-07-17"
+
+[[trusted.regex]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-27"
+end = "2024-07-17"
+
+[[trusted.regex-automata]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-25"
+end = "2024-07-17"
+
+[[trusted.regex-lite]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2023-02-28"
+end = "2025-09-03"
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-03-30"
+end = "2024-07-17"
+
+[[trusted.reqwest]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.rustix]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2021-10-29"
+end = "2024-07-17"
+
+[[trusted.rustversion]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-07-08"
+end = "2024-08-08"
+
+[[trusted.ryu]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2024-07-17"
+
+[[trusted.same-file]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-07-16"
+end = "2024-07-17"
+
+[[trusted.scopeguard]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2020-02-16"
+end = "2024-07-17"
+
+[[trusted.serde]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-17"
+
+[[trusted.serde_bytes]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-02-25"
+end = "2024-07-17"
+
+[[trusted.serde_derive]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-17"
+
+[[trusted.serde_json]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-02-28"
+end = "2024-07-17"
+
+[[trusted.serde_path_to_error]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-08-20"
+end = "2025-11-13"
+
+[[trusted.serde_repr]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-26"
+end = "2025-06-13"
+
+[[trusted.serde_yaml]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2025-10-16"
+
+[[trusted.smallvec]]
+criteria = "safe-to-deploy"
+user-id = 2017 # Matt Brubeck (mbrubeck)
+start = "2019-10-28"
+end = "2024-07-17"
+
+[[trusted.socket2]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-05-06"
+end = "2025-10-16"
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-17"
+
+[[trusted.termcolor]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-06-04"
+end = "2024-07-17"
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-09"
+end = "2025-06-13"
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-09"
+end = "2025-06-13"
+
+[[trusted.thread_local]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-09-07"
+end = "2024-07-17"
+
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-03-02"
+end = "2025-06-13"
+
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2020-12-25"
+end = "2024-07-17"
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-04-24"
+end = "2024-07-17"
+
+[[trusted.tokio-stream]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-04"
+end = "2024-07-17"
+
+[[trusted.tokio-util]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-12"
+end = "2025-10-16"
+
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-05-16"
+end = "2024-07-17"
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-09-13"
+end = "2024-10-06"
+
+[[trusted.tower]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-04-27"
+end = "2024-07-17"
+
+[[trusted.tower]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2024-09-09"
+end = "2025-10-18"
+
+[[trusted.tower-http]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2024-09-23"
+end = "2025-10-18"
+
+[[trusted.tower-layer]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-04-27"
+end = "2024-07-17"
+
+[[trusted.ucd-trie]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-07-21"
+end = "2025-10-16"
+
+[[trusted.unicode-bidi]]
+criteria = "safe-to-deploy"
+user-id = 2017 # Matt Brubeck (mbrubeck)
+start = "2021-04-06"
+end = "2024-07-17"
+
+[[trusted.unicode-width]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-08-19"
+end = "2025-10-16"
+
+[[trusted.unsafe-libyaml]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2022-07-03"
+end = "2025-10-16"
+
+[[trusted.walkdir]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-06-09"
+end = "2024-07-17"
+
+[[trusted.want]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-19"
+end = "2024-07-17"
+
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-06-03"
+end = "2024-07-17"
+
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2019-07-22"
+end = "2024-07-17"
+
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.wasm-bindgen-backend]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.wasm-bindgen-futures]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.wasm-bindgen-macro]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.wasm-bindgen-macro-support]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.web-sys]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2024-07-17"
+
+[[trusted.winapi-util]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2020-01-11"
+end = "2024-07-17"
+
+[[trusted.windows]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-01-15"
+end = "2024-07-17"
+
+[[trusted.windows-core]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-11-15"
+end = "2025-10-16"
+
+[[trusted.windows-implement]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-01-27"
+end = "2025-10-16"
+
+[[trusted.windows-interface]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-02-18"
+end = "2025-10-16"
+
+[[trusted.windows-result]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-02-02"
+end = "2025-10-16"
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-11-15"
+end = "2025-10-16"
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-09"
+end = "2024-07-17"
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-01"
+end = "2024-07-17"
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-11-05"
+end = "2024-07-17"
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-28"
+end = "2024-07-17"
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-04-02"
+end = "2025-10-16"
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-27"
+end = "2024-07-17"
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-28"
+end = "2024-07-17"
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-01"
+end = "2024-07-17"
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-27"
+end = "2024-07-17"
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-02-22"
+end = "2024-10-05"

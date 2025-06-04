@@ -1,0 +1,54 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+axum-metrics.workspace = true
+axum.workspace = true
+base64.workspace = true
+chrono.workspace = true
+clap.workspace = true
+hex.workspace = true
+http.workspace = true
+itertools.workspace = true
+metrics.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "json",
+    "chrono",
+] }
+thiserror.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+
+common = { path = "../common" }
+
+[dev-dependencies]
+hyper.workspace = true
+tower.workspace = true
+
+[package.metadata.deb]
+maintainer = "CoverDrop Team <coverdrop@guardian.co.uk>"
+copyright = "2023, The Guardian"
+extended-description = "CoverDrop API"
+revision = ""
+depends = "$auto"
+priority = "optional"
+assets = [
+    # binary
+    ["target/release/api", "/usr/bin/", "755"],
+    # assets
+    ["systemd/bootstrap.sh", "/var/api/", "755"],
+]
+maintainer-scripts = "systemd/"
+systemd-units = { enable = true }

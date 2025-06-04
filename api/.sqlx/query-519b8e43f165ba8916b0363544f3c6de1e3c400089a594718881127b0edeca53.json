@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE journalist_profiles SET\n                display_name = COALESCE($1, display_name),\n                sort_name    = COALESCE($2, sort_name),\n                description  = COALESCE($3, description),\n                is_desk      = COALESCE($4, is_desk)\n            WHERE id = $5\n            RETURNING\n                is_desk,\n                LENGTH(description) AS \"description_length!: i32\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "is_desk",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "description_length!: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "519b8e43f165ba8916b0363544f3c6de1e3c400089a594718881127b0edeca53"
+}

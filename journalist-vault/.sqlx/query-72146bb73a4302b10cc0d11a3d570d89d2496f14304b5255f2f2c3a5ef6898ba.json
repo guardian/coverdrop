@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO vault_info\n                (journalist_id, max_dead_drop_id)\n            VALUES (?1, 0)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "72146bb73a4302b10cc0d11a3d570d89d2496f14304b5255f2f2c3a5ef6898ba"
+}

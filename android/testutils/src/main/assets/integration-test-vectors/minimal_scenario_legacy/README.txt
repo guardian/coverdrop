@@ -1,0 +1,1 @@
+This is a copy of the old test vectors that use the previous signature variant. See #2998.

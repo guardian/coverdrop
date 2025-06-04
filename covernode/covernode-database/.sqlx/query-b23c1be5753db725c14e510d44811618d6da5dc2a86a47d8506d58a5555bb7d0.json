@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO setup_bundle\n                (pk_upload_form_json, key_pair_json, created_at)\n                VALUES\n                (?1, ?2, ?3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "b23c1be5753db725c14e510d44811618d6da5dc2a86a47d8506d58a5555bb7d0"
+}

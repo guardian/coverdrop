@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    pk_json AS \"pk_json: String\"\n                FROM organization_public_keys\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "pk_json: String",
+        "ordinal": 0,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d669abd26d860c3a16308ff05d68349533051ed807a0b6cb906eb4aa775620f6"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id AS \"_id: i64\",\n            session_started_at AS \"_session_started_at: DateTime<Utc>\"\n        FROM sessions\n        ORDER BY session_started_at ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "_id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "_session_started_at: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "55217e9d2dcfece30292c0eff5e1decaebb47ecb045f4792ba13f052f5226c0e"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH insert_query AS (\n                    INSERT INTO journalist_id_pks (journalist_profile_id, provisioning_pk_id, added_at, not_valid_after, pk_json)\n                        VALUES ($1, $2, $3, $4, $5)\n                    ON CONFLICT DO NOTHING\n                    RETURNING epoch AS \"epoch: Epoch\"\n                ),\n                select_query AS (\n                    SELECT epoch AS \"epoch: Epoch\"\n                    FROM journalist_id_pks\n                    WHERE (pk_json->>'key') = ($5->>'key')\n                )\n                SELECT * FROM insert_query\n                UNION\n                SELECT * FROM select_query\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "epoch: Epoch",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3bf6286c305a4cfe212743d9a1b1a8247b686c5cb15d61adf14c8cc4b0318726"
+}

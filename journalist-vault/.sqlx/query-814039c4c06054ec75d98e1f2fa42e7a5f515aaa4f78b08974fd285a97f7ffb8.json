@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO vault_setup_bundle\n                (\n                    provisioning_pk_id,\n                    pk_upload_form_json,\n                    keypair_json,\n                    register_journalist_form_json\n                )\n            VALUES\n                (?1, ?2, ?3, ?4)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "814039c4c06054ec75d98e1f2fa42e7a5f515aaa4f78b08974fd285a97f7ffb8"
+}

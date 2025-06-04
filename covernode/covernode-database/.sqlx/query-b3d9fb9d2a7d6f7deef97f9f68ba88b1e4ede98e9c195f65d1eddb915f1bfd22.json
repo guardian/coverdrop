@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                UPDATE covernode_id_key_pairs\n                SET\n                    epoch = ?1,\n                    key_pair_json = ?2\n                WHERE json_extract(key_pair_json, '$.secret_key') = json_extract(?2, '$.secret_key')\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "b3d9fb9d2a7d6f7deef97f9f68ba88b1e4ede98e9c195f65d1eddb915f1bfd22"
+}

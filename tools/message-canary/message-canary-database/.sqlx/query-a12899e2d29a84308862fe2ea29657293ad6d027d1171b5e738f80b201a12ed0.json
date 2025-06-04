@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH u2j AS (\n                    SELECT COUNT(*) AS \"undelivered_u2j_messages: i64\"\n                    FROM user_to_journalist_messages\n                    WHERE received_at IS NULL\n                    AND sent_at < $1\n                    AND sent_at > $2\n                ), j2u AS (\n                    SELECT COUNT(*) AS \"undelivered_j2u_messages: i64\"\n                    FROM journalist_to_user_messages\n                    WHERE received_at IS NULL\n                    AND sent_at < $1\n                    AND sent_at > $2\n                )\n                SELECT *\n                FROM u2j\n                CROSS JOIN j2u\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "undelivered_u2j_messages: i64",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "undelivered_j2u_messages: i64",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "a12899e2d29a84308862fe2ea29657293ad6d027d1171b5e738f80b201a12ed0"
+}

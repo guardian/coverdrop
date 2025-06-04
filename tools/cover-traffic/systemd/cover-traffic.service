@@ -1,0 +1,12 @@
+[Unit]
+Description=CoverTraffic
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=always
+EnvironmentFile=/etc/systemd/cover-traffic
+ExecStart=/var/cover-traffic/bootstrap.sh
+
+[Install]
+WantedBy=multi-user.target

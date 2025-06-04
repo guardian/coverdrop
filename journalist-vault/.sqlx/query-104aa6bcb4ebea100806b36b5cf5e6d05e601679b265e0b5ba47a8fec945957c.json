@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                vault_setup_bundle.id                AS \"id: i64\",\n                provisioning_pk_id                   AS \"provisioning_pk_id: i64\",\n                pk_upload_form_json                  AS \"pk_upload_form_json: String\",\n                keypair_json                         AS \"keypair_json: String\",\n                register_journalist_form_json        AS \"register_journalist_form_json: String\",\n                journalist_provisioning_pks.pk_json  AS \"provisioning_pk_json: String\",\n                anchor_organization_pks.pk_json     AS \"org_pk_json: String\"\n            FROM vault_setup_bundle\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = vault_setup_bundle.provisioning_pk_id\n            JOIN anchor_organization_pks\n                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_id: i64",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "pk_upload_form_json: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "keypair_json: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "register_journalist_form_json: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "org_pk_json: String",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "104aa6bcb4ebea100806b36b5cf5e6d05e601679b265e0b5ba47a8fec945957c"
+}

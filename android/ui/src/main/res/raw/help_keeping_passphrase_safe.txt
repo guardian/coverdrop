@@ -1,0 +1,47 @@
+# Keeping passphrases safe
+
+## What is a passphrase?
+
+Your Secure Messaging passphrase is a set of words known only by you. It grants you access to your conversation with the Guardian on this mobile device. You will need to enter your passphrase to see replies from us and to send follow-up messages.
+
+Our software creates your passphrase, but we do not store it. If you forget it, we can't get you back in to your conversation.
+
+PASSPHRASE_BOXES apple waterfall diamond
+
+### Should I write my passphrase down somewhere safe?
+
+We recommend you record your passphrase somewhere it won't be found or in a password manager.
+
+SPACE
+
+### Can I screenshot my passphrase?
+
+This is not secure. If confidentiality isn’t a concern, it might work for you.
+
+SPACE
+
+### Can I just memorise my passphrase?
+
+You can. But if you forget it, you will not be able to continue a conversation.
+
+DIVIDER
+
+## Remembering passphrases
+
+### What if I do forget my passphrase?
+
+Only you have your passphrase; no one else. Our systems cannot remind you. This is to prevent even the most sophisticated adversary from gaining access to your communication.
+
+If you lose your passphrase you will need to start a new conversation. For security reasons, when you start a new conversation, your old conversation will be deleted from this device. 
+
+If you start a new conversation with the same journalist as before, they will not know you're the same person. But you may be able to remind the journalist by referring to details shared in the prior conversation.
+
+DIVIDER
+
+## What if someone else learns my passphrase?
+
+Your passphrase only works on the phone on which you set it. No one can read your messages on a different phone, even if they somehow knew your passphrase.
+
+If you suspect someone knows your passphrase and may gain access to your phone, you can delete your old conversations and reset the passphrase by starting a new conversation.
+
+When you start a new conversation you will be required to set a new passphrase. At this point your old message vault will be wiped, even if you don't write any new messages.

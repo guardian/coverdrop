@@ -1,0 +1,17 @@
+version: "3"
+services:
+  db:
+    image: postgres:14.10
+    environment:
+      - POSTGRES_DB=canary
+      - POSTGRES_USER=canary
+      - POSTGRES_PASSWORD=canary
+    ports:
+      - "25432:5432"
+    restart: always
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+
+volumes:
+  db-volume:
+    driver: local

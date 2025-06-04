@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                UPDATE covernode_msg_key_pairs\n                SET epoch = ?1\n                WHERE json_extract(key_pair_json, '$.secret_key') = json_extract(?2, '$.secret_key')\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "d530db0dd365e2c571b789fe7bec701555e967f565506e3ffa8a148be95b7b30"
+}

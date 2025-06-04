@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO journalist_msg_key_pairs\n                (id_key_pair_id, key_pair_json, added_at)\n            VALUES\n                (?1, ?2, ?3)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8050bb03df61dd6cf7ec46553cd38e194b287e2db3ca407f0ca81e982faaed57"
+}

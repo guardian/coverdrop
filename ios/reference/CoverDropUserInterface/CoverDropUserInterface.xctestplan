@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "293A17ED-CE08-4537-ADBE-FD1B4801A00C",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testRepetitionMode" : "retryOnFailure"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "CoverDropUserInterfaceTests",
+        "name" : "CoverDropUserInterfaceTests"
+      }
+    }
+  ],
+  "version" : 1
+}

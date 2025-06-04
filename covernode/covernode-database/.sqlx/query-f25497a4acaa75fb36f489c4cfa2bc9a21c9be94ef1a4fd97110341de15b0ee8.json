@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                DELETE FROM setup_bundle\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "f25497a4acaa75fb36f489c4cfa2bc9a21c9be94ef1a4fd97110341de15b0ee8"
+}

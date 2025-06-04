@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "9E8A707B-598C-4C21-B51B-8C7E39292E0E",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testRepetitionMode" : "retryOnFailure"
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "CoverDropCoreTests",
+        "name" : "CoverDropCoreTests"
+      }
+    }
+  ],
+  "version" : 1
+}

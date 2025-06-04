@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    id AS \"id: i64\"\n                FROM organization_public_keys\n                WHERE json_extract(pk_json, '$.key') == ?1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8aa31e26817c6a490d7310709487d1d5f3f98d119f4301693dd93c9172872b9c"
+}

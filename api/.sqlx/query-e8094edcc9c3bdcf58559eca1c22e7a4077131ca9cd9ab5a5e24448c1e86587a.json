@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO journalist_provisioning_pks (org_pk_id, added_at, not_valid_after, pk_json)\n                    VALUES ($1, $2, $3, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e8094edcc9c3bdcf58559eca1c22e7a4077131ca9cd9ab5a5e24448c1e86587a"
+}

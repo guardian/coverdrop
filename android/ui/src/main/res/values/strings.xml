@@ -1,0 +1,197 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">CoverDrop Reference App</string>
+
+    <!--About screen-->
+    <string name="screen_about_header">About Secure Messaging</string>
+    <string name="screen_about_headline_what_this_is_for">What this is for</string>
+    <string name="screen_about_button_how_secure_messaging_works">How Secure Messaging works</string>
+    <string name="screen_about_button_why_we_made_secure_messaging">Why we made Secure Messaging</string>
+    <string name="screen_about_button_faqs">FAQs</string>
+    <string name="screen_about_button_privacy_policy">Privacy policy</string>
+    <string name="screen_about_headline_getting_started">Getting started</string>
+    <string name="screen_about_button_craft_your_first_message">Compose your first message</string>
+    <string name="screen_about_button_keeping_passphrases_safe">Keeping passphrases safe</string>
+    <string name="screen_about_headline_as_the_conversation_progresses">As the conversation progresses</string>
+    <string name="screen_about_button_what_to_expect_as_a_reply">What to expect as a reply</string>
+    <string name="screen_about_button_source_protection">Source protection</string>
+    <string name="screen_about_headline_technical_information">Technical information</string>
+    <string name="screen_about_technical_information">The details below help our engineers to develop and test this feature.</string>
+
+    <!--Entry screen-->
+    <string name="screen_entry_button_get_started">Get started</string>
+    <string name="screen_entry_button_check_your_inbox">Check your message vault</string>
+    <string name="screen_entry_link_about">About Secure Messaging</string>
+    <string name="screen_entry_coverdrop_not_available">The Secure Messaging feature is currently not available. Please try again later. Below we show technical information that might be helpful.</string>
+
+    <!--Integrity violations screen-->
+    <string name="screen_violations_header">Secure Messaging is not available. We believe that this device might not be secure.</string>
+    <string name="screen_violations_dismiss_and_ignore_explanation">If you believe these are false-positives, you can ignore this warning for this session using the button below.</string>
+    <string name="screen_violations_dismiss_button">Dismiss and ignore warnings</string>
+
+    <!--How this works screen-->
+    <string name="screen_how_this_works_header">How this works</string>
+    <string name="screen_how_this_works_continue">Continue</string>
+    <string name="screen_how_this_works_set_up_my_passphrase">Set up my passphrase</string>
+    <string name="screen_how_this_works_pager1_title">Send a message</string>
+    <string name="screen_how_this_works_pager1_content">Your message will be sent anonymously and securely to a journalist or team. It will be encrypted and indistinguishable from the Guardian app\'s regular network activity.</string>
+    <string name="screen_how_this_works_pager2_title">Check back for a response</string>
+    <string name="screen_how_this_works_pager2_content">Our journalists check for new messages regularly. If they wish to take your story further they will respond here.</string>
+    <string name="screen_how_this_works_pager3_title">Memorise your passphrase</string>
+    <string name="screen_how_this_works_pager3_content">Shortly you will be given a unique passphrase. Use this to access your conversation. Please memorise it or record it somewhere secure.</string>
+
+    <!--New session screen-->
+    <string name="screen_new_session_help_banner_keeping_passphrases_safe">Keeping passphrases safe</string>
+    <string name="screen_new_session_help_banner_learn_more">Learn more</string>
+    <string name="screen_new_session_button_already_have_passphrase">I already have a passphrase</string>
+    <string name="screen_new_session_button_confirm_passphrase">Confirm passphrase</string>
+    <string name="screen_new_session_button_remembered_my_passphrase">I have remembered my passphrase</string>
+    <string name="screen_new_session_button_reveal_passphrase">Reveal passphrase</string>
+    <string name="screen_new_session_error_entered_passphrase_does_not_match">The passphrase you entered does not match the generated one from the previous screen.</string>
+    <string name="screen_new_session_header_confirm_passphrase">Enter passphrase</string>
+    <string name="screen_new_session_header_remember_passphrase">Remember passphrase</string>
+    <string name="screen_new_session_text_confirm_passphrase_explanation">Enter your passphrase to unlock your secure vault and send your first message.</string>
+    <string name="screen_new_session_text_remember_passphrase_explanation">You will always need this passphrase to access your conversation, ~Make sure you memorise it or write it somewhere safe~. Your passphrase must be entered in the correct order with the correct spelling.</string>
+    <string name="screen_new_session_text_creating_storage_please_wait">Creating secure message vault… please wait. On older phones this can take more than a minute…</string>
+    <string name="screen_new_session_text_error_not_all_words_entered">Please fill in all passphrase words.</string>
+    <string name="screen_new_session_text_error_unknown">Failed to create a message vault. Please exit Secure Messaging and try again later—or try using a different phone.</string>
+
+    <!-- Select recipient screen -->
+    <string name="screen_select_recipient_header">Select a team or journalist</string>
+    <string name="screen_select_recipient_text">If you know who you would like to contact, you can add them as a recipient.</string>
+    <string name="screen_select_recipient_button_back_to_list">Back to list</string>
+    <string name="screen_select_recipient_button_select">Select</string>
+    <string name="screen_select_recipient_button_select_team">Select team</string>
+    <string name="screen_select_recipient_tab_teams">Teams</string>
+    <string name="screen_select_recipient_tab_journalists">Journalists</string>
+    <string name="screen_select_recipient_empty_state_no_teams">No teams available. Please select a journalist to talk to instead.</string>
+
+    <!--Continue session screen-->
+    <string name="screen_continue_button_confirm_passphrase">Confirm Passphrase</string>
+    <string name="screen_continue_button_i_do_not_have_a_passphrase_yet">I do not have a passphrase yet</string>
+    <string name="screen_continue_header_enter_passphrase">Enter passphrase</string>
+    <string name="screen_continue_text_explanation_remember_passphrase">If you previously set up a secure message vault, please enter your passphrase to unlock it.</string>
+    <string name="screen_continue_text_unlocking_storage_please_wait">Unlocking secure vault… please wait. On older phones this can take a while…</string>
+    <string name="screen_continue_text_error_authentication_failed">Failed to open message vault. Either you haven\'t set up a vault, or the passphrase was wrong. Please re-enter the passphrase or go back to set up a vault.</string>
+    <string name="screen_continue_text_error_not_all_words_entered">Please fill in all passphrase words.</string>
+    <string name="screen_continue_text_error_bad_passphrase">The passphrase cannot be right because it contains words that are not in the word list.</string>
+    <string name="screen_continue_text_error_unknown">Failed to unlock a message vault. Please exit Secure Messaging and try again later—or try using a different phone.</string>
+
+    <!--New message screen-->
+    <string name="screen_new_message_help_banner_craft_your_first_message">Compose your first message</string>
+    <string name="screen_new_message_help_banner_learn_more">Learn more</string>
+    <string name="screen_new_message_header_new_message">What do you want to share with us?</string>
+    <string name="screen_new_message_text_who_would_you_like_to_contact">Select a journalist or team</string>
+    <string name="screen_new_message_text_desc_who_would_you_like_to_contact">Your message is reviewed by journalists</string>
+    <string name="screen_new_message_text_recipient_loading">loading…</string>
+    <string name="screen_new_message_text_recipient_change">Change</string>
+    <string name="screen_new_message_text_no_recipient_selected">no recipient selected</string>
+    <string name="screen_new_message_text_your_message">What\'s your message?</string>
+    <string name="screen_new_message_text_your_message_description">See ‘Compose your first message’ for advice</string>
+    <string name="screen_new_message_button_send_message">Send message</string>
+    <string name="screen_new_message_error_forced_recipient">At the current time you can only contact a single Guardian recipient.</string>
+    <string name="screen_new_message_error_no_recipient_selected">No recipient selected.</string>
+    <string name="screen_new_message_error_message_empty">The message is empty.</string>
+    <string name="screen_new_message_error_message_too_long">The message is too long.</string>
+    <string name="screen_new_message_error_cannot_send_unknown_error">Failed to create a new conversation. Please exit Secure Messaging and try again later—or try using a different phone.</string>
+    <string name="screen_new_message_exit_dialog_title">Leaving your message vault</string>
+    <string name="screen_new_message_exit_dialog_text">This will log you out of your secure vault. Your unfinished message will not be sent. Are you sure?</string>
+    <string name="screen_new_message_exit_dialog_button_confirm">Log out</string>
+    <string name="screen_new_message_exit_dialog_button_cancel">Cancel</string>
+
+    <!--Message sent screen-->
+    <string name="screen_message_sent_button_go_to_inbox">Review conversation</string>
+    <string name="screen_message_sent_button_logout">Log out from Secure Messaging</string>
+    <string name="screen_message_sent_content_main">Your message is being disguised. It will be received by a Guardian journalist within a few hours.\n\nUse the passphrase you memorised to access this conversation again. \n\nJournalists aim to respond in a reasonable time frame. However in busy times replies can take several days. For security reasons you will not receive a notification. You have to come back here and check.</string>
+    <string name="screen_message_sent_header_main">Your message will be received by a journalist soon</string>
+    <string name="screen_message_sent_header_sub">Go about your normal day.</string>
+    <string name="screen_message_sent_header2_main">What happens next?</string>
+    <string name="screen_message_sent_help_button_what_to_expect_as_a_reply">What to expect as a reply</string>
+    <string name="screen_message_sent_help_button_read_more">Read more</string>
+    <string name="screen_message_sent_exit_dialog_title">Leaving your message vault</string>
+    <string name="screen_message_sent_exit_dialog_text">This will log you out of your secure vault. Are you sure?</string>
+    <string name="screen_message_sent_exit_dialog_button_confirm">Log out</string>
+    <string name="screen_message_sent_exit_dialog_button_cancel">Cancel</string>
+
+    <!--Inbox screen-->
+    <string name="screen_inbox_delete_your_messages">Delete message vault</string>
+    <string name="screen_inbox_leave_inbox">Leave message vault</string>
+    <string name="screen_inbox_about_secure_messaging">About Secure Messaging</string>
+    <string name="screen_inbox_delete_dialog_confirmation_heading">Delete your message vault?</string>
+    <string name="screen_inbox_delete_dialog_confirmation_content">This will delete your vault and you will not be able to unlock it anymore. You won\'t be able to read any existing messages or responses to them. Messages you\'ve recently sent may still be received by the journalist.</string>
+    <string name="screen_inbox_delete_dialog_confirmation_button_delete">Delete everything</string>
+    <string name="screen_inbox_delete_dialog_confirmation_button_keep">Keep</string>
+    <string name="screen_inbox_delete_dialog_progress_heading">Deleting conversations…</string>
+    <string name="screen_inbox_delete_dialog_error_heading">Delete your conversations?</string>
+    <string name="screen_inbox_delete_dialog_error_content">Deleting your messages means the journalist might never see them. Please consider keeping this conversation.</string>
+    <string name="screen_inbox_delete_dialog_error_button_dismiss">Delete</string>
+    <string name="screen_inbox_exit_dialog_title">Leaving your message vault</string>
+    <string name="screen_inbox_exit_dialog_text">This will log you out of your secure vault. Are you sure?</string>
+    <string name="screen_inbox_exit_dialog_button_confirm">Log out</string>
+    <string name="screen_inbox_exit_dialog_button_cancel">Cancel</string>
+    <string name="screen_inbox_text_no_messages_last_x_days" tools:ignore="PluralsCandidate">You have no messages to show from the last %1d days.</string>
+
+    <!--Conversation screen-->
+    <string name="screen_conversation_pending">Your message is now queued up for secure transmission within routine Guardian app activity. We recommend that you exit Secure Messaging and wait for a response before you send another message.</string>
+    <string name="screen_conversation_sent">Your message has been sent. We recommend that you wait for a response before you send another message.</string>
+    <string name="screen_conversation_empty">There are no messages in this conversation. This might be because they expired after 14 days and have been automatically deleted.</string>
+    <string name="screen_conversation_button_send_new">Send a new message</string>
+
+    <!--Component : strapline header with explanation-->
+    <string name="component_strapline_content_explanation">The Guardian Secure Messaging service was developed to allow you to share stories with us securely and privately using strong encryption. \n\nIt is designed to prevent others from even knowing you are in communication with us.</string>
+    <string name="component_strapline_header_part_1">Send us a message</string>
+    <string name="component_strapline_header_part_2">securely</string>
+    <string name="component_strapline_header_part_3">privately</string>
+
+    <!--Component : message limiting indicator-->
+    <string name="component_message_limit_indicator_text_error_message_limit_reached">Message limit reached</string>
+    <string name="component_message_limit_indicator_text_error_message_please_shorten">Please shorten your message.</string>
+
+    <!--Component : message thread-->
+    <string name="component_message_thread_messaging_with">Messaging with</string>
+    <string name="component_message_thread_last_message">Last message</string>
+    <string name="component_message_thread_no_messages">No messages</string>
+
+    <!--Component : chat bubble-->
+    <string name="component_chat_bubble_demo_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras condimentum, massa id interdum luctus, lacus velit pulvinar enim, eu malesuada metus turpis eu quam.</string>
+    <string name="component_chat_bubble_message_pending">Pending</string>
+    <string name="component_chat_bubble_message_sent">Sent</string>
+    <string name="component_chat_bubble_you">You</string>
+    <string name="component_chat_bubble_unsupported_message_type">Unsupported message type</string>
+    <string name="component_chat_bubble_just_now">Just now</string>
+
+    <!--Component: help screen content-->
+    <string name="caption_passphrase_example">Example of a passphrase</string>
+
+    <!--Component: top bar -->
+    <string name="top_bar_warning_banner_first_line">We\'re testing a new feature</string>
+    <string name="top_bar_warning_banner_second_line">For now, messages may not all be read.</string>
+    <string name="top_bar_warning_banner_snooze_dialog_header">Secure Messaging: public test</string>
+    <string name="top_bar_warning_banner_snooze_dialog_body">Feel free to try out this new way to contact Guardian reporters. However, during this test period we can\'t guarantee that all messages will be read. You may want to consider the alternatives described in theguardian.com/tips.\n\nIf you don\'t need to stay anonymous we\'d welcome feedback at userhelp@theguardian.com.</string>
+    <string name="top_bar_warning_banner_snooze_dialog_button_snooze">Hide warning</string>
+    <string name="top_bar_warning_banner_snooze_dialog_button_dismiss">OK</string>
+
+    <!-- Component: icons -->
+    <string name="icon_content_description_chevron_right">Chevron pointing right</string>
+    <string name="icon_content_description_close">Close</string>
+    <string name="icon_content_description_delete">Delete</string>
+    <string name="icon_content_description_edit">Edit</string>
+    <string name="icon_content_description_hide">Hide</string>
+    <string name="icon_content_description_info">Information</string>
+    <string name="icon_content_description_refresh">Refresh</string>
+    <string name="icon_content_description_reveal">Reveal</string>
+    <string name="icon_content_description_warning">Warning</string>
+
+    <!-- Component: passphrases -->
+    <string name="component_passphrases_button_hide_passphrase">Hide passphrase</string>
+    <string name="component_passphrases_button_reveal_passphrase">Reveal passphrase</string>
+
+    <!-- Shared: new conversation confirmation dialog -->
+    <string name="dialog_confirm_new_conversation_heading">Set up your secure message vault</string>
+    <string name="dialog_confirm_new_conversation_content">Starting a new conversation will remove any prior messages from your vault, if they existed. \n\nDo you want to continue?</string>
+    <string name="dialog_confirm_new_conversation_button_yes">Yes, start a new conversation</string>
+    <string name="dialog_confirm_new_conversation_button_no">No</string>
+
+    <!-- Other: test strings -->
+    <string name="test_error_message">Cannot open storage because the tea pot is eating cereals.</string>
+    <string name="test_error_message_fatal">Cannot open storage because the tea pot is eating cereals. Giving up!</string>
+</resources>

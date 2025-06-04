@@ -1,0 +1,91 @@
+{
+  "journalist_profiles": [
+    {
+      "id": "static_test_journalist",
+      "display_name": "Static Test Journalist",
+      "sort_name": "journalist static test",
+      "description": "static test journalist",
+      "is_desk": false,
+      "tag": "6a139e67",
+      "status": "VISIBLE"
+    }
+  ],
+  "default_journalist_id": null,
+  "keys": [
+    {
+      "org_pk": {
+        "key": "73ee6a1a04bcb962b95feb5396932550de8ed29320103bd62356d482f6eb2d5c",
+        "certificate": "6a083e504c149df7bef6cd420ba13a2f7dcb6664d0dc5ade80121dcfa8311bd5cb8fe9accfb6cb07e0c1fac11c2dc621680a1accead5cd660759b7b7b015a400",
+        "not_valid_after": "2024-10-02T19:06:19.921207Z"
+      },
+      "covernodes": [
+        {
+          "provisioning_pk": {
+            "key": "1c704cad39284b8a9269a3d6357f21e596b2eeed820ba3524df2544174b4f70f",
+            "certificate": "3f9a8a7345dcd5ffe96beab355e3662a3da70d60bc70971f0f4e3ca312f211d99f95d9164ff668fd402df2baa508d0d7d4817c3692756d65b52cab296dc7c008",
+            "not_valid_after": "2024-03-20T19:06:21.272197Z"
+          },
+          "covernodes": {
+            "covernode_001": [
+              {
+                "id_pk": {
+                  "key": "504560a698983c7864b20fc1d4ee115901a38e7d958f5e40accbed0497ecad17",
+                  "certificate": "a6d80476390948c98396fac7c401ffc6678065bb30e3e3ec3a58dc44982a742de0b06310303e3939dae0b428ed92d77bb61fb4d964d87b402fc4b1956c01310e",
+                  "not_valid_after": "2023-11-01T19:06:21.976033Z"
+                },
+                "msg_pks": [
+                  {
+                    "key": "13c50b83ad24030b2b2d5a49d7438abe6609988b399f2345e0362be39504c45a",
+                    "certificate": "eff9fe58646dcda5b07ce4fac43037e0048cbdd46b66f36b6e72e139f857247a0ec73efec1bc4658f0b60cedb24160bcd0992b86407962de40dccc7e5bcc170d",
+                    "not_valid_after": "2023-10-31T19:06:51.528405249Z"
+                  }
+                ]
+              },
+              {
+                "id_pk": {
+                  "key": "2c6ff2e2248f0610a0b2f0fa4bf8a0bd63a1e04b6100333394fb6878f3d644ae",
+                  "certificate": "e36ee04d9c22855251fa101548bc86c274b239d981471463709ce4e955edbe26671354987e4c1d600dd39b5f470082ce50a3a911533b3b7de3724f1168f0230b",
+                  "not_valid_after": "2023-11-15T19:06:57.800816416Z"
+                },
+                "msg_pks": []
+              }
+            ]
+          }
+        }
+      ],
+      "journalists": [
+        {
+          "provisioning_pk": {
+            "key": "947d712a3ce4758b6313630696d3d8e18d635a0ecfb64f8c4e90fbf8a339356d",
+            "certificate": "7fcbc31ff56e10c7515bf517763675a3df2079f3da62ee2e408fb4bb7174062bcc74a70df9102bf440a879c2f3f4c2c83f88226228d540fa09067911a2a11d00",
+            "not_valid_after": "2024-03-20T19:06:20.603185Z"
+          },
+          "journalists": {
+            "static_test_journalist": [
+              {
+                "id_pk": {
+                  "key": "ba64d6d3176b614f4895dd01b8827e6218282d2a8b6d9096f4b333414a939f93",
+                  "certificate": "65f6d8c70af63b2aeebf05dd7eee9746a92773a1a54e02f6a50f5c4ba030dfeb6f822ae7f4c68e424bd6eb82055ed8932a8421fb3702e2858e77c345a395cc05",
+                  "not_valid_after": "2023-11-29T19:06:19Z"
+                },
+                "msg_pks": [
+                  {
+                    "key": "ab780e21bca74478152c75f0d5071a5a6fcbbdbb18b6c6addb206e707b7e2e5a",
+                    "certificate": "d0245080e8800e733a4d6be3e30021244cbac1bdfac6c1883131ff8997d754b82a957a724db5a370bd726f7733e6711a77dea439c071a08658e20d578caa4b0a",
+                    "not_valid_after": "2023-11-01T19:06:58.488976958Z"
+                  },
+                  {
+                    "key": "636b2c6d5993f78b1b52b88a42a320f27d1677a4c39121bb935ea57ba9b59b4d",
+                    "certificate": "16c71b6fc25f5e767cfff2409cb8092104e8ab8a305f3b7ab794a65574ca539872a3324c71bb468a941014dc230cee94346e2b7ba452390dd9f6a1c4a7185d00",
+                    "not_valid_after": "2023-10-31T19:06:53.114994666Z"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "max_epoch": 12
+}

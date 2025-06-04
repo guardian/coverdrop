@@ -1,0 +1,13 @@
+DELETE FROM journalist_dead_drops;
+DELETE FROM user_dead_drops;
+DELETE FROM system_status_events;
+DELETE FROM journalist_msg_pks;
+DELETE FROM journalist_profiles;
+DELETE FROM journalist_id_pks;
+DELETE FROM journalist_provisioning_pks;
+DELETE FROM covernode_msg_pks;
+DELETE FROM covernode_id_pks;
+DELETE FROM covernodes;
+DELETE FROM covernode_provisioning_pks;
+DELETE FROM admin_pks;
+DELETE FROM organization_pks;

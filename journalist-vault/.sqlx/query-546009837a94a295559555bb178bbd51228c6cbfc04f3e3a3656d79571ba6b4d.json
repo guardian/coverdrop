@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE journalist_msg_key_pairs\n                SET epoch = ?1\n            WHERE json_extract(key_pair_json, '$.secret_key')  = json_extract(?2, '$.secret_key')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "546009837a94a295559555bb178bbd51228c6cbfc04f3e3a3656d79571ba6b4d"
+}

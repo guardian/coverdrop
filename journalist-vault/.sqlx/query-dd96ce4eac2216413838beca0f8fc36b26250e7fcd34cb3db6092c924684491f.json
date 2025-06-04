@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM candidate_journalist_id_key_pair\n            WHERE json_extract(key_pair_json, '$.secret_key') = json_extract(?1, '$.secret_key')\n            RETURNING\n                id AS \"id: i64\",\n                key_pair_json AS \"key_pair_json: String\",\n                added_at AS \"added_at: DateTime<Utc>\"\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "added_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dd96ce4eac2216413838beca0f8fc36b26250e7fcd34cb3db6092c924684491f"
+}

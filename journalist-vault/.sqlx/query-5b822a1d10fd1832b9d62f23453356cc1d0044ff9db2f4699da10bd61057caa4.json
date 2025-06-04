@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_msg_key_pairs.id           AS \"msg_key_pair_id: i64\",\n                journalist_msg_key_pairs.key_pair_json AS \"msg_key_pair_json: String\",\n                journalist_msg_key_pairs.added_at     AS \"msg_key_pair_added_at: DateTime<Utc>\",\n                journalist_id_key_pairs.id            AS \"id_key_pair_id: i64\",\n                journalist_id_key_pairs.key_pair_json  AS \"id_key_pair_json: String\",\n                journalist_id_key_pairs.added_at      AS \"id_key_pair_added_at: DateTime<Utc>\",\n                journalist_provisioning_pks.id        AS \"provisioning_pk_id: i64\",\n                journalist_provisioning_pks.pk_json   AS \"provisioning_pk_json: String\",\n                anchor_organization_pks.id           AS \"org_pk_id: i64\",\n                anchor_organization_pks.pk_json      AS \"org_pk_json: String\"\n            FROM journalist_msg_key_pairs\n            JOIN journalist_id_key_pairs\n                ON journalist_id_key_pairs.id = journalist_msg_key_pairs.id_key_pair_id\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id\n            JOIN anchor_organization_pks\n                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "msg_key_pair_id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "msg_key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "msg_key_pair_added_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "id_key_pair_id: i64",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "id_key_pair_json: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      },
+      {
+        "name": "id_key_pair_added_at: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "provisioning_pk_id: i64",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "org_pk_id: i64",
+        "ordinal": 8,
+        "type_info": "Int64"
+      },
+      {
+        "name": "org_pk_json: String",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5b822a1d10fd1832b9d62f23453356cc1d0044ff9db2f4699da10bd61057caa4"
+}

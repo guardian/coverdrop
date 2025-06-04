@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    user_id AS \"user_id: i32\",\n                    ARRAY_AGG(message) AS \"messages: Vec<String>\"\n                FROM (\n                    SELECT\n                        user_id,\n                        message,\n                        RANK() OVER (PARTITION BY user_id ORDER BY received_at DESC)\n                    FROM users u\n                    LEFT JOIN journalist_to_user_messages j\n                        ON u.id = j.user_id\n                    WHERE received_at IS NOT NULL\n                ) AS x\n                WHERE rank <= $1\n                GROUP BY 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "user_id: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "messages: Vec<String>",
+        "type_info": "TextArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "cfd8fac0e9b46751d31c12bbf6021fd55d97e1b4b9c8cb438997b1c06e78a4ef"
+}

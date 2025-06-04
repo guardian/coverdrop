@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                jp.id           AS \"id!: JournalistIdentity\",\n                jp.display_name AS \"display_name!: String\",\n                jp.sort_name    AS \"sort_name!: String\",\n                jp.description  AS \"description!: String\",\n                jp.is_desk      AS \"is_desk!: bool\",\n                js.status       AS \"status!: JournalistStatus\"\n            FROM journalist_profiles jp\n            JOIN journalist_statuses js\n                ON jp.status_id = js.id\n            WHERE js.status != 'HIDDEN_FROM_RESPONSE'\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!: JournalistIdentity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "display_name!: String",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "sort_name!: String",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description!: String",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "is_desk!: bool",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "status!: JournalistStatus",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "525c4df0a4d9abdfc3c4c75251d66113a5771176804d65ca10374a0ad9277074"
+}

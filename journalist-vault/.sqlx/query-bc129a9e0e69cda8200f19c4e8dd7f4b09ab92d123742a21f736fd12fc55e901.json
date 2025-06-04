@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO sessions (session_started_at)\n            VALUES (?1)\n            RETURNING id AS \"id: i64\"\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bc129a9e0e69cda8200f19c4e8dd7f4b09ab92d123742a21f736fd12fc55e901"
+}

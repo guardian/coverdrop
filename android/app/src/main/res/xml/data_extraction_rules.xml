@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude
+            domain="sharedpref"
+            path="coverdrop_shared_prefs.xml" />
+        <exclude
+            domain="file"
+            path="coverdrop" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude
+            domain="sharedpref"
+            path="coverdrop_shared_prefs.xml" />
+        <exclude
+            domain="file"
+            path="coverdrop" />
+    </device-transfer>
+</data-extraction-rules>

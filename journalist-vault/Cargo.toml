@@ -1,0 +1,27 @@
+[package]
+name = "journalist-vault"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+hex.workspace = true
+libsqlite3-sys.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features = [
+    "sqlite",
+    "runtime-tokio-rustls",
+    "chrono",
+] }
+strum.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+itertools.workspace = true
+
+common = { path = "../common" }
+
+[dev-dependencies]
+tempfile.workspace = true
+common = { path = "../common", features = ["test-utils"] }

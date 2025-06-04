@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO organization_public_keys\n                (pk_json, created_at)\n                VALUES\n                (?1, ?2)\n                ON CONFLICT DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "8a4a60ad21cc4387909d1a7a45961e51d88cd8ce33fe86ea56c3b1c8fd01c2da"
+}

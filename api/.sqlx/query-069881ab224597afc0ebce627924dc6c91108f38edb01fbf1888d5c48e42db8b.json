@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT MAX(added_at) AS \"added_at: DateTime<Utc>\"\n                FROM covernode_id_pks\n                WHERE covernode_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "added_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "069881ab224597afc0ebce627924dc6c91108f38edb01fbf1888d5c48e42db8b"
+}

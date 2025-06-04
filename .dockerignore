@@ -1,0 +1,18 @@
+# .dot folders
+.cargo/
+.github/
+
+# Docker configurations as those are not used _inside_ the Docker containers
+*/**/Dockerfile
+*/**/Dockerfile
+
+# Sub-folders unrelated to Docker
+android/
+cdk/
+common/tests/vectors/
+docs/
+!docs/analysis/
+integration-tests/vectors/
+ios/
+supply-chain/
+target/

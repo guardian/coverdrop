@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    key_pair_json AS \"key_pair_json: String\",\n                    created_at AS \"created_at: DateTime<Utc>\"\n                FROM covernode_id_key_pairs\n                WHERE epoch IS NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "key_pair_json: String",
+        "ordinal": 0,
+        "type_info": "Null"
+      },
+      {
+        "name": "created_at: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "4a693c81f56e2024ac1cbd6f61a78f59845a82e2d454d4179f1203b199febde5"
+}

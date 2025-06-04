@@ -1,0 +1,2 @@
+ALTER TABLE trusted_organization_pks
+RENAME TO anchor_organization_pks;

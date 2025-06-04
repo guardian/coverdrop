@@ -1,0 +1,136 @@
+# Frequently asked questions
+
+## General
+
+### Who is Secure Messaging for?
+
+We built the Guardian Secure Messaging service to allow readers to contact our journalists directly about news stories that we are covering or should be covering. If you know about something that should be reported, tell us using Secure Messaging and we will handle your tip confidentially and responsibly.
+
+Unlike other apps that require technical skills to ensure security, Secure Messaging is designed for anyone to use with ease. All you need is to remember your passphrase. Whether you're a PA, nurse, data scientist, police officer, supermarket worker, public servant, intern, or CEO, this app is for you. It’s made for people who are witnessing injustice and want the Guardian’s help to bring it to light.
+
+DIVIDER
+
+### Who is it not for?
+
+The Secure Messaging service is purely for story tips. Don’t use it for customer service enquiries, letters to the editor, article submissions, complaints, etc. Such messages will be ignored. Please see theguardian.com/contact-us for advice on how to get in touch about those things.
+
+DIVIDER
+
+### How does Secure Messaging work?
+
+We have a dedicated help page on how Secure Messaging works. It explains how the system is designed to protect your identity and keep your messages secret.
+
+BUTTON
+How Secure Messaging works
+Read more
+button_how_secure_messaging_work
+
+DIVIDER
+
+### Is it really anonymous? I’m signed in to the Guardian app.
+
+You don’t have to be signed in to the Guardian app to use Secure Messaging, but Secure Messaging is anonymous even if you are signed in. The Secure Messaging part of the app only knows the content of your messages. It has no access to information that the overall Guardian app may have – not your email, name, location, reading history, etc.
+
+As a consequence no identifying information accompanies the messages received by our journalists. We can’t even tell which devices sent us real messages. We know nothing more than what the senders tell us.
+
+BUTTON
+Privacy policy
+Read more
+button_privacy_policy
+
+DIVIDER
+
+## Interaction with journalists
+
+### I don't know who to speak to. Who should I contact?
+
+If you don’t know which journalist might specialise in the matter you wish to raise, you could browse our existing journalism on related subjects and see what names appear next to those articles. If you’re still not sure, pick a team such as “Environment team” or “Investigations team”. Those messages will go to the duty editor for that team. If they want to follow up they may do so themselves or they may direct you to a specific reporter.
+
+DIVIDER
+
+### What does 'Pending' mean? Why aren't my messages sent immediately?
+
+The pending message you see is part of a sophisticated system to keep your actions hidden. Your real message is delayed because it will be sent when your phone would normally send a decoy “cover” message. This means the time you use the app cannot be linked to when a message is sent. This disguise technique is one of the many ways we keep you and your messages secret.
+
+To ensure real messages are indistinguishable from the “cover” messages sent by the Guardian app, both messages must be sent at similar times. Otherwise, activity patterns could reveal when real messages are sent, potentially identifying a source.
+
+DIVIDER
+
+### Who gets to see my messages?
+
+If you select a specific journalist as a recipient, your message is routed directly to them. If you select a team, your message will go to the editor or editors in charge of that team. Secure Messages are end-to-end encrypted and can’t be deciphered by anyone else.
+
+Under some circumstances a substitute journalist will act on behalf of the designated recipient – for example if a reporter is briefly unavailable to respond to an ongoing conversation.
+
+Similarly, if someone using our apps should try to abuse the system, the recipient journalist may ask a colleague to take over. In both cases the addressee would temporarily transfer the means to decrypt their correspondence to a trusted colleague who is experienced in dealing with highly confidential material.
+
+DIVIDER
+
+### How can I be sure that my messages are really going to the Guardian?
+
+We use digital security keys to secure the content of your messages. The Guardian's main key is held in a secure location and you can verify that the app is identifying the correct one as follows:
+- Go back to the About Secure Messaging screen.
+- Scroll down to the bottom.
+- You'll see the word "root:" followed by a code identifying the key that the app is currently using.
+- Compare that code to the "Secure Messaging Digest" code that is published in the small print on page 2 of the Guardian newspaper in print.
+
+DIVIDER
+
+### How long does it take to get a reply?
+
+We can’t promise we’ll reply to anyone. Even when we do, it can take a while. For security reasons, your messages are not sent immediately and aren’t received immediately by us after being sent. Similarly, replies from journalists are neither sent nor received immediately. So even if a reporter replies the moment they receive a message, you may not see that reply for hours. And of course each reporter doesn’t work 24 hours a day or every day, so it could take days.
+
+BUTTON
+What to expect as a reply
+Read more
+button_what_to_expect_as_a_reply
+
+DIVIDER
+
+### Why can't I talk to more than one person at a time?
+
+Messages must be infrequent to keep “cover” effective without increasing data use. That’s why only one conversation is allowed at a time. This also helps prevent spam and abuse.
+
+DIVIDER
+
+### How do I choose to speak with a different journalist or team?
+
+There are two ways to do this. You can delete your old conversation to pick someone new to correspond with. This retains your current passphrase. Or you can choose to 'Get started' from the first Secure Messaging page, and set up a new message vault with a new passphrase.
+
+DIVIDER
+
+## Troubleshooting / technical
+
+### How do I report a technical problem?
+
+You can report problems with Secure Messaging by going back into the main app, selecting Settings and then Help. However, please note that unlike your communication using Secure Messaging, bug reports are not anonymous: they’re sent from your own email address and can include details about the phone you’re using and your Guardian subscription (if you have one). Your bug report shouldn't discuss the content of your Secure Message.
+
+Keep in mind that bug reports are sent via email. If someone gains access to your emails, they could see that you’ve attempted to use Secure Messaging. This means your use of the system is not secret.
+
+DIVIDER
+
+### How do I report security issues?
+
+To let us know about security issues with CoverDrop, the technology platform that powers Secure Messaging, we would prefer you email us under encryption. Please write to coverdrop.security@theguardian.com and use the public key with the fingerprint: 853F 7EFF 332F DA4F 66ED CD83 3CA0 0C56 15FA 4518
+
+DIVIDER
+
+### I need to send a document. What should I do?
+
+Contact us via Secure Messaging first, and say you have documents to share. A reporter will discuss with you how best to do that safely.
+
+DIVIDER
+
+### I forgot my passphrase. What should I do?
+
+We cannot reset your passphrase or provide reminders, as this would weaken security. If you lose it, please create a new secure message vault and start a new conversation.
+
+DIVIDER
+
+### What if someone compels me to show them my Secure Messaging vault?
+
+All Guardian apps automatically include an encrypted Secure Messaging vault. Whether a vault was created automatically or set up by you, it behaves identically: it's encrypted the same way, saved at the same times, and it always stays the same size. 
+
+This means that neither the app itself, nor someone with access to your smartphone, can tell the difference. If you were to enter an incorrect passphrase, the app would not know if you actually have a "real" message vault (which can be unlocked with a different passphrase) or if the vault was created automatically with a random passphrase that was never shown. The app responds to an incorrect passphrase by reporting, truthfully, that the passphrase does not work either because it's wrong or because you didn't create a vault at all. 
+
+Consequently you can plausibly deny that you have ever set up a vault by saying "I do not have a passphrase and I never did".

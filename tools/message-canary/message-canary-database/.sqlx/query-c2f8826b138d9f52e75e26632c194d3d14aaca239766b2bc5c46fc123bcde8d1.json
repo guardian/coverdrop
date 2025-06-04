@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT MAX(dead_drop_id) AS \"max_dead_drop_id: i32\"\n                FROM u2j_processed_dead_drops;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "max_dead_drop_id: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c2f8826b138d9f52e75e26632c194d3d14aaca239766b2bc5c46fc123bcde8d1"
+}

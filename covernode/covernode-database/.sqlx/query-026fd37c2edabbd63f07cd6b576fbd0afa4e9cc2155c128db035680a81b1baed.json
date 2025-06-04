@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO covernode_msg_key_pairs\n                (key_pair_json, epoch, created_at)\n                VALUES\n                (?1, ?2, ?3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "026fd37c2edabbd63f07cd6b576fbd0afa4e9cc2155c128db035680a81b1baed"
+}

@@ -1,0 +1,18 @@
+// We apply custom resolution strategies to force-upgrade transitive dependencies
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java") {
+            useVersion("3.25.5")
+            because("https://security.snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-8055227")
+        }
+        if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java-util") {
+            useVersion("3.25.5")
+            because("https://security.snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-8055228")
+        }
+        if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
+            useVersion("4.1.118.Final")
+            because("https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-8707739")
+        }
+    }
+}
+

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO users\n                (user_pk, status_updated_at)\n            VALUES (?1, ?2)\n            ON CONFLICT(user_pk) DO NOTHING\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fc3780566075eced72b4d81d891144108cb889aa8f57fc489e11ba49c0e2cd94"
+}

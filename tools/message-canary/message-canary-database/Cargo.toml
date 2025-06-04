@@ -1,0 +1,14 @@
+[package]
+name = "message-canary-database"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features = ["postgres", "chrono"] }
+tracing.workspace = true
+
+common.path = "../../../common"

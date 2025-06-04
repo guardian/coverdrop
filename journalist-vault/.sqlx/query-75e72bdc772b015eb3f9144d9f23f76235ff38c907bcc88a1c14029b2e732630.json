@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_id AS \"id: JournalistIdentity\"\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: JournalistIdentity",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "75e72bdc772b015eb3f9144d9f23f76235ff38c907bcc88a1c14029b2e732630"
+}

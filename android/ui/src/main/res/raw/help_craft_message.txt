@@ -1,0 +1,74 @@
+# Compose your first message
+
+BLOCKQUOTE
+We receive hundreds of tips a day. The messages that stand out are clear, detailed and fact-focused.
+Paul Lewis
+Head of investigations
+
+Messages are most credible when they are packed with facts, refer to evidence for those facts, and provide some context for how you know this.
+
+DIVIDER
+
+## Include what’s safe
+
+### Facts
+
+Specifics are critical - such as names, locations and dates.
+
+EXAMPLE
+I work at ~government department ‘Department name’~ in the ~procurement section~.
+
+### Clearly state the nature of your tip
+
+Be concise and focus on what you know, rather than what you think or suspect.
+
+EXAMPLE
+I have discovered ~evidence of a senior official's involvement in corruption and bribery~. ‘Name’, the head of our section, has received $150,000 in under-the-radar payments.
+
+### Evidence
+
+Tell us how you know what you know, and how we might verify it.
+
+EXAMPLE
+I have ~photographic evidence of transactions~ from the past two years and access to ~further documents~ that show these were a quid pro quo for awarding contracts to multinational company ‘Company name’.
+
+Our journalists appreciate that sharing information can be intimidating. You should only share what is best for your safety. However, vague messages are rarely actionable.
+
+SPACE
+
+BLOCKQUOTE
+You and your information will be treated with respect. Good sources are extremely important to us, and protecting their anonymity is a top priority.
+Nick Hopkins
+Head of news
+
+DIVIDER
+
+## Try to avoid…
+
+### Being vague
+
+Journalists need facts. If you don't explain the who, what, how and when, a reporter is unlikely to spend time trying to work out what you're talking about. Something like the following is unlikely to get a response:
+
+EXAMPLE
+I have ~some information~, would you like to know more? ~Someone I know~ is doing ~something illegal~.
+
+### Anonymity
+
+The Secure Messaging system doesn't let us know who you are. If you don't want to be identified as a result of our reporting, we will do everything we can to prevent that from happening. But the credibility of a story tip relies on the credibility of its source. If you can share why you know what you know, it's far more likely to be taken seriously.
+
+EXAMPLE
+I know about a criminal abuse of power but ~I can't tell you how I know it~.
+
+### Time pressure
+
+Reply times can vary. It could take several days. If it can’t wait, consider faster but less secure methods such as email or telephone.
+
+EXAMPLE
+Make sure you reply to me on here by the ~end of today~.
+
+DIVIDER
+
+BUTTON
+Source protection
+Read more
+button_source_protection

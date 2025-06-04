@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    key_pair_json AS \"key_pair_json: String\",\n                    pk_json       AS \"org_pk_json: String\"\n                FROM journalist_provisioning_key_pairs jp\n                INNER JOIN organization_public_keys o\n                    ON o.id = jp.organization_pk_id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "key_pair_json: String",
+        "ordinal": 0,
+        "type_info": "Null"
+      },
+      {
+        "name": "org_pk_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "454fabc3ddf7ac767e85ab757ca198404a905dae5d7c309fbd5726bd995e254d"
+}

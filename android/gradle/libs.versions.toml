@@ -1,0 +1,75 @@
+[versions]
+# General build configuration
+compileSdk = "35"
+minSdk = "26"
+targetSdk = "34"
+java = "17"
+
+# Dependencies
+accompanist-pager = "0.28.0"
+accompanist-pager-indicators = "0.28.0"
+androidx-junit = "1.2.1"
+androidx-hilt = "1.2.0"
+appcompat = "1.7.0"
+compose-activity = "1.10.1"
+compose-bom = "2025.04.01"
+compose-compiler = "1.5.8"
+com-scottyab-rootbeer = "0.1.1"
+compose-constraintLayout = "1.1.1"
+core-ktx = "1.16.0"
+espresso-core = "3.6.1"
+gson = "2.11.0"
+google-hilt = "2.56.2"
+junit = "4.13.2"
+lifecycle = "2.9.0"
+monitor = "1.7.2"
+navigation = "2.9.0"
+okhttp3 = "4.12.0"
+runner = "1.6.2"
+sloth = "0.4.0-rc1"
+truth = "1.1.4"
+workmanager = "2.10.1"
+
+[libraries]
+accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanist-pager" }
+accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pager-indicators", version.ref = "accompanist-pager-indicators" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "compose-activity" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+androidx-compose-material = { group = "androidx.compose.material", name = "material" }
+androidx-compose-runtimeLiveData = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+androidx-compose-uiTestJunit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-uiTestManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-uiTooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-uiToolingPreview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-constraintlayout-compose = { module = "androidx.constraintlayout:constraintlayout-compose", version.ref = "compose-constraintLayout" }
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "core-ktx" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidx-hilt" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }
+androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-material-icons-core = {  group = "androidx.compose.material", name = "material-icons-core"}
+androidx-material-icons-extended = {  group = "androidx.compose.material", name = "material-icons-extended-android"}
+androidx-monitor = { module = "androidx.test:monitor", version.ref = "monitor" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
+androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workmanager" }
+androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "workmanager" }
+com-lambdapioneer-sloth = { module = "com.lambdapioneer.sloth:sloth", version.ref = "sloth" }
+com-scottyab-rootbeer = { module = "com.scottyab:rootbeer-lib", version.ref = "com-scottyab-rootbeer" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "google-hilt" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "google-hilt" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "google-hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "google-hilt" }
+junit = { module = "junit:junit", version.ref = "junit" }
+squareup-okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp3" }
+squareup-okhttp3-dnsoverhttps = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps", version.ref = "okhttp3" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+
+[plugins]
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "google-hilt" }

@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_id_key_pairs.id            AS \"id: i64\",\n                journalist_id_key_pairs.key_pair_json AS \"id_key_pair_json: String\",\n                journalist_id_key_pairs.added_at      AS \"added_at: DateTime<Utc>\",\n                journalist_id_key_pairs.epoch         AS \"epoch: Epoch\",\n                journalist_provisioning_pks.pk_json   AS \"provisioning_pk_json: String\",\n                anchor_organization_pks.pk_json      AS \"org_pk_json: String\"\n            FROM journalist_id_key_pairs\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id\n            JOIN anchor_organization_pks\n                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "id_key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "added_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "epoch: Epoch",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "org_pk_json: String",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "945c9b92b6aba0784ef1253d8251b9c277fec01952d38c8a986a9b750f6ed400"
+}

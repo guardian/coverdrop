@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT EXISTS (\n                    SELECT 1\n                    FROM journalist_id_pks\n                    WHERE decode(pk_json #>>'{key}', 'hex') = $1\n                ) AS \"matches_queued!: bool\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "matches_queued!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "813e52656cd9258a184e3dcfcf0a2859b06597f755cabb86774297c83c4a4921"
+}

@@ -1,0 +1,56 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+test-utils = ["dep:num-bigint"]
+
+[dependencies]
+anyhow.workspace = true
+argon2.workspace = true
+async-trait.workspace = true
+aws-config.workspace = true
+aws-sdk-cloudwatch.workspace = true
+aws-sdk-kinesis.workspace = true
+aws-sdk-ses.workspace = true
+aws-sdk-ssm.workspace = true
+axum.workspace = true
+base64.workspace = true
+chacha20poly1305.workspace = true
+chrono.workspace = true
+clap.workspace = true
+crc32fast.workspace = true
+ed25519-dalek.workspace = true
+flate2.workspace = true
+hex-buffer-serde.workspace = true
+hex.workspace = true
+http.workspace = true
+itertools.workspace = true
+lazy_static.workspace = true
+libc.workspace = true
+libsqlite3-sys.workspace = true
+metrics.workspace = true
+metrics_cloudwatch.workspace = true
+num-bigint = { workspace = true, optional = true }                         # BigInts are required to do some arithmatic with shard hashes but only in integration tests where we simulate AWS scaling out kinesis stream
+openssl.workspace = true                                                   # If the vendored Cargo feature is enabled, the openssl-src crate will be used to compile and statically link to a copy of OpenSSL. This is needed to cross-compile for ARM64 in CI.
+rand.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+rpassword.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_with.workspace = true
+sha2.workspace = true
+sodiumoxide.workspace = true
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["json"] }
+uuid = { workspace = true }
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+x25519-dalek.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

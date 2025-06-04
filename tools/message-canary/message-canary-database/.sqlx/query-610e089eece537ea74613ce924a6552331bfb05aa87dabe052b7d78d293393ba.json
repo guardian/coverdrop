@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                WITH user_id AS (\n                    SELECT id\n                    FROM users\n                    WHERE (key_pair_json -> 'public_key' ->> 'key') = $1\n                )\n                INSERT INTO journalist_to_user_messages (\n                    user_id,\n                    journalist_id,\n                    sent_at,\n                    message\n                )\n                SELECT user_id.id, $2, $3, $4\n                FROM user_id\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "610e089eece537ea74613ce924a6552331bfb05aa87dabe052b7d78d293393ba"
+}

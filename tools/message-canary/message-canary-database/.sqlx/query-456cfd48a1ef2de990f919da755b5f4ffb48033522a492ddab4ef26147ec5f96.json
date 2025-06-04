@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE journalist_to_user_messages\n                SET received_at = $1\n                WHERE\n                    journalist_id = $2\n                    AND user_id = $3\n                    AND message = $4\n                    AND received_at IS NULL\n                RETURNING sent_at AS \"sent_at: DateTime<Utc>\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sent_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Text",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "456cfd48a1ef2de990f919da755b5f4ffb48033522a492ddab4ef26147ec5f96"
+}

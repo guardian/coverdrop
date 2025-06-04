@@ -1,0 +1,5 @@
+mod covernode_id_pk_with_epoch;
+mod journalist_id_pk_with_epoch;
+
+pub use covernode_id_pk_with_epoch::UntrustedCoverNodeIdPublicKeyWithEpoch;
+pub use journalist_id_pk_with_epoch::UntrustedJournalistIdPublicKeyWithEpoch;

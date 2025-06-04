@@ -1,0 +1,156 @@
+use std::{fs::File, path::Path, str::FromStr};
+
+use app_state::AppStateHandle;
+use commands::{
+    admin::{
+        force_rotate_id_pk, force_rotate_msg_pk, get_logs, get_public_info,
+        get_trust_anchor_digests, get_vault_keys,
+    },
+    chats::{
+        burst_cover_messages, check_message_length, get_chats, mark_as_read, submit_message,
+        update_user_alias_and_description, update_user_status,
+    },
+    profiles::get_profiles,
+    vaults::{add_trust_anchor, get_colocated_password, get_vault_state, unlock_vault},
+};
+use directories::ProjectDirs;
+use logging::JournalistClientLogLayer;
+use model::Profiles;
+use notifications::start_notification_service;
+use reqwest::Url;
+use tauri::{App, Manager as _};
+use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
+use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
+
+mod app_state;
+mod commands;
+mod error;
+mod logging;
+mod model;
+mod multipass;
+mod notifications;
+mod tasks;
+
+fn fail_setup_with_message(app: &mut App, message: &str) -> Result<(), Box<dyn std::error::Error>> {
+    app.dialog()
+        .message(message)
+        .kind(MessageDialogKind::Error)
+        .title("Error")
+        .blocking_show();
+
+    Err(message.to_string().into())
+}
+
+fn handle_profiles(profiles_path: impl AsRef<Path>) -> anyhow::Result<Profiles> {
+    let mut profiles = if profiles_path.as_ref().exists() {
+        let profiles_file = File::open(profiles_path.as_ref())?;
+        serde_json::from_reader::<File, Profiles>(profiles_file)?
+    } else {
+        Profiles::default()
+    };
+
+    // Update any existing profiles
+    if let Some(profiles_env) = option_env!("BUILT_IN_PROFILES") {
+        for profile_pair in profiles_env.split(',') {
+            if let Some((stage, url)) = profile_pair.split_once('=') {
+                let url = Url::from_str(url)?;
+                profiles.insert(stage, url);
+            }
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(multipass_nodes) = multipass::list_coverdrop_nodes() {
+            if let Some(node) = multipass_nodes.first() {
+                if let Some(local_ip) = node.local_ip() {
+                    let url = format!("http://{}:30000/", local_ip);
+                    let url = Url::from_str(&url)?;
+                    profiles.insert("DEV-AUTO", url);
+                } else {
+                    tracing::warn!(
+                        "Unable to get IP address from multipass node in 192.168.0.0/16 subnet"
+                    );
+                }
+            }
+        } else {
+            tracing::warn!("Unable to list multipass nodes, is multipass cli installed?");
+        }
+    }
+
+    let json = serde_json::to_string_pretty(&profiles)?;
+    std::fs::write(profiles_path.as_ref(), json)?;
+
+    Ok(profiles)
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_window_state::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            if let Some(proj_dirs) =
+                ProjectDirs::from("com", "theguardian", "coverdrop-journalist-client")
+            {
+                let notifications = start_notification_service(app.app_handle());
+                let app_state = AppStateHandle::new(notifications);
+
+                tracing_subscriber::registry()
+                    .with(JournalistClientLogLayer::new(app_state.logs.clone()))
+                    .init();
+
+                let config_dir = proj_dirs.config_dir();
+
+                if let Err(e) = std::fs::create_dir_all(config_dir) {
+                    return fail_setup_with_message(
+                        app,
+                        &format!("Failed to create application config directory: {:?}", e),
+                    );
+                }
+
+                let profiles_path = config_dir.join("profiles.json");
+
+                let profiles = match handle_profiles(profiles_path) {
+                    Ok(profiles) => profiles,
+                    Err(e) => {
+                        return fail_setup_with_message(
+                            app,
+                            &format!("Failed to load profiles: {:?}", e),
+                        )
+                    }
+                };
+
+                app.manage(app_state);
+                app.manage(profiles);
+
+                Ok(())
+            } else {
+                fail_setup_with_message(app, "Cannot get home directory for current user")
+            }
+        })
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(tauri::generate_handler![
+            get_vault_state,
+            get_chats,
+            unlock_vault,
+            get_colocated_password,
+            get_profiles,
+            submit_message,
+            force_rotate_id_pk,
+            force_rotate_msg_pk,
+            get_public_info,
+            check_message_length,
+            mark_as_read,
+            update_user_status,
+            update_user_alias_and_description,
+            get_logs,
+            burst_cover_messages,
+            get_trust_anchor_digests,
+            get_vault_keys,
+            add_trust_anchor
+        ])
+        .run(tauri::generate_context!())
+        .expect("Run tauri application");
+}

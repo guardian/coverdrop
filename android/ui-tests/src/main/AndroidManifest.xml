@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name=".CoverDropApplication"
+        android:allowBackup="true"
+        android:label="CoverDrop UI Tests"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CoverDropSample"
+        tools:targetApi="31">
+        <activity
+            android:name=".TestActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.CoverDropSample">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

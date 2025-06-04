@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO covernode_provisioning_pks (org_pk_id, added_at, not_valid_after, pk_json)\n                    VALUES ($1, $2, $3, $4)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Timestamptz",
+        "Timestamptz",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2fe370d9db908ab8d5e33e5e889dd585a0d992bf2e824ba5850ae9d3cadbc40f"
+}

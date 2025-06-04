@@ -1,0 +1,11 @@
+[Unit]
+Description=CoverDrop API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/systemd/api
+ExecStart=/var/api/bootstrap.sh
+
+[Install]
+WantedBy=multi-user.target

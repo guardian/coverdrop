@@ -1,0 +1,24 @@
+# Source protection
+
+BLOCKQUOTE
+Journalists have a moral obligation to protect confidential sources of information
+The Guardian's editorial code of practice
+theguardian.com/editorial-code
+
+Whistleblowers and witnesses to wrongdoings are essential to holding power to account. But this can come with risks to the people who speak out. This is why sources often ask to remain anonymous.
+
+DIVIDER
+
+When a Guardian journalist agrees not to disclose the identity of a source, the journalist will attempt to frame the articles they write in ways that don't reveal who they have been speaking to. Even when facing litigation, journalists have the right to protect the identity of their sources who acted in the public interest.
+
+Our Secure Messaging system was created to help protect sources’ anonymity:
+
+- A Guardian mobile app that has been used to message the Guardian looks the same as a Guardian app that has only been used to view Guardian content.
+- The data transmitted to and from the Guardian looks the same for Secure Messaging users as it does for all other Guardian app users.
+- The information the Guardian receives from Secure Messaging sources comes with no accompanying information about who sent it or from where.
+
+So we know nothing more about a Secure Messaging source than what a source chooses to tell us.
+
+DIVIDER
+
+This doesn’t necessarily mean that all sources remain anonymous to the reporter themself. That scenario is in fact rare. More commonly, a confidential source will tell a reporter who they are, or at least provide some identifying information, in order to explain how they know about the subject they have raised, and to show that their claims are credible. It can also help a journalist corroborate their source’s allegations without unwittingly revealing clues about who that source is.

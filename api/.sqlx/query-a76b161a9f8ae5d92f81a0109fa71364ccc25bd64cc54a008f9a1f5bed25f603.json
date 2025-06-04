@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT EXISTS (\n                        SELECT 1\n                        FROM journalist_id_pk_rotation_queue\n                        WHERE journalist_id = $1\n                            AND decode(\n                                    (convert_from(\n                                        decode(form_json #>>'{body}', 'base64'),\n                                        'utf8'\n                                    )::jsonb #>>'{new_pk,key}'),\n                                    'hex'\n                                ) = $2\n                    ) AS \"matches_queued!: bool\"\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "matches_queued!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "a76b161a9f8ae5d92f81a0109fa71364ccc25bd64cc54a008f9a1f5bed25f603"
+}
