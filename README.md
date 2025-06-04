@@ -6,10 +6,10 @@ CoverDrop is a system designed to allow users of news organisations' mobile apps
 
 The CoverDrop system consists of four major components:
 
-- A module within the news organisation's regular mobile apps;
-- A cloud-based API;
-- The CoverNode: a set of services run from a secured location;
-- A desktop application used by journalists at the news organisation.
+- A module within the news organisation's regular mobile apps
+- A cloud-based API
+- The CoverNode: a set of services run from a secured location
+- A desktop application used by journalists at the news organisation
 
 CoverDrop provides strong plausible deniability by making every instance of the news organisation's public mobile app behave the same way, whether it is used for secure communication or for normal news consumption:
 
