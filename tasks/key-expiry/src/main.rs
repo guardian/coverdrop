@@ -45,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
         api_url,
         key_location,
         team_email_address,
+        stage,
     } = Cli::parse();
 
     tracing::info!(
@@ -129,7 +130,7 @@ async fn main() -> anyhow::Result<()> {
             let email = SendEmailConfig {
                 to: team_email_address.clone(),
                 reply_to: team_email_address.clone(),
-                subject: "🚨 Expiring key notification".to_owned(),
+                subject: format!("🚨 Expiring key notification {}", stage.as_guardian_str()),
                 body: email_body,
             };
 

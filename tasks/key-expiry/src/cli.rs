@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser};
-use common::aws::ssm::prefix::ParameterPrefix;
+use common::{aws::ssm::prefix::ParameterPrefix, clap::Stage};
 use reqwest::Url;
 
 #[derive(Args)]
@@ -27,4 +27,6 @@ pub struct Cli {
     pub team_email_address: String,
     #[command(flatten)]
     pub key_location: TrustedOrgPkLocation,
+    #[clap(long, env = "STAGE")]
+    pub stage: Stage,
 }
