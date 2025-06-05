@@ -29,6 +29,9 @@ public enum DateFormats {
 
     public static func isoDateFormatter() -> DateFormatter {
         let dateFormatter = DateFormatter()
+        // We use the en_US_POSIX locale to ensure that the date format 
+        // is interpreted correctly regardless of the user's locale settings.
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ"
         return dateFormatter
     }
