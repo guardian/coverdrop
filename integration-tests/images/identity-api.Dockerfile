@@ -44,5 +44,6 @@ RUN update-ca-certificates
 COPY --from=builder /usr/src/app/exec/ .
 
 EXPOSE 3010
+EXPOSE 4444
 
 CMD ["./identity-api"]

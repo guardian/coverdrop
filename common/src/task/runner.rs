@@ -104,6 +104,8 @@ impl TaskRunner {
     }
 
     pub async fn run(&mut self) {
+        tracing::info!("Starting task runner in {} mode", self.mode);
+
         if self.mode.triggerable() {
             let tasks = self.tasks.clone();
 

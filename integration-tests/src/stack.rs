@@ -84,6 +84,7 @@ pub struct CoverDropStack {
     _api_task_api_client: TaskApiClient<service::Api>,
 
     identity_api_client: IdentityApiClient,
+    identity_api_task_api_client: Option<TaskApiClient<service::IdentityApi>>,
 
     covernode_task_api_client: Option<TaskApiClient<service::CoverNode>>,
 
@@ -99,6 +100,7 @@ pub struct CoverDropStackBuilder {
     covernode_key_mode: CoverNodeKeyMode,
     dead_drop_limit: Option<i64>,
     covernode_task_runner_mode: Option<RunnerMode>,
+    identity_api_task_runner_mode: Option<RunnerMode>,
     cover_message_sender: bool,
 }
 
@@ -137,6 +139,11 @@ impl CoverDropStackBuilder {
 
     pub fn with_covernode_task_runner_mode(mut self, runner_mode: RunnerMode) -> Self {
         self.covernode_task_runner_mode = Some(runner_mode);
+        self
+    }
+
+    pub fn with_identity_api_task_runner_mode(mut self, runner_mode: RunnerMode) -> Self {
+        self.identity_api_task_runner_mode = Some(runner_mode);
         self
     }
 
@@ -337,6 +344,8 @@ impl CoverDropStackBuilder {
             api.get_bridge_ip_address()
                 .await
                 .expect("Get bridge ip address for identity api"),
+            self.identity_api_task_runner_mode
+                .unwrap_or(RunnerMode::Timer),
             base_time,
         )
         .await;
@@ -350,6 +359,26 @@ impl CoverDropStackBuilder {
             Url::parse(&format!("http://localhost:{identity_api_port}")).unwrap();
 
         let identity_api_client = IdentityApiClient::new(identity_api_url);
+
+        let identity_api_task_api_client = if self
+            .identity_api_task_runner_mode
+            .is_some_and(|m| m.triggerable())
+        {
+            let identity_api_task_api_port = identity_api
+                .get_host_port_ipv4(TASK_RUNNER_API_PORT)
+                .await
+                .expect("Get identity-api task runner port");
+
+            Some(
+                TaskApiClient::new(
+                    Url::parse(&format!("http://localhost:{}", identity_api_task_api_port))
+                        .expect("Parse identity-api task API url"),
+                )
+                .expect("Create identity-api task API client"),
+            )
+        } else {
+            None
+        };
 
         //
         // Keys
@@ -509,6 +538,7 @@ impl CoverDropStackBuilder {
             api_client_cached,
             api_client_uncached,
             identity_api_client,
+            identity_api_task_api_client,
             covernode_task_api_client,
             _api_task_api_client: api_task_api_client,
             kinesis_client,
@@ -537,6 +567,7 @@ impl CoverDropStack {
             varnish_api_cache: false,
             covernode_key_mode: CoverNodeKeyMode::ProvidedKeyPair,
             dead_drop_limit: None,
+            identity_api_task_runner_mode: None,
             covernode_task_runner_mode: None,
             cover_message_sender: false,
         }
@@ -580,6 +611,10 @@ impl CoverDropStack {
 
     pub fn identity_api_client(&self) -> &IdentityApiClient {
         &self.identity_api_client
+    }
+
+    pub fn identity_api_task_api_client(&self) -> &TaskApiClient<service::IdentityApi> {
+        self.identity_api_task_api_client.as_ref().expect("The Identity API task API client is only available when the Identity APi task runner is triggerable")
     }
 
     pub fn covernode_task_api_client(&self) -> &TaskApiClient<service::CoverNode> {

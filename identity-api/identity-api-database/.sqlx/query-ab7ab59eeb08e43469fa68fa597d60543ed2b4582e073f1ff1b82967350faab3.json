@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                DELETE FROM organization_public_keys\n                WHERE json_extract(pk_json, '$.not_valid_after') < ?1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ab7ab59eeb08e43469fa68fa597d60543ed2b4582e073f1ff1b82967350faab3"
+}

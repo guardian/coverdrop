@@ -16,7 +16,7 @@ use identity_api::{
         general::get_healthcheck, post_keys::post_rotate_covernode_id_key,
         public_keys::get_public_keys,
     },
-    tasks::{CheckFileSystemForKeysTask, RotateJournalistIdPublicKeysTask},
+    tasks::{CheckFileSystemForKeysTask, DeleteExpiredKeysTask, RotateJournalistIdPublicKeysTask},
     DEFAULT_PORT,
 };
 use identity_api_database::Database;
@@ -55,6 +55,9 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
         database.clone(),
     );
 
+    let delete_expired_keys_task =
+        DeleteExpiredKeysTask::new(Duration::seconds(60), database.clone());
+
     let heartbeat_task = HeartbeatTask::default();
 
     let mut cron_tasks = tokio::task::spawn({
@@ -62,6 +65,7 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
 
         runner.add_task(check_file_system_for_keys_task).await;
         runner.add_task(rotate_journalist_id_pk_task).await;
+        runner.add_task(delete_expired_keys_task).await;
         runner.add_task(heartbeat_task).await;
 
         async move { runner.run().await }

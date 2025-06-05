@@ -19,7 +19,7 @@ use common::{
     },
     client::{JournalistStatus, VerifiedKeysAndJournalistProfiles},
     protocol::keys::AnchorOrganizationPublicKey,
-    service::{self, CoverNode},
+    service::{self, CoverNode, IdentityApi},
     task::TaskApiClient,
 };
 use journalist_vault::JournalistVault;
@@ -204,6 +204,15 @@ pub async fn trigger_all_init_tasks_covernode(task_api_client: &TaskApiClient<Co
 }
 
 pub async fn trigger_expired_key_deletion_covernode(task_api_client: &TaskApiClient<CoverNode>) {
+    task_api_client
+        .trigger_task("delete_expired_keys")
+        .await
+        .expect("Trigger key rotation task");
+}
+
+pub async fn trigger_expired_key_deletion_identity_api(
+    task_api_client: &TaskApiClient<IdentityApi>,
+) {
     task_api_client
         .trigger_task("delete_expired_keys")
         .await

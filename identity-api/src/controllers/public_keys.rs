@@ -1,22 +1,8 @@
 use axum::{Extension, Json};
-use common::{
-    protocol::keys::{
-        LatestKey, UntrustedAnchorOrganizationPublicKey, UntrustedCoverNodeProvisioningPublicKey,
-        UntrustedJournalistProvisioningPublicKey,
-    },
-    time,
-};
+use common::{identity_api::models::IdentityApiPublicKeys, protocol::keys::LatestKey, time};
 use identity_api_database::Database;
-use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
-
-#[derive(Serialize, Deserialize)]
-pub struct IdentityApiPublicKeys {
-    anchor_org_pks: Vec<UntrustedAnchorOrganizationPublicKey>,
-    covernode_provisioning_pk: Option<UntrustedCoverNodeProvisioningPublicKey>,
-    journalist_provisioning_pk: Option<UntrustedJournalistProvisioningPublicKey>,
-}
 
 pub async fn get_public_keys(
     Extension(database): Extension<Database>,
@@ -45,9 +31,9 @@ pub async fn get_public_keys(
         .into_latest_key()
         .map(|key_pair| key_pair.public_key().to_untrusted());
 
-    Ok(Json(IdentityApiPublicKeys {
+    Ok(Json(IdentityApiPublicKeys::new(
         anchor_org_pks,
         covernode_provisioning_pk,
         journalist_provisioning_pk,
-    }))
+    )))
 }

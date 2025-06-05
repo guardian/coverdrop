@@ -1,6 +1,7 @@
 use std::{env, net::IpAddr, path::Path};
 
 use chrono::{DateTime, Utc};
+use common::task::RunnerMode;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, RunnableImage};
 
@@ -15,10 +16,11 @@ pub async fn start_identity_api(
     network: &str,
     keys_dir: impl AsRef<Path>,
     api_ip: IpAddr,
+    runner_mode: RunnerMode,
     base_time: DateTime<Utc>,
 ) -> ContainerAsync<IdentityApi> {
     let identity_api_image = IdentityApi::default();
-    let identity_api_image_args = IdentityApiArgs::new(api_ip, API_PORT, base_time);
+    let identity_api_image_args = IdentityApiArgs::new(api_ip, API_PORT, runner_mode, base_time);
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
 

@@ -1,6 +1,7 @@
 use std::{collections::HashMap, env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
+use common::task::RunnerMode;
 use testcontainers::{core::WaitFor, Image, ImageArgs};
 
 use crate::{
@@ -13,14 +14,21 @@ use crate::{
 pub struct IdentityApiArgs {
     api_ip: IpAddr,
     api_port: u16,
+    runner_mode: RunnerMode,
     base_time: DateTime<Utc>,
 }
 
 impl IdentityApiArgs {
-    pub fn new(api_ip: IpAddr, api_port: u16, base_time: DateTime<Utc>) -> Self {
+    pub fn new(
+        api_ip: IpAddr,
+        api_port: u16,
+        runner_mode: RunnerMode,
+        base_time: DateTime<Utc>,
+    ) -> Self {
         Self {
             api_ip,
             api_port,
+            runner_mode,
             base_time,
         }
     }
@@ -34,11 +42,12 @@ impl ImageArgs for IdentityApiArgs {
 
         let db_url_arg = "--db-path=/var/keys/identity-api.db";
         let db_password_arg = format!("--db-password={}", IDENTITY_API_DB_PASSWORD);
+        let runner_mode_arg = format!("--task-runner-mode={}", self.runner_mode);
 
         let command =
-            format!("{set_time_arg} && ./identity-api --stage=dev --keys-path=/var/keys {api_url_arg} {db_url_arg} {db_password_arg}");
+            format!("{set_time_arg} && ./identity-api --stage=dev --keys-path=/var/keys {runner_mode_arg} {api_url_arg} {db_url_arg} {db_password_arg}");
 
-        println!("Starting Identity APi with: {}", command);
+        println!("Starting Identity API with: {}", command);
 
         Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
     }

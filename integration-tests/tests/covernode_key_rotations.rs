@@ -1,11 +1,19 @@
 use std::time::Duration;
 
-use common::{protocol::constants::DAY_IN_SECONDS, task::RunnerMode};
+use common::{
+    protocol::constants::{
+        COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
+        COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
+        ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+    },
+    task::RunnerMode,
+};
 
 use integration_tests::{
     api_wrappers::{
         get_and_verify_public_keys, trigger_all_init_tasks_covernode,
-        trigger_expired_key_deletion_covernode, trigger_key_rotation_covernode,
+        trigger_expired_key_deletion_covernode, trigger_expired_key_deletion_identity_api,
+        trigger_key_rotation_covernode,
     },
     save_test_vector, CoverDropStack,
 };
@@ -17,6 +25,7 @@ async fn covernode_key_rotations() {
     pretty_env_logger::try_init().unwrap();
 
     let mut stack = CoverDropStack::builder()
+        .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
         .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
         .build()
         .await;
@@ -104,4 +113,59 @@ async fn covernode_key_rotations() {
     assert_eq!(msg_key_pairs.len(), 2);
 
     save_test_vector!("covernode_msg_rotated_2", &stack);
+
+    // Check key expiry
+    //
+    // 1. Things should be valid right now
+
+    trigger_expired_key_deletion_identity_api(stack.identity_api_task_api_client()).await;
+
+    let public_keys = stack
+        .identity_api_client()
+        .get_public_keys()
+        .await
+        .expect("Get public keys");
+
+    assert!(!public_keys.anchor_org_pks.is_empty());
+    assert!(public_keys.covernode_provisioning_pk.is_some());
+    assert!(public_keys.journalist_provisioning_pk.is_some());
+
+    // 2. Org pk still there, provisioing keys gone
+    stack
+        .time_travel(
+            stack.now()
+                + Duration::from_secs(COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS as u64),
+        )
+        .await;
+
+    trigger_expired_key_deletion_identity_api(stack.identity_api_task_api_client()).await;
+
+    let public_keys = stack
+        .identity_api_client()
+        .get_public_keys()
+        .await
+        .expect("Get public keys");
+
+    assert!(!public_keys.anchor_org_pks.is_empty());
+    assert!(public_keys.covernode_provisioning_pk.is_none());
+    assert!(public_keys.journalist_provisioning_pk.is_none());
+
+    // 3. All keys expired
+    stack
+        .time_travel(
+            stack.now() + Duration::from_secs(ORGANIZATION_KEY_VALID_DURATION_SECONDS as u64),
+        )
+        .await;
+
+    trigger_expired_key_deletion_identity_api(stack.identity_api_task_api_client()).await;
+
+    let public_keys = stack
+        .identity_api_client()
+        .get_public_keys()
+        .await
+        .expect("Get public keys");
+
+    assert!(public_keys.anchor_org_pks.is_empty());
+    assert!(public_keys.covernode_provisioning_pk.is_none());
+    assert!(public_keys.journalist_provisioning_pk.is_none());
 }

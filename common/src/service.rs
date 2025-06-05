@@ -8,3 +8,6 @@ impl CoverDropService for CoverNode {}
 
 pub struct Api;
 impl CoverDropService for Api {}
+
+pub struct IdentityApi;
+impl CoverDropService for IdentityApi {}

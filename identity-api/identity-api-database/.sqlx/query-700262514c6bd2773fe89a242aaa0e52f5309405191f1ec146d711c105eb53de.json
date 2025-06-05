@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                DELETE FROM covernode_provisioning_key_pairs\n                WHERE json_extract(key_pair_json, '$.public_key.not_valid_after') < ?1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "700262514c6bd2773fe89a242aaa0e52f5309405191f1ec146d711c105eb53de"
+}

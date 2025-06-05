@@ -6,7 +6,7 @@ use reqwest::Url;
 
 use super::{
     forms::post_rotate_covernode_id::RotateCoverNodeIdPublicKeyForm,
-    models::UntrustedCoverNodeIdPublicKeyWithEpoch,
+    models::{IdentityApiPublicKeys, UntrustedCoverNodeIdPublicKeyWithEpoch},
 };
 
 #[derive(Clone, Debug)]
@@ -55,5 +55,20 @@ impl IdentityApiClient {
         let new_signed_covernode_id_pk = handle_response_json(new_signed_covernode_id_pk).await?;
 
         Ok(new_signed_covernode_id_pk)
+    }
+
+    /// GET    /v1/public-keys
+    pub async fn get_public_keys(&self) -> anyhow::Result<IdentityApiPublicKeys> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys");
+
+        let public_keys = self.client.get(url).send().await?;
+
+        let public_keys = handle_response_json(public_keys).await?;
+
+        Ok(public_keys)
     }
 }

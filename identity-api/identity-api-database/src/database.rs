@@ -98,6 +98,25 @@ impl Database {
         Ok(pks)
     }
 
+    pub async fn delete_expired_orgaization_pks(
+        &self,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<usize> {
+        let mut conn = self.pool.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+                DELETE FROM organization_public_keys
+                WHERE json_extract(pk_json, '$.not_valid_after') < ?1
+            "#,
+            now,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(result.rows_affected() as usize)
+    }
+
     // Journalist Provisioning Keys
 
     pub async fn insert_journalist_provisioning_key_pair(
@@ -180,6 +199,25 @@ impl Database {
             .collect::<anyhow::Result<_>>()?;
 
         Ok(key_pairs)
+    }
+
+    pub async fn delete_expired_journalist_provisioning_key_pairs(
+        &self,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<usize> {
+        let mut conn = self.pool.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+                DELETE FROM journalist_provisioning_key_pairs
+                WHERE json_extract(key_pair_json, '$.public_key.not_valid_after') < ?1
+            "#,
+            now,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(result.rows_affected() as usize)
     }
 
     // CoverNode Provisioning Keys
@@ -265,5 +303,24 @@ impl Database {
             .collect::<anyhow::Result<_>>()?;
 
         Ok(key_pairs)
+    }
+
+    pub async fn delete_expired_covernode_provisioning_key_pairs(
+        &self,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<usize> {
+        let mut conn = self.pool.acquire().await?;
+
+        let result = sqlx::query!(
+            r#"
+                DELETE FROM covernode_provisioning_key_pairs
+                WHERE json_extract(key_pair_json, '$.public_key.not_valid_after') < ?1
+            "#,
+            now,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        Ok(result.rows_affected() as usize)
     }
 }
