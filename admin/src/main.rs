@@ -7,9 +7,9 @@ use admin::generate_covernode_database;
 use admin::generate_covernode_provisioning_key_pair;
 use admin::generate_journalist;
 use admin::generate_journalist_provisioning_key_pair;
-use admin::generate_reseed_journalist_id_key_pair_form;
 use admin::generate_test_vectors;
 use admin::post_log_config_form;
+use admin::reseed_journalist_vault_id_key_pair;
 use admin::run_post_ceremony_actions;
 use admin::run_setup_ceremony;
 use admin::submit_delete_journalist_form;
@@ -22,6 +22,7 @@ use admin::{
 use clap::Parser;
 use cli::{Cli, Commands};
 use common::api::api_client::ApiClient;
+use common::clap::validate_password_from_args;
 use common::crypto::human_readable_digest;
 use common::crypto::keys::public_key::PublicKey;
 use common::crypto::pbkdf::DEFAULT_PASSPHRASE_WORDS;
@@ -227,16 +228,22 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
-        Commands::GenerateReseedJournalistIdKeypairForm {
+        Commands::ReseedJournalistVaultIdKeyPair {
             journalist_id,
             keys_path,
-            output_path,
-        } => generate_reseed_journalist_id_key_pair_form(
-            keys_path,
-            journalist_id,
-            output_path,
-            time::now(),
-        ),
+            vault_path,
+            password,
+            password_path,
+        } => {
+            let password = validate_password_from_args(password, password_path)?;
+            let vault = JournalistVault::open(&vault_path, &password).await?;
+
+            let now = time::now();
+
+            reseed_journalist_vault_id_key_pair(keys_path, journalist_id, &vault, now).await?;
+
+            Ok(())
+        }
         Commands::DeleteJournalistForm {
             journalist_id,
             keys_path,

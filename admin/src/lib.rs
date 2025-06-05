@@ -4,9 +4,9 @@ mod generate_constants_files;
 mod generate_covernode_database;
 mod generate_journalists;
 mod generate_keys;
-mod generate_reseed_journalist_id_key_pair_form;
 mod generate_test_vectors;
 mod post_log_config_form;
+mod reseed_journalist_vault_id_key_pair;
 mod update_journalist;
 mod update_system_status;
 
@@ -25,8 +25,8 @@ pub use generate_keys::{
     generate_covernode_messaging_key_pair, generate_covernode_provisioning_key_pair,
     generate_journalist_provisioning_key_pair, generate_organization_key_pair,
 };
-pub use generate_reseed_journalist_id_key_pair_form::generate_reseed_journalist_id_key_pair_form;
 pub use generate_test_vectors::generate_test_vectors;
 pub use post_log_config_form::post_log_config_form;
+pub use reseed_journalist_vault_id_key_pair::reseed_journalist_vault_id_key_pair;
 pub use update_journalist::update_journalist;
 pub use update_system_status::update_system_status;

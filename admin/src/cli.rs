@@ -239,14 +239,18 @@ pub enum Commands {
         #[clap(long)]
         keys_path: PathBuf,
     },
-    GenerateReseedJournalistIdKeypairForm {
+    ReseedJournalistVaultIdKeyPair {
         #[clap(long)]
         journalist_id: JournalistIdentity,
         /// The keys directory containing the journalist provisioning public and secret keys
         #[clap(long)]
         keys_path: PathBuf,
         #[clap(long)]
-        output_path: PathBuf,
+        vault_path: PathBuf,
+        #[clap(long)]
+        password: Option<String>,
+        #[clap(long, conflicts_with = "password")]
+        password_path: Option<PathBuf>,
     },
     /// Delete a given journalist
     DeleteJournalist {
