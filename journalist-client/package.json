@@ -11,9 +11,9 @@
     "createEuiIcons": "node scripts/createEuiIcons.js",
     "createAppIcons": "tauri icon ./src-tauri/icons/base.svg",
     "prepare": "cd .. && husky journalist-client/.husky",
-    "check-format": "prettier --check \"{src,src-tauri}/**/*.{ts,tsx}\"",
-    "format": "prettier --write \"{src,src-tauri}/**/*.{ts,tsx}\"",
-    "lint": "eslint src/** src-tauri/** --no-error-on-unmatched-pattern",
+    "check-format": "prettier --check src/**/*.{ts,tsx}",
+    "format": "prettier --write src/**/*.{ts,tsx}",
+    "lint": "eslint src/**/*.{ts,tsx}",
     "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
