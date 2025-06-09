@@ -71,6 +71,7 @@ impl MailboxMessage {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn from_journalist_to_user(
         id: i64,
         to: &UserPublicKey,
