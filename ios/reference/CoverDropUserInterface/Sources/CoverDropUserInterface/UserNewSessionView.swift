@@ -236,7 +236,7 @@ struct UserNewSessionView: View {
         var as2 = AttributedString("Make sure you memorise it or write it down somewhere safe.")
         as2.foregroundColor = Color.HelpExample.highlightColor
         as2.font = .body.weight(.semibold)
-        let as3 = AttributedString("Your passphrase must be entered in the correct oder with the correct spelling.")
+        let as3 = AttributedString("Your passphrase must be entered in the correct order with the correct spelling.")
 
         return as1 + " " + as2 + " " + as3
     }
