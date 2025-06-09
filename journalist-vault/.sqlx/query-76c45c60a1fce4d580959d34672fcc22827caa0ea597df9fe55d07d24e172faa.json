@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM sessions\n        WHERE session_started_at < ?1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "76c45c60a1fce4d580959d34672fcc22827caa0ea597df9fe55d07d24e172faa"
+}

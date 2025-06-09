@@ -1033,17 +1033,21 @@ impl JournalistVault {
 
     /// - Delete expired id and msg key pairs.
     /// - Remove messages that are more than JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS old
+    /// - Delete old logs
     pub async fn clean_up(&self, now: DateTime<Utc>) -> anyhow::Result<()> {
         let message_deletion_duration =
             Duration::seconds(JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS);
 
         let mut tx = self.pool.begin().await?;
 
-        // Order is important here to prevent foreign key constraint issues
-        // we delete from the leaves up to the ID keys.
         message_queries::delete_messages_before(&mut tx, now, message_deletion_duration).await?;
+
+        // Delete expired keys, order is important here to prevent foreign key
+        // constraint issues we delete from the leaves (messaging keys) up to the ID keys.
         msg_key_queries::delete_expired_msg_key_pairs(&mut tx, now).await?;
         id_key_queries::delete_expired_id_key_pairs(&mut tx, now).await?;
+
+        logging::delete_old_logs(&mut tx, now).await?;
 
         tx.commit().await?;
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM log_entries\n        WHERE timestamp < ?1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "4aed37c403d475e8754514450ce825527d270213a43bf8d4342b754a9371a6f6"
+}

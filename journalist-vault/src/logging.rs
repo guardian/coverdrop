@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use sqlx::SqliteConnection;
 use tracing::Level;
 
@@ -138,4 +138,55 @@ pub async fn select_log_entries_by_session_range(
         .collect();
 
     Ok(entries)
+}
+
+/// Delete all logging sessions and their associated log entries that are older than 2 weeks
+pub async fn delete_old_logs(
+    conn: &mut SqliteConnection,
+    now: DateTime<Utc>,
+) -> anyhow::Result<()> {
+    // Use checked_sub to safely handle potential underflow
+    let two_weeks_ago = now
+        .checked_sub_signed(Duration::weeks(2))
+        .unwrap_or(DateTime::<Utc>::MIN_UTC);
+
+    // First delete log entries for old sessions (to maintain foreign key constraints)
+    sqlx::query!(
+        r#"
+        DELETE FROM log_entries
+        WHERE session_id IN (
+            SELECT id FROM sessions WHERE session_started_at < ?1
+        )
+        "#,
+        two_weeks_ago
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    // Then delete the old sessions
+    sqlx::query!(
+        r#"
+        DELETE FROM sessions
+        WHERE session_started_at < ?1
+        "#,
+        two_weeks_ago
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    // Pick up any remaining log entries. Should only do something if the journalist
+    // never closes their vault so their session is more than two weeks old.
+    // This is unfortunately another query because we don't cascade deletes of
+    // sessions to log entries, otherwise we could just do this as our first query.
+    sqlx::query!(
+        r#"
+        DELETE FROM log_entries
+        WHERE timestamp < ?1
+        "#,
+        two_weeks_ago
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    Ok(())
 }
