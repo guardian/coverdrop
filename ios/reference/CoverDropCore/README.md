@@ -2,15 +2,6 @@
 
 This package contains the main cryptographic primitives for CoverDrop.
 
-There are a few additional steps required when integrating this library:
+This repository is part of the iOS code for [CoverDrop](https://www.coverdrop.org/) which has been setup to allow the publishing of this Swift Package.
 
-1. Integrate the `CoverDropCore` implementation or equivalents of all available `UIApplicationDelegate` system callback methods. These include:
-
-```
-    public static func didLaunch() async throws
-    
-    public static func didEnterForeground()
-    
-    public static func didEnterBackground()
-    
-```
+More details [can be found in the main repository](https://github.com/guardian/coverdrop)

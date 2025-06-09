@@ -1,6 +1,11 @@
 # CoverDropUserInterface
 
 This package contains all the user interface classes for the CoverDrop iOS application.
+
+This repository is part of the iOS code for [CoverDrop](https://www.coverdrop.org/) which has been setup to allow the publishing of this Swift Package.
+
+More details [can be found in the main repository](https://github.com/guardian/coverdrop)
+
 This will allow you to import this package into your application and get the full functionality
 of CoverDrop within your application.
 
