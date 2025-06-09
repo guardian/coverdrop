@@ -46,7 +46,7 @@ enum HelpScreenContent: Error, Equatable {
             ]
         case .howSecureMessagingWorks:
             [
-                "button_why_we_made_secure_messaging": HelpScreenContent.whyWeMadeSecureMessaging
+                "button_faq": HelpScreenContent.faq
             ]
         case .keepingPassphraseSafe:
             [:]

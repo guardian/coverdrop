@@ -46,7 +46,7 @@ fun HelpHowSecureMessagingWorksScreen(navController: NavHostController) = HelpSc
     navController = navController,
     helpTextResId = R.raw.help_how_secure_messaging_works,
     onClickMapping = mapOf(
-        Pair("button_why_we_made_secure_messaging") { navController.navigate(CoverDropDestinations.HELP_WHY_WE_MADE_SECURE_MESSAGING) },
+        Pair("button_faq") { navController.navigate(CoverDropDestinations.HELP_FAQ) },
     )
 )
 

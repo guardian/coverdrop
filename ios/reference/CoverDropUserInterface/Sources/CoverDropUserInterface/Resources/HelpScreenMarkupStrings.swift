@@ -254,9 +254,9 @@ If someone were to be accused of being a source, their Guardian app would not lo
 DIVIDER
 
 BUTTON
-Why we made Secure Messaging
+Frequently asked questions
 Read more
-button_why_we_made_secure_messaging
+button_faq
 """
 
 let helpMarkdownKeepingPassphrasesSafe = """
