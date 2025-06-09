@@ -28,6 +28,8 @@ pub(crate) async fn users(conn: &mut SqliteConnection) -> anyhow::Result<Vec<Use
         r#"
             SELECT
                 user_pk AS "user_pk: Vec<u8>",
+                alias AS "alias: String",
+                description AS "description: String",
                 status AS "status: UserStatus"
             FROM users
         "#
@@ -40,6 +42,8 @@ pub(crate) async fn users(conn: &mut SqliteConnection) -> anyhow::Result<Vec<Use
         Ok(User {
             user_pk,
             status: row.status,
+            alias: row.alias,
+            description: row.description,
         })
     })
     .collect::<anyhow::Result<Vec<_>>>()?;

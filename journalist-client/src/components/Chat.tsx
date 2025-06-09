@@ -33,6 +33,7 @@ type ChatProps = {
   currentUserStatus: UserStatus;
   userAlias: string | null;
   userDescription: string | null;
+  fetchUsersAndChats: () => Promise<void>;
 };
 
 export const Chat = ({
@@ -43,6 +44,7 @@ export const Chat = ({
   currentUserStatus,
   userAlias: userAlias,
   userDescription,
+  fetchUsersAndChats,
 }: ChatProps) => {
   const [messageFillRatio, setMessageFillRatio] = useState(0);
   const [currentMessageDraft, setCurrentMessageDraft] = useState("");
@@ -87,7 +89,7 @@ export const Chat = ({
     messages.forEach((m) => {
       if (
         m.type === "userToJournalistMessage" &&
-        m.from === userReplyKey &&
+        m.userPk === userReplyKey &&
         !m.read
       ) {
         markAsRead(m.id);
@@ -149,10 +151,9 @@ export const Chat = ({
 
       closeMuteModal(e);
 
-      setCurrentUserReplyKey(null);
+      fetchUsersAndChats();
 
-      const messages = await getChats();
-      messageStore.setMessages(messages);
+      setCurrentUserReplyKey(null);
     } catch (e: unknown) {
       if (e instanceof Error) {
         console.error("Error handling user status change:", e.message);
@@ -174,8 +175,7 @@ export const Chat = ({
 
       closeEditModal(e);
 
-      const messages = await getChats();
-      messageStore.setMessages(messages);
+      fetchUsersAndChats();
     } catch (e: unknown) {
       if (e instanceof Error) {
         console.error("Error handling user status change:", e.message);
@@ -210,11 +210,7 @@ export const Chat = ({
           >
             {messages
               .filter((m) => {
-                if (m.type === "journalistToUserMessage") {
-                  return m.to === userReplyKey;
-                } else {
-                  return m.from === userReplyKey;
-                }
+                return m.userPk === userReplyKey;
               })
               .map((m) => {
                 const alignSelf =

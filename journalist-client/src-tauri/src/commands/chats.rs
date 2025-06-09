@@ -1,5 +1,5 @@
 use common::{
-    client::mailbox::mailbox_message::UserStatus,
+    client::mailbox::mailbox_message::UserStatus as MailboxUserStatus,
     protocol::{
         constants::MESSAGE_PADDING_LEN,
         journalist::{
@@ -19,7 +19,7 @@ use crate::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, CommonSnafu, GenericSnafu,
         PublicInfoUnavailableSnafu, VaultLockedSnafu, VaultSnafu,
     },
-    model::Message,
+    model::{Message, User, UserStatus},
 };
 
 #[tauri::command]
@@ -53,11 +53,35 @@ pub async fn get_chats(app: State<'_, AppStateHandle>) -> Result<Vec<Message>, C
         .map(|r| {
             r.into_iter()
                 .flat_map(|msg| {
-                    Message::from_vault_message(&msg, &app.name_generator)
+                    Message::from_vault_message(&msg)
                         .map_err(|e| tracing::error!("Error converting mailbox message {}", e))
                 })
                 .collect()
         })
+}
+
+#[tauri::command]
+pub async fn get_users(app: State<'_, AppStateHandle>) -> Result<Vec<User>, CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+
+    let vault_users = vault.users().await.context(VaultSnafu {
+        failed_to: "get users",
+    })?;
+
+    let users = vault_users
+        .into_iter()
+        .map(|user| {
+            User::new(
+                &app.name_generator,
+                user.user_pk,
+                UserStatus::from_mailbox_message_user_status(user.status),
+                user.alias,
+                user.description,
+            )
+        })
+        .collect();
+
+    Ok(users)
 }
 
 #[tauri::command]
@@ -94,7 +118,7 @@ fn user_pk_from_hex(reply_key: &str) -> Result<UserPublicKey, CommandError> {
 pub async fn update_user_status(
     app: State<'_, AppStateHandle>,
     reply_key: String,
-    status: UserStatus,
+    status: MailboxUserStatus,
 ) -> Result<(), CommandError> {
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
 

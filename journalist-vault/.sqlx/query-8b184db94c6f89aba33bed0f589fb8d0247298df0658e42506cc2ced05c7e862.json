@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                user_pk AS \"user_pk: Vec<u8>\",\n                alias AS \"alias: String\",\n                description AS \"description: String\",\n                status AS \"status: UserStatus\"\n            FROM users\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "user_pk: Vec<u8>",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "alias: String",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "status: UserStatus",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "8b184db94c6f89aba33bed0f589fb8d0247298df0658e42506cc2ced05c7e862"
+}

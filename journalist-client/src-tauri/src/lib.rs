@@ -7,8 +7,8 @@ use commands::{
         get_trust_anchor_digests, get_vault_keys,
     },
     chats::{
-        burst_cover_messages, check_message_length, get_chats, mark_as_read, submit_message,
-        update_user_alias_and_description, update_user_status,
+        burst_cover_messages, check_message_length, get_chats, get_users, mark_as_read,
+        submit_message, update_user_alias_and_description, update_user_status,
     },
     profiles::get_profiles,
     vaults::{add_trust_anchor, get_colocated_password, get_vault_state, unlock_vault},
@@ -133,6 +133,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             get_vault_state,
+            get_users,
             get_chats,
             unlock_vault,
             get_colocated_password,

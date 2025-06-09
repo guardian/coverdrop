@@ -11,12 +11,13 @@ import {
   EuiHorizontalRule,
   useEuiTheme,
 } from "@elastic/eui";
-import { getChats } from "../commands/chats";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
 import { UserStatus } from "../model/bindings/UserStatus";
 import { timeAgo } from "@guardian/libs";
 import { palette } from "../styles/palette";
+import { useUserStore } from "../state/users";
+import { useErrorStore } from "../state/errors";
 
 type Chat = {
   name: string;
@@ -145,6 +146,7 @@ export const ChatsSideBar = ({
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
   const messageStore = useMessageStore();
+  const userStore = useUserStore();
 
   const { euiTheme } = useEuiTheme();
   const { font, size } = euiTheme;
@@ -153,43 +155,54 @@ export const ChatsSideBar = ({
     setIsSideNavOpenOnMobile(!isSideNavOpenOnMobile);
   };
 
+  const messages = messageStore.messages;
+  const messageUserPks = new Set(messages.map((m) => m.userPk));
+  const userInfo = userStore.getUserInfo();
+
   useEffect(() => {
-    getChats().then((message) => {
-      messageStore.setMessages(message);
+    messageUserPks.forEach((messageUserPk) => {
+      if (!userInfo[messageUserPk]) {
+        console.warn(
+          `User info for userPk ${messageUserPk} not found in userInfo store`,
+        );
+        useErrorStore
+          .getState()
+          .addError(`User info for ${messageUserPk} not found.`);
+      }
     });
+  }, [JSON.stringify(messageUserPks), JSON.stringify(userInfo)]);
 
-    const intervalId = setInterval(() => {
-      getChats().then((message) => {
-        messageStore.setMessages(message);
-      });
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const chats = messageStore.messages
-    .map<Chat>((message) => {
-      console.log(message);
+  const chats = messages
+    .map<Chat | undefined>((message) => {
+      if (!userInfo[message.userPk]) {
+        // error created above
+        return undefined;
+      }
+      const thisUserInfo = userInfo[message.userPk];
+      const chatName = thisUserInfo.alias
+        ? thisUserInfo.alias
+        : thisUserInfo.displayName;
       if (message.type == "userToJournalistMessage") {
         return {
-          name: message.userAlias ? message.userAlias : message.fromDisplayName,
-          replyKey: message.from,
+          name: chatName,
+          replyKey: message.userPk,
           lastMessageTimestamp: message.receivedAt,
           read: message.read,
-          userStatus: message.userStatus,
+          userStatus: thisUserInfo.status,
           lastMessage: message.message,
         };
       } else {
         return {
-          name: message.userAlias ? message.userAlias : message.toDisplayName,
-          replyKey: message.to,
+          name: chatName,
+          replyKey: message.userPk,
           lastMessageTimestamp: message.sentAt,
           read: true,
-          userStatus: message.userStatus,
+          userStatus: thisUserInfo.status,
           lastMessage: message.message,
         };
       }
     })
+    .filter((c) => c !== undefined)
     .sort((a, b) =>
       a!.lastMessageTimestamp > b!.lastMessageTimestamp ? -1 : 1,
     )

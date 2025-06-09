@@ -1,7 +1,12 @@
 import { Message } from "../model/bindings/Message";
+import { User } from "../model/bindings/User";
 import { UserStatus } from "../model/bindings/UserStatus";
 import { useMessageStore } from "../state/messages";
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
+
+export const getUsers = (): Promise<User[]> => {
+  return invokeWithErrorMessage("get_users");
+};
 
 export const getChats = (): Promise<Message[]> => {
   return invokeWithErrorMessage("get_chats");

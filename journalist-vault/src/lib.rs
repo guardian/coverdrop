@@ -93,6 +93,8 @@ pub enum ReplacementStrategy {
 
 pub struct User {
     pub user_pk: UserPublicKey,
+    pub alias: Option<String>,
+    pub description: Option<String>,
     pub status: UserStatus,
 }
 
