@@ -19,7 +19,8 @@ use common::argon2_sqlcipher::Argon2SqlCipher;
 use common::clap::{validate_password_from_args, Stage};
 use common::crypto::keys::serde::StorableKeyMaterial;
 use common::protocol::keys::{
-    anchor_org_pk, UntrustedAnchorOrganizationPublicKey, UntrustedJournalistProvisioningKeyPair,
+    anchor_org_pk, verify_journalist_provisioning_pk, UntrustedAnchorOrganizationPublicKey,
+    UntrustedJournalistProvisioningKeyPair, UntrustedJournalistProvisioningPublicKey,
     UntrustedOrganizationPublicKey,
 };
 use common::time;
@@ -392,6 +393,45 @@ async fn main() -> anyhow::Result<()> {
                 let org_pk = anchor_org_pk(&org_pk.to_tofu_anchor(), now)?;
 
                 vault.add_org_pk(&org_pk, now).await?;
+                println!("OK");
+            }
+            // TODO this functionality could be automated in Sentinel. Pull down
+            // key hierarchy and add any new provisioning keys to vault.
+            JournalistVaultCommand::AddProvisioningPublicKey {
+                vault_path,
+                password,
+                password_path,
+                journalist_provisioning_pk_path,
+            } => {
+                let password = validate_password_from_args(password, password_path)?;
+                let vault = JournalistVault::open(&vault_path, &password).await?;
+
+                let now = time::now();
+
+                let org_pks = vault.org_pks(now).await?;
+
+                let journalist_provisioning_pk =
+                    UntrustedJournalistProvisioningPublicKey::load_from_file(
+                        &journalist_provisioning_pk_path,
+                    )?;
+
+                let maybe_keys = org_pks.iter().find_map(|org_pk| {
+                    let org_pk = org_pk.to_non_anchor();
+                    verify_journalist_provisioning_pk(&journalist_provisioning_pk, &org_pk, now)
+                        .ok()
+                        .map(|journalist_provisioning_pk| (org_pk, journalist_provisioning_pk))
+                });
+
+                let Some((org_pk, journalist_provisioning_pk)) = maybe_keys else {
+                    anyhow::bail!(
+                        "Could not find trust anchor for journalist provisioning public key"
+                    );
+                };
+
+                vault
+                    .add_provisioning_pk(&org_pk, &journalist_provisioning_pk, now)
+                    .await?;
+
                 println!("OK");
             }
             // TODO: delete https://github.com/guardian/coverdrop-internal/issues/3100
