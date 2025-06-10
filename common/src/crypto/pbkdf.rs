@@ -65,7 +65,8 @@ pub fn derive_secret_box_key_with_configuration(
         params,
     );
 
-    let salt = Salt::try_from(salt.as_ref()).unwrap();
+    let salt = Salt::try_from(salt.as_ref())
+        .map_err(|_| anyhow::anyhow!("Failed to create salt from salt string"))?;
     let mut salt_arr = [0u8; KEY_LEN];
     let salt_bytes = salt.decode_b64(&mut salt_arr).unwrap();
 

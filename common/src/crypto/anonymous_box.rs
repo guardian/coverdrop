@@ -68,7 +68,8 @@ impl<T> AnonymousBox<T> {
         T: Encryptable,
     {
         let bytes = data.as_unencrypted_bytes();
-        let pk = PublicKey::from_slice(recipient_pk.raw_public_key().as_bytes()).unwrap();
+        let pk = PublicKey::from_slice(recipient_pk.raw_public_key().as_bytes())
+            .ok_or(Error::InvalidPublicKeyBytes)?;
         let pk_tag_and_ciphertext = sodiumoxide_patches::sealed_box::seal(bytes, &pk)
             .map_err(|_| Error::FailedToEncrypt)?;
 

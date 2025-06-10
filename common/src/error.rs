@@ -63,4 +63,6 @@ pub enum Error {
     LatestKeyPairNotFound(&'static str),
     #[error("Signing key has expired")]
     SigningKeyExpired,
+    #[error("Invalid X25519 public key bytes")]
+    InvalidPublicKeyBytes,
 }
