@@ -99,3 +99,20 @@ pub(crate) async fn journalist_provisioning_pk_id_from_pk(
 
     Ok(maybe_id)
 }
+
+pub(crate) async fn delete_expired_provisioning_pks(
+    conn: &mut SqliteConnection,
+    now: DateTime<Utc>,
+) -> anyhow::Result<()> {
+    sqlx::query!(
+        r#"
+            DELETE FROM journalist_provisioning_pks
+            WHERE pk_json->>'not_valid_after' < $1;
+        "#,
+        now
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}

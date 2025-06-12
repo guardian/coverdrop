@@ -16,7 +16,7 @@ use crate::protocol::constants::{
 
 use super::*;
 
-fn generate_child_expiry_not_valid_after<R: Role>(
+pub fn generate_child_expiry_not_valid_after<R: Role>(
     ttl_duration: Duration,
     parent_key_pair: &SignedSigningKeyPair<R>,
     now: DateTime<Utc>,

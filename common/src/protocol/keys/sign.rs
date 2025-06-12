@@ -10,21 +10,25 @@ use crate::{
 };
 
 use super::{
-    CoverNodeIdPublicKey, CoverNodeProvisioningKeyPair, JournalistIdPublicKey,
-    JournalistProvisioningKeyPair, UnregisteredCoverNodeIdPublicKey,
+    generate_child_expiry_not_valid_after, CoverNodeIdPublicKey, CoverNodeProvisioningKeyPair,
+    JournalistIdPublicKey, JournalistProvisioningKeyPair, UnregisteredCoverNodeIdPublicKey,
     UnregisteredJournalistIdPublicKey,
 };
 
 pub fn sign_covernode_id_pk(
     unsigned_pk: UnregisteredCoverNodeIdPublicKey,
-    journalist_provisioning_key_pair: &CoverNodeProvisioningKeyPair,
+    covernode_provisioning_key_pair: &CoverNodeProvisioningKeyPair,
     now: DateTime<Utc>,
 ) -> CoverNodeIdPublicKey {
-    let not_valid_after = now + Duration::seconds(COVERNODE_ID_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = generate_child_expiry_not_valid_after(
+        Duration::seconds(COVERNODE_ID_KEY_VALID_DURATION_SECONDS),
+        covernode_provisioning_key_pair,
+        now,
+    );
 
     let certificate_data =
         KeyCertificateData::new_for_signing_key(&unsigned_pk.key, not_valid_after);
-    let certificate = journalist_provisioning_key_pair.sign(&certificate_data);
+    let certificate = covernode_provisioning_key_pair.sign(&certificate_data);
 
     CoverNodeIdPublicKey::new(unsigned_pk.key, certificate, not_valid_after)
 }
@@ -34,7 +38,11 @@ pub fn sign_journalist_id_pk(
     journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
     now: DateTime<Utc>,
 ) -> JournalistIdPublicKey {
-    let not_valid_after = now + Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = generate_child_expiry_not_valid_after(
+        Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS),
+        journalist_provisioning_key_pair,
+        now,
+    );
 
     let certificate_data =
         KeyCertificateData::new_for_signing_key(&unsigned_pk.key, not_valid_after);

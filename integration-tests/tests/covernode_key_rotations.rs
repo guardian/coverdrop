@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use common::{
     protocol::constants::{
-        COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
         COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
         ORGANIZATION_KEY_VALID_DURATION_SECONDS,
     },

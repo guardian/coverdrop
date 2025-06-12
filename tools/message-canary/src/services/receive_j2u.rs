@@ -44,6 +44,8 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
         let verified_dead_drops =
             verify_journalist_to_user_dead_drop_list(&keys, &dead_drop_list, now);
 
+        tracing::info!("Found {} verified dead drops", verified_dead_drops.len());
+
         for user in users {
             for dead_drop in &verified_dead_drops {
                 for msg in &dead_drop.data.messages {
@@ -53,10 +55,11 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
                         let message_string = message.to_string()?;
 
                         tracing::info!(
-                            "user_id {} received message {} from journalist_id {}",
+                            "user_id {} received message {} from journalist_id {} in dead drop {}",
                             user.user_id,
                             message_string,
                             journalist_id,
+                            dead_drop.id
                         );
 
                         let delivery_duration = canary_state
@@ -73,6 +76,13 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
                             metrics::histogram!("J2UMessageDeliveryTime")
                                 .record(delivery_duration.num_seconds() as f64);
                         } else {
+                            tracing::warn!(
+                                "user_id {} received duplicate message {} from journalist_id {} in dead drop {}",
+                                user.user_id,
+                                message_string,
+                                journalist_id,
+                                dead_drop.id
+                           );
                             metrics::counter!("DuplicateJ2UMessage").increment(1);
                         }
                     }
@@ -80,12 +90,7 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
             }
         }
 
-        max_dead_drop_id = dead_drop_list
-            .dead_drops
-            .iter()
-            .max_by_key(|&d| d.id)
-            .unwrap()
-            .id;
+        max_dead_drop_id = verified_dead_drops.iter().max_by_key(|&d| d.id).unwrap().id;
 
         tracing::info!("updated max dead drop id to {}", max_dead_drop_id);
         canary_state

@@ -40,12 +40,18 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
             .pull_journalist_dead_drops(ids_greater_than, None)
             .await?;
 
-        let dead_drops =
+        tracing::info!("pulled {} new dead drops", dead_drop_list.dead_drops.len());
+
+        let verified_dead_drops =
             verify_user_to_journalist_dead_drop_list(&keys, dead_drop_list, time::now());
 
-        tracing::info!("Found {} dead drops", dead_drops.len());
+        tracing::info!("Found {} verified dead drops", verified_dead_drops.len());
 
-        let Some(max_dead_drop_id) = dead_drops.iter().max_by_key(|d| d.id).map(|d| d.id) else {
+        let Some(max_dead_drop_id) = verified_dead_drops
+            .iter()
+            .max_by_key(|d| d.id)
+            .map(|d| d.id)
+        else {
             tracing::info!("No dead drops in dead drop list");
 
             throttle.wait().await;
@@ -67,23 +73,24 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                 .await?
                 .collect::<Vec<_>>();
 
-            let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> = dead_drops
-                .iter()
-                .flat_map(|dead_drop| {
-                    dead_drop
-                        .data
-                        .messages
-                        .iter()
-                        .filter_map(|encrypted_message| {
-                            get_decrypted_journalist_dead_drop_message(
-                                &covernode_msg_pks,
-                                &journalist_msg_key_pairs,
-                                encrypted_message,
-                                dead_drop.id,
-                            )
-                        })
-                })
-                .collect();
+            let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> =
+                verified_dead_drops
+                    .iter()
+                    .flat_map(|dead_drop| {
+                        dead_drop
+                            .data
+                            .messages
+                            .iter()
+                            .filter_map(|encrypted_message| {
+                                get_decrypted_journalist_dead_drop_message(
+                                    &covernode_msg_pks,
+                                    &journalist_msg_key_pairs,
+                                    encrypted_message,
+                                    dead_drop.id,
+                                )
+                            })
+                    })
+                    .collect();
 
             tracing::info!(
                 "Journalist {} decrypted {} messages",
@@ -102,6 +109,14 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
             for decrypted_message in decrypted_messages {
                 let message = decrypted_message.u2j_message.message.to_string()?;
 
+                tracing::info!(
+                    "journalist {} received message {} from user_id {:?} in dead drop {}",
+                    journalist_id,
+                    message,
+                    decrypted_message.u2j_message.reply_key,
+                    decrypted_message.dead_drop_id
+                );
+
                 let maybe_delivery_duration = canary_state
                     .db
                     .update_u2j_message_setting_received_at(
@@ -116,6 +131,13 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                     metrics::histogram!("U2JMessageDeliveryTime")
                         .record(delivery_duration.num_seconds() as f64);
                 } else {
+                    tracing::warn!(
+                        "journalist {} received duplicate message {} from user_id {:?} in dead drop {}",
+                        journalist_id,
+                        message,
+                        decrypted_message.u2j_message.reply_key,
+                        decrypted_message.dead_drop_id
+                    );
                     metrics::counter!("DuplicateU2JMessage").increment(1);
                 }
             }

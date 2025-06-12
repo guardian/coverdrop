@@ -24,7 +24,7 @@ pub const IDENTITY_API_AWS_SECRET_ACCESS_KEY_SECRET: &str =
     "IDENTITY_API_AWS_SECRET_ACCESS_KEY_SECRET";
 // This is consider private but not secret
 pub const COVERDROP_POSTGRES_DB_SECRET: &str = "COVERDROP_POSTGRES_DB_SECRET";
-pub const MAILBOX_PASSWORD: &str = "this is a password";
+pub const MAILBOX_PASSWORD: &str = "zoom zoom zoom zoom zoom";
 
 pub fn get_all_secrets() -> Vec<String> {
     vec![

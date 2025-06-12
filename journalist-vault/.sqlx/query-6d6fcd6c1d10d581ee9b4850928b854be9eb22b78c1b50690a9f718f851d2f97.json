@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM journalist_provisioning_pks\n            WHERE pk_json->>'not_valid_after' < $1;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6d6fcd6c1d10d581ee9b4850928b854be9eb22b78c1b50690a9f718f851d2f97"
+}

@@ -11,6 +11,7 @@ mod user_queries;
 mod vault_message;
 mod vault_setup_bundle;
 
+use anyhow::Context;
 use key_rows::{
     AllVaultKeys, UntrustedCandidateJournalistIdKeyPairRow,
     UntrustedCandidateJournalistMessagingKeyPairRow, UntrustedJournalistProvisioningPublicKeyRow,
@@ -1032,6 +1033,7 @@ impl JournalistVault {
     }
 
     /// - Delete expired id and msg key pairs.
+    /// - Delete expired organization and provisioning public keys
     /// - Remove messages that are more than JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS old
     /// - Delete old logs
     pub async fn clean_up(&self, now: DateTime<Utc>) -> anyhow::Result<()> {
@@ -1040,14 +1042,28 @@ impl JournalistVault {
 
         let mut tx = self.pool.begin().await?;
 
-        message_queries::delete_messages_before(&mut tx, now, message_deletion_duration).await?;
+        message_queries::delete_messages_before(&mut tx, now, message_deletion_duration)
+            .await
+            .context("delete old messages")?;
 
         // Delete expired keys, order is important here to prevent foreign key
         // constraint issues we delete from the leaves (messaging keys) up to the ID keys.
-        msg_key_queries::delete_expired_msg_key_pairs(&mut tx, now).await?;
-        id_key_queries::delete_expired_id_key_pairs(&mut tx, now).await?;
+        msg_key_queries::delete_expired_msg_key_pairs(&mut tx, now)
+            .await
+            .context("delete expired msg key pairs")?;
+        id_key_queries::delete_expired_id_key_pairs(&mut tx, now)
+            .await
+            .context("delete expired id key pairs")?;
+        provisioning_key_queries::delete_expired_provisioning_pks(&mut tx, now)
+            .await
+            .context("delete expired provisioning pks")?;
+        org_key_queries::delete_expired_org_pks(&mut tx, now)
+            .await
+            .context("delete expired org pks")?;
 
-        logging::delete_old_logs(&mut tx, now).await?;
+        logging::delete_old_logs(&mut tx, now)
+            .await
+            .context("delete old logs")?;
 
         tx.commit().await?;
 

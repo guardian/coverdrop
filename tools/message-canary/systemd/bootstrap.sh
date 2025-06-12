@@ -16,4 +16,4 @@ echo "Bootstrap script starting message canary"
     --vaults-path=$VAULTS_PATH \
     --mph-u2j=1 \
     --mph-j2u=1 \
-    --max-delivery-time-hours 12
+    --max-delivery-time-hours 3

@@ -52,3 +52,20 @@ pub(crate) async fn org_pks(
 
     Ok(pks)
 }
+
+pub(crate) async fn delete_expired_org_pks(
+    conn: &mut SqliteConnection,
+    now: DateTime<Utc>,
+) -> anyhow::Result<()> {
+    sqlx::query!(
+        r#"
+            DELETE FROM anchor_organization_pks
+            WHERE pk_json->>'not_valid_after' < $1;
+        "#,
+        now
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}

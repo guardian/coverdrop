@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM anchor_organization_pks\n            WHERE pk_json->>'not_valid_after' < $1;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "1f1343f567d632070f46b2ab52b2e64ce04ce766becf97f1b9c287a15b0df297"
+}
