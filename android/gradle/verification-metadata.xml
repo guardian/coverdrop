@@ -10,6 +10,7 @@
       <trusted-artifacts>
          <trust file=".*-javadoc[.]jar" regex="true" reason="Required for IDE synchronization"/>
          <trust file=".*-sources[.]jar" regex="true" reason="Required for IDE synchronization"/>
+         <trust group="gradle" name="gradle"/>
       </trusted-artifacts>
       <ignored-keys>
          <ignored-key id="0F9FE62F88E938D8" reason="Key couldn't be downloaded from any key server"/>

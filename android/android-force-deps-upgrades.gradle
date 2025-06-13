@@ -1,18 +1,16 @@
-// We apply custom resolution strategies to force-upgrade transitive dependencies
-configurations.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java") {
-            useVersion("3.25.5")
-            because("https://security.snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-8055227")
-        }
-        if (requested.group == "com.google.protobuf" && requested.name == "protobuf-java-util") {
-            useVersion("3.25.5")
-            because("https://security.snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-8055228")
-        }
-        if (requested.group == "io.netty" && requested.name == "netty-codec-http2") {
-            useVersion("4.1.118.Final")
-            because("https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-8707739")
+configurations {
+    // we force upgrades of some transitive dependencies where there are known vulnerabilities and
+    // the intermediate dependencies are not being updated; generally most of these are not part
+    // of the shipped code, but are used in tests or in the build process
+    all {
+        resolutionStrategy {
+            force(
+                    // https://security.snyk.io/vuln/SNYK-JAVA-COMGOOGLEPROTOBUF-8055227
+                    "com.google.protobuf:protobuf-java:3.25.5",
+                    "com.google.protobuf:protobuf-java-util:3.25.5",
+                    // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-8707739
+                    "io.netty:netty-codec-http2:4.1.118.Final"
+            )
         }
     }
 }
-

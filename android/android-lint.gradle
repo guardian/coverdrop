@@ -1,5 +1,5 @@
 android {
-    lintOptions {
+    lint {
         // This enables all `warning` level Lint checks
         warningsAsErrors true
 
@@ -19,6 +19,10 @@ android {
         // provided by the library which target an incompatible lint API version
         // See: https://issuetracker.google.com/issues/311218673 (different versions, same problem)
         disable("ObsoleteLintCustomCheck")
+
+        // The LibSodium library has not been updated for the 16 KiB alignment yet
+        // See: https://github.com/guardian/coverdrop-internal/issues/2425
+        disable("Aligned16KB")
 
         abortOnError true
         checkDependencies true

@@ -8,6 +8,7 @@ java = "17"
 # Dependencies
 accompanist-pager = "0.28.0"
 accompanist-pager-indicators = "0.28.0"
+android-agp = "8.10.1"
 androidx-junit = "1.2.1"
 androidx-hilt = "1.2.0"
 appcompat = "1.7.0"
@@ -20,6 +21,7 @@ core-ktx = "1.16.0"
 espresso-core = "3.6.1"
 gson = "2.11.0"
 google-hilt = "2.56.2"
+jetbrains-kotlin-android = "2.1.0"
 junit = "4.13.2"
 lifecycle = "2.9.0"
 monitor = "1.7.2"
@@ -51,8 +53,8 @@ androidx-lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-lived
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle" }
-androidx-material-icons-core = {  group = "androidx.compose.material", name = "material-icons-core"}
-androidx-material-icons-extended = {  group = "androidx.compose.material", name = "material-icons-extended-android"}
+androidx-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended-android" }
 androidx-monitor = { module = "androidx.test:monitor", version.ref = "monitor" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation" }
 androidx-navigation-testing = { module = "androidx.navigation:navigation-testing", version.ref = "navigation" }
@@ -73,3 +75,7 @@ truth = { module = "com.google.truth:truth", version.ref = "truth" }
 
 [plugins]
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "google-hilt" }
+android-application = { id = "com.android.application", version.ref = "android-agp" }
+android-library = { id = "com.android.library", version.ref = "android-agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "jetbrains-kotlin-android" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "jetbrains-kotlin-android" }
