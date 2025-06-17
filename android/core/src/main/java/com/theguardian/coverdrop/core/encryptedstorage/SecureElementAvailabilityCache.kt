@@ -3,7 +3,6 @@ package com.theguardian.coverdrop.core.encryptedstorage
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import com.theguardian.coverdrop.core.persistence.PublicStorage
 import kotlin.properties.Delegates
 
@@ -35,11 +34,7 @@ internal open class SecureElementAvailabilityCache(
     fun isAvailable(): Boolean = cachedIsAvailable
 
     private fun internalCheckIsAvailable(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            false
-        } else {
-            context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
-        }
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
     }
 }
 

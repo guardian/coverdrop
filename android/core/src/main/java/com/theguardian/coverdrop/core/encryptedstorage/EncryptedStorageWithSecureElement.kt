@@ -1,8 +1,6 @@
 package com.theguardian.coverdrop.core.encryptedstorage
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.goterl.lazysodium.SodiumAndroid
 import com.lambdapioneer.sloth.SlothException
 import com.lambdapioneer.sloth.SlothLib
@@ -29,7 +27,6 @@ internal data class EncryptedStorageSecureElementBasedSession(
  *
  * See: https://github.com/lambdapioneer/sloth
  */
-@RequiresApi(Build.VERSION_CODES.P)
 internal class EncryptedStorageWithSecureElement(
     context: Context,
     slothLib: SlothLib,

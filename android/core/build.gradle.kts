@@ -61,8 +61,8 @@ dependencies {
     implementation(libs.com.lambdapioneer.sloth)
 
     // lib-sodium dependencies; the "@aar" is important
-    implementation("com.goterl:lazysodium-android:5.0.2@aar")
-    implementation("net.java.dev.jna:jna:5.8.0@aar")
+    implementation("com.goterl:lazysodium-android:5.2.0@aar")
+    implementation("net.java.dev.jna:jna:5.17.0@aar")
 
     testImplementation(libs.junit)
 
