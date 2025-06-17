@@ -73,16 +73,48 @@ dependencies {
     androidTestImplementation(libs.truth)
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            groupId = libs.versions.libraryGroupId.get()
+            artifactId = "core"
+            version = libs.versions.libraryVersion.get()
+
+            pom {
+                name.set("CoverDrop :core Android")
+                description.set("The CoverDrop core library for Android")
+                url.set("https://github.com/guardian/coverdrop")
+                packaging = "aar"
+                licenses {
+                    license {
+                        name.set("Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        name.set("The Guardian's Secure Messaging Team")
+                        email.set("secure.messaging@guardian.co.uk")
+                        url.set("https://github.com/guardian/coverdrop")
+                    }
+                }
+                organization {
+                    name.set("Guardian News & Media")
+                    url.set("https://www.theguardian.com")
+                }
+                scm {
+                    connection.set("scm:git:github.com/guardian/coverdrop.git")
+                    developerConnection.set("scm:git:ssh://github.com/guardian/coverdrop.git")
+                    url.set("https://github.com/guardian/coverdrop/tree/main/android")
+                }
+            }
+
+            // Use the artifacts called "release" for publishing.
+            afterEvaluate {
                 from(components["release"])
-                groupId = "com.theguardian.coverdrop"
-                artifactId = "core"
-                version = "0.0.1"
             }
         }
+
         repositories {
             maven {
                 url = uri("$buildDir/repo")
@@ -92,6 +124,17 @@ afterEvaluate {
 }
 
 signing {
-    useGpgCmd()
+    if (!System.getenv("AUTOMATED_MAVEN_RELEASE_PGP_SECRET").isNullOrEmpty()) {
+        // If the PGP secret is set, we use in-memory keys for signing.
+        // This is useful for automated releases.
+        useInMemoryPgpKeys(
+            System.getenv("AUTOMATED_MAVEN_RELEASE_PGP_SECRET"),
+            // We use a passwordless key so the an empty string is used as password here.
+            "",
+        )
+    } else {
+        // Otherwise, we use GPG command line tool for signing.
+        useGpgCmd()
+    }
     sign(publishing.publications)
 }

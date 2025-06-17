@@ -165,9 +165,13 @@ The following list enumerates the most prominent and important ones that are rel
 ## Publishing and integration
 
 The integration of the `:core` and `:ui` libraries with the reference app (`:app`) is done in the same way as it will be done with the main The Guardian app.
-For this both libraries are published to a local maven repository using the `./scripts/build_and_collect_aars.sh` script.
+
+For local testing and continuous integration, both libraries are published to a local maven repository using the `./scripts/build_and_collect_aars.sh` script.
 In CI this folder is exposed as a downloadable artifact that can be copied over to the main news reader app.
 For the built of the downloadable APK files, we point the reference app to the Maven copy (see `./scripts/patch_app_to_use_maven.sh`) so that the APKs are built against those .aar files.
+
+Periodically, we will publish the `:core` and `:ui` libraries to Maven Central.
+For this there is a separate GitHub Action that can be triggered manually and imports the access secrets for Sonatype.
 
 ## Supply chain verification
 
