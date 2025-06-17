@@ -78,7 +78,7 @@ data class CoverDropConfiguration(
      * Whether to show a warning banner underneath the top app bar that explains that the app is a
      * testing version. Clicking on the banner allows to temporarily disable the warning.
      */
-    val showBetaWarningBanner: Boolean = true,
+    val showBetaWarningBanner: Boolean = false,
 
     /**
      * Whether to show debug information on the about screen.

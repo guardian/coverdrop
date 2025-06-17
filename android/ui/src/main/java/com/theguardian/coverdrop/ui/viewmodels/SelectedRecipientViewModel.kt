@@ -96,9 +96,12 @@ class SelectedRecipientViewModel @Inject constructor(
         selectedRecipient.value = SingleRecipientWithChoice(recipient)
     }
 
-    @VisibleForTesting
-    fun forceReinitialize() {
+    fun forceResetToInitializing() {
         selectedRecipient.value = Initializing
-        getSelectedRecipient()
+    }
+
+    @VisibleForTesting
+    fun getInternalStateForTesting(): SelectedRecipientState {
+        return selectedRecipient.value
     }
 }

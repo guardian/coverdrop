@@ -1,5 +1,6 @@
 package com.theguardian.coverdrop.ui.tests
 
+import android.annotation.SuppressLint
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -23,6 +24,8 @@ import com.theguardian.coverdrop.ui.tests.utils.TEST_PASSPHRASE
 import com.theguardian.coverdrop.ui.tests.utils.waitForNavigationTo
 import com.theguardian.coverdrop.ui.tests.utils.waitUntilTextIsDisplayed
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -47,21 +50,26 @@ class EntryScreenTests {
     val testName = TestName()
 
     private lateinit var navController: TestNavHostController
+    private lateinit var sharedSelectedRecipientViewModel: SelectedRecipientViewModel
 
     @Inject
     lateinit var coverDropLib: ICoverDropLib
 
     @Before
+    @SuppressLint("ViewModelConstructorInComposable")
     fun setupAppNavHost() {
         hiltRule.inject()
 
         composeTestRule.activity.setContent {
             CoverDropSurface {
+                sharedSelectedRecipientViewModel =
+                    SelectedRecipientViewModel(coverDropLib.getPublicDataRepository())
                 navController = TestNavHostController(LocalContext.current)
                 navController.navigatorProvider.addNavigator(ComposeNavigator())
                 CoverDropNavGraph(
                     navController = navController,
-                    startDestination = CoverDropDestinations.ENTRY_ROUTE
+                    startDestination = CoverDropDestinations.ENTRY_ROUTE,
+                    sharedSelectedRecipientViewModel = sharedSelectedRecipientViewModel,
                 )
             }
         }
@@ -249,5 +257,19 @@ class EntryScreenTests {
             val state = composeTestRule.activityRule.scenario.state
             assertThat(state).isEqualTo(Lifecycle.State.DESTROYED)
         }
+    }
+
+    /**
+     * GIVEN the user is on the entry screen
+     * WHEN the user has not yet used any other feature of the app
+     * THEN the selected recipient state should be initializing
+     */
+    @Test
+    fun whenVisitStartScreen_thenSelectedRecipientStateIsInitializing() {
+        // ensure that lateinit variables are ready
+        runBlocking { composeTestRule.awaitIdle() }
+
+        assertThat(sharedSelectedRecipientViewModel.getInternalStateForTesting())
+            .isEqualTo(SelectedRecipientState.Initializing)
     }
 }

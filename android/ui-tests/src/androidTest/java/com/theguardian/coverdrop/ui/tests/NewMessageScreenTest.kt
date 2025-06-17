@@ -32,6 +32,7 @@ import com.theguardian.coverdrop.ui.tests.utils.waitForNavigationTo
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
 import com.theguardian.coverdrop.ui.utils.SampleDataProvider
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState
 import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.SingleRecipientForced
 import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientViewModel
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -269,7 +270,7 @@ class NewMessageScreenTest {
             publicDataRepo.simulateBehaviour(ONLY_ONE_JOURNALIST_AVAILABLE)
 
             // force reloading from the repository
-            sharedSelectedRecipientViewModel.forceReinitialize()
+            sharedSelectedRecipientViewModel.forceResetToInitializing()
             composeTestRule.waitUntil {
                 sharedSelectedRecipientViewModel.getSelectedRecipient().value is SingleRecipientForced
             }
@@ -332,5 +333,56 @@ class NewMessageScreenTest {
         composeTestRule.waitUntil(timeoutMillis = 1_000) {
             coverDropLib.getPrivateDataRepository().getLockState() == LockState.LOCKED
         }
+    }
+
+    /**
+     * GIVEN the user is on the new message screen and has selected a recipient
+     * WHEN the user navigates back to the entry screen
+     * THEN the recipient selection is cleared
+     */
+    @Test
+    fun whenNavigatingBackToInbox_thenRecipientSelectionIsCleared() {
+        val recipient = COVERDROP_SAMPLE_DATA.getTeams().first()
+        sharedSelectedRecipientViewModel.selectRecipient(recipient)
+
+        composeTestRule.onNodeWithTag("edit_recipient")
+            .assertTextContains(recipient.displayName)
+
+        runBlocking { composeTestRule.awaitIdle() }
+        composeTestRule.pressBack()
+        composeTestRule.onNodeWithText("Log out").performClick()
+        composeTestRule.waitForNavigationTo(navController, CoverDropDestinations.ENTRY_ROUTE)
+
+        // Check that the recipient selection is cleared
+        assertThat(sharedSelectedRecipientViewModel.getInternalStateForTesting())
+            .isEqualTo(SelectedRecipientState.Initializing)
+    }
+
+    /**
+     * GIVEN the user is on the new message screen and has selected a recipient
+     * WHEN the user sends a message and is navigated to the next screen
+     * THEN the recipient selection is cleared
+     */
+    @Test
+    fun whenSendingMessage_thenRecipientSelectionIsCleared() {
+        val recipient = COVERDROP_SAMPLE_DATA.getTeams().first()
+        sharedSelectedRecipientViewModel.selectRecipient(recipient)
+
+        composeTestRule.onNodeWithTag("edit_recipient")
+            .assertTextContains(recipient.displayName)
+
+        val nodeEditMessage = composeTestRule.onNodeWithTag("edit_message")
+        nodeEditMessage.performTextInput(COVERDROP_SAMPLE_DATA.getSampleMessage())
+
+        composeTestRule.onNodeWithText("Send message").performScrollToAndClick()
+
+        composeTestRule.waitForNavigationTo(
+            navController,
+            CoverDropDestinations.MESSAGE_SENT_ROUTE
+        )
+
+        // Check that the recipient selection is cleared
+        assertThat(sharedSelectedRecipientViewModel.getInternalStateForTesting())
+            .isEqualTo(SelectedRecipientState.Initializing)
     }
 }

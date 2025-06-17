@@ -106,12 +106,14 @@ fun NewMessageRoute(
         NewMessageUiState.FINISHED -> {
             LaunchedEffect(true) {
                 navController.navigate(CoverDropDestinations.MESSAGE_SENT_ROUTE)
+                sharedSelectedRecipientViewModel.forceResetToInitializing()
             }
         }
 
         NewMessageUiState.EXIT -> {
             LaunchedEffect(true) {
                 navController.popBackStack(CoverDropDestinations.ENTRY_ROUTE, inclusive = false)
+                sharedSelectedRecipientViewModel.forceResetToInitializing()
             }
         }
     }
