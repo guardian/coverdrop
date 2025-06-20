@@ -117,6 +117,11 @@ pub enum Command {
         #[clap(subcommand)]
         command: VerifyCommand,
     },
+    /// Administration commands for managing aspects of the protocol
+    Admin {
+        #[clap(subcommand)]
+        command: AdminCommand,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -364,5 +369,22 @@ pub enum VerifyCommand {
         journalist_provisioning_key_pair_path: PathBuf,
         #[clap(long)]
         organization_public_key_path: PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AdminCommand {
+    /// Generate an encrypted identity-api database
+    ///
+    /// Should be ran offline since it will have access
+    /// to the provisioning key pairs.
+    GenerateIdentityApiDatabase {
+        /// Path to the directory containing at least one trust anchor,
+        /// journalist and CoverNode provisioning key pairs.
+        #[clap(long)]
+        keys_path: PathBuf,
+        /// Optionally provide a specific path to the new database
+        #[clap(long, default_value = "./identity-api.db")]
+        db_path: PathBuf,
     },
 }

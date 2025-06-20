@@ -5,10 +5,11 @@ use crate::k8s::port_forward::{
 };
 use crate::ssh_scp::scp::{scp, ScpDirection};
 use crate::subprocess::wait_for_subprocess;
+use admin::generate_identity_api_db;
 use clap::Parser;
 use cli::{
-    BackupCommand, Cli, Command, CoverNodeCommand, DevelopmentCommand, IdentityApiCommand,
-    JournalistVaultCommand, ProductionCommand, StagingCommand, VerifyCommand,
+    AdminCommand, BackupCommand, Cli, Command, CoverNodeCommand, DevelopmentCommand,
+    IdentityApiCommand, JournalistVaultCommand, ProductionCommand, StagingCommand, VerifyCommand,
 };
 use commands::development_commands::{copy_all_images_to_multipass, copy_image_to_multipass};
 use commands::{
@@ -28,6 +29,7 @@ use coverup_home::CoverUpHome;
 use external_dependencies::external_dependency_preflight_check;
 use journalist_vault::JournalistVault;
 use multipass::list_coverdrop_nodes;
+use rpassword::prompt_password;
 use ssh_scp::{command_over_ssh, tunnel_and_port_forward};
 
 use std::fs::File;
@@ -35,6 +37,7 @@ use std::io::Write;
 use tokio::process;
 use tracing_subscriber::EnvFilter;
 
+mod admin;
 mod aws;
 mod bring_up;
 mod cli;
@@ -482,6 +485,18 @@ async fn main() -> anyhow::Result<()> {
                 } else {
                     println!("Failed to verify");
                 }
+            }
+        },
+        Command::Admin { command } => match command {
+            AdminCommand::GenerateIdentityApiDatabase { keys_path, db_path } => {
+                let password = prompt_password("Enter new identity-api database password: ")?;
+                let confirm_password = prompt_password("Confirm identity-api database password: ")?;
+
+                if password != confirm_password {
+                    anyhow::bail!("Provided passwords did not match");
+                }
+
+                generate_identity_api_db(db_path, &password, keys_path, true).await?;
             }
         },
     }
