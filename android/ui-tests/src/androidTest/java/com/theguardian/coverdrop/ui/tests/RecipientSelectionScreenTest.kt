@@ -158,6 +158,12 @@ class RecipientSelectionScreenTest {
             .isEqualTo(SelectedRecipientState.SingleRecipientWithChoice(firstTeam))
     }
 
+    /**
+     * GIVEN user visits the recipient selection screen
+     * WHEN the "Journalists" tab is clicked
+     * THEN all journalists are shown, except hidden ones
+     */
+    @Test
     fun whenJournalistIsHidden_thenNotShown() {
         val shownJournalist = COVERDROP_SAMPLE_DATA.getJournalists()
             .first { it.visibility == JournalistVisibility.VISIBLE }
@@ -168,5 +174,24 @@ class RecipientSelectionScreenTest {
 
         composeTestRule.onNodeWithText(shownJournalist.displayName).assertIsDisplayed()
         composeTestRule.onNodeWithText(hiddenJournalist.displayName).assertDoesNotExist()
+    }
+
+    /**
+     * GIVEN user has clicked a team and is on the confirmation screen
+     * WHEN clicking on the back button
+     * THEN back to the overview list
+     */
+    @Test
+    fun whenBackButtonClicked_onConfirmationScreen_thenBackToRecipientSelection() {
+        val firstTeam = COVERDROP_SAMPLE_DATA.getTeams().first()
+        composeTestRule.onNodeWithText("Journalists").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(firstTeam.displayName).performClick()
+        composeTestRule.onNodeWithText("Select team").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Journalists").assertDoesNotExist()
+
+        composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+
+        composeTestRule.onNodeWithText("Journalists").assertIsDisplayed()
     }
 }

@@ -45,6 +45,7 @@ import com.theguardian.coverdrop.ui.components.CoverDropTopAppBar
 import com.theguardian.coverdrop.ui.components.ErrorMessageWithIcon
 import com.theguardian.coverdrop.ui.components.PrimaryButton
 import com.theguardian.coverdrop.ui.components.SecondaryButton
+import com.theguardian.coverdrop.ui.navigation.BackPressHandler
 import com.theguardian.coverdrop.ui.theme.BackgroundNeutral
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.NeutralMiddle
@@ -112,10 +113,16 @@ private fun RecipientSelectionScreen(
     selectAndConfirmJournalist: (String) -> Unit = {},
     initialPage: Int = 0,
 ) {
+    fun onBack() {
+        when (screenState) {
+            RecipientSelectionState.SHOWING_SELECTION -> navController.navigateUp()
+            RecipientSelectionState.CONFIRM_TEAM -> backToList()
+        }
+    }
+
     Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            onNavigationOptionPressed = { navController.navigateUp() }
-        )
+        CoverDropTopAppBar(onNavigationOptionPressed = { onBack() })
+        BackPressHandler { onBack() }
 
         when (screenState) {
             RecipientSelectionState.SHOWING_SELECTION -> TeamAndJournalistSelectionContent(
