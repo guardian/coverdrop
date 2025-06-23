@@ -21,7 +21,6 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
 
         vectorDrawables {
             useSupportLibrary = true
@@ -169,7 +168,7 @@ publishing {
 
         repositories {
             maven {
-                url = uri("$buildDir/repo")
+                url = uri(layout.buildDirectory.dir("repo"))
             }
         }
     }

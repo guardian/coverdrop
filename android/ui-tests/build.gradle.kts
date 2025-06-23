@@ -14,7 +14,6 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
 
         applicationId = "com.theguardian.coverdrop.ui.tests"
         versionCode = 1

@@ -13,7 +13,6 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -117,7 +116,7 @@ publishing {
 
         repositories {
             maven {
-                url = uri("$buildDir/repo")
+                url = uri(layout.buildDirectory.dir("repo"))
             }
         }
     }
