@@ -237,13 +237,15 @@ export const Chat = ({
                     style={{
                       alignSelf,
                       marginBottom: `-${size.base}`,
-                      maxWidth: "50%",
+                      maxWidth: "85%",
                     }}
                     key={messageId}
                   >
                     <div
                       style={{
                         whiteSpace: "pre-wrap",
+                        overflowWrap: "break-word",
+                        maxWidth: "100%",
                         alignSelf,
                         color,
                         background,
