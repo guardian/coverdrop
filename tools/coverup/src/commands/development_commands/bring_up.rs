@@ -24,7 +24,7 @@ pub async fn bring_up(
     let nodes = list_coverdrop_nodes()?;
 
     // We want to initialize our cluster while it's in a clean state
-    // with all nodes up so let's delete any non-runnning nodes
+    // with all nodes up so let's delete any non-running nodes
     let non_running_nodes = nodes.iter().filter(|node| node.state != "Running");
 
     for node in non_running_nodes {

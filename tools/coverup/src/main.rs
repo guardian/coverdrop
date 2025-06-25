@@ -12,6 +12,7 @@ use cli::{
     IdentityApiCommand, JournalistVaultCommand, ProductionCommand, StagingCommand, VerifyCommand,
 };
 use commands::development_commands::{copy_all_images_to_multipass, copy_image_to_multipass};
+use commands::staging_commands::minio_tunnel;
 use commands::{
     back_up, copy_file, covernode_commands, data_copier_shell, development_commands,
     identity_api_commands, list_files, production_commands, staging_commands,
@@ -34,7 +35,7 @@ use ssh_scp::{command_over_ssh, tunnel_and_port_forward};
 
 use std::fs::File;
 use std::io::Write;
-use tokio::process;
+use tokio::{process, signal};
 use tracing_subscriber::EnvFilter;
 
 mod admin;
@@ -211,6 +212,18 @@ async fn main() -> anyhow::Result<()> {
                     };
                 })
                 .await?;
+            }
+            StagingCommand::Minio { aws_config, port } => {
+                let mut child = minio_tunnel(aws_config, port)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("Error setting up minio tunnel: {:?}", e))?;
+
+                // Wait for Ctrl+C
+                signal::ctrl_c().await?;
+                println!("\nReceived Ctrl+C, shutting down...");
+
+                // Kill the tunnel process
+                child.kill().await?;
             }
             StagingCommand::K8s { aws_config, port } => {
                 let kubeconfig_path = coverup_home.kubeconfig_path_for_stage(Stage::Staging)?;

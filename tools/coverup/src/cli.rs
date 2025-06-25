@@ -194,6 +194,13 @@ pub enum StagingCommand {
         #[clap(long, default_value = "8444")]
         port: u16,
     },
+    Minio {
+        #[command(flatten)]
+        aws_config: AwsConfig,
+        /// Local port to use
+        #[clap(long, default_value = "9001")]
+        port: u16,
+    },
     /// Create a tunnel to the staging k3s cluster then setup port forwarding for the kubernetes dashboard.
     K8s {
         #[command(flatten)]
