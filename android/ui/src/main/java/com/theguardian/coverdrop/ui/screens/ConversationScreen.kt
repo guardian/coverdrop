@@ -13,6 +13,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -81,13 +83,18 @@ private fun ConversationScreen(
             onNavigationOptionPressed = navigateBack,
         )
 
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .fillMaxWidth(1f)
                 .weight(1f)
         ) {
             ConversationMainContent(messages, thread)
+        }
+
+        LaunchedEffect(messages) {
+            scrollState.animateScrollTo(scrollState.maxValue)
         }
 
         Divider(color = NeutralMiddle)

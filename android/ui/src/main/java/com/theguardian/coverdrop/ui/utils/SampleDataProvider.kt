@@ -93,11 +93,11 @@ class SampleDataProvider {
         val messages = List(numMessages) { index ->
             val time = startTime + timesteps.multipliedBy(index.toLong())
             if (index == numMessages - 1 && !lastMessageIsSent) {
-                Message.Pending(getSampleText(random.nextInt(20)), time)
+                Message.Pending(getSampleText(random.nextInt(20)) + " id$index", time)
             } else if (index % 2 == 0) {
-                Message.Sent(getSampleText(random.nextInt(20)), time)
+                Message.Sent(getSampleText(random.nextInt(20)) + " id$index", time)
             } else {
-                Message.Received(getSampleText(random.nextInt(20)), time)
+                Message.Received(getSampleText(random.nextInt(20)) + " id$index", time)
             }
         }
 

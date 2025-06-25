@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CoverDropSample" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Disable edge-to-edge mode until we have migrated the UI -->
+        <!-- See: https://github.com/guardian/coverdrop-internal/issues/3286 -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+    </style>
+</resources>

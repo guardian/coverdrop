@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -28,6 +29,7 @@ import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -209,6 +211,46 @@ class ConversationScreenTest {
         composeTestRule.onNodeWithText("Send message").performClick()
 
         // observe new message in thread
+        composeTestRule.waitUntilTextIsDisplayed("new user message")
+    }
+
+    /**
+     * GIVEN there are many messages in the thread
+     * WHEN the users navigates to the conversation
+     * THEN the UI scrolls to the bottom of the thread
+     */
+    @Test
+    fun whenManyMessages_thenScrollToBottom() {
+        val mockedCoverDropLib = (coverDropLib as CoverDropLibMock)
+        val messages = COVERDROP_SAMPLE_DATA.getSampleThread(numMessages = 20)
+        mockedCoverDropLib.getPrivateDataRepository().addConversationForId(
+            id = journalistId,
+            thread = messages
+        )
+
+        runBlocking { composeTestRule.awaitIdle() }
+        composeTestRule.onNodeWithText("id19", substring = true).isDisplayed()
+    }
+
+    /**
+     * GIVEN there are many messages in the thread
+     * WHEN the user sends a new message
+     * THEN the UI scrolls to the bottom of the thread
+     */
+    @Test
+    fun whenSendingNewMessage_thenScrollToBottom() {
+        val mockedCoverDropLib = (coverDropLib as CoverDropLibMock)
+        val messages = COVERDROP_SAMPLE_DATA.getSampleThread(numMessages = 20)
+        mockedCoverDropLib.getPrivateDataRepository().addConversationForId(
+            id = journalistId,
+            thread = messages
+        )
+
+        runBlocking { composeTestRule.awaitIdle() }
+        composeTestRule.onNodeWithText("Send a new message").performClick()
+        composeTestRule.onNodeWithTag("edit_message").performTextInput("new user message")
+        composeTestRule.onNodeWithText("Send message").performClick()
+
         composeTestRule.waitUntilTextIsDisplayed("new user message")
     }
 }
