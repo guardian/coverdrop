@@ -1,6 +1,7 @@
 use std::{fs::File, path::Path, str::FromStr};
 
 use app_state::AppStateHandle;
+use clap::Parser as _;
 use commands::{
     admin::{
         force_rotate_id_pk, force_rotate_msg_pk, get_logs, get_public_info,
@@ -22,7 +23,10 @@ use tauri::{App, Manager as _};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
+use cli::Cli;
+
 mod app_state;
+mod cli;
 mod commands;
 mod error;
 mod logging;
@@ -86,16 +90,18 @@ fn handle_profiles(profiles_path: impl AsRef<Path>) -> anyhow::Result<Profiles> 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let cli = Cli::parse();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|app| {
+        .setup(move |app| {
             if let Some(proj_dirs) =
                 ProjectDirs::from("com", "theguardian", "coverdrop-journalist-client")
             {
                 let notifications = start_notification_service(app.app_handle());
-                let app_state = AppStateHandle::new(notifications);
+                let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
 
                 tracing_subscriber::registry()
                     .with(JournalistClientLogLayer::new(app_state.logs.clone()))

@@ -4274,6 +4274,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "clap",
  "common",
  "directories",
  "hex",

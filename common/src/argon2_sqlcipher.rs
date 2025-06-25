@@ -23,7 +23,7 @@ pub enum ConnectMode {
 enum KeyPragmaValue<'a> {
     Password(&'a str),
     Argon2Key(SecretBoxKey),
-    // TODO: delete https://github.com/guardian/coverdrop-internal/issues/3100
+    // TODO delete https://github.com/guardian/coverdrop-internal/issues/3100
     HexArgon2Key(SecretBoxKey),
 }
 

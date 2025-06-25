@@ -23,6 +23,7 @@ tauri-plugin-dialog = "2"
 anyhow.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
+clap.workspace = true
 directories.workspace = true
 hex.workspace = true
 rand.workspace = true

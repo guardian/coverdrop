@@ -37,7 +37,7 @@ pub enum AppState {
         /// Path to vault
         path: PathBuf,
         /// Handle to background task runner, useful for aborting maybe?
-        _runner_join_handle: JoinHandle<()>,
+        _runner_join_handle: Option<JoinHandle<()>>,
         /// The users vault - unlocked
         vault: JournalistVault,
         api_client: ApiClient,
@@ -64,16 +64,18 @@ pub struct AppStateHandle {
     notifications: Notifications,
     inner: RwLock<AppState>,
     pub logs: LogReceiver,
+    no_background_tasks: bool,
 }
 
 impl AppStateHandle {
-    pub fn new(notifications: Notifications) -> Self {
+    pub fn new(notifications: Notifications, no_background_tasks: bool) -> Self {
         Self {
             name_generator: NameGenerator::default(),
             public_info: PublicInfo::default(),
             inner: RwLock::new(AppState::default()),
             notifications,
             logs: LogReceiver::default(),
+            no_background_tasks,
         }
     }
 
@@ -98,33 +100,39 @@ impl AppStateHandle {
             .process_vault_setup_bundle(&api_client, time::now())
             .await?;
 
-        let runner_join_handle = tokio::task::spawn({
-            // We don't ever want this to run a web server so it should only ever
-            // be RunnerMode::Timer
-            let mut runner = TaskRunner::new(RunnerMode::Timer);
+        let runner_join_handle = if self.no_background_tasks {
+            tracing::info!("Background tasks disabled via --no-background-tasks flag");
+            None
+        } else {
+            tracing::debug!("Starting background tasks");
+            Some(tokio::task::spawn({
+                // We don't ever want this to run a web server so it should only ever
+                // be RunnerMode::Timer
+                let mut runner = TaskRunner::new(RunnerMode::Timer);
 
-            let refresh_public_info_task =
-                RefreshPublicInfo::new(&api_client, &vault, &self.public_info);
-            let pull_dead_drops_task =
-                PullDeadDrops::new(&api_client, &vault, &self.public_info, &self.notifications);
-            let send_journalist_messages_task =
-                SendJournalistMessages::new(&api_client, &vault, &self.public_info);
-            let rotate_keys_task = RotateJournalistKeys::new(&api_client, &vault);
-            let clean_up_vault_task = CleanUpVault::new(&vault);
+                let refresh_public_info_task =
+                    RefreshPublicInfo::new(&api_client, &vault, &self.public_info);
+                let pull_dead_drops_task =
+                    PullDeadDrops::new(&api_client, &vault, &self.public_info, &self.notifications);
+                let send_journalist_messages_task =
+                    SendJournalistMessages::new(&api_client, &vault, &self.public_info);
+                let rotate_keys_task = RotateJournalistKeys::new(&api_client, &vault);
+                let clean_up_vault_task = CleanUpVault::new(&vault);
 
-            async move {
-                // Pulling public info *MUST* be the first task so that the pull dead drops
-                // and rotate keys tasks have fresh keys.
-                runner.add_task(refresh_public_info_task).await;
+                async move {
+                    // Pulling public info *MUST* be the first task so that the pull dead drops
+                    // and rotate keys tasks have fresh keys.
+                    runner.add_task(refresh_public_info_task).await;
 
-                runner.add_task(pull_dead_drops_task).await;
-                runner.add_task(rotate_keys_task).await;
-                runner.add_task(send_journalist_messages_task).await;
-                runner.add_task(clean_up_vault_task).await;
+                    runner.add_task(pull_dead_drops_task).await;
+                    runner.add_task(rotate_keys_task).await;
+                    runner.add_task(send_journalist_messages_task).await;
+                    runner.add_task(clean_up_vault_task).await;
 
-                runner.run().await;
-            }
-        });
+                    runner.run().await;
+                }
+            }))
+        };
 
         self.logs.use_vault(&vault, time::now()).await?;
 
