@@ -214,7 +214,7 @@ pub async fn api_has_anchor_org_pk(
     Ok(has_key)
 }
 
-pub async fn run_post_ceremony_actions(
+pub async fn upload_keys_to_api(
     bundle_path: impl AsRef<Path>,
     api_client: &ApiClient,
     aws_config: &AwsConfig,

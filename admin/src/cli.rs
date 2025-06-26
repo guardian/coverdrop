@@ -73,10 +73,9 @@ pub enum Commands {
         #[clap(long)]
         target_directory: PathBuf,
     },
-    /// After a the key creation ceremony has been performed various keys need to be uploaded to the
-    /// API and other services. This is done by providing this command with the public bundle created
-    /// during the ceremony.
-    RunPostCeremonyUpload {
+    /// After a the key creation ceremony has been performed, this command can be used to upload the organization
+    /// public key, covernode and journalist provisioning public keys, and admin public key to the API.
+    UploadKeysToApi {
         /// The path to the key bundle that was created during the offline proportion of the ceremony.
         #[clap(long)]
         bundle_directory_path: PathBuf,

@@ -10,11 +10,11 @@ use admin::generate_journalist_provisioning_key_pair;
 use admin::generate_test_vectors;
 use admin::post_log_config_form;
 use admin::reseed_journalist_vault_id_key_pair;
-use admin::run_post_ceremony_actions;
 use admin::run_setup_ceremony;
 use admin::submit_delete_journalist_form;
 use admin::update_journalist;
 use admin::update_system_status;
+use admin::upload_keys_to_api;
 use admin::{
     copy_admin_key_pair, generate_covernode_identity_key_pair,
     generate_covernode_messaging_key_pair, generate_organization_key_pair,
@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
             bundle_directory_path,
             target_directory,
         } => copy_identity_api_key_pairs(bundle_directory_path, target_directory).await,
-        Commands::RunPostCeremonyUpload {
+        Commands::UploadKeysToApi {
             bundle_directory_path,
             api_url,
             aws_config,
@@ -78,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
         } => {
             let api_client = ApiClient::new(api_url);
 
-            run_post_ceremony_actions(
+            upload_keys_to_api(
                 bundle_directory_path,
                 &api_client,
                 &aws_config,

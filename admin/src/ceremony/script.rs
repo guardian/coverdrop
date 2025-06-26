@@ -38,15 +38,15 @@ Make sure the following step is completed:
 - Move the CoverNode provisioning key pair to removable device 'B'. This will be used by the identity API.
 Have you completed this step?";
 
-pub const COVERNODE_IDENTITY_KEY_PAIRS: &str =
-    "The CoverNode identity key pair(s) has been created.
+pub const COVERNODE_DB: &str = "The CoverNode database(s) has been created.
 Make sure the following step is completed:
-- Move the CoverNode identity key pair(s) to removable device 'D'. This will be used by the CoverNode.
+- Move the CoverNode database(s) to removable device 'D'. This will be used by the CoverNode.
 Have you completed this step?";
 
-pub const ADMIN_KEY_PAIR: &str = "The system status key pair has been created.
+// should we be calling this admin key pair?
+pub const ADMIN_KEY_PAIR: &str = "The admin key pair has been created.
 Make sure the following step is completed:
-- Move the system status key pair to removable device 'E'.
+- Move the admin key pair to removable device 'E'.
 Have you completed this step?";
 
 pub const SET_SYSTEM_STATUS_BUNDLE: &str =

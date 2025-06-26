@@ -235,7 +235,7 @@ impl CeremonyStep {
                         .await?;
                 }
 
-                ask_user_to_confirm(COVERNODE_IDENTITY_KEY_PAIRS, *assume_yes)?;
+                ask_user_to_confirm(COVERNODE_DB, *assume_yes)?;
 
                 Ok(())
             }
