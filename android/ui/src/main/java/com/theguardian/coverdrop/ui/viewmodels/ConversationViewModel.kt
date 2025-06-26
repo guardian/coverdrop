@@ -28,7 +28,7 @@ class ConversationViewModel @Inject constructor(
     val activeConversation = mutableActiveConversation.asStateFlow()
 
     private val message = MutableStateFlow("")
-    val messageSizeState = message.map { DraftMessage(text = message.value).getFillLimit() }
+    val messageSizeState = message.map { DraftMessage(text = message.value).getFillLevel() }
 
     init {
         getActive()

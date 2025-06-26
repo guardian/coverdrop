@@ -44,7 +44,7 @@ class NewMessageViewModel @Inject constructor(
     private val errorMessage = MutableStateFlow<String?>(null)
 
     val messageSizeState = message.map { text ->
-        DraftMessage(text = text).getFillLimit()
+        DraftMessage(text = text).getFillLevel()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0f)
 
     fun getErrorMessage(): StateFlow<String?> = errorMessage
@@ -94,7 +94,7 @@ class NewMessageViewModel @Inject constructor(
 
         // the message must fit into the allocated length once compressed
         val draftMessage = DraftMessage(text = message)
-        if (draftMessage.getFillLimit() > 1f) {
+        if (draftMessage.getFillLevel() > 1f) {
             validationErrors.add(context.getString(R.string.screen_new_message_error_message_too_long))
         }
 
