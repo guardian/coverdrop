@@ -66,7 +66,7 @@ fun ChatBubble(message: Message) {
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentSize()
-            .padding(Padding.S),
+            .padding(Padding.M),
         border = borderStroke,
         shape = RoundedCornerShape.M,
         backgroundColor = backgroundColour,

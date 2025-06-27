@@ -6,12 +6,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,12 +33,18 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.theguardian.coverdrop.core.models.JournalistInfo
 import com.theguardian.coverdrop.core.models.Message
 import com.theguardian.coverdrop.core.models.MessageThread
 import com.theguardian.coverdrop.ui.R
@@ -126,6 +137,10 @@ private fun ConversationMainContent(
                 .padding(Padding.M),
         )
     } else {
+        thread?.recipient?.let {
+            SecureConversationHeading(it)
+        }
+
         ChatMessages(messages, thread?.recipient?.displayName ?: "")
 
         // information box if the last message comes from the user; depends on the message status
@@ -149,6 +164,46 @@ private fun ConversationMainContent(
             else -> {}
         }
     }
+}
+
+@Composable
+private fun SecureConversationHeading(info: JournalistInfo) {
+    val text = buildAnnotatedString {
+        appendInlineContent("secure_conversation_icon", "[icon]")
+        append(
+            stringResource(
+                R.string.screen_conversation_heading_secure_conversation,
+                info.displayName
+            )
+        )
+    }
+
+    val inlineContent = mapOf(
+        "secure_conversation_icon" to InlineTextContent(
+            placeholder = Placeholder(
+                width = 22.sp,
+                height = 18.sp,
+                placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter
+            ),
+            children = {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.onBackground,
+                )
+            }
+        )
+    )
+
+    Text(
+        text = text,
+        inlineContent = inlineContent,
+        fontWeight = FontWeight.W500,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Padding.L, bottom = Padding.M, start = Padding.M, end = Padding.M)
+    )
 }
 
 @Composable

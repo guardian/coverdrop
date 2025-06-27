@@ -135,6 +135,7 @@
     <string name="screen_conversation_sent">Your message has been sent. We recommend that you wait for a response before you send another message.</string>
     <string name="screen_conversation_empty">There are no messages in this conversation. This might be because they expired after 14 days and have been automatically deleted.</string>
     <string name="screen_conversation_button_send_new">Send a new message</string>
+    <string name="screen_conversation_heading_secure_conversation">Secure chat with %1$s</string>
 
     <!--Component : strapline header with explanation-->
     <string name="component_strapline_content_explanation">The Guardian Secure Messaging service was developed to allow you to share stories with us securely and privately using strong encryption. \n\nIt is designed to prevent others from even knowing you are in communication with us.</string>
