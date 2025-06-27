@@ -3,8 +3,9 @@ android {
         // This enables all `warning` level Lint checks
         warningsAsErrors true
 
-        // We update dependencies in sync with the main app
-        disable("GradleDependency")
+        // We update dependencies in sync with the main app (they are not a good reason to fail the
+        // CI lint check)
+        disable("GradleDependency", "AndroidGradlePluginVersion")
 
         // For the `@aar` imports we cannot use the Gradle catalogue yet
         disable("UseTomlInstead")
