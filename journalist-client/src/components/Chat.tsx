@@ -104,7 +104,7 @@ export const Chat = ({
     }
 
     prevUserReplyKey.current = userReplyKey;
-  }, [userReplyKey, messages]);
+  }, [userReplyKey]);
 
   const adjustHeight = () => {
     const textarea = textareaRef.current;

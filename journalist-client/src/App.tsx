@@ -85,6 +85,20 @@ const App = ({
     });
   }, []);
 
+  useEffect(() => {
+    const unreadMessageHasArrivedForSelectedUser =
+      currentUserReplyKey &&
+      messageStore.messages.some(
+        (msg) =>
+          msg.userPk === currentUserReplyKey &&
+          msg.type === "userToJournalistMessage" &&
+          !msg.read,
+      );
+    if (unreadMessageHasArrivedForSelectedUser) {
+      setCurrentUserReplyKey(null);
+    }
+  }, [messageStore.messages.length]);
+
   return (
     <div>
       {vaultState === null ? (
