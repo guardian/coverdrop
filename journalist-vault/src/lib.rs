@@ -414,6 +414,11 @@ impl JournalistVault {
         message_queries::mark_as_read(&mut conn, message_id).await
     }
 
+    pub async fn mark_as_unread(&self, message_id: i64) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        message_queries::mark_as_unread(&mut conn, message_id).await
+    }
+
     pub async fn messages(&self) -> anyhow::Result<Vec<VaultMessage>> {
         let mut conn = self.pool.acquire().await?;
 

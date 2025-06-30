@@ -166,6 +166,20 @@ pub(crate) async fn mark_as_read(
     Ok(())
 }
 
+pub(crate) async fn mark_as_unread(
+    conn: &mut SqliteConnection,
+    message_id: i64,
+) -> anyhow::Result<()> {
+    sqlx::query!(
+        r#"UPDATE u2j_messages SET read = false WHERE id = ?1"#,
+        message_id
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}
+
 /// Adds a new messages to the FIFO outbound queue.
 pub(crate) async fn enqueue_message(
     conn: &mut SqliteConnection,

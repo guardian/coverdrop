@@ -6,6 +6,7 @@ type MessageState = {
   messages: Message[];
   setMessages: (messages: Message[]) => void;
   markAsRead: (id: bigint) => void;
+  markAsUnread: (id: bigint) => void;
 };
 
 export const useMessageStore = create<MessageState>((set) => ({
@@ -25,6 +26,14 @@ export const useMessageStore = create<MessageState>((set) => ({
       messages: state.messages.map((message: Message) =>
         message.type === "userToJournalistMessage" && message.id === id
           ? { ...message, read: true }
+          : message,
+      ),
+    })),
+  markAsUnread: (id: bigint) =>
+    set((state) => ({
+      messages: state.messages.map((message: Message) =>
+        message.type === "userToJournalistMessage" && message.id === id
+          ? { ...message, read: false }
           : message,
       ),
     })),

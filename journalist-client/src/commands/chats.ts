@@ -31,6 +31,11 @@ export const markAsRead = async (messageId: bigint): Promise<void> => {
   useMessageStore.getState().markAsRead(messageId);
 };
 
+export const markAsUnread = async (messageId: bigint): Promise<void> => {
+  await invokeWithErrorMessage("mark_as_unread", { messageId });
+  useMessageStore.getState().markAsUnread(messageId);
+};
+
 export const updateUserStatus = async (
   replyKey: string,
   status: UserStatus,

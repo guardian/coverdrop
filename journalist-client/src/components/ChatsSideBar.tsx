@@ -23,7 +23,7 @@ type Chat = {
   name: string;
   replyKey: string;
   lastMessageTimestamp: string;
-  read: boolean;
+  hasUnread: boolean;
   userStatus: UserStatus;
   lastMessage: string;
 };
@@ -82,7 +82,7 @@ const chatsToSideNav = (
                   <EuiFlexItem
                     grow={false}
                     style={{
-                      color: !chat.read
+                      color: chat.hasUnread
                         ? palette("chat-sidebar-unread-message-time-color")
                         : "default",
                     }}
@@ -107,7 +107,7 @@ const chatsToSideNav = (
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
                     <div>
-                      {!chat.read ? (
+                      {chat.hasUnread ? (
                         <EuiFlexItem
                           style={{
                             width: size.s,
@@ -172,49 +172,44 @@ export const ChatsSideBar = ({
     });
   }, [JSON.stringify(messageUserPks), JSON.stringify(userInfo)]);
 
-  const chats = messages
-    .map<Chat | undefined>((message) => {
-      if (!userInfo[message.userPk]) {
-        // error created above
-        return undefined;
-      }
-      const thisUserInfo = userInfo[message.userPk];
-      const chatName = thisUserInfo.alias
-        ? thisUserInfo.alias
-        : thisUserInfo.displayName;
-      if (message.type == "userToJournalistMessage") {
+  const chats = Object.values(
+    messages.reduce(
+      (acc, message) => {
+        if (!userInfo[message.userPk]) {
+          // error created above
+          return acc;
+        }
+        const thisUserInfo = userInfo[message.userPk];
+        const chatName = thisUserInfo.alias ?? thisUserInfo.displayName;
+        const maybeExistingInAcc = acc[message.userPk];
+        const messageTimestamp =
+          message.type === "userToJournalistMessage"
+            ? message.receivedAt
+            : message.sentAt;
+        const isRead =
+          message.type === "userToJournalistMessage" ? message.read : true;
+        const isLatestMessage =
+          !maybeExistingInAcc ||
+          maybeExistingInAcc.lastMessageTimestamp < messageTimestamp;
         return {
-          name: chatName,
-          replyKey: message.userPk,
-          lastMessageTimestamp: message.receivedAt,
-          read: message.read,
-          userStatus: thisUserInfo.status,
-          lastMessage: message.message,
+          ...acc,
+          [message.userPk]: {
+            name: chatName,
+            replyKey: message.userPk,
+            lastMessageTimestamp: isLatestMessage
+              ? messageTimestamp
+              : maybeExistingInAcc.lastMessageTimestamp,
+            hasUnread: !isRead || maybeExistingInAcc?.hasUnread,
+            userStatus: thisUserInfo.status,
+            lastMessage: isLatestMessage
+              ? message.message
+              : maybeExistingInAcc.lastMessage,
+          },
         };
-      } else {
-        return {
-          name: chatName,
-          replyKey: message.userPk,
-          lastMessageTimestamp: message.sentAt,
-          read: true,
-          userStatus: thisUserInfo.status,
-          lastMessage: message.message,
-        };
-      }
-    })
-    .filter((c) => c !== undefined)
-    .sort((a, b) =>
-      a!.lastMessageTimestamp > b!.lastMessageTimestamp ? -1 : 1,
-    )
-    // remove duplicates, keeping the element which appears first
-    // (the one with most recent timestamp)
-    .filter(
-      (value, i, array) =>
-        i ===
-        array.findIndex(
-          (arrayValue) => arrayValue!.replyKey === value!.replyKey,
-        ),
-    );
+      },
+      {} as Record<string, Chat>,
+    ),
+  ).sort((a, b) => (a.lastMessageTimestamp > b.lastMessageTimestamp ? -1 : 1));
 
   const inboxChats = chats.filter((c) => c.userStatus == "ACTIVE");
   const mutedChats = chats.filter((c) => c.userStatus == "MUTED");

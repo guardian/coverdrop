@@ -100,6 +100,22 @@ pub async fn mark_as_read(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn mark_as_unread(
+    app: State<'_, AppStateHandle>,
+    message_id: i64,
+) -> Result<(), CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+
+    tracing::info!("Marking message {} as unread", message_id);
+
+    vault.mark_as_unread(message_id).await.context(VaultSnafu {
+        failed_to: "mark message as unread",
+    })?;
+
+    Ok(())
+}
+
 fn user_pk_from_hex(reply_key: &str) -> Result<UserPublicKey, CommandError> {
     let user_pk = hex::decode(reply_key).ok().context(GenericSnafu {
         ctx: "Failed to decode reply key hex",

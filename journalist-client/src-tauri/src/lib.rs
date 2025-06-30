@@ -9,7 +9,7 @@ use commands::{
     },
     chats::{
         burst_cover_messages, check_message_length, get_chats, get_users, mark_as_read,
-        submit_message, update_user_alias_and_description, update_user_status,
+        mark_as_unread, submit_message, update_user_alias_and_description, update_user_status,
     },
     profiles::get_profiles,
     vaults::{add_trust_anchor, get_colocated_password, get_vault_state, unlock_vault},
@@ -150,6 +150,7 @@ pub fn run() {
             get_public_info,
             check_message_length,
             mark_as_read,
+            mark_as_unread,
             update_user_status,
             update_user_alias_and_description,
             get_logs,
