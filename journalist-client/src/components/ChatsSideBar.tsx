@@ -180,7 +180,7 @@ export const ChatsSideBar = ({
           return acc;
         }
         const thisUserInfo = userInfo[message.userPk];
-        const chatName = thisUserInfo.alias ?? thisUserInfo.displayName;
+        const chatName = thisUserInfo.alias || thisUserInfo.displayName;
         const maybeExistingInAcc = acc[message.userPk];
         const messageTimestamp =
           message.type === "userToJournalistMessage"
