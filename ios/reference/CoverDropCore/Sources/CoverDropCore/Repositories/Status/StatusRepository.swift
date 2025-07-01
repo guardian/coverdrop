@@ -8,12 +8,12 @@ class StatusRepository: CacheableApiRepository<StatusData> {
             now: now,
             urlSession: urlSession,
             defaultResponse: StatusData(
-                status: .unavailable,
-                description: "Unavailable",
+                status: .available,
+                description: "Available",
                 timestamp: RFC3339DateTimeString(
                     date: DateFunction.currentTime()
                 ),
-                isAvailable: false
+                isAvailable: true
             ),
             localRepository: LocalCacheFileRepository<StatusData>(
                 file: CoverDropFiles.statusCache
