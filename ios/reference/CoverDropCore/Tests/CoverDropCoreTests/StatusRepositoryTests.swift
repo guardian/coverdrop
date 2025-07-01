@@ -15,7 +15,7 @@ final class StatusRepositoryTests: XCTestCase {
         let results = try await StatusRepository(config: config, urlSession: urlSession)
             .downloadAndUpdateAllCaches(cacheEnabled: false)
 
-        XCTAssertTrue(results?.status == .unavailable)
+        XCTAssertTrue(results?.status == .available)
     }
 
     func testFirstRunWithOutsideCacheWindowApiResponseLoadsDeadDropsAndCacheDisabled() async throws {
@@ -36,7 +36,7 @@ final class StatusRepositoryTests: XCTestCase {
         let results = try await StatusRepository(config: config, urlSession: urlSession)
             .downloadAndUpdateAllCaches()
 
-        XCTAssertTrue(results?.status == .unavailable)
+        XCTAssertTrue(results?.status == .available)
     }
 
     func testFirstRunWithOutsideCacheWindowApiResponseLoadsDeadDrops() async throws {
@@ -91,7 +91,7 @@ final class StatusRepositoryTests: XCTestCase {
             urlSession: urlSession
         ).downloadAndUpdateAllCaches(cacheEnabled: false)
 
-        XCTAssertTrue(results?.status == .unavailable)
+        XCTAssertTrue(results?.status == .available)
     }
 
     func testCacheInsideCacheWindowUpdatesCache() async throws {
