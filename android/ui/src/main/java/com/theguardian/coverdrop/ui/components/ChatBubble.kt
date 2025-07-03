@@ -1,7 +1,9 @@
 package com.theguardian.coverdrop.ui.components
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,18 +15,28 @@ import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.theguardian.coverdrop.core.models.ExpiryState
 import com.theguardian.coverdrop.core.models.Message
+import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.ui.R
+import com.theguardian.coverdrop.ui.theme.ChatTextColorExpired
+import com.theguardian.coverdrop.ui.theme.ChatTextColorExpiring
 import com.theguardian.coverdrop.ui.theme.ChatTextColorPending
 import com.theguardian.coverdrop.ui.theme.ChatTextColorSent
 import com.theguardian.coverdrop.ui.theme.CoverDropPreviewSurface
@@ -37,7 +49,7 @@ import java.time.Duration
 import java.time.Instant
 
 @Composable
-fun ChatBubble(message: Message) {
+fun ChatBubble(message: Message, now: Instant = DefaultClock().now()) {
     val textContent = when (message) {
         is Message.Pending -> message.message
         is Message.Received -> message.message
@@ -92,50 +104,101 @@ fun ChatBubble(message: Message) {
                     .fillMaxWidth()
                     .padding(Padding.M)
             ) {
-                // Indicators for pending or sent messages
+                // Indicators are prioritised to first indicate expiry state and otherwise pending
+                // and sent state.
                 Row {
-                    when (message) {
-                        is Message.Pending -> {
-                            Image(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(end = 4.dp),
-                                painter = painterResource(id = R.drawable.ic_chat_bubble_pending),
-                                contentDescription = stringResource(id = R.string.component_chat_bubble_message_pending),
-                                contentScale = ContentScale.Fit,
-                            )
-                            Text(
-                                text = stringResource(id = R.string.component_chat_bubble_message_pending),
-                                color = ChatTextColorPending,
-                                style = MaterialTheme.typography.body2.bold(),
-                            )
-                        }
-
-                        is Message.Sent -> {
-                            Image(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(end = 4.dp),
-                                painter = painterResource(id = R.drawable.ic_chat_bubble_sent),
-                                contentDescription = stringResource(id = R.string.component_chat_bubble_message_sent),
-                                contentScale = ContentScale.Fit,
-                            )
-                            Text(
-                                text = stringResource(id = R.string.component_chat_bubble_message_sent),
-                                color = ChatTextColorSent,
-                                style = MaterialTheme.typography.body2.bold(),
+                    when (message.getExpiryState(now)) {
+                        ExpiryState.Expired -> {
+                            val toastContext = LocalContext.current
+                            val toastText =
+                                stringResource(id = R.string.component_chat_bubble_expired_explanation)
+                            MessageStateIndicatorLine(
+                                text = stringResource(id = R.string.component_chat_bubble_message_expired),
+                                color = ChatTextColorExpired,
+                                painter = rememberVectorPainter(Icons.Filled.Warning),
+                                colorFilter = ColorFilter.tint(ChatTextColorExpired),
+                                onClick = {
+                                    Toast
+                                        .makeText(toastContext, toastText, Toast.LENGTH_SHORT)
+                                        .show()
+                                }
                             )
                         }
 
-                        else -> {
-                            /* received messages do not have a indicated status */
+                        is ExpiryState.SoonToBeExpired -> {
+                            val remainingHours =
+                                (message.getExpiryState(now) as ExpiryState.SoonToBeExpired)
+                                    .getTimeRemainingInHours(now)
+                            val expiringInString = stringResource(
+                                id = R.string.component_chat_bubble_message_expiring_in,
+                                "${remainingHours}h"
+                            )
+                            MessageStateIndicatorLine(
+                                text = expiringInString,
+                                color = ChatTextColorExpiring,
+                                painter = painterResource(id = R.drawable.ic_chat_bubble_expiring),
+                            )
+                        }
+
+                        ExpiryState.Fresh -> when (message) {
+                            is Message.Pending -> {
+                                MessageStateIndicatorLine(
+                                    text = stringResource(id = R.string.component_chat_bubble_message_pending),
+                                    color = ChatTextColorPending,
+                                    painter = painterResource(id = R.drawable.ic_chat_bubble_pending),
+                                )
+                            }
+
+                            is Message.Sent -> {
+                                MessageStateIndicatorLine(
+                                    text = stringResource(id = R.string.component_chat_bubble_message_sent),
+                                    color = ChatTextColorSent,
+                                    painter = painterResource(id = R.drawable.ic_chat_bubble_sent),
+                                )
+                            }
+
+                            else -> {
+                                /* received messages do not have a indicated status */
+                            }
                         }
                     }
+
                 }
 
                 Text(text = timeText, style = MaterialTheme.typography.body2)
             }
         }
+    }
+}
+
+@Composable
+fun MessageStateIndicatorLine(
+    text: String,
+    color: Color,
+    painter: Painter,
+    colorFilter: ColorFilter? = null,
+    onClick: (() -> Unit)? = null,
+) {
+    val modifier = if (onClick != null) {
+        Modifier.clickable { onClick() }
+    } else {
+        Modifier
+    }
+    Row(modifier = modifier) {
+        Image(
+            modifier = Modifier
+                .size(16.dp)
+                .padding(end = 4.dp),
+            painter = painter,
+            contentDescription = text,
+            contentScale = ContentScale.Fit,
+            colorFilter = colorFilter,
+        )
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.body2.bold(),
+        )
     }
 }
 
@@ -193,5 +256,37 @@ fun ChatBubblePreviewReceivedJustNow() = CoverDropPreviewSurface {
 fun ChatBubblePreviewUnknown() = CoverDropPreviewSurface {
     ChatBubble(
         Message.Unknown(timestamp = Instant.now())
+    )
+}
+
+@Preview(
+    name = "Chat Bubble Expired (three weeks ago)",
+    device = Devices.PIXEL_6,
+    showSystemUi = false
+)
+@Composable
+fun ChatBubblePreviewExpired() = CoverDropPreviewSurface {
+    ChatBubble(
+        Message.Received(
+            message = stringResource(id = R.string.component_chat_bubble_demo_text),
+            timestamp = Instant.now() - Duration.ofDays(21)
+        )
+    )
+}
+
+@Preview(
+    name = "Chat Bubble Expiring Soon (in a few hours)",
+    device = Devices.PIXEL_6,
+    showSystemUi = false
+)
+@Composable
+fun ChatBubblePreviewExpiringSoon() = CoverDropPreviewSurface {
+    val now = DefaultClock().now()
+    ChatBubble(
+        Message.Received(
+            message = stringResource(id = R.string.component_chat_bubble_demo_text),
+            timestamp = now - Duration.ofDays(14) + Duration.ofHours(5)
+        ),
+        now = now,
     )
 }

@@ -21,6 +21,8 @@ val WarningPastelRed = Color(0xFFFF9081) // gsource: brandText.error
 val InfoPastelBlue = Color(0xFFC1D8FC) // gsource: specialReport.500
 
 val ChatTextColorPending = Color(0xFFFF7F0F) // from the exported svg
+val ChatTextColorExpiring = Color(0xFFFF7F0F)
+val ChatTextColorExpired = Color(0xFFFF7F0F)
 val ChatTextColorSent = Color(0xFF22874D) // from the exported svg
 
 val SurfaceBorder = Color(0xFF999999) // gsource: neutral.60

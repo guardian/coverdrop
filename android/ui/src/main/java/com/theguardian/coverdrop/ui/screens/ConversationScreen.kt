@@ -29,7 +29,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -59,6 +58,8 @@ import com.theguardian.coverdrop.ui.theme.Padding
 import com.theguardian.coverdrop.ui.theme.RoundedCorners
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
 import com.theguardian.coverdrop.ui.viewmodels.ConversationViewModel
+import java.time.Duration
+import java.time.Instant
 
 @Composable
 fun ConversationRoute(
@@ -86,6 +87,7 @@ private fun ConversationScreen(
     totalMessageSizePercent: Float = 0f,
     onSendMessage: () -> Unit = {},
     initialMessage: String? = null,
+    now: Instant = Instant.now(),
 ) {
     val messages = thread?.messages ?: emptyList()
 
@@ -101,7 +103,7 @@ private fun ConversationScreen(
                 .fillMaxWidth(1f)
                 .weight(1f)
         ) {
-            ConversationMainContent(messages, thread)
+            ConversationMainContent(messages, thread, now)
         }
 
         LaunchedEffect(messages) {
@@ -127,6 +129,7 @@ private fun ConversationScreen(
 private fun ConversationMainContent(
     messages: List<Message>,
     thread: MessageThread?,
+    now: Instant,
 ) {
     if (messages.isEmpty()) {
         Text(
@@ -141,7 +144,7 @@ private fun ConversationMainContent(
             SecureConversationHeading(it)
         }
 
-        ChatMessages(messages, thread?.recipient?.displayName ?: "")
+        ChatMessages(messages, thread?.recipient?.displayName ?: "", now)
 
         // information box if the last message comes from the user; depends on the message status
         when (messages.lastOrNull()) {
@@ -305,4 +308,16 @@ fun ConversationScreenPreviewInComposeModeWithTooLongMessage() = CoverDropSurfac
     val thread = COVERDROP_SAMPLE_DATA.getSampleThread(numMessages = 1)
     val message = COVERDROP_SAMPLE_DATA.getSampleMessage(wordCount = 100)
     ConversationScreen(thread = thread, totalMessageSizePercent = 1.1f, initialMessage = message)
+}
+
+@Preview(device = Devices.PIXEL_6)
+@Composable
+fun ConversationScreenPreviewWithExpiringAndExpiredMessages() = CoverDropSurface {
+    val thread = COVERDROP_SAMPLE_DATA.getSampleThread(numMessages = 2)
+    ConversationScreen(
+        thread = thread,
+        totalMessageSizePercent = 1.1f,
+        now = Instant.now() + Duration.ofDays(13).plusHours(22)
+            .plusMinutes(30) // 13 days, 21 hours, 30 minutes in the future
+    )
 }

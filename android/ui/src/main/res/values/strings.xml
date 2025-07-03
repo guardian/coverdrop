@@ -156,6 +156,9 @@
     <string name="component_chat_bubble_demo_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras condimentum, massa id interdum luctus, lacus velit pulvinar enim, eu malesuada metus turpis eu quam.</string>
     <string name="component_chat_bubble_message_pending">Pending</string>
     <string name="component_chat_bubble_message_sent">Sent</string>
+    <string name="component_chat_bubble_message_expiring_in">Expiring in %1$s</string>
+    <string name="component_chat_bubble_message_expired">Expired</string>
+    <string name="component_chat_bubble_expired_explanation">Expired messages will be deleted when leaving the vault.</string>
     <string name="component_chat_bubble_you">You</string>
     <string name="component_chat_bubble_unsupported_message_type">Unsupported message type</string>
     <string name="component_chat_bubble_just_now">Just now</string>
