@@ -34,11 +34,12 @@ class BackgroundWorkTest {
     val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
     private val scenario = TestScenario.Minimal
 
-    private val testVectors = IntegrationTestVectors(context, scenario)
-    private val fileManager = CoverDropFileManager(context, CoverDropNamespace.TEST)
     private val config = createCoverDropConfigurationForTest(context, scenario)
     private val clock = config.clock as TestClock
-    private val publicStorage = PublicStorage(context, fileManager)
+
+    private val testVectors = IntegrationTestVectors(context, scenario)
+    private val fileManager = CoverDropFileManager(context, clock,CoverDropNamespace.TEST)
+    private val publicStorage = PublicStorage(context, clock, fileManager)
     private val testApiCallProvider = config.createApiCallProvider() as TestApiCallProvider
     private val encryptedStorage = createEncryptedStorageForTest(context, fileManager)
 

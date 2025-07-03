@@ -26,9 +26,9 @@ class CoverDropRepositoriesTest {
 
     // set-up working mocks for the underlying infrastructure components (ordered as they are
     // checked and used in the code under test)
-    private val fileManager = CoverDropFileManager(context, CoverDropNamespace.TEST)
     private val config = createCoverDropConfigurationForTest(context, TestScenario.Minimal)
-    private val publicStorage = PublicStorage(context, fileManager)
+    private val fileManager = CoverDropFileManager(context, config.clock, CoverDropNamespace.TEST)
+    private val publicStorage = PublicStorage(context, config.clock, fileManager)
     private val testApiCallProvider = config.createApiCallProvider() as TestApiCallProvider
     private val encryptedStorage = createEncryptedStorageForTest(context, fileManager)
 

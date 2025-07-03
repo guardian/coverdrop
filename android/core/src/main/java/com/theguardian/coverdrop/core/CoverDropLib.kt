@@ -327,7 +327,7 @@ internal class CoverDropLibInternal(
     }
 
     private val mFileManager: CoverDropFileManager by lazy {
-        CoverDropFileManager(mApplicationContext) // file-system access
+        CoverDropFileManager(mApplicationContext, mClock) // file-system access
     }
 
     private val mPassphraseWordList: PassphraseWordList by lazy {
@@ -335,7 +335,7 @@ internal class CoverDropLibInternal(
     }
 
     private val mPublicStorage: PublicStorage by lazy {
-        PublicStorage(mApplicationContext, mFileManager)
+        PublicStorage(mApplicationContext, mClock, mFileManager)
     }
 
     private val mSecureElementAvailabilityCache: SecureElementAvailabilityCache by lazy {

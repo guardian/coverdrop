@@ -24,8 +24,9 @@ internal class BackgroundWorkManager(
     private val context: Context = lib.getApplicationContext(),
     private val workManager: WorkManager = WorkManager.getInstance(context),
 ) {
-    private val fileManager = CoverDropFileManager(context)
-    private val publicStorage = PublicStorage(context, fileManager)
+    private val clock = lib.getClock()
+    private val fileManager = CoverDropFileManager(context, clock)
+    private val publicStorage = PublicStorage(context, clock, fileManager)
 
     /**
      * Called when the app has exited (or is about to exit). This method schedules the

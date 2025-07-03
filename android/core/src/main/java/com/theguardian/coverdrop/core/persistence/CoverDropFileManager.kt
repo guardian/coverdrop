@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import com.theguardian.coverdrop.core.crypto.CoverDropPrivateSendingQueue
+import com.theguardian.coverdrop.core.utils.IClock
 import com.theguardian.coverdrop.core.utils.splitAt
 import java.io.File
 import java.io.FileNotFoundException
@@ -87,6 +88,7 @@ internal enum class DeprecatedCoverDropFiles(
 
 internal class CoverDropFileManager(
     context: Context,
+    private val clock: IClock,
     namespace: CoverDropNamespace = CoverDropNamespace.LIVE,
 ) {
     private val coverDropBaseDir = File(context.filesDir, FILE_MANAGER_COVERDROP_DIR)
@@ -176,10 +178,10 @@ internal class CoverDropFileManager(
         val path = path(file)
         if (file.isDirectory) {
             for (it in path.walkBottomUp()) {
-                it.setLastModified(Instant.now().toEpochMilli())
+                it.setLastModified(clock.now().toEpochMilli())
             }
         } else {
-            path.setLastModified(Instant.now().toEpochMilli())
+            path.setLastModified(clock.now().toEpochMilli())
         }
     }
 

@@ -8,6 +8,7 @@ import com.theguardian.coverdrop.core.models.MessageThread
 import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.ui.R
 import java.time.Duration
+import java.time.Instant
 import kotlin.random.Random
 
 val COVERDROP_SAMPLE_DATA = SampleDataProvider()
@@ -80,7 +81,7 @@ class SampleDataProvider {
 
     fun getSampleThread(
         numMessages: Int = 10,
-        clock: DefaultClock = DefaultClock(),
+        now: Instant = Instant.now(),
         seed: Int = 0,
         lastMessageIsSent: Boolean = false,
     ): MessageThread {
@@ -88,7 +89,7 @@ class SampleDataProvider {
         val journalistInfo = getSampleJournalistInfo()
 
         val timesteps = Duration.ofHours(1)
-        val startTime = clock.now() - timesteps.multipliedBy(numMessages.toLong())
+        val startTime = now - timesteps.multipliedBy(numMessages.toLong())
 
         val messages = List(numMessages) { index ->
             val time = startTime + timesteps.multipliedBy(index.toLong())

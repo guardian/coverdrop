@@ -7,6 +7,7 @@ import com.theguardian.coverdrop.core.crypto.COVERDROP_PRIVATE_SENDING_QUEUE_ITE
 import com.theguardian.coverdrop.core.crypto.CoverDropPrivateSendingQueue
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueItem
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueSecret
+import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.core.utils.nextByteArray
 import com.theguardian.coverdrop.core.utils.padTo
 import com.theguardian.coverdrop.testutils.InstantSubject
@@ -21,9 +22,11 @@ import java.time.Instant
 class PublicStorageTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    val clock = DefaultClock()
     private val instance = PublicStorage(
         context = context,
-        fileManager = CoverDropFileManager(context, CoverDropNamespace.TEST)
+        clock = clock,
+        fileManager = CoverDropFileManager(context, clock, CoverDropNamespace.TEST)
     )
 
     @Before

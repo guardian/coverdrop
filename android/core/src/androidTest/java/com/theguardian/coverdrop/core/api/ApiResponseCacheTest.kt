@@ -30,9 +30,11 @@ class ApiResponseCacheTest {
     private val context = InstrumentationRegistry.getInstrumentation().context
     private val clock = TestClock(nowOverride = Instant.now())
     private val configuration = createMinimalCoverDropTestConfigurationWithClock(clock)
+    private val fileManager = CoverDropFileManager(context, clock, CoverDropNamespace.TEST)
     private val publicStorage = PublicStorage(
         context = context,
-        fileManager = CoverDropFileManager(context, CoverDropNamespace.TEST)
+        clock = clock,
+        fileManager = fileManager
     )
 
     private val apiCallProvider =

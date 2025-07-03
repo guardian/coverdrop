@@ -20,11 +20,11 @@ import java.util.Date
  */
 internal fun humanFriendlyMessageTimeString(
     timestamp: Instant,
-    clock: IClock = DefaultClock(),
+    now: Instant,
     forceAbsoluteTime: Boolean = false,
     justNowString: String = "Just now"
 ): String {
-    val timePassed = clock.now().toEpochMilli() - timestamp.toEpochMilli()
+    val timePassed = now.toEpochMilli() - timestamp.toEpochMilli()
     val isInTheFuture = timePassed < 0
     val isLongTimeAgo = timePassed > 12 * DateUtils.HOUR_IN_MILLIS
     val isJustNow = timePassed < DateUtils.MINUTE_IN_MILLIS
@@ -43,7 +43,7 @@ internal fun humanFriendlyMessageTimeString(
         // otherwise return the relative time
         DateUtils.getRelativeTimeSpanString(
             /* time = */ timestamp.toEpochMilli(),
-            /* now = */ clock.now().toEpochMilli(),
+            /* now = */ now.toEpochMilli(),
             /* minResolution = */ DateUtils.MINUTE_IN_MILLIS,
             /* flags = */ 0
         ).toString()

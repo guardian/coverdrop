@@ -33,7 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.theguardian.coverdrop.core.models.ExpiryState
 import com.theguardian.coverdrop.core.models.Message
-import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.ui.R
 import com.theguardian.coverdrop.ui.theme.ChatTextColorExpired
 import com.theguardian.coverdrop.ui.theme.ChatTextColorExpiring
@@ -49,7 +48,7 @@ import java.time.Duration
 import java.time.Instant
 
 @Composable
-fun ChatBubble(message: Message, now: Instant = DefaultClock().now()) {
+fun ChatBubble(message: Message, now: Instant) {
     val textContent = when (message) {
         is Message.Pending -> message.message
         is Message.Received -> message.message
@@ -58,6 +57,7 @@ fun ChatBubble(message: Message, now: Instant = DefaultClock().now()) {
     }
     val timeText = humanFriendlyMessageTimeString(
         timestamp = message.timestamp,
+        now = now,
         justNowString = stringResource(id = R.string.component_chat_bubble_just_now)
     )
 
@@ -213,7 +213,8 @@ fun ChatBubblePreviewSentOneWeekAgo() = CoverDropPreviewSurface {
         Message.Sent(
             message = stringResource(id = R.string.component_chat_bubble_demo_text),
             timestamp = Instant.now() - Duration.ofDays(7)
-        )
+        ),
+        now = Instant.now(),
     )
 }
 
@@ -228,7 +229,8 @@ fun ChatBubblePreviewPending() = CoverDropPreviewSurface {
         Message.Pending(
             message = stringResource(id = R.string.component_chat_bubble_demo_text),
             timestamp = Instant.now() - Duration.ofMinutes(42)
-        )
+        ),
+        now = Instant.now(),
     )
 }
 
@@ -243,7 +245,8 @@ fun ChatBubblePreviewReceivedJustNow() = CoverDropPreviewSurface {
         Message.Received(
             message = stringResource(id = R.string.component_chat_bubble_demo_text),
             timestamp = Instant.now()
-        )
+        ),
+        now = Instant.now(),
     )
 }
 
@@ -255,7 +258,8 @@ fun ChatBubblePreviewReceivedJustNow() = CoverDropPreviewSurface {
 @Composable
 fun ChatBubblePreviewUnknown() = CoverDropPreviewSurface {
     ChatBubble(
-        Message.Unknown(timestamp = Instant.now())
+        Message.Unknown(timestamp = Instant.now()),
+        now = Instant.now(),
     )
 }
 
@@ -270,7 +274,8 @@ fun ChatBubblePreviewExpired() = CoverDropPreviewSurface {
         Message.Received(
             message = stringResource(id = R.string.component_chat_bubble_demo_text),
             timestamp = Instant.now() - Duration.ofDays(21)
-        )
+        ),
+        now = Instant.now(),
     )
 }
 
@@ -281,7 +286,7 @@ fun ChatBubblePreviewExpired() = CoverDropPreviewSurface {
 )
 @Composable
 fun ChatBubblePreviewExpiringSoon() = CoverDropPreviewSurface {
-    val now = DefaultClock().now()
+    val now = Instant.now()
     ChatBubble(
         Message.Received(
             message = stringResource(id = R.string.component_chat_bubble_demo_text),

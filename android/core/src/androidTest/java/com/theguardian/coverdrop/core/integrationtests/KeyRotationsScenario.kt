@@ -33,14 +33,14 @@ class KeyRotationsScenario {
 
     // set-up working mocks for the underlying infrastructure components (ordered as they are
     // checked and used in the code under test)
-    private val fileManager = CoverDropFileManager(context, CoverDropNamespace.TEST)
+    private val fileManager = CoverDropFileManager(context, testClock, CoverDropNamespace.TEST)
     private val config = createCoverDropConfigurationForTest(
         context = context,
         scenario = scenario,
         clockOverride = testClock
     )
 
-    private val publicStorage = PublicStorage(context, fileManager)
+    private val publicStorage = PublicStorage(context, testClock, fileManager)
     private val testApiCallProvider = config.createApiCallProvider() as TestApiCallProvider
     private val encryptedStorage = createEncryptedStorageForTest(context, fileManager)
 

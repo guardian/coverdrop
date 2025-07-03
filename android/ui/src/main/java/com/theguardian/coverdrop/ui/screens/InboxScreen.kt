@@ -154,6 +154,7 @@ private fun MainContent(
     onShowDeleteAllDialog: () -> Unit,
     onShowAbout: () -> Unit,
     onTryToExit: () -> Unit,
+    now: Instant = Instant.now(),
 ) {
     Column(modifier = Modifier.fillMaxHeight(1f)) {
         CoverDropTopAppBar(
@@ -180,7 +181,7 @@ private fun MainContent(
                         .verticalScroll(rememberScrollState())
                         .weight(1f)
                 ) {
-                    ThreadsList(screenState, messageExpiryDuration, navController)
+                    ThreadsList(screenState, messageExpiryDuration, navController, now)
                 }
             }
 
@@ -245,6 +246,7 @@ private fun ThreadsList(
     screenState: InboxUiState.ShowMessages,
     messageExpiryDuration: Duration,
     navController: NavHostController,
+    now: Instant,
 ) {
     if (screenState.activeConversation == null) {
         Row(
@@ -276,6 +278,7 @@ private fun ThreadsList(
                     time = mostRecentUpdate?.let {
                         humanFriendlyMessageTimeString(
                             timestamp = it,
+                            now = now,
                             forceAbsoluteTime = true
                         )
                     }
@@ -303,6 +306,7 @@ private fun ThreadsList(
                     time = mostRecentUpdate?.let {
                         humanFriendlyMessageTimeString(
                             timestamp = it,
+                            now = now,
                             forceAbsoluteTime = true
                         )
                     }

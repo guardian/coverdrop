@@ -17,6 +17,7 @@ import com.theguardian.coverdrop.core.persistence.SharedPreferencesKeys.PREF_KEY
 import com.theguardian.coverdrop.core.persistence.SharedPreferencesKeys.PREF_KEY_PUBLISHED_KEYS_LAST_UPDATED
 import com.theguardian.coverdrop.core.persistence.SharedPreferencesKeys.PREF_KEY_SE_AVAILABLE
 import com.theguardian.coverdrop.core.persistence.SharedPreferencesKeys.PREF_KEY_STATUS_EVENT_LAST_UPDATED
+import com.theguardian.coverdrop.core.utils.IClock
 import java.io.FileNotFoundException
 import java.time.Instant
 
@@ -38,6 +39,7 @@ enum class SharedPreferencesKeys(val key: String) {
  */
 internal class PublicStorage(
     private val context: Context,
+    private val clock: IClock,
     private val fileManager: CoverDropFileManager,
 ) {
     @SuppressLint("VisibleForTests")
@@ -215,7 +217,7 @@ internal class PublicStorage(
         getSharedPreferences().edit {
             putLong(
                 PREF_KEY_BACKGROUND_WORK_LAST_TRIGGERED_TIMESTAMP.key,
-                Instant.now().toEpochMilli()
+                clock.now().toEpochMilli(),
             )
         }
     }

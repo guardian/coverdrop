@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import com.theguardian.coverdrop.core.crypto.COVERDROP_PRIVATE_SENDING_QUEUE_ITEM_SIZE
 import com.theguardian.coverdrop.core.crypto.CoverDropPrivateSendingQueue
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueItem
+import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.core.utils.nextByteArray
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertThrows
@@ -16,7 +17,7 @@ import kotlin.experimental.xor
 class CoverDropFileManagerTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val instance = CoverDropFileManager(context, CoverDropNamespace.TEST)
+    private val instance = CoverDropFileManager(context, DefaultClock(), CoverDropNamespace.TEST)
 
     @Before
     fun setup() {
