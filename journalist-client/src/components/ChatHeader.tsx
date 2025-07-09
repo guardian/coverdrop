@@ -78,7 +78,7 @@ export const ChatHeader = ({
             aria-label="info"
             color="primary"
             onClick={() => setIsEditModalVisible(true)}
-            title="Update user alias"
+            title="Update source details"
           />
         </EuiFlexItem>
         <EuiFlexItem grow={false}>

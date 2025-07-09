@@ -10,6 +10,7 @@ import {
   EuiFormRow,
   EuiFieldText,
   EuiTextArea,
+  EuiText,
 } from "@elastic/eui";
 import { FormEvent } from "react";
 
@@ -44,6 +45,10 @@ export const EditUserModal = ({
         </EuiModalHeaderTitle>
       </EuiModalHeader>
       <EuiModalBody>
+        <EuiText style={{ marginBottom: 20 }}>
+          <p>This information is not visible to the source.</p>
+        </EuiText>
+
         <EuiForm
           component="form"
           onSubmit={(e: FormEvent<HTMLFormElement>) => {
@@ -52,7 +57,7 @@ export const EditUserModal = ({
         >
           <EuiFormRow>
             <EuiFieldText
-              placeholder="Provide a user alias for your source"
+              placeholder="Give this source a nickname"
               name="popfirst"
               onChange={(e) => {
                 if (e.target.value.length <= 30) {
@@ -66,7 +71,7 @@ export const EditUserModal = ({
           </EuiFormRow>
           <EuiFormRow>
             <EuiTextArea
-              placeholder="Provide a description for your source"
+              placeholder="Use this field to make notes about this source."
               value={draftUserDescription}
               onChange={(e) => setUserDescription(e.target.value)}
             />
@@ -77,7 +82,7 @@ export const EditUserModal = ({
         <EuiButtonEmpty onClick={closeModal}>Cancel</EuiButtonEmpty>
         <EuiButton
           type="submit"
-          form={"Submit user name and description"}
+          form="Submit user name and description"
           fill
           onClick={handleFormSubmit}
         >
