@@ -180,6 +180,9 @@ async fn main() -> anyhow::Result<()> {
                 )
                 .await?;
             }
+            ProductionCommand::Minio => {
+                unimplemented!("See docs/on_premises_backups.md");
+            }
         },
 
         //

@@ -160,6 +160,7 @@ pub enum ProductionCommand {
         #[clap(long, default_value = "8444")]
         local_port: u16,
     },
+    Minio,
 }
 
 #[derive(Debug, Subcommand)]
