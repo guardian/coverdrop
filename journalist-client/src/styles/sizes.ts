@@ -19,7 +19,10 @@ export const sizes = {
   coverMessageBurstModal: {
     width: widths.genericModalWidth,
   },
-  toggleMuteModal: {
+  muteModal: {
+    width: widths.genericModalWidth,
+  },
+  copyToClipboardModal: {
     width: widths.genericModalWidth,
   },
   trustedKeyDigestModal: {

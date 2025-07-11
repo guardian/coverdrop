@@ -18,9 +18,11 @@ import { timeAgo } from "@guardian/libs";
 import { palette } from "../styles/palette";
 import { useUserStore } from "../state/users";
 import { useErrorStore } from "../state/errors";
+import { PerChatMenu } from "./PerChatMenu";
 
 type Chat = {
   name: string;
+  description: string | null;
   replyKey: string;
   lastMessageTimestamp: string;
   hasUnread: boolean;
@@ -32,6 +34,10 @@ type ChatsSideBarProps = {
   userAlias: string;
   currentUserReplyKey: string | null;
   setChat: (userReplyKey: string) => void;
+  markChatAsUnread: (replyKey: string) => void;
+  setMaybeEditModalForReplyKey: (maybeReplyKey: string | null) => void;
+  setMaybeMuteModalForReplyKey: (maybeReplyKey: string | null) => void;
+  setMaybeCopyToClipboardModalForReplyKey: (replyKey: string | null) => void;
 };
 
 const chatsToSideNav = (
@@ -39,9 +45,16 @@ const chatsToSideNav = (
   chats: Chat[],
   setChat: (userReplyKey: string) => void,
   currentUserReplyKey: string | null,
+  markChatAsUnread: (replyKey: string) => void,
+  setMaybeEditModalForReplyKey: (value: string | null) => void,
+  setMaybeMuteModalForReplyKey: (value: string | null) => void,
+  setMaybeCopyToClipboardModalForReplyKey: (replyKey: string | null) => void,
 ) => {
   const { euiTheme } = useEuiTheme();
   const { font, size } = euiTheme;
+
+  const [maybeContextMenuOpenForReplyKey, setMaybeContextMenuOpenForReplyKey] =
+    useState<string | null>(null);
 
   return chats.length > 0
     ? chats.map((chat) => {
@@ -71,14 +84,35 @@ const chatsToSideNav = (
                       : palette("chat-sidebar-unselected-chat-background"),
                   cursor: "pointer",
                 }}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setMaybeContextMenuOpenForReplyKey(chat.replyKey);
+                }}
               >
-                <EuiFlexGroup justifyContent="spaceBetween">
+                <EuiFlexGroup gutterSize="s">
                   <EuiFlexItem
-                    grow={false}
+                    grow={true}
                     style={{ fontWeight: font.weight.bold }}
+                    title={chat.description}
                   >
                     {chat.name}
                   </EuiFlexItem>
+                  {chat.hasUnread && (
+                    <div>
+                      <EuiFlexItem
+                        style={{
+                          width: size.s,
+                          height: size.s,
+                          backgroundColor: palette(
+                            "chat-sidebar-unread-message-dot-background",
+                          ),
+                          borderRadius: "50%",
+                          marginBottom: "1px",
+                          display: "inline-block",
+                        }}
+                      />
+                    </div>
+                  )}
                   <EuiFlexItem
                     grow={false}
                     style={{
@@ -106,23 +140,28 @@ const chatsToSideNav = (
                     {lastMessage}
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
-                    <div>
-                      {chat.hasUnread ? (
-                        <EuiFlexItem
-                          style={{
-                            width: size.s,
-                            height: size.s,
-                            backgroundColor: palette(
-                              "chat-sidebar-unread-message-dot-background",
-                            ),
-                            borderRadius: "50%",
-                            display: "inline-block",
-                          }}
-                        />
-                      ) : (
-                        <EuiFlexItem grow={false} />
-                      )}
-                    </div>
+                    <PerChatMenu
+                      isOpen={chat.replyKey === maybeContextMenuOpenForReplyKey}
+                      setIsOpen={(isOpen) =>
+                        setMaybeContextMenuOpenForReplyKey(
+                          isOpen ? chat.replyKey : null,
+                        )
+                      }
+                      shouldShowLabel={false}
+                      hasUnread={chat.hasUnread}
+                      markAsUnread={() => markChatAsUnread(chat.replyKey)}
+                      isMuted={chat.userStatus === "MUTED"}
+                      showEditModal={() =>
+                        setMaybeEditModalForReplyKey(chat.replyKey)
+                      }
+                      showMuteModal={() =>
+                        setMaybeMuteModalForReplyKey(chat.replyKey)
+                      }
+                      showCopyToClipboardModal={() =>
+                        setMaybeCopyToClipboardModalForReplyKey(chat.replyKey)
+                      }
+                    />{" "}
+                    {/* TODO ideally only show when hovering over that menu item */}
                   </EuiFlexItem>
                 </EuiFlexGroup>
               </div>
@@ -143,6 +182,10 @@ export const ChatsSideBar = ({
   userAlias,
   currentUserReplyKey: currentUserReplyKey,
   setChat,
+  markChatAsUnread,
+  setMaybeEditModalForReplyKey,
+  setMaybeMuteModalForReplyKey,
+  setMaybeCopyToClipboardModalForReplyKey,
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
   const messageStore = useMessageStore();
@@ -195,6 +238,7 @@ export const ChatsSideBar = ({
           ...acc,
           [message.userPk]: {
             name: chatName,
+            description: thisUserInfo.description,
             replyKey: message.userPk,
             lastMessageTimestamp: isLatestMessage
               ? messageTimestamp
@@ -219,12 +263,20 @@ export const ChatsSideBar = ({
     inboxChats,
     setChat,
     currentUserReplyKey,
+    markChatAsUnread,
+    setMaybeEditModalForReplyKey,
+    setMaybeMuteModalForReplyKey,
+    setMaybeCopyToClipboardModalForReplyKey,
   );
   const mutedItems = chatsToSideNav(
     "mutedItems",
     mutedChats,
     setChat,
     currentUserReplyKey,
+    markChatAsUnread,
+    setMaybeEditModalForReplyKey,
+    setMaybeMuteModalForReplyKey,
+    setMaybeCopyToClipboardModalForReplyKey,
   );
 
   const tabs = [
@@ -284,14 +336,17 @@ export const ChatsSideBar = ({
         style={{
           fontSize: `calc(${size.base} + 2)`,
           fontWeight: font.weight.bold,
-          padding: size.xs,
+          padding: size.s,
+          gap: size.m,
+          paddingBottom: size.m,
           borderBottom: `1px solid ${palette("chat-sidebar-journalist-name-border-color")}`,
         }}
+        alignItems="center"
       >
-        <EuiFlexItem grow={true}>{userAlias}</EuiFlexItem>
         <EuiFlexItem grow={false}>
           <SettingsPopover />
         </EuiFlexItem>
+        <EuiFlexItem grow={true}>{userAlias}</EuiFlexItem>
       </EuiFlexGroup>
       <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>

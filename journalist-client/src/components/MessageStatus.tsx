@@ -2,7 +2,7 @@ import { EuiFlexGroup, EuiFlexItem, EuiIcon } from "@elastic/eui";
 
 // If the message is from today, only show the time,
 // otherwise show the date and time
-const formatDateTime = (dateTime: string) => {
+export const formatDateTime = (dateTime: string) => {
   const date = new Date(dateTime);
   const today = new Date();
   if (
