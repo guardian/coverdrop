@@ -62,7 +62,7 @@ impl LogReceiver {
 
             for log_entry in log_entries {
                 if let Err(e) = self.tx.send(log_entry) {
-                    eprintln!("Failed to send log entry: {}", e);
+                    eprintln!("Failed to send log entry: {e}");
                 }
             }
 
@@ -106,7 +106,7 @@ struct MessageVisitor<'a>(&'a mut String);
 impl Visit for MessageVisitor<'_> {
     fn record_debug(&mut self, field: &Field, value: &dyn fmt::Debug) {
         if field.name() == "message" {
-            self.0.push_str(&format!("{:?}", value));
+            self.0.push_str(&format!("{value:?}"));
         }
     }
 }
@@ -124,7 +124,7 @@ impl<S: Subscriber> Layer<S> for JournalistClientLogLayer {
         let log_entry = LogEntry::new(time::now(), *metadata.level(), metadata.target(), message);
 
         if let Err(e) = self.log_receiver.tx.send(log_entry) {
-            eprintln!("Failed to send log entry: {}", e);
+            eprintln!("Failed to send log entry: {e}");
         }
     }
 }

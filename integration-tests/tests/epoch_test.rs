@@ -42,8 +42,7 @@ async fn epoch_test() {
         .expect("Get postgres port");
 
     let db_url = format!(
-        "postgres://{}:{}@{}:{}/{}",
-        POSTGRES_USER, POSTGRES_PASSWORD, postgres_ip, postgres_port, POSTGRES_DB
+        "postgres://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{postgres_ip}:{postgres_port}/{POSTGRES_DB}"
     );
 
     let pool = PgPoolOptions::new()
@@ -142,7 +141,7 @@ fn execute_query_as_task(
         let mut results: Vec<anyhow::Result<bool>> = vec![];
 
         for count in 0..100 {
-            println!("Running ! {}", count);
+            println!("Running ! {count}");
             let org_pk = generate_organization_key_pair(now)
                 .to_public_key()
                 .to_untrusted();

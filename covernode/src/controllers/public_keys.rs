@@ -1,4 +1,4 @@
-use axum::{Extension, Json};
+use axum::{extract::State, Json};
 use common::protocol::keys::{
     UntrustedAnchorOrganizationPublicKey, UntrustedCoverNodeIdPublicKey,
     UntrustedCoverNodeMessagingPublicKey, UntrustedUnregisteredCoverNodeIdPublicKey,
@@ -26,9 +26,7 @@ pub struct CoverNodePublicKeys {
     messaging_keys: CoverNodeMessagingPublicKeys,
 }
 
-pub async fn get_public_keys(
-    Extension(key_state): Extension<KeyState>,
-) -> Json<CoverNodePublicKeys> {
+pub async fn get_public_keys(State(key_state): State<KeyState>) -> Json<CoverNodePublicKeys> {
     let key_state = key_state.read().await;
 
     let anchor_org_pks = key_state

@@ -12,7 +12,7 @@ pub async fn wait_for_port_active(port: u16, silent: bool) {
     let mut attempts = 0;
     while attempts < 10 && !port_available(port).await {
         if !silent {
-            println!("Port {} not active, waiting...", port);
+            println!("Port {port} not active, waiting...");
         }
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         attempts += 1;

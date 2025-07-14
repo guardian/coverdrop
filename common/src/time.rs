@@ -48,7 +48,7 @@ pub fn now() -> DateTime<Utc> {
             Ok(time) => {
                 return time;
             }
-            Err(err) => panic!("Failed to read fake time from file: {}", err),
+            Err(err) => panic!("Failed to read fake time from file: {err}"),
         }
     }
 

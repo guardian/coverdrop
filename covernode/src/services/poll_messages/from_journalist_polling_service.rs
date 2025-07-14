@@ -81,7 +81,7 @@ impl FromJournalistPollingService {
                         // This is far from ideal since if we are in a position where we panic consistently
                         // before a dead drop is released then we will never move our checkpoint forward and
                         // the system as a whole will stall.
-                        panic!("Polling journalist messages failed: {:?}", err);
+                        panic!("Polling journalist messages failed: {err:?}");
                     }
 
                     0

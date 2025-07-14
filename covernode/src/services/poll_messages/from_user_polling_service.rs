@@ -89,7 +89,7 @@ impl FromUserPollingService {
                             err.root_cause()
                         );
 
-                        panic!("Polling user messages failed: {:?}", err);
+                        panic!("Polling user messages failed: {err:?}");
                     }
 
                     0

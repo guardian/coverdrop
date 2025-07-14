@@ -5,8 +5,8 @@ use crate::cache_control::{add_cache_control_header, DEAD_DROP_TTL_IN_SECONDS};
 use crate::dead_drop_limits::DeadDropLimits;
 use crate::error::AppError;
 use crate::services::database::Database;
-use axum::extract::Query;
-use axum::{Extension, Json};
+use axum::extract::{Query, State};
+use axum::Json;
 use chrono::Duration;
 use common::api::models::dead_drop_summary::DeadDropSummary;
 use common::api::models::dead_drops::{
@@ -46,8 +46,8 @@ impl GetDeadDropQueryParams {
 }
 
 pub async fn get_user_dead_drops(
-    Extension(db): Extension<Database>,
-    Extension(dead_drop_limits): Extension<DeadDropLimits>,
+    State(db): State<Database>,
+    State(dead_drop_limits): State<DeadDropLimits>,
     query_params: Query<GetDeadDropQueryParams>,
 ) -> Result<(HeaderMap, Json<UnverifiedJournalistToUserDeadDropsList>), AppError> {
     let ids_greater_than = query_params.ids_greater_than;
@@ -75,8 +75,8 @@ pub async fn get_user_dead_drops(
 }
 
 pub async fn get_journalist_dead_drops(
-    Extension(db): Extension<Database>,
-    Extension(dead_drop_limits): Extension<DeadDropLimits>,
+    State(db): State<Database>,
+    State(dead_drop_limits): State<DeadDropLimits>,
     query_params: Query<GetDeadDropQueryParams>,
 ) -> Result<(HeaderMap, Json<UnverifiedUserToJournalistDeadDropsList>), AppError> {
     let ids_greater_than = query_params.ids_greater_than;
@@ -104,8 +104,8 @@ pub async fn get_journalist_dead_drops(
 }
 
 pub async fn post_user_dead_drops(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(dead_drop): Json<UnpublishedJournalistToUserDeadDrop>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -127,8 +127,8 @@ pub async fn post_user_dead_drops(
 }
 
 pub async fn post_journalist_dead_drops(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(dead_drop): Json<UnpublishedUserToJournalistDeadDrop>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -150,7 +150,7 @@ pub async fn post_journalist_dead_drops(
 }
 
 pub async fn get_user_recent_dead_drop_summary(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<Vec<DeadDropSummary>>), AppError> {
     let summaries = db
         .dead_drop_queries
@@ -164,7 +164,7 @@ pub async fn get_user_recent_dead_drop_summary(
 }
 
 pub async fn get_journalist_recent_dead_drop_summary(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<Vec<DeadDropSummary>>), AppError> {
     let summaries = db
         .dead_drop_queries

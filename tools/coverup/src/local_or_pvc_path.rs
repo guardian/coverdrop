@@ -36,7 +36,7 @@ impl FromStr for PvcPath {
 
             Ok(PvcPath { pvc, path })
         } else {
-            Err(format!("{} is not in the format $PVC_NAME:$PATH", s))
+            Err(format!("{s} is not in the format $PVC_NAME:$PATH"))
         }
     }
 }

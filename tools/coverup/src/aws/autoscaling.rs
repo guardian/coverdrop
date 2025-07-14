@@ -53,7 +53,7 @@ pub async fn scale_asg(
         .send()
         .await?;
 
-    println!("ASG {:?} scaled to 0 instances", asg_name);
+    println!("ASG {asg_name:?} scaled to 0 instances");
 
     Ok(())
 }

@@ -1,4 +1,4 @@
-use axum::{body::Bytes, Extension, Json};
+use axum::{body::Bytes, extract::State, Json};
 use axum_extra::{headers::UserAgent, TypedHeader};
 use common::{
     api::models::messages::user_to_covernode_message::EncryptedUserToCoverNodeMessage,
@@ -102,7 +102,7 @@ fn put_metrics(user_agent: &Option<TypedHeader<UserAgent>>, outcome: AppendOutco
 #[axum::debug_handler]
 pub async fn post_u2j_message(
     user_agent: Option<TypedHeader<UserAgent>>,
-    Extension(kinesis_client): Extension<KinesisClient>,
+    State(kinesis_client): State<KinesisClient>,
     body: Bytes,
 ) -> Result<(), AppError> {
     let u2j_message = serde_json::from_slice::<EncryptedUserToCoverNodeMessage>(&body)

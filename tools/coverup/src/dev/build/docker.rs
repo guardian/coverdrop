@@ -59,7 +59,7 @@ pub async fn docker_build_rust(
 
     let tag = format!("coverdrop_{}:coverup", service.as_str());
 
-    let tag_arg = format!("--tag={}", tag);
+    let tag_arg = format!("--tag={tag}");
 
     let mut docker_build = process::Command::new("docker")
         .arg("build")
@@ -138,7 +138,7 @@ pub async fn copy_image_to_node(
         .spawn()?;
 
     let mut ssh = process::Command::new("ssh")
-        .arg(format!("ubuntu@{}", node))
+        .arg(format!("ubuntu@{node}"))
         .arg("sudo k3s ctr images import -")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

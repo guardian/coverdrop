@@ -134,7 +134,7 @@ impl Task for RotateJournalistIdPublicKeysTask {
                 "Signed new journalist id public key for {}: {}",
                 journalist_id,
                 &serde_json::to_string(&signed_journalist_id_pk.to_untrusted())
-                    .unwrap_or_else(|e| format!("<failed to serialize: {}>", e))
+                    .unwrap_or_else(|e| format!("<failed to serialize: {e}>"))
             );
 
             let form = PostJournalistIdPublicKeyForm::new(

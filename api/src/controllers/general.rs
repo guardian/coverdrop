@@ -1,6 +1,12 @@
 use std::env;
 
-use axum::{Extension, Json};
+use crate::{
+    cache_control::{add_cache_control_header, HEALTHCHECK_TTL_IN_SECONDS, STATUS_TTL_IN_SECONDS},
+    error::AppError,
+    services::database::Database,
+};
+use axum::extract::State;
+use axum::Json;
 use chrono::Duration;
 use common::{
     api::{
@@ -14,12 +20,6 @@ use common::{
     tracing::TracingReloadHandle,
 };
 use http::HeaderMap;
-
-use crate::{
-    cache_control::{add_cache_control_header, HEALTHCHECK_TTL_IN_SECONDS, STATUS_TTL_IN_SECONDS},
-    error::AppError,
-    services::database::Database,
-};
 
 fn get_env_or_error(var: &'static str) -> Result<String, AppError> {
     env::var(var).map_err(|_| AppError::EnvVariableNotFound(var))
@@ -35,7 +35,7 @@ pub async fn get_healthcheck() -> (HeaderMap, Json<HealthCheck>) {
 }
 
 pub async fn get_latest_status(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<PublishedStatusEvent>), AppError> {
     let status = db.system_queries.get_latest_status().await?;
 
@@ -52,7 +52,7 @@ pub async fn get_latest_status(
 }
 
 pub async fn post_status_event(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
     Json(body): Json<PostSystemStatusEventForm>,
 ) -> Result<(), AppError> {
     let admin_pk = db
@@ -91,7 +91,7 @@ pub async fn post_status_event(
     let ses_client = SesClient::new(
         region,
         None,
-        format!("CoverDrop {} <alerts@{}>", stage, email_identity_domain),
+        format!("CoverDrop {stage} <alerts@{email_identity_domain}>"),
     )
     .await;
 
@@ -115,8 +115,8 @@ pub async fn post_status_event(
 }
 
 pub async fn post_reload_tracing(
-    Extension(db): Extension<Database>,
-    Extension(tracing_reload_handle): Extension<TracingReloadHandle>,
+    State(db): State<Database>,
+    State(tracing_reload_handle): State<TracingReloadHandle>,
     Json(form): Json<PostLogConfigForm>,
 ) -> Result<(), AppError> {
     let admin_pk = db

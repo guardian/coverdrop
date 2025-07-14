@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
     };
 
     if let Err(error) = result {
-        eprintln!("Failed to run command with error: {}", error);
+        eprintln!("Failed to run command with error: {error}");
         std::process::exit(1);
     }
 

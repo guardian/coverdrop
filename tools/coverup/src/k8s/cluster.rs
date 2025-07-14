@@ -15,13 +15,12 @@ pub async fn check_cluster_available(kubeconfig_path: &Path) -> anyhow::Result<b
         .to_str()
         .expect("Get path from kubeconfig_path");
 
-    let get_pods_command = format!("kubectl get pods --kubeconfig {}", kubeconfig_path);
+    let get_pods_command = format!("kubectl get pods --kubeconfig {kubeconfig_path}");
     let mut child = create_subprocess("Get pods", &get_pods_command, true).await?;
     let get_pods_exit_status = child.wait().await?;
     if !get_pods_exit_status.success() {
         println!(
-            "Failed to get pods from context {} - either tunnel isn't running or your context file needs replacing (see coverup 'kubeconfig' command for your stage)",
-            kubeconfig_path
+            "Failed to get pods from context {kubeconfig_path} - either tunnel isn't running or your context file needs replacing (see coverup 'kubeconfig' command for your stage)"
         );
         return Err(anyhow::anyhow!(
             "kubectl get pods command had error status code"
@@ -48,10 +47,7 @@ pub async fn initialise_kubectl(
             {
                 return Ok(Some(child));
             }
-            println!(
-                "Cluster still unavailable, trying again in {} seconds...",
-                delay
-            );
+            println!("Cluster still unavailable, trying again in {delay} seconds...");
         }
     } else {
         return Ok(None);

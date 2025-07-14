@@ -137,7 +137,7 @@ mod tests {
         };
 
         let watched_crates = FsWatchedCrate::from_cargo_metadata(&metadata);
-        println!("{:#?}", watched_crates);
+        println!("{watched_crates:#?}");
 
         // Assertions
         assert_eq!(watched_crates.len(), 3);

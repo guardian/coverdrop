@@ -14,14 +14,14 @@ impl std::str::FromStr for ImageAndTag {
         let mut parts = s.split(':');
 
         let Some(name) = parts.next() else {
-            return Err(format!("Image name not found in '{}'", s));
+            return Err(format!("Image name not found in '{s}'"));
         };
         if name.is_empty() {
             return Err("Image name cannot be empty".to_string());
         }
 
         let Some(tag) = parts.next() else {
-            return Err(format!("Image tag not found in '{}'", s));
+            return Err(format!("Image tag not found in '{s}'"));
         };
 
         if tag.is_empty() {

@@ -107,7 +107,7 @@ mod test {
                         let covernode_database_path = state
                             .output_directory
                             .as_path()
-                            .join(format!("{}.db", covernode_identity));
+                            .join(format!("{covernode_identity}.db"));
                         assert!(covernode_database_path.is_file())
                     }
                 }
@@ -235,7 +235,7 @@ mod test {
             let covernode_database_path = state
                 .output_directory
                 .as_path()
-                .join(format!("{}.db", covernode_identity));
+                .join(format!("{covernode_identity}.db"));
             assert!(covernode_database_path.is_file());
 
             let db = Database::open(&covernode_database_path, covernode_db_password)

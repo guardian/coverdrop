@@ -100,7 +100,7 @@ impl IntoResponse for AppError {
             ),
             Self::EnvVariableNotFound(var) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Environment variable not found {}", var),
+                format!("Environment variable not found: {var}"),
             ),
             Self::KeyRotationTooRecent => (
                 StatusCode::BAD_REQUEST,

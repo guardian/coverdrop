@@ -1,6 +1,6 @@
 use axum::{
     routing::{get, post},
-    Extension, Router,
+    Router,
 };
 use chrono::Duration;
 use clap::Parser;
@@ -16,6 +16,7 @@ use identity_api::{
         general::get_healthcheck, post_keys::post_rotate_covernode_id_key,
         public_keys::get_public_keys,
     },
+    identity_api_state::IdentityApiState,
     tasks::{CheckFileSystemForKeysTask, DeleteExpiredKeysTask, RotateJournalistIdPublicKeysTask},
     DEFAULT_PORT,
 };
@@ -72,6 +73,8 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
     });
 
     let mut web_server = tokio::task::spawn(async move {
+        let identity_api_state = IdentityApiState::new(api_client, database);
+
         let app = Router::new()
             // General
             .route("/healthcheck", get(get_healthcheck))
@@ -81,8 +84,7 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
                 "/public-keys/covernode/me/rotate-id-key",
                 post(post_rotate_covernode_id_key),
             )
-            .layer(Extension(api_client))
-            .layer(Extension(database));
+            .with_state(identity_api_state);
 
         let app = Router::new()
             .nest("/v1/", app)

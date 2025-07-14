@@ -80,7 +80,7 @@ impl ImageArgs for ApiArgs {
             {delete_old_dead_drops_poll_seconds_arg} {default_journalist_id_arg} {u2j_dead_drop_limit_arg} \
             {task_runner_mode} {kinesis_flags}");
 
-        println!("Starting API with: {}", command);
+        println!("Starting API with: {command}");
 
         Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
     }

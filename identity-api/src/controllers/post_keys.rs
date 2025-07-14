@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use axum::{http::StatusCode, Extension, Json};
+use axum::{extract::State, http::StatusCode, Json};
 use common::{
     api::api_client::ApiClient,
     crypto::keys::public_key::PublicKey,
@@ -13,8 +13,8 @@ use common::{
 use identity_api_database::Database;
 
 pub async fn post_rotate_covernode_id_key(
-    Extension(api_client): Extension<ApiClient>,
-    Extension(database): Extension<Database>,
+    State(api_client): State<ApiClient>,
+    State(database): State<Database>,
     Json(form): Json<RotateCoverNodeIdPublicKeyForm>,
 ) -> Result<(StatusCode, Json<UntrustedCoverNodeIdPublicKeyWithEpoch>), AppError> {
     let anchor_org_pks = database
@@ -97,7 +97,7 @@ pub async fn post_rotate_covernode_id_key(
     tracing::debug!(
         "Signed new CoverNode id public key: {}",
         &serde_json::to_string(&signed_covernode_id_pk.to_untrusted())
-            .unwrap_or_else(|e| format!("<failed to serialize: {}>", e))
+            .unwrap_or_else(|e| format!("<failed to serialize: {e}>"))
     );
 
     let api_response = api_client

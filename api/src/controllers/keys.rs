@@ -1,4 +1,5 @@
-use axum::{extract::Path, Extension, Json};
+use axum::extract::{Path, State};
+use axum::Json;
 use chrono::{DateTime, Duration, Utc};
 use common::{
     api::{
@@ -52,9 +53,9 @@ use crate::{
 };
 
 pub async fn get_public_keys(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
-    Extension(default_journalist_id): Extension<Option<JournalistIdentity>>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
+    State(default_journalist_id): State<Option<JournalistIdentity>>,
 ) -> Result<(HeaderMap, Json<UntrustedKeysAndJournalistProfiles>), AppError> {
     let (keys, max_epoch) = {
         let anchor_org_pks = anchor_org_pks.get().await;
@@ -90,8 +91,8 @@ pub async fn get_public_keys(
 }
 
 pub async fn post_journalist(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostJournalistForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -125,8 +126,8 @@ pub async fn post_journalist(
 }
 
 pub async fn patch_journalist(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PatchJournalistForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -159,8 +160,8 @@ pub async fn patch_journalist(
 }
 
 pub async fn delete_journalist(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<DeleteJournalistForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -224,8 +225,8 @@ fn warn_if_key_rotation_too_recent<R: Role>(
 }
 
 pub async fn post_covernode_provisioning_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostCoverNodeProvisioningPublicKeyForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -271,8 +272,8 @@ pub async fn post_covernode_provisioning_key(
 }
 
 pub async fn post_covernode_id_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostCoverNodeIdPublicKeyForm>,
 ) -> Result<Json<Epoch>, AppError> {
     let (keys, _max_epoch) = db
@@ -326,8 +327,8 @@ pub async fn post_covernode_id_key(
 }
 
 pub async fn post_covernode_msg_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostCoverNodeMessagingPublicKeyForm>,
 ) -> Result<Json<Epoch>, AppError> {
     let (keys, _max_epoch) = db
@@ -371,8 +372,8 @@ pub async fn post_covernode_msg_key(
 }
 
 pub async fn post_journalist_provisioning_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostJournalistProvisioningPublicKeyForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -418,8 +419,8 @@ pub async fn post_journalist_provisioning_key(
 }
 
 pub async fn post_journalist_id_pk_rotation_form(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<RotateJournalistIdPublicKeyFormForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db
@@ -456,7 +457,7 @@ pub async fn post_journalist_id_pk_rotation_form(
 }
 
 pub async fn get_journalist_id_pk_rotation_forms(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<Vec<JournalistIdAndPublicKeyRotationForm>>), AppError> {
     let result = db
         .journalist_queries
@@ -479,8 +480,8 @@ pub async fn get_journalist_id_pk_rotation_forms(
 /// Upload a new journalist ID key that has been signed using a journalist provisioning key by
 /// the on-premises identity services.
 pub async fn post_journalist_id_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostJournalistIdPublicKeyForm>,
 ) -> Result<Json<Epoch>, AppError> {
     let (keys, _max_epoch) = db
@@ -535,7 +536,7 @@ pub async fn post_journalist_id_key(
 }
 
 pub async fn get_journalist_id_pk_with_epoch(
-    Extension(db): Extension<Database>,
+    State(db): State<Database>,
     Path(pk_hex): Path<String>,
 ) -> Result<
     (
@@ -560,8 +561,8 @@ pub async fn get_journalist_id_pk_with_epoch(
 }
 
 pub async fn post_journalist_msg_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostJournalistMessagingPublicKeyForm>,
 ) -> Result<Json<Epoch>, AppError> {
     let (keys, _max_epoch) = db
@@ -607,8 +608,8 @@ pub async fn post_journalist_msg_key(
 }
 
 pub async fn post_admin_key(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
     Json(form): Json<PostAdminPublicKeyForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db

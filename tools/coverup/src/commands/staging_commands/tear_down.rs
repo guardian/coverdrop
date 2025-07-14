@@ -15,7 +15,7 @@ async fn scale_down_asg(app_tag: &str, stage: Stage, config: &SdkConfig) -> anyh
     let autoscaling_client: aws_sdk_autoscaling::Client = aws_sdk_autoscaling::Client::new(config);
     let asg_name = get_asg_name(app_tag, stage, &autoscaling_client).await?;
 
-    println!("Scaling down asg: {:?}", asg_name);
+    println!("Scaling down asg: {asg_name:?}");
 
     // scale down api asg to 0 instances
     scale_asg(&asg_name, 0, &autoscaling_client).await?;

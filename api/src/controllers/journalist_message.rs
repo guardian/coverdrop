@@ -1,4 +1,5 @@
-use axum::{Extension, Json};
+use axum::extract::State;
+use axum::Json;
 use common::{
     api::forms::PostJournalistToCoverNodeMessageForm, aws::kinesis::client::KinesisClient, time,
 };
@@ -13,9 +14,9 @@ use crate::{
 /// which allows us to verify the message is from a real and trusted journalist.
 /// It does not reveal any information about if the message is cover or real.
 pub async fn post_forward_journalist_to_covernode_msg(
-    Extension(anchor_org_pks): Extension<AnchorOrganizationPublicKeyCache>,
-    Extension(db): Extension<Database>,
-    Extension(kinesis_client): Extension<KinesisClient>,
+    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
+    State(db): State<Database>,
+    State(kinesis_client): State<KinesisClient>,
     Json(form): Json<PostJournalistToCoverNodeMessageForm>,
 ) -> Result<(), AppError> {
     let (keys, _max_epoch) = db

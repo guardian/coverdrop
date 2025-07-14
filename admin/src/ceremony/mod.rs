@@ -67,7 +67,7 @@ fn ask_user_to_confirm(message: &str, assume_yes: bool) -> anyhow::Result<()> {
     const CONFIRMATION_WORD: &str = "yes";
 
     loop {
-        println!("{}\nType '{}' to confirm.", message, CONFIRMATION_WORD);
+        println!("{message}\nType '{CONFIRMATION_WORD}' to confirm.");
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
         if input.trim().to_lowercase() == CONFIRMATION_WORD {

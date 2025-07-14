@@ -37,7 +37,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
     //
     // Initialize tracing
     //
-    let tracing_reload_handle = init_tracing_with_reload_handle("info");
+    let _ = init_tracing_with_reload_handle("info");
     init_metrics(COVERNODE_NAMESPACE, &cli.stage).await?;
 
     tracing::info!("Cli args: {cli:?}");
@@ -190,8 +190,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
     });
 
     let port = cli.port;
-    let mut web_service =
-        tokio::spawn(async move { server::serve(port, key_state, tracing_reload_handle).await });
+    let mut web_service = tokio::spawn(async move { server::serve(port, key_state).await });
 
     // ⚠️ WARNING: DO NOT CHANGE THE LINE BELOW! ⚠️
     // `testcontainers` relies on this line being printed to stdout

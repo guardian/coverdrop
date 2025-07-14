@@ -30,7 +30,7 @@ enum KeyPragmaValue<'a> {
 impl KeyPragmaValue<'_> {
     fn to_pragma_string(&self) -> String {
         match self {
-            KeyPragmaValue::Password(password) => format!("'{}'", password),
+            KeyPragmaValue::Password(password) => format!("'{password}'"),
             KeyPragmaValue::Argon2Key(key) => {
                 format!("\"x'{}'\"", hex::encode_upper(key))
             }
@@ -58,7 +58,7 @@ impl Argon2SqlCipher {
             anyhow::bail!("Path to database is not valid unicode");
         };
 
-        let url = format!("sqlite://{}", path);
+        let url = format!("sqlite://{path}");
         let url = Url::from_str(&url)?;
 
         //

@@ -54,7 +54,7 @@ impl VaultLogger {
                                     buf_size = 0;
                                 }
                                 Err(e) => {
-                                    eprintln!("Failed to save log entry to vault: {:?}", e);
+                                    eprintln!("Failed to save log entry to vault: {e:?}");
                                 }
                             }
                         }

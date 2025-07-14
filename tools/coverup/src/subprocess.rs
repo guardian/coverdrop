@@ -16,12 +16,12 @@ pub async fn wait_for_subprocess(mut child: Child, name: &str) -> anyhow::Result
     // wait on either the tunnel stopping (due to e.g. network outage), or ctrl+c
     tokio::select! {
         _ = sigint_receiver.changed() => {
-            println!("Ctrl-C received, terminating {} process", name);
+            println!("Ctrl-C received, terminating {name} process");
             let _ = child.kill().await;
             Ok(child)
         }
         _ = child.wait() => {
-            println!("{} process exited", name);
+            println!("{name} process exited");
             Ok(child)
         }
     }
@@ -50,7 +50,7 @@ pub async fn create_subprocess(
         tokio::spawn({
             async move {
                 while let Some(line) = stdout_reader.next_line().await.unwrap_or(None) {
-                    println!("{} stdout: {}", name, line);
+                    println!("{name} stdout: {line}");
                 }
             }
         });
@@ -58,7 +58,7 @@ pub async fn create_subprocess(
         tokio::spawn({
             async move {
                 while let Some(line) = stderr_reader.next_line().await.unwrap_or(None) {
-                    eprintln!("{} stderr: {}", name, line);
+                    eprintln!("{name} stderr: {line}");
                 }
             }
         });
@@ -68,6 +68,6 @@ pub async fn create_subprocess(
         .id()
         .ok_or_else(|| anyhow::anyhow!("Failed to get child process id"))?;
 
-    println!("{} started. {} process id: {:?}", name, name, child_id);
+    println!("{name} started. {name} process id: {child_id:?}");
     Ok(child)
 }

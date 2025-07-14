@@ -1,4 +1,5 @@
 use api::anchor_org_pk_cache::AnchorOrganizationPublicKeyCache;
+use api::api_state::ApiState;
 use api::cli::Cli;
 use api::controllers::dead_drops::{
     get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
@@ -20,7 +21,7 @@ use api::services::database::Database;
 use api::services::tasks::{AnchorOrganizatioPublicKeyPollTask, DeleteOldDeadDropsTask};
 use api::DEFAULT_PORT;
 use axum::routing::{delete, get, patch, post};
-use axum::{Extension, Router};
+use axum::Router;
 use chrono::Duration;
 use clap::Parser;
 use common::aws::kinesis::client::KinesisClient;
@@ -118,6 +119,15 @@ async fn main() -> anyhow::Result<()> {
         cli.u2j_dead_drops_per_request_limit,
     );
 
+    let api_state = ApiState::new(
+        anchor_org_pks,
+        db,
+        kinesis_client,
+        cli.default_journalist_id,
+        tracing_reload_handle,
+        dead_drop_limits,
+    );
+
     let app = Router::new()
         // General
         .route("/healthcheck", get(get_healthcheck))
@@ -185,12 +195,7 @@ async fn main() -> anyhow::Result<()> {
             "/journalist-messages",
             post(post_forward_journalist_to_covernode_msg),
         )
-        .layer(Extension(anchor_org_pks))
-        .layer(Extension(db))
-        .layer(Extension(kinesis_client))
-        .layer(Extension(cli.default_journalist_id))
-        .layer(Extension(tracing_reload_handle))
-        .layer(Extension(dead_drop_limits));
+        .with_state(api_state);
 
     let app = Router::new()
         .nest("/v1/", app)

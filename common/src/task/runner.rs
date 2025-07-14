@@ -7,10 +7,10 @@ use std::{
 };
 
 use axum::{
-    extract::Path,
+    extract::{FromRef, Path, State},
     response::{IntoResponse, Response},
     routing::{get, post},
-    Extension, Json, Router,
+    Json, Router,
 };
 use chrono::{DateTime, Utc};
 use clap::ValueEnum;
@@ -24,6 +24,19 @@ use crate::time;
 use super::Task;
 
 pub const TASK_RUNNER_API_PORT: u16 = 4444;
+
+type RwLockedTasks = Arc<RwLock<Vec<RunningTask>>>;
+
+#[derive(Clone, FromRef)]
+struct TaskRunnerState {
+    tasks: RwLockedTasks,
+}
+
+impl TaskRunnerState {
+    pub fn new(tasks: RwLockedTasks) -> Self {
+        TaskRunnerState { tasks }
+    }
+}
 
 struct RunningTask {
     pub next_scheduled_execution: DateTime<Utc>,
@@ -84,7 +97,7 @@ impl TaskRunner {
     pub fn new(mode: RunnerMode) -> Self {
         Self {
             mode,
-            tasks: Arc::new(RwLock::new(vec![])),
+            tasks: Arc::new(RwLock::new(Vec::new())),
         }
     }
 
@@ -107,7 +120,7 @@ impl TaskRunner {
         tracing::info!("Starting task runner in {} mode", self.mode);
 
         if self.mode.triggerable() {
-            let tasks = self.tasks.clone();
+            let task_runner_state = TaskRunnerState::new(self.tasks.clone());
 
             // Spawn and immediately drop a task handle, since this is only for
             // testing purposes we're not too fussed about handling a failure elegantly
@@ -115,7 +128,7 @@ impl TaskRunner {
                 let app = Router::new()
                     .route("/tasks", get(get_tasks))
                     .route("/tasks/{name}/trigger", post(post_task_trigger))
-                    .layer(Extension(tasks));
+                    .with_state(task_runner_state);
 
                 let socket_addr =
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), TASK_RUNNER_API_PORT);
@@ -200,7 +213,7 @@ impl IntoResponse for TaskError {
 
 async fn post_task_trigger(
     Path(name): Path<String>,
-    Extension(tasks): Extension<Arc<RwLock<Vec<RunningTask>>>>,
+    State(tasks): State<RwLockedTasks>,
 ) -> Result<(), TaskError> {
     let mut tasks = tasks.write().await;
 
@@ -219,9 +232,7 @@ async fn post_task_trigger(
     Ok(())
 }
 
-async fn get_tasks(
-    Extension(tasks): Extension<Arc<RwLock<Vec<RunningTask>>>>,
-) -> Json<Vec<String>> {
+async fn get_tasks(State(tasks): State<RwLockedTasks>) -> Json<Vec<String>> {
     let tasks = tasks.read().await;
 
     let task_names = tasks.iter().map(|task| task.name().to_string()).collect();

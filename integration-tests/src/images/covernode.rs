@@ -135,7 +135,7 @@ impl ImageArgs for CoverNodeArgs {
             {j2u_mixing_parameters} {aws_flags} {runner_mode_arg} \
             {disable_stream_throttle} {stage}");
 
-        println!("Starting Covernode with: {}", command);
+        println!("Starting Covernode with: {command}");
 
         Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
     }

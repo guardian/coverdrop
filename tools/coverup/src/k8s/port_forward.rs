@@ -20,16 +20,10 @@ async fn port_forward(
         "kubectl port-forward {target_id} -n {namespace} {local_port}:{remote_port} --kubeconfig {kubeconfig_path}"
     );
 
-    println!(
-        "Setting up port forwarding. Equivalent kubectl command: {}",
-        command
-    );
+    println!("Setting up port forwarding. Equivalent kubectl command: {command}");
 
     let child = create_subprocess("Port-forward", &command, true).await?;
-    println!(
-        "\n      Port forwarding has been set up at http://localhost:{}\n",
-        local_port
-    );
+    println!("\n      Port forwarding has been set up at http://localhost:{local_port}\n");
     if wait_until_sigint {
         Ok(wait_for_subprocess(child, "Port-forward").await?)
     } else {
@@ -73,8 +67,7 @@ pub async fn port_forward_kubernetes_dashboard(
         .to_str()
         .expect("Get path from kubeconfig_path");
     let token_command = format!(
-        "kubectl -n kubernetes-dashboard create token admin-user --kubeconfig {}",
-        kubeconfig_path_str
+        "kubectl -n kubernetes-dashboard create token admin-user --kubeconfig {kubeconfig_path_str}"
     );
     let mut token_process = create_subprocess("Token request", &token_command, true).await?;
     token_process.wait().await?;

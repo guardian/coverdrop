@@ -9,7 +9,7 @@ pub async fn healthcheck(kubeconfig_path: Option<impl AsRef<Path>>) -> anyhow::R
         .forward_http_get_request(CoverDropService::CoverNode, "/v1/healthcheck")
         .await?;
 
-    println!("{}", json);
+    println!("{json}");
 
     Ok(())
 }

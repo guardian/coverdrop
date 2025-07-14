@@ -20,27 +20,23 @@ pub async fn create_tunnel(
             local_port, local_port
         );
     }
-    println!(
-        "Creating tunnel to {}:{} at localhost:{}",
-        remote_host, remote_port, local_port
-    );
+    println!("Creating tunnel to {remote_host}:{remote_port} at localhost:{local_port}");
     // use aws cli to start session (I tried using the Rust SDK but that doesn't handle the port forwarding)
     let command = format!(
         r##"aws ssm start-session \
-            --target {} \
+            --target {tunnel_instance_id} \
             --document-name "AWS-StartPortForwardingSessionToRemoteHost" \
-            --parameters '{{"localPortNumber":["{}"],"portNumber":["{}"],"host":["{}"]}}' \
+            --parameters '{{"localPortNumber":["{local_port}"],"portNumber":["{remote_port}"],"host":["{remote_host}"]}}' \
             --profile secure-collaboration \
             --region eu-west-1
-            "##,
-        tunnel_instance_id, local_port, remote_port, remote_host
+            "##
     );
     let child = create_subprocess("Tunnel", command.as_str(), true).await?;
 
     let child_id = child
         .id()
         .ok_or_else(|| anyhow::anyhow!("Failed to get child process id"))?;
-    println!("Tunnel has been created. Tunnel process id: {:?}", child_id);
+    println!("Tunnel has been created. Tunnel process id: {child_id:?}");
 
     Ok(child)
 }
@@ -107,7 +103,7 @@ pub async fn get_file_contents(
         .ok_or_else(|| anyhow::anyhow!("Failed to get stdout s3 url"))?;
 
     let s3_key = stdout_s3_url
-        .split(format!("{}/", ssm_output_bucket).as_str())
+        .split(format!("{ssm_output_bucket}/").as_str())
         .last()
         .ok_or_else(|| anyhow::anyhow!("Failed to get s3 key"))?;
 

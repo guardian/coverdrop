@@ -35,8 +35,5 @@ where
         }
     }
 
-    panic!(
-        "Failed to successfully run function after {} retries",
-        attempts
-    );
+    panic!("Failed to successfully run function after {attempts} retries");
 }

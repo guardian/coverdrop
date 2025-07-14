@@ -201,7 +201,7 @@ async fn main() -> anyhow::Result<()> {
 
                 tunnel_and_run(aws_config, &kubeconfig_path, || async {
                     if let Err(e) = port_forward_argo(port, &kubeconfig_path).await {
-                        eprint!("Error setting up port forwarding for argo {:?}", e)
+                        eprint!("Error setting up port forwarding for argo {e:?}")
                     };
                 })
                 .await?;
@@ -211,7 +211,7 @@ async fn main() -> anyhow::Result<()> {
 
                 tunnel_and_run(aws_config, &kubeconfig_path, || async {
                     if let Err(e) = port_forward_longhorn(port, &kubeconfig_path).await {
-                        eprint!("Error setting up port forwarding for longhorn {:?}", e)
+                        eprint!("Error setting up port forwarding for longhorn {e:?}")
                     };
                 })
                 .await?;
@@ -233,7 +233,7 @@ async fn main() -> anyhow::Result<()> {
                 tunnel_and_run(aws_config, &kubeconfig_path, || async {
                     if let Err(e) = port_forward_kubernetes_dashboard(port, &kubeconfig_path).await
                     {
-                        eprint!("Error setting up port forwarding for k8s {:?}", e)
+                        eprint!("Error setting up port forwarding for k8s {e:?}")
                     };
                 })
                 .await?;
@@ -355,7 +355,7 @@ async fn main() -> anyhow::Result<()> {
                 password,
                 password_path,
             } => {
-                println!("Deriving key for vault at {:?}", vault_path);
+                println!("Deriving key for vault at {vault_path:?}");
 
                 let password = validate_password_from_args(password, password_path)?;
 
@@ -363,8 +363,8 @@ async fn main() -> anyhow::Result<()> {
                     Argon2SqlCipher::derive_database_key(&vault_path, &password).await;
 
                 match key_string_result {
-                    Err(e) => eprintln!("Error: {:?}", e),
-                    Ok(key_string) => println!("Key: {}", key_string),
+                    Err(e) => eprintln!("Error: {e:?}"),
+                    Ok(key_string) => println!("Key: {key_string}"),
                 }
             }
             JournalistVaultCommand::OpenVault {
@@ -372,7 +372,7 @@ async fn main() -> anyhow::Result<()> {
                 password,
                 password_path,
             } => {
-                println!("Opening vault at {:?}", vault_path);
+                println!("Opening vault at {vault_path:?}");
 
                 let password = validate_password_from_args(password, password_path)?;
 
@@ -380,9 +380,9 @@ async fn main() -> anyhow::Result<()> {
                     Argon2SqlCipher::derive_database_key(&vault_path, &password).await;
 
                 match key_string_result {
-                    Err(e) => eprintln!("Error calculating key: {:?}", e),
+                    Err(e) => eprintln!("Error calculating key: {e:?}"),
                     Ok(key_string) => {
-                        let pragma_arg = format!("PRAGMA key=\"x'{}'\";", key_string);
+                        let pragma_arg = format!("PRAGMA key=\"x'{key_string}'\";");
                         let exec_args =
                             vec![vault_path.to_str().unwrap(), "-cmd", pragma_arg.as_str()];
 

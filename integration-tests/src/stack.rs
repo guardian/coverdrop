@@ -293,7 +293,7 @@ impl CoverDropStackBuilder {
             .expect("Get bridge ip address for api");
 
         let api_task_api_client = TaskApiClient::new(
-            Url::parse(&format!("http://localhost:{}", api_task_api_port))
+            Url::parse(&format!("http://localhost:{api_task_api_port}"))
                 .expect("Failed to parse covernode task API url"),
         )
         .expect("Create covernode task API client");
@@ -371,7 +371,7 @@ impl CoverDropStackBuilder {
 
             Some(
                 TaskApiClient::new(
-                    Url::parse(&format!("http://localhost:{}", identity_api_task_api_port))
+                    Url::parse(&format!("http://localhost:{identity_api_task_api_port}"))
                         .expect("Parse identity-api task API url"),
                 )
                 .expect("Create identity-api task API client"),
@@ -478,7 +478,7 @@ impl CoverDropStackBuilder {
         {
             Some(
                 TaskApiClient::new(
-                    Url::parse(&format!("http://localhost:{}", covernode_task_api_port))
+                    Url::parse(&format!("http://localhost:{covernode_task_api_port}"))
                         .expect("Parse covernode task API url"),
                 )
                 .expect("Create covernode task API client"),

@@ -148,7 +148,7 @@ mod tests {
                 derive_secret_box_key_with_configuration(password, &salt, configuration).unwrap();
             let duration = start.elapsed();
 
-            println!("Hashing with {:?} took {:?}", configuration, duration);
+            println!("Hashing with {configuration:?} took {duration:?}");
         }
 
         Ok(())

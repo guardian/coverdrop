@@ -11,7 +11,7 @@ pub async fn list_files(
     let files = data_copier_pod.list_files(&pvc_path.path, long).await?;
 
     for f in &files {
-        println!("{}", f);
+        println!("{f}");
     }
 
     Ok(())

@@ -44,7 +44,7 @@ pub async fn wipe_all_tables(config: &SdkConfig, stage: Stage) -> anyhow::Result
     let first_api_instance_id = first_api_instance
         .instance_id
         .ok_or_else(|| anyhow::anyhow!("No instance id found"))?;
-    println!("API instance: {:?}", first_api_instance_id);
+    println!("API instance: {first_api_instance_id:?}");
 
     let db_name = format!(
         "coverdrop-api-db-{}",
@@ -59,10 +59,8 @@ pub async fn wipe_all_tables(config: &SdkConfig, stage: Stage) -> anyhow::Result
     let secret_arn = get_secret_arn(&secret_client, stage, "DatabaseSec".to_string()).await?;
     let db_password = get_db_password(secret_client, secret_arn, &db_name).await?;
 
-    let db_url = format!(
-        "postgres://coverdrop:{}@localhost:{}/coverdrop_api_db",
-        db_password, local_db_port
-    );
+    let db_url =
+        format!("postgres://coverdrop:{db_password}@localhost:{local_db_port}/coverdrop_api_db");
     run_wipe_query(&db_url).await?;
     tunnel_process.kill().await.expect("Kill tunnel process");
     tunnel_process.wait().await?;

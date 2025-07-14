@@ -278,7 +278,7 @@ fn format_number(num: usize) -> String {
 fn format_bytes(bytes: &[u8]) -> String {
     let mut result = Vec::<String>::new();
     for byte in bytes {
-        result.push(format!("0x{:02x}", byte));
+        result.push(format!("0x{byte:02x}"));
     }
     result.join(", ")
 }

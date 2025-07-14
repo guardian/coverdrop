@@ -238,7 +238,7 @@ mod tests {
 
         let secret_wrapper = CliSecret::<String, PlainRedactor>::new(test_value);
 
-        let debug_value = format!("{:?}", secret_wrapper);
+        let debug_value = format!("{secret_wrapper:?}");
 
         assert_eq!(debug_value, "<REDACTED>");
     }
@@ -249,7 +249,7 @@ mod tests {
 
         let secret_wrapper = CliSecret::<String, PostgresConnectionStringRedactor>::new(test_value);
 
-        let debug_value = format!("{:?}", secret_wrapper);
+        let debug_value = format!("{secret_wrapper:?}");
 
         assert_eq!(
             debug_value,
@@ -264,7 +264,7 @@ mod tests {
 
         let secret_wrapper = CliSecret::<String, PostgresConnectionStringRedactor>::new(test_value);
 
-        let debug_value = format!("{:?}", secret_wrapper);
+        let debug_value = format!("{secret_wrapper:?}");
 
         assert_eq!(
             debug_value,

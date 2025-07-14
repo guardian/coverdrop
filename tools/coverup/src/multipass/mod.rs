@@ -78,7 +78,7 @@ pub fn ensure_nodes_running(
     static CLOUD_INIT: &[u8] = include_bytes!("./multipass-cloud-init.yaml");
 
     for i in 0..desired_node_count.get() {
-        let node_name = format!("{}{}", NODE_PREFIX, i);
+        let node_name = format!("{NODE_PREFIX}{i}");
 
         tracing::debug!("Ensuring node {} is launched", node_name);
 
@@ -89,7 +89,7 @@ pub fn ensure_nodes_running(
 
         let mut process = process::Command::new("multipass")
             .arg("launch")
-            .arg(format!("--name={}", node_name))
+            .arg(format!("--name={node_name}"))
             .arg(format!("--cpus={}", cpus_per_node.get()))
             .arg(format!("--memory={}G", ram_gb_per_node.get()))
             .arg(format!("--disk={}G", storage_gb_per_node.get()))
@@ -129,7 +129,7 @@ pub fn copy_docker_image_to_nodes(
                     .ok_or_else(|| anyhow::anyhow!("Node has no local IP"))?;
 
                 let ssh_status = process::Command::new("ssh")
-                    .arg(format!("ubuntu@{}", ip))
+                    .arg(format!("ubuntu@{ip}"))
                     .arg("sudo k3s ctr images import -")
                     .stdin(Stdio::from(docker_stdout))
                     .status()?;

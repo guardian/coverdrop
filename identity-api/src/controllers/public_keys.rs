@@ -1,11 +1,11 @@
-use axum::{Extension, Json};
+use axum::{extract::State, Json};
 use common::{identity_api::models::IdentityApiPublicKeys, protocol::keys::LatestKey, time};
 use identity_api_database::Database;
 
 use crate::error::AppError;
 
 pub async fn get_public_keys(
-    Extension(database): Extension<Database>,
+    State(database): State<Database>,
 ) -> Result<Json<IdentityApiPublicKeys>, AppError> {
     let now = time::now();
 

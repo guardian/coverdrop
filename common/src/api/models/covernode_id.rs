@@ -35,7 +35,7 @@ impl CoverNodeIdentity {
     }
 
     pub fn from_node_id(node_number: u8) -> Self {
-        Self(format!("covernode_{:0>3}", node_number))
+        Self(format!("covernode_{node_number:0>3}"))
     }
 
     pub fn into_string(self) -> String {

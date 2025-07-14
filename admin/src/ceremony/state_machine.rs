@@ -146,7 +146,7 @@ impl CeremonyStep {
         } = state;
 
         if !*assume_yes {
-            println!("\n=== Step {:?} ===", self);
+            println!("\n=== Step {self:?} ===");
         }
 
         match self {
@@ -214,7 +214,7 @@ impl CeremonyStep {
                 for covernode_id in 1..=(*covernode_count).into() {
                     let covernode_identity = CoverNodeIdentity::from_node_id(covernode_id);
 
-                    let db_path = output_directory.join(format!("{}.db", covernode_identity));
+                    let db_path = output_directory.join(format!("{covernode_identity}.db"));
                     let db = Database::open(&db_path, covernode_db_password).await?;
 
                     let covernode_id_key_pair = generate_covernode_id_key_pair(

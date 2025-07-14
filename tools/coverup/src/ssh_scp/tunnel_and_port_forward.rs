@@ -7,8 +7,8 @@ pub async fn command_over_ssh(
     admin_machine_ip: Ipv4Addr,
     command: &str,
 ) -> anyhow::Result<()> {
-    println!("Running command over SSH: {}", command);
-    let ssh_command = format!("ssh {}@{} -t '{}'", ssh_user, admin_machine_ip, command);
+    println!("Running command over SSH: {command}");
+    let ssh_command = format!("ssh {ssh_user}@{admin_machine_ip} -t '{command}'");
 
     let mut child = create_subprocess("SSH command", ssh_command.as_str(), true).await?;
 
@@ -36,13 +36,11 @@ pub async fn tunnel_and_port_forward(
     // DEV LAPTOP: local port (e.g. 8444)
 
     let port_forward_command = format!(
-        "kubectl port-forward svc/{} -n {} {}:{}",
-        service_name, service_namespace, local_port, remote_port,
+        "kubectl port-forward svc/{service_name} -n {service_namespace} {local_port}:{remote_port}",
     );
 
     let command = format!(
-        "ssh -L {}:localhost:{} {}@{} -t {}",
-        local_port, local_port, ssh_user, admin_machine_ip, port_forward_command
+        "ssh -L {local_port}:localhost:{local_port} {ssh_user}@{admin_machine_ip} -t {port_forward_command}"
     );
 
     let mut child = create_subprocess("Tunnel and port-forward", command.as_str(), true).await?;
@@ -51,11 +49,11 @@ pub async fn tunnel_and_port_forward(
         .id()
         .ok_or_else(|| anyhow::anyhow!("Failed to get child process id"))?;
 
-    println!("Tunnel has been created. Tunnel process id: {:?}", child_id);
+    println!("Tunnel has been created. Tunnel process id: {child_id:?}");
 
     wait_for_port_active(local_port, true).await;
 
-    open::that(format!("https://localhost:{}", local_port))?;
+    open::that(format!("https://localhost:{local_port}"))?;
 
     let _ = child.wait().await;
 

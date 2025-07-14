@@ -20,15 +20,9 @@ pub async fn scp(
         .to_str()
         .expect("Convert path to string");
     let source_dest = if direction == ScpDirection::RemoteToLocal {
-        format!(
-            "{}@{}:{} {}",
-            user, remote_instance_ip, source_path, dest_path
-        )
+        format!("{user}@{remote_instance_ip}:{source_path} {dest_path}")
     } else {
-        format!(
-            "{}, {}@{}:{}",
-            source_path, user, remote_instance_ip, dest_path
-        )
+        format!("{source_path}, {user}@{remote_instance_ip}:{dest_path}")
     };
     let key_string = format!(
         "-i {}",
@@ -38,7 +32,7 @@ pub async fn scp(
             .expect("Get key path from supplied path")
     );
 
-    let scp_command = format!("scp {} {}", key_string, source_dest);
+    let scp_command = format!("scp {key_string} {source_dest}");
     let mut result = create_subprocess("scp", &scp_command, true).await?;
     let exit_code = result.wait().await?;
     if !exit_code.success() {
@@ -47,6 +41,6 @@ pub async fn scp(
             exit_code.to_string()
         )
     }
-    println!("Successfully copied file {} to {}", source_path, dest_path);
+    println!("Successfully copied file {source_path} to {dest_path}");
     Ok(())
 }

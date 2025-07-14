@@ -41,13 +41,13 @@ impl ImageArgs for IdentityApiArgs {
         let api_url_arg = format!("--api-url=http://{}:{}", self.api_ip, self.api_port);
 
         let db_url_arg = "--db-path=/var/keys/identity-api.db";
-        let db_password_arg = format!("--db-password={}", IDENTITY_API_DB_PASSWORD);
+        let db_password_arg = format!("--db-password={IDENTITY_API_DB_PASSWORD}",);
         let runner_mode_arg = format!("--task-runner-mode={}", self.runner_mode);
 
         let command =
             format!("{set_time_arg} && ./identity-api --stage=dev --keys-path=/var/keys {runner_mode_arg} {api_url_arg} {db_url_arg} {db_password_arg}");
 
-        println!("Starting Identity API with: {}", command);
+        println!("Starting Identity API with: {command}");
 
         Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
     }

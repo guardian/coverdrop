@@ -1,6 +1,7 @@
 use axum::{
+    extract::FromRef,
     routing::{get, post},
-    Extension, Router,
+    Router,
 };
 use clap::Parser;
 use common::{
@@ -15,6 +16,17 @@ use u2j_appender::{
     kinesis_client::KinesisClient,
     DEFAULT_PORT,
 };
+
+#[derive(Clone, FromRef)]
+pub struct U2JAppenderState {
+    pub kinesis_client: KinesisClient,
+}
+
+impl U2JAppenderState {
+    pub fn new(kinesis_client: KinesisClient) -> Self {
+        Self { kinesis_client }
+    }
+}
 
 #[tokio::main]
 async fn main() {
@@ -38,11 +50,13 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
     )
     .await;
 
+    let u2j_appender_state = U2JAppenderState::new(kinesis_client);
+
     let app = Router::new()
         .route("/healthcheck", get(get_healthcheck))
         .route("/user/messages", post(post_u2j_message))
-        .layer(Extension(kinesis_client))
-        .layer(axum_metrics::MetricLayer::default());
+        .layer(axum_metrics::MetricLayer::default())
+        .with_state(u2j_appender_state);
 
     let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
 

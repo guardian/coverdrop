@@ -60,6 +60,6 @@ pub async fn do_secrets_exist_in_container_logs<T: testcontainers::Image>(
     tracing::debug!("got secrets count: {}", secret_count);
 
     let logs_writer = File::create(log_path).expect("Create log file");
-    write!(&logs_writer, "{}", combined_logs).unwrap();
+    write!(&logs_writer, "{combined_logs}").unwrap();
     Ok(secret_count > 0)
 }

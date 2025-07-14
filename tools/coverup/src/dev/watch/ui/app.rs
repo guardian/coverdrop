@@ -127,7 +127,7 @@ impl App {
                 _ = interval.tick() => {
                     if let Err(e) = self.render() {
                         // Not sure how we can meaningfully recover from an unhandled error in the render loop.
-                        panic!("Error in render loop: {:?}", e);
+                        panic!("Error in render loop: {e:?}");
                     }
                 }
                 Some(Ok(event)) = crossterm_event => {
@@ -161,7 +161,7 @@ impl App {
                             if let Some(service_status) = self.get_service_or_warn(&service) {
                                 service_status.build_log.push("");
                                 service_status.build_log.push("#");
-                                service_status.build_log.push(format!("# {}", build_status));
+                                service_status.build_log.push(format!("# {build_status}"));
                                 service_status.build_log.push("#");
                                 service_status.build_log.push("");
                                 service_status.build_status = build_status;
@@ -340,7 +340,7 @@ impl App {
                         .iter()
                         .fold(String::new(), |mut acc, line| {
                             line_count += 1;
-                            acc.push_str(&format!("{:0>4}: ", line_count));
+                            acc.push_str(&format!("{line_count:0>4}: "));
                             acc.push_str(line);
                             acc.push('\n');
                             acc
@@ -352,7 +352,7 @@ impl App {
                     )
                 }
             }
-            Some(LogTarget::Pod(name)) => format!("Logs for {}", name),
+            Some(LogTarget::Pod(name)) => format!("Logs for {name}"),
             None => "No entity selected".to_string(),
         };
 

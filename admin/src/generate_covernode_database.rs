@@ -24,7 +24,7 @@ pub async fn generate_covernode_database(
 
     let output_path = output_path
         .as_ref()
-        .join(format!("{}.db", covernode_identity));
+        .join(format!("{covernode_identity}.db"));
 
     let anchor_org_pks = load_anchor_org_pks(&keys_path, now)?;
     if anchor_org_pks.is_empty() {

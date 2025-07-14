@@ -68,7 +68,7 @@ fn handle_profiles(profiles_path: impl AsRef<Path>) -> anyhow::Result<Profiles> 
         if let Ok(multipass_nodes) = multipass::list_coverdrop_nodes() {
             if let Some(node) = multipass_nodes.first() {
                 if let Some(local_ip) = node.local_ip() {
-                    let url = format!("http://{}:30000/", local_ip);
+                    let url = format!("http://{local_ip}:30000/");
                     let url = Url::from_str(&url)?;
                     profiles.insert("DEV-AUTO", url);
                 } else {
@@ -112,7 +112,7 @@ pub fn run() {
                 if let Err(e) = std::fs::create_dir_all(config_dir) {
                     return fail_setup_with_message(
                         app,
-                        &format!("Failed to create application config directory: {:?}", e),
+                        &format!("Failed to create application config directory: {e:?}"),
                     );
                 }
 
@@ -123,7 +123,7 @@ pub fn run() {
                     Err(e) => {
                         return fail_setup_with_message(
                             app,
-                            &format!("Failed to load profiles: {:?}", e),
+                            &format!("Failed to load profiles: {e:?}"),
                         )
                     }
                 };
