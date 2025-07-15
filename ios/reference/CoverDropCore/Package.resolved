@@ -10,12 +10,29 @@
       }
     },
     {
+      "identity" : "iossecuritysuite",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/securing/IOSSecuritySuite.git",
+      "state" : {
+        "revision" : "651f1ca002b1060214173e55b9040272ae91abcd",
+        "version" : "1.9.11"
+      }
+    },
+    {
+      "identity" : "sloth-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lambdapioneer/sloth-ios.git",
+      "state" : {
+        "revision" : "eda780a69a7622b9c0a28c135ad061741a491024",
+        "version" : "0.3.0"
+      }
+    },
+    {
       "identity" : "swift-sodium",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jedisct1/swift-sodium.git",
       "state" : {
-        "revision" : "4f9164a0a2c9a6a7ff53a2833d54a5c79c957342",
-        "version" : "0.9.1"
+        "revision" : "63240810df971557fe9badc557257bdfbfeb90a3"
       }
     }
   ],

@@ -8,6 +8,11 @@ struct HeaderView<Content: View>: View {
     @State private var showingScreenshotDetectedAlert = false
     @State private var showingBetaBannerAlert = false
 
+    @AppStorage("coverDropEnabledRemotely", store: UserDefaults(suiteName: "coverdrop.theguardian.com")!)
+    private var isCoverDropEnabled: Bool = false
+
+    @State private var showPopover: Bool = false
+
     /// An optional closure to allow a view to implement its own dismissal logic. If `nil`, the parent view will be
     /// dismissed when the back button is pressed.
     let dismissAction: (() -> Void)?
@@ -34,6 +39,10 @@ struct HeaderView<Content: View>: View {
                     if type != .inbox {
                         backButtonView()
                     }
+                    #if DEBUG
+                        Spacer()
+                        toggleDevMenu()
+                    #endif
                     Spacer() // This pushed the button to the left corner
                     logoView()
                 }
@@ -84,6 +93,32 @@ struct HeaderView<Content: View>: View {
             .frame(height: 40, alignment: .topLeading)
             .padding([.trailing], Padding.large)
             .padding([.vertical], Padding.medium)
+    }
+
+    func toggleDevMenu() -> some View {
+        VStack {
+            Button("Dev Settings") {
+                showPopover = true
+            }.buttonStyle(.bordered)
+                .popover(isPresented: $showPopover) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("Preferences")
+                            .font(.headline)
+
+                        Toggle(
+                            "CoverDrop enabled",
+                            isOn: $isCoverDropEnabled
+                        ).accessibilityIdentifier("toggleCoverDropEnabledButton")
+
+                        Button("Close") {
+                            showPopover = false
+                        }.buttonStyle(.bordered).accessibilityIdentifier("closeDevMenuButton")
+                    }
+                    .frame(width: 200)
+                }
+        }
+        .accessibilityIdentifier("toggleDevMenuButton")
+        .accessibilityElement(children: .contain)
     }
 
     func backButtonView() -> some View {

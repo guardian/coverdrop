@@ -12,13 +12,33 @@ public enum TestingFlag: String {
     case mockedDataStatusUnavailable = "STATUS_UNAVAILABLE"
     case mockedDataExpiredMessagesScenario = "EXPIRED_MESSAGES_SCENARIO"
     case forceSingleRecipient = "FORCE_SINGLE_RECIPIENT"
+    case coverDropDisabled = "COVERDROP_DISABLED"
+    case offline = "OFFLINE"
+    case startWithCachedPublicKeys = "START_WITH_CACHED_PUBLIC_KEYS"
 }
 
 public enum TestingBridge {
     /// Returns `true` if the given testing flag has been enabled for the reference application
     public static func isEnabled(_ flag: TestingFlag, processInfo: ProcessInfo? = nil) -> Bool {
         let processInfo = processInfo ?? ProcessInfo.processInfo
-        return processInfo.arguments.contains(flag.rawValue)
+
+        switch flag {
+        // We support a special case for coverDropDisabled as we want to be able to test
+        // coverdrop being enabled after the app has started, we do this by also checking the UserDefaults storage
+        // which can be updated via the test button in the header
+        case .coverDropDisabled:
+            let defaults = UserDefaults(suiteName: "coverdrop.theguardian.com")
+            if defaults?.object(forKey: "coverDropEnabledRemotely") == nil {
+                return processInfo.arguments.contains(flag.rawValue)
+            }
+
+            let remoteEnabled = defaults?.bool(forKey: "coverDropEnabledRemotely") ?? false
+            let disabled = !remoteEnabled
+            return disabled
+
+        default:
+            return processInfo.arguments.contains(flag.rawValue)
+        }
     }
 
     public static func setTestingFlags(launchArguments: inout [String], flags: [TestingFlag]) {

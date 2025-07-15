@@ -3,6 +3,7 @@ import Foundation
 class URLProtocolMock: URLProtocol {
     /// Dictionary maps URLs to tuples of error, data, and response
     static var mockURLs = [URL?: MockResponse]()
+    static var offline = false
 
     override class func canInit(with _: URLRequest) -> Bool {
         // Handle all types of requests
@@ -15,6 +16,13 @@ class URLProtocolMock: URLProtocol {
     }
 
     override func startLoading() {
+        if URLProtocolMock.offline {
+            let error = URLError(.notConnectedToInternet)
+            client?.urlProtocol(self, didFailWithError: error)
+            client?.urlProtocolDidFinishLoading(self)
+            return
+        }
+
         if let url = request.url {
             if let mockResponse = URLProtocolMock.mockURLs[url] {
                 // We have a mock response specified so return it.

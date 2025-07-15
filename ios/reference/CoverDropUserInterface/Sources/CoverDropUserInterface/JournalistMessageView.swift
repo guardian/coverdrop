@@ -53,8 +53,9 @@ struct JournalistMessageView: View {
     }
 
     private func messageComposeView(recipient: JournalistData) -> some View {
-        @State var expired = false
+
         return VStack {
+            let expired = isCurrentKeyExpired(recipient: recipient)
             let inactive = !self.conversationViewModel
                 .isCurrentConversationActive(maybeActiveConversation: inboxViewModel.activeConversation)
             let isMostRecentMessageFromUser = self.conversationViewModel.isMostRecentMessageFromUser()
@@ -68,15 +69,10 @@ struct JournalistMessageView: View {
             } else {
                 messageSendView()
             }
-
-        }.onAppear {
-            Task {
-                expired = await isCurrentKeyExpired(recipient: recipient)
-            }
         }
     }
 
-    func isCurrentKeyExpired(recipient: JournalistData) async -> Bool {
+    func isCurrentKeyExpired(recipient: JournalistData) -> Bool {
         if let verifiedKeys = try? lib.publicDataRepository.getVerifiedKeys(),
            let currentKey = verifiedKeys.getLatestMessagingKey(journalistId: recipient.recipientId) {
             return currentKey.isExpired(now: DateFunction.currentKeysPublishedTime())

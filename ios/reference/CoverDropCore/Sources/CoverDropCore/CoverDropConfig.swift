@@ -23,6 +23,7 @@ public enum StaticConfig: CoverDropConfig {
     case prodConfig
     case stagingConfig
     case devConfig
+    case devConfigWithCache
 
     private func internalGetConfig() -> CoverDropConfig {
         switch self {
@@ -32,6 +33,8 @@ public enum StaticConfig: CoverDropConfig {
             return StagingConfig()
         case .devConfig:
             return DevConfig()
+        case .devConfigWithCache:
+            return DevConfigWithCache()
         }
     }
 
@@ -103,6 +106,26 @@ public struct StagingConfig: CoverDropConfig {
     public var minDurationBetweenBackgroundRunsInSecs = 60 * 60
     public var numMessagesPerBackgroundRun = 2
     public var removeBackgroundSendStateOnStart = false
+}
+
+// TODO: This is only for setting the cache enabled to true in the UITests
+// will be addressed by https://github.com/guardian/coverdrop-internal/issues/3333
+public struct DevConfigWithCache: CoverDropConfig {
+    public var envType: EnvType = .dev
+    public var withSecureDns: Bool = false
+
+    public var passphraseWordCount = 3
+
+    public let apiBaseUrl = "http://localhost:3000/v1"
+    public let messageBaseUrl = "http://localhost:7676"
+
+    public let cacheEnabled = true
+
+    // The maxBackgroundDurationInSeconds is longer that minDurationBetweenBackgroundRunsInSecs
+    // so we can test the background sending when foregrounding the app without the auto logout being triggered
+    public let maxBackgroundDurationInSeconds = 20
+    public var minDurationBetweenBackgroundRunsInSecs = 10
+    public var numMessagesPerBackgroundRun = 2
 }
 
 public struct DevConfig: CoverDropConfig {

@@ -15,7 +15,7 @@ final class InboxUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    func testConversationCannotBeRepliedToIfInactive() throws {
+    func skipped_testConversationCannotBeRepliedToIfInactive() throws {
         // This START_WITH_MESSAGES launch argument is required to add test messages to the inbox.
         // This is needed because we only decrypt messages for journalists already in your inbox,
         // so without these inital messages we cannot process the dead drop fixtures

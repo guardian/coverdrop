@@ -66,10 +66,12 @@ public class CoverDropService: ObservableObject {
 
     /// May be called from various parts of the app to ensure that the `CoverDropService` is intialized
     /// so that subsequent calls to `getLibrary()` succeed.
-    public func ensureInitialized(config: CoverDropConfig) throws {
+    @discardableResult
+    public func ensureInitialized(config: CoverDropConfig) throws -> Task<Void, Never>? {
         switch state {
-        case .notInitialized:
-            Task {
+        // If the app failed to initialize we want to be able to recover
+        case .notInitialized, .failedToInitialize:
+            return Task {
                 await MainActor.run {
                     state = .initializing
                 }
@@ -87,8 +89,8 @@ public class CoverDropService: ObservableObject {
                     }
                 }
             }
-        case .initialized, .failedToInitialize, .initializing:
-            return
+        case .initialized, .initializing:
+            return nil
         }
     }
 
@@ -131,8 +133,14 @@ public class CoverDropService: ObservableObject {
             }
         }
 
-        //  request the public keys and any dead drops
-        try await publicDataRepository.pollPublicKeysAndStatusApis()
+        #if DEBUG
+            // Handle all modifications that might need to happen as a result of passed in test flags
+            try await CoverDropServiceHelper.handleTestingFlags(config: config)
+        #endif
+
+        // Check the status endpoint first
+        try await publicDataRepository.loadStatus()
+
         //  get the verified keys
         guard (try? await publicDataRepository.loadAndVerifyPublicKeys()) != nil else {
             throw CoverDropServicesError.verifiedPublicKeysNotAvailable
@@ -160,12 +168,6 @@ public class CoverDropService: ObservableObject {
         // so we do not delay startup
         _ = try? await publicDataRepository.loadDeadDrops()
 
-        // Handle all modifications that might need to happen as a result of passed in test flags
-        try await CoverDropServiceHelper.handleTestingFlags(
-            config: config,
-            verifiedKeys: publicDataRepository.getVerifiedKeys()
-        )
-
         return CoverDropLibrary(
             publicDataRepository: publicDataRepository,
             secretDataRepository: secretDataRepository,
@@ -188,11 +190,16 @@ public class CoverDropService: ObservableObject {
             }
         }
 
-        // employ mocked url protocol for UI and integration tests
-        if TestingBridge.isMockedDataEnabled(config: config) {
-            URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
-            urlSession.protocolClasses = [URLProtocolMock.self]
-        }
+        #if DEBUG
+            // employ mocked url protocol for UI and integration tests
+            if TestingBridge.isMockedDataEnabled(config: config) {
+                URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
+                if TestingBridge.isEnabled(.offline) {
+                    URLProtocolMock.offline = true
+                }
+                urlSession.protocolClasses = [URLProtocolMock.self]
+            }
+        #endif
 
         return URLSession(configuration: urlSession)
     }
@@ -215,11 +222,10 @@ public class CoverDropService: ObservableObject {
                 _ = try? await deadDrops
             }
             // It's possible that coverdrop has been enabled remotely while the user still had the app open
+            // or that the app failed to initialize on first startup ie the user was offline
             // So the service will never initialize until the app is restarted.
             // To avoid this, we check the state on foreground, and start the service if needed.
-            if case .notInitialized = CoverDropService.shared.state {
-                try? CoverDropService.shared.ensureInitialized(config: config)
-            }
+            try? CoverDropService.shared.ensureInitialized(config: config)
         }
     }
 

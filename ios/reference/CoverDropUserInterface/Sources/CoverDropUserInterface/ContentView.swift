@@ -26,7 +26,9 @@ struct ContentView: View {
     var body: some View {
         Group {
             switch coverDropService.state {
-            case .notInitialized, .initializing:
+            case .notInitialized:
+                InitErrorView(error: "Secure messaging unavailable")
+            case .initializing:
                 LoadingView()
             case let .initialized(lib: lib):
                 ReadyView(
@@ -38,15 +40,6 @@ struct ContentView: View {
                 InitErrorView(error: "error: \(reason)")
             }
         }.environment(uiConfig)
-            .onAppear {
-                // This runs the task outside of the views context, so it will not cancel if the user
-                // navigates away from this screen
-                Task.detached(priority: .high) {
-                    if case .notInitialized = await coverDropService.state {
-                        try? await CoverDropService.shared.ensureInitialized(config: config)
-                    }
-                }
-            }
             .alert(
                 """
                 You took a screenshot.
@@ -122,7 +115,6 @@ struct NonLoggedInNavigationView: View {
                     publicDataRepository: lib.publishedPublicDataRepository, navPath: $navPath
                 )
             }.navigationDestination(for: Destination.self) { destination in
-
                 switch destination {
                 case .about:
                     AboutCoverDropView(

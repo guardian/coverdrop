@@ -18,6 +18,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
         #if DEBUG
             config = .devConfig
+            if TestingBridge.isEnabled(.startWithCachedPublicKeys) {
+                config = .devConfigWithCache
+            }
+
         #endif
 
         #if CODE
@@ -41,9 +45,21 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         GuardianFonts.registerFonts()
 
         disableAnimationsIfNeeded()
-        try? coverDropService.didLaunch(config: config)
+        clearTestingDefaults()
 
+        let coverDropDisabled = TestingBridge.isEnabled(.coverDropDisabled)
+
+        if coverDropDisabled {
+            Debug.println("CoverDrop is disabled for testing")
+        } else {
+            try? coverDropService.didLaunch(config: config)
+        }
         return true
+    }
+
+    private func clearTestingDefaults() {
+        let defaults = UserDefaults(suiteName: "coverdrop.theguardian.com")
+        defaults?.removeObject(forKey: "coverDropEnabledRemotely")
     }
 
     /// Disables UIView animations for the purposes of UI Testiing
@@ -54,12 +70,20 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func applicationDidEnterBackground(_: UIApplication) {
-        CoverDropService.didEnterBackground()
+        if TestingBridge.isEnabled(.coverDropDisabled) == false {
+            CoverDropService.didEnterBackground()
+        } else {
+            CoverDropService.shared.state = .notInitialized
+        }
         CoverDropUserInterface.applicationDidEnterBackground(window, coverProvider: coverProvider)
     }
 
     func applicationWillEnterForeground(_: UIApplication) {
-        CoverDropService.willEnterForeground(config: config)
+        if TestingBridge.isEnabled(.coverDropDisabled) == false {
+            CoverDropService.willEnterForeground(config: config)
+        } else {
+            CoverDropService.shared.state = .notInitialized
+        }
         CoverDropUserInterface.applicationWillEnterForeground(coverProvider: coverProvider)
     }
 

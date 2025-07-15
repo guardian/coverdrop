@@ -3,6 +3,7 @@ import Foundation
 enum CoverDropServiceHelperError: Error {
     case cannotGetTestJournalist
     case bothEmptyAndNonEmptyTestStorageRequested
+    case unableToSaveCacheOnStartup
 }
 
 public enum CoverDropServiceHelper {
@@ -14,7 +15,7 @@ public enum CoverDropServiceHelper {
         }
     }
 
-    public static func handleTestingFlags(config: CoverDropConfig, verifiedKeys: VerifiedPublicKeys) async throws {
+    public static func handleTestingFlags(config: CoverDropConfig) async throws {
         if TestingBridge.isEnabled(.removeBackgroundSendStateOnStart) {
             BackgroundMessageSendState.clearAllState()
         }
@@ -24,10 +25,22 @@ public enum CoverDropServiceHelper {
             throw CoverDropServiceHelperError.bothEmptyAndNonEmptyTestStorageRequested
         }
 
+        let verifiedKeys = PublicKeysHelper.shared.testKeys
         if TestingBridge.isEnabled(.startWithEmptyStorage) {
             try await addTestStorage(includeMessages: false, config: config, verifiedKeys: verifiedKeys)
         } else if TestingBridge.isEnabled(.startWithNonEmptyStorage) {
             try await addTestStorage(includeMessages: true, config: config, verifiedKeys: verifiedKeys)
+        }
+
+        if TestingBridge.isEnabled(.startWithCachedPublicKeys) {
+            let publicKeysData = try PublicKeysHelper.readLocalKeysFile()
+            let localPublicKeysCacheFile = LocalCacheFileRepository<PublicKeysData>(file: .publicKeysCache)
+
+            guard (try? await localPublicKeysCacheFile.save(
+                data: publicKeysData
+            )) != nil else {
+                throw CoverDropServiceHelperError.unableToSaveCacheOnStartup
+            }
         }
     }
 
@@ -69,12 +82,16 @@ public enum CoverDropServiceHelper {
             .incomingMessage(message: .textMessage(message: IncomingMessageData(
                 sender: testDefaultJournalist,
                 messageText: "Hey this has expired",
-                dateReceived: Date(timeIntervalSinceNow: -TimeInterval(60 * 60 * 24 * 15))
+                dateReceived: DateFunction
+                    .currentTime()
+                    .addingTimeInterval(-TimeInterval(60 * 60 * 24 * 15))
             ))),
             .incomingMessage(message: .textMessage(message: IncomingMessageData(
                 sender: testDefaultJournalist,
                 messageText: "Hey this has expiry warning",
-                dateReceived: Date(timeIntervalSinceNow: -TimeInterval(60 * 60 * 24 * 13))
+                dateReceived: DateFunction
+                    .currentTime()
+                    .addingTimeInterval(-TimeInterval(60 * 60 * 24 * 13))
             ))),
             .incomingMessage(message: .textMessage(message: IncomingMessageData(
                 sender: testDefaultJournalist,

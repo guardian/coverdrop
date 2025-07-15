@@ -22,7 +22,7 @@ final class AppForegroundUITest: XCTestCase {
 
         _ = app.buttons["Open CoverDrop"].waitForExistence(timeout: timeout)
         app.buttons["Open CoverDrop"].tap()
-        XCTAssertTrue(app.staticTexts["error: failedToLoadPublicKeys"].exists)
+        XCTAssertTrue(app.staticTexts["error: verifiedPublicKeysNotAvailable"].exists)
     }
 
     func testForegroundingAppStartsOnCorrectPublicKeysDataAndDeadDrops() {

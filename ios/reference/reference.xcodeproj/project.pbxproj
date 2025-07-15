@@ -15,6 +15,8 @@
 		A00CAC682DD23986005D13B6 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00CAC652DD23986005D13B6 /* Icons.xcassets */; };
 		A00CAC692DD23986005D13B6 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00CAC652DD23986005D13B6 /* Icons.xcassets */; };
 		A00CAC6A2DD23986005D13B6 /* Icons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00CAC652DD23986005D13B6 /* Icons.xcassets */; };
+		A00F18A92E1594AD00BC68E9 /* CoverDropLifeCycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00F18A82E1594AD00BC68E9 /* CoverDropLifeCycleTests.swift */; };
+		A00F18EB2E17D12B00BC68E9 /* LifecycleTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00F18EA2E17D11C00BC68E9 /* LifecycleTest.swift */; };
 		A01C571C2977FB5E009DCDCD /* SecretDataRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01C571A2977FB5E009DCDCD /* SecretDataRepositoryTests.swift */; };
 		A026E1742B4EEC1B009F9900 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 072D6DBC2A28D5A700E05369 /* AppDelegate.swift */; };
 		A026E1752B4EEC1B009F9900 /* AppInitalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02F4EDF291CFDDE0033BA4A /* AppInitalView.swift */; };
@@ -92,6 +94,8 @@
 		A00D393F2B6A5ED8001FA37E /* CoverDropCore.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = CoverDropCore.xctestplan; path = CoverDropCore/CoverDropCore.xctestplan; sourceTree = "<group>"; };
 		A00D39402B6A5F08001FA37E /* CoverDropUserInterface.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = CoverDropUserInterface.xctestplan; path = CoverDropUserInterface/CoverDropUserInterface.xctestplan; sourceTree = "<group>"; };
 		A00D39412B6A6CD8001FA37E /* referenceUITestsGroup1.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = referenceUITestsGroup1.xctestplan; sourceTree = "<group>"; };
+		A00F18A82E1594AD00BC68E9 /* CoverDropLifeCycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoverDropLifeCycleTests.swift; sourceTree = "<group>"; };
+		A00F18EA2E17D11C00BC68E9 /* LifecycleTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleTest.swift; sourceTree = "<group>"; };
 		A01C571A2977FB5E009DCDCD /* SecretDataRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretDataRepositoryTests.swift; sourceTree = "<group>"; };
 		A026E17F2B4EEC1B009F9900 /* referenceDev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = referenceDev.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A02DA2B4296D73E800235965 /* referenceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = referenceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -190,6 +194,7 @@
 		A02DA2B5296D73E800235965 /* referenceUITests */ = {
 			isa = PBXGroup;
 			children = (
+				A00F18EA2E17D11C00BC68E9 /* LifecycleTest.swift */,
 				A0823A822D94002500F2DE0F /* Utils */,
 				A02DA2C0296D742600235965 /* NewPassphraseViewUITest.swift */,
 				07BCDDB729CCB8BD00310EC4 /* Navigation.swift */,
@@ -266,6 +271,7 @@
 				A01C571B2977FB5E009DCDCD /* Repositories */,
 				A0657BCF293A56C800B4E500 /* EncryptedStorageTests.swift */,
 				A0C7FCA32A49A8FF007F052B /* DeadDropDecryptionServiceTests.swift */,
+				A00F18A82E1594AD00BC68E9 /* CoverDropLifeCycleTests.swift */,
 			);
 			path = referenceTests;
 			sourceTree = "<group>";
@@ -588,6 +594,7 @@
 				A08898C12AA1E04F00017CAE /* NavigationUITests.swift in Sources */,
 				A0D868EC2A73B0D2008EFD7F /* KeyExpiryUITest.swift in Sources */,
 				A0C5B3FA2A52CE2D00280D88 /* LogoutUITests.swift in Sources */,
+				A00F18EB2E17D12B00BC68E9 /* LifecycleTest.swift in Sources */,
 				A0C5B3FC2A54167500280D88 /* AboutPagesTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -606,6 +613,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A01C571C2977FB5E009DCDCD /* SecretDataRepositoryTests.swift in Sources */,
+				A00F18A92E1594AD00BC68E9 /* CoverDropLifeCycleTests.swift in Sources */,
 				A0F2A25B2994FC4800831EE6 /* UserToJournalistMessageTests.swift in Sources */,
 				A0C7FCA42A49A8FF007F052B /* DeadDropDecryptionServiceTests.swift in Sources */,
 				A0BDBB2F2CE35FB600B6B826 /* BackgroundMessagesScheduleServiceTests.swift in Sources */,

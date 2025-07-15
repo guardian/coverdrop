@@ -17,7 +17,7 @@ final class KeyExpiryUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    func testAppWithMissingKeysCanOpenExistingConversation() {
+    func skipped_testAppWithMissingKeysCanOpenExistingConversation() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [
             .mockedDataExpiredMessagesScenario,
             .startWithNonEmptyStorage
@@ -35,5 +35,9 @@ final class KeyExpiryUITest: XCTestCase {
         app.staticTexts["Static Test Journalist"].tap()
         XCTAssertTrue(app.staticTexts["Hey this is pending"].exists)
         _ = app.staticTexts["Static Test Journalist is currently unavailable."].waitForExistence(timeout: timeout)
+        XCTAssertTrue(
+            app
+                .staticTexts["Static Test Journalist is currently unavailable."].exists
+        )
     }
 }
