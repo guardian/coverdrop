@@ -10,7 +10,7 @@ export const BurstCoverMessageModal = (props: { closeModal: () => void }) => {
   return (
     <EuiConfirmModal
       style={{ width: sizes.coverMessageBurstModal.width }}
-      title={<div>Send Cover Message Burst</div>}
+      title={<div>Send cover message burst</div>}
       onCancel={props.closeModal}
       onConfirm={async () => {
         setBusy(true);

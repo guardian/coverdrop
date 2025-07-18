@@ -193,34 +193,27 @@ export const SettingsPopover = () => {
           <EuiContextMenuItem>
             <strong>Helpers</strong>
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>
-            View Vault Keys
+           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
+            View application logs
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
-            View Application Logs
+          <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>
+            View vault keys
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="eye" onClick={getPublicInfoClicked}>
-            View Public Profiles and Keys
+            View all public profiles and keys
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
-            View Trust Anchor Digests
+            View trust anchor digests
           </EuiContextMenuItem>
           <EuiContextMenuItem>
             <strong>Danger Zone</strong>
           </EuiContextMenuItem>
           <EuiContextMenuItem
             color="warning"
-            icon="key"
-            onClick={addTrustAnchorClicked}
-          >
-            Add trust anchor
-          </EuiContextMenuItem>
-          <EuiContextMenuItem
-            color="warning"
             icon="sun"
             onClick={burstCoverMessagesClicked}
           >
-            Send Cover Message Burst
+            Send cover message burst
           </EuiContextMenuItem>
           <EuiContextMenuItem
             color="warning"
@@ -235,6 +228,13 @@ export const SettingsPopover = () => {
             onClick={forceMsgRotationClicked}
           >
             Force messaging key rotation
+          </EuiContextMenuItem>
+          <EuiContextMenuItem
+            color="warning"
+            icon="key"
+            onClick={addTrustAnchorClicked}
+          >
+            Add trust anchor
           </EuiContextMenuItem>
         </EuiContextMenuPanel>
       </EuiPopover>

@@ -14,7 +14,7 @@ export const AddTrustAnchorModal = (props: { closeModal: () => void }) => {
   return (
     <EuiConfirmModal
       style={{ width: sizes.addTrustAnchorModal.width }}
-      title={<div>Add Trust Anchor</div>}
+      title={<div>Add trust anchor</div>}
       onCancel={props.closeModal}
       onConfirm={async () => {
         setBusy(true);
@@ -33,12 +33,12 @@ export const AddTrustAnchorModal = (props: { closeModal: () => void }) => {
         iconType="warning"
       >
         <p>
-          Only ever add a new trust anchor at the direct and verifiable
-          instruction of an administrator.
+          You should only add a new trust anchor if instructed to by a Secure Messaging
+          administrator, whose identity you have verified.
         </p>
         <p>
           If you are not absolutely confident that the person who instructed you
-          to add this new anchor is who they sey they are then do{" "}
+          to do this is who they say they are then do{" "}
           <strong>NOT</strong> proceed.
         </p>
         <EuiButton

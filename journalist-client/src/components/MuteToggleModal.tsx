@@ -32,7 +32,7 @@ export const MuteToggleModal = ({
       ? `Muted sources will appear in the "Muted" tab. They
         will still be able to send you messages, but you will not receive
         notifications for them.`
-      : `Do you want to unmute this source?`;
+      : `Do you want to unmute this source? New messsages from them will appear in your Inbox.`;
 
   const handleMuteUser = async () => {
     try {

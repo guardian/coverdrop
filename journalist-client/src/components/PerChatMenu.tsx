@@ -74,7 +74,7 @@ export const PerChatMenu = ({
             icon={"pencil"}
             onClick={showEditModal}
           >
-            Update user alias
+            Update source info
           </EuiContextMenuItem>,
           <EuiContextMenuItem
             key={"muting"}
