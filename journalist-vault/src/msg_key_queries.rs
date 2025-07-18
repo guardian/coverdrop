@@ -69,7 +69,7 @@ pub(crate) async fn candidate_msg_key_pair(
     Ok(maybe_candidate_msg_key_pair)
 }
 
-pub(crate) async fn pubished_msg_key_pairs(
+pub(crate) async fn published_msg_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
 ) -> anyhow::Result<impl Iterator<Item = PublishedJournalistMessagingKeyPairRow>> {

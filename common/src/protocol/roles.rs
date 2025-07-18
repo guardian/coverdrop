@@ -45,7 +45,7 @@ define_role!(CoverNodeMessaging, "CoverNode messaging", "covernode_msg");
 // Journalist //
 ////////////////
 
-// Journalist provisioning keys are used to issue new jornalist identity keys
+// Journalist provisioning keys are used to issue new journalist identity keys
 // without having to access the organization root key
 define_role!(
     JournalistProvisioning,

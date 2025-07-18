@@ -13,14 +13,14 @@ use crate::{
 };
 
 /// Poll `key_location` for *new* anchor organization keys to put into the database
-pub struct AnchorOrganizatioPublicKeyPollTask {
+pub struct AnchorOrganizationPublicKeyPollTask {
     interval: Duration,
     key_location: KeyLocation,
     anchor_org_pks: AnchorOrganizationPublicKeyCache,
     db: Database,
 }
 
-impl AnchorOrganizatioPublicKeyPollTask {
+impl AnchorOrganizationPublicKeyPollTask {
     pub fn new(
         interval: Duration,
         key_location: KeyLocation,
@@ -37,7 +37,7 @@ impl AnchorOrganizatioPublicKeyPollTask {
 }
 
 #[async_trait]
-impl Task for AnchorOrganizatioPublicKeyPollTask {
+impl Task for AnchorOrganizationPublicKeyPollTask {
     fn name(&self) -> &'static str {
         "anchor_org_pk_poll"
     }

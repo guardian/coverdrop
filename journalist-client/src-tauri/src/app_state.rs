@@ -23,7 +23,7 @@ use crate::{
     notifications::Notifications,
     tasks::{
         CleanUpVault, PullDeadDrops, RefreshPublicInfo, RotateJournalistKeys,
-        SendJournalistMessages,
+        SendJournalistMessages, SyncJournalistProvisioningPublicKeys,
     },
 };
 
@@ -112,6 +112,8 @@ impl AppStateHandle {
 
                 let refresh_public_info_task =
                     RefreshPublicInfo::new(&api_client, &vault, &self.public_info);
+                let sync_public_keys_task =
+                    SyncJournalistProvisioningPublicKeys::new(&vault, &self.public_info);
                 let pull_dead_drops_task =
                     PullDeadDrops::new(&api_client, &vault, &self.public_info, &self.notifications);
                 let send_journalist_messages_task =
@@ -124,6 +126,7 @@ impl AppStateHandle {
                     // and rotate keys tasks have fresh keys.
                     runner.add_task(refresh_public_info_task).await;
 
+                    runner.add_task(sync_public_keys_task).await;
                     runner.add_task(pull_dead_drops_task).await;
                     runner.add_task(rotate_keys_task).await;
                     runner.add_task(send_journalist_messages_task).await;

@@ -18,7 +18,7 @@ use api::controllers::keys::{
 };
 use api::dead_drop_limits::DeadDropLimits;
 use api::services::database::Database;
-use api::services::tasks::{AnchorOrganizatioPublicKeyPollTask, DeleteOldDeadDropsTask};
+use api::services::tasks::{AnchorOrganizationPublicKeyPollTask, DeleteOldDeadDropsTask};
 use api::DEFAULT_PORT;
 use axum::routing::{delete, get, patch, post};
 use axum::Router;
@@ -94,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn({
         let delete_old_dead_drops_task =
             DeleteOldDeadDropsTask::new(delete_old_dead_drops_polling_period, db.clone());
-        let anchor_org_pk_poll_task = AnchorOrganizatioPublicKeyPollTask::new(
+        let anchor_org_pk_poll_task = AnchorOrganizationPublicKeyPollTask::new(
             anchor_organisation_public_key_polling_period,
             cli.key_location,
             anchor_org_pks.clone(),

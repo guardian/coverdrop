@@ -14,7 +14,7 @@ use controllers::general::get_healthcheck;
 use message_canary_database::database::Database;
 use services::{
     create_undelivered_message_metrics, receive_j2u, receive_u2j, rotate_journalist_keys, send_j2u,
-    send_u2j,
+    send_u2j, sync_journalist_provisioning_pks,
 };
 use tokio::net::TcpListener;
 
@@ -79,8 +79,13 @@ async fn main() -> anyhow::Result<()> {
     });
 
     //
-    // Journalist key rotationn
+    // Journalist key rotation
     //
+
+    let mut sync_journalist_provisioning_pks_service = tokio::spawn({
+        let canary_state = canary_state.clone();
+        async move { sync_journalist_provisioning_pks(canary_state).await }
+    });
 
     let mut rotate_journalist_keys_service = tokio::spawn({
         let canary_state = canary_state.clone();
@@ -126,6 +131,7 @@ async fn main() -> anyhow::Result<()> {
             send_j2u_service.abort();
             receive_u2j_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             rotate_journalist_keys_service.abort();
             metrics_and_alerts_service.abort();
             web_server.abort();
@@ -136,6 +142,7 @@ async fn main() -> anyhow::Result<()> {
             send_u2j_service.abort();
             receive_u2j_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             rotate_journalist_keys_service.abort();
             metrics_and_alerts_service.abort();
             web_server.abort();
@@ -146,6 +153,7 @@ async fn main() -> anyhow::Result<()> {
             send_u2j_service.abort();
             send_j2u_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             rotate_journalist_keys_service.abort();
             metrics_and_alerts_service.abort();
             web_server.abort();
@@ -156,6 +164,18 @@ async fn main() -> anyhow::Result<()> {
             send_u2j_service.abort();
             send_j2u_service.abort();
             receive_u2j_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
+            rotate_journalist_keys_service.abort();
+            metrics_and_alerts_service.abort();
+            web_server.abort();
+        },
+        r = (&mut sync_journalist_provisioning_pks_service) => {
+            log_task_result_exit("sync journalist keys service", r);
+
+            send_u2j_service.abort();
+            send_j2u_service.abort();
+            receive_u2j_service.abort();
+            receive_j2u_service.abort();
             rotate_journalist_keys_service.abort();
             metrics_and_alerts_service.abort();
             web_server.abort();
@@ -167,6 +187,7 @@ async fn main() -> anyhow::Result<()> {
             send_j2u_service.abort();
             receive_u2j_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             metrics_and_alerts_service.abort();
             web_server.abort();
         },
@@ -177,6 +198,7 @@ async fn main() -> anyhow::Result<()> {
             send_j2u_service.abort();
             receive_u2j_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             rotate_journalist_keys_service.abort();
             web_server.abort();
         },
@@ -187,6 +209,7 @@ async fn main() -> anyhow::Result<()> {
             send_j2u_service.abort();
             receive_u2j_service.abort();
             receive_j2u_service.abort();
+            sync_journalist_provisioning_pks_service.abort();
             rotate_journalist_keys_service.abort();
             metrics_and_alerts_service.abort();
         },

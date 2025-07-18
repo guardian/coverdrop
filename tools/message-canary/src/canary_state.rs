@@ -47,6 +47,8 @@ impl CanaryState {
 
         let mut vaults = HashMap::new();
         let mut paths = tokio::fs::read_dir(&vaults_path).await?;
+        let keys_path = keys_path.into();
+        let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
 
         let mut any_new_journalists = false;
         while let Some(path) = paths.next_entry().await? {
@@ -65,15 +67,25 @@ impl CanaryState {
 
                 let vault = JournalistVault::open(&path, &password).await?;
 
-                let set_up_occured = vault
+                let set_up_occurred = vault
                     .process_vault_setup_bundle(&api_client, time::now())
                     .await?;
 
-                if set_up_occured {
+                if set_up_occurred {
                     any_new_journalists = true;
                 }
 
                 let journalist_id = vault.journalist_id().await?;
+
+                // load anchor org pks from file system into each vault
+                tracing::info!(
+                    "attempting to add {} anchor org pks to vault {}",
+                    anchor_org_pks.len(),
+                    journalist_id
+                );
+                for org_pk in &anchor_org_pks {
+                    vault.add_org_pk(org_pk, time::now()).await?;
+                }
 
                 vaults.insert(path.to_owned(), vault);
                 db.insert_journalist(&journalist_id).await?;
@@ -105,7 +117,7 @@ impl CanaryState {
         let users = db.get_users(num_users).await?;
 
         Ok(Self {
-            keys_path: keys_path.into(),
+            keys_path,
             api_client,
             messaging_client,
             db,

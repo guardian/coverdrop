@@ -414,8 +414,6 @@ async fn main() -> anyhow::Result<()> {
                 vault.add_org_pk(&org_pk, now).await?;
                 println!("OK");
             }
-            // TODO this functionality could be automated in Sentinel. Pull down
-            // key hierarchy and add any new provisioning keys to vault.
             JournalistVaultCommand::AddProvisioningPublicKey {
                 vault_path,
                 password,

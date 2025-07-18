@@ -39,7 +39,10 @@ use common::{
     },
     argon2_sqlcipher::Argon2SqlCipher,
     client::mailbox::mailbox_message::UserStatus,
-    crypto::keys::{public_key::PublicKey, signing::UnsignedSigningKeyPair},
+    crypto::keys::{
+        public_key::PublicKey,
+        signing::{SignedPublicSigningKey, UnsignedSigningKeyPair},
+    },
     epoch::Epoch,
     identity_api::{
         forms::post_rotate_journalist_id::RotateJournalistIdPublicKeyForm,
@@ -51,11 +54,12 @@ use common::{
             JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS, JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS,
         },
         keys::{
-            generate_journalist_messaging_key_pair, AnchorOrganizationPublicKey,
-            JournalistIdKeyPair, JournalistIdPublicKeyFamilyList, JournalistMessagingKeyPair,
-            JournalistProvisioningPublicKey, LatestKey, OrganizationPublicKey,
-            UnregisteredJournalistIdKeyPair, UserPublicKey,
+            generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
+            AnchorOrganizationPublicKey, JournalistIdKeyPair, JournalistIdPublicKeyFamilyList,
+            JournalistMessagingKeyPair, JournalistProvisioningPublicKey, LatestKey,
+            OrganizationPublicKey, UnregisteredJournalistIdKeyPair, UserPublicKey,
         },
+        roles::JournalistProvisioning,
     },
     FixedSizeMessageText,
 };
@@ -251,7 +255,7 @@ impl JournalistVault {
             })
             .collect();
 
-        let published_msg_key_pairs = msg_key_queries::pubished_msg_key_pairs(&mut conn, now)
+        let published_msg_key_pairs = msg_key_queries::published_msg_key_pairs(&mut conn, now)
             .await?
             .map(|row| UntrustedPublishedJournalistMessagingKeyPairRow {
                 id: row.id,
@@ -463,6 +467,21 @@ impl JournalistVault {
         org_key_queries::insert_org_pk(&mut conn, org_pk, now).await
     }
 
+    pub async fn provisioning_pks(
+        &self,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<Vec<JournalistProvisioningPublicKey>> {
+        let mut conn = self.pool.acquire().await?;
+
+        let provisioning_keys =
+            provisioning_key_queries::journalist_provisioning_pks(&mut conn, now)
+                .await?
+                .map(|row| row.pk)
+                .collect();
+
+        Ok(provisioning_keys)
+    }
+
     pub async fn add_provisioning_pk(
         &self,
         org_pk: &OrganizationPublicKey,
@@ -519,7 +538,7 @@ impl JournalistVault {
             .into_iter()
             .map(|row| row.key_pair);
 
-        let published_msg_key_pairs = msg_key_queries::pubished_msg_key_pairs(&mut conn, now)
+        let published_msg_key_pairs = msg_key_queries::published_msg_key_pairs(&mut conn, now)
             .await?
             .map(|iter| iter.key_pair);
 
@@ -534,7 +553,7 @@ impl JournalistVault {
     ) -> anyhow::Result<Option<JournalistMessagingKeyPair>> {
         let mut conn = self.pool.acquire().await?;
 
-        let latest_key_pair = msg_key_queries::pubished_msg_key_pairs(&mut conn, now)
+        let latest_key_pair = msg_key_queries::published_msg_key_pairs(&mut conn, now)
             .await?
             .map(|key_pair_row| key_pair_row.key_pair)
             .collect::<Vec<_>>()
@@ -726,6 +745,61 @@ impl JournalistVault {
         }
     }
 
+    /// Takes an iterator of journalist provisioning keys and inserts any that aren't already in the vault
+    /// after verifying them with trust anchors.
+    pub async fn sync_journalist_provisioning_pks(
+        &self,
+        api_journalist_provisioning_pks: &Vec<&SignedPublicSigningKey<JournalistProvisioning>>,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<(), anyhow::Error> {
+        let vault_journalist_provisioning_pks = self.provisioning_pks(now).await?;
+        let journalist_provisioning_pks_to_insert: Vec<_> = api_journalist_provisioning_pks
+            .iter()
+            .filter(|key| !vault_journalist_provisioning_pks.contains(key))
+            .collect();
+
+        if journalist_provisioning_pks_to_insert.is_empty() {
+            tracing::info!("No new provisioning keys from API to insert into vault");
+            return Ok(());
+        } else {
+            tracing::info!(
+                "Found {} new provisioning keys to add to vault",
+                journalist_provisioning_pks_to_insert.len()
+            )
+        }
+
+        let org_pks = self.org_pks(now).await?;
+
+        for journalist_provisioning_pk in journalist_provisioning_pks_to_insert {
+            // find the trust anchor that has signed the provisioning key to insert
+            let maybe_keys = org_pks.iter().find_map(|org_pk| {
+                let org_pk = org_pk.to_non_anchor();
+                verify_journalist_provisioning_pk(
+                    &journalist_provisioning_pk.to_untrusted(),
+                    &org_pk,
+                    now,
+                )
+                .ok()
+                .map(|journalist_provisioning_pk| (org_pk, journalist_provisioning_pk))
+            });
+
+            if let Some((org_pk, journalist_provisioning_pk)) = maybe_keys {
+                tracing::info!(
+                    "Found signing key for provisioning key. Inserting provisioning key."
+                );
+                self.add_provisioning_pk(&org_pk, &journalist_provisioning_pk, now)
+                    .await?;
+            } else {
+                tracing::warn!(
+                    "Could not find trust anchor for journalist provisioning public key {}",
+                    journalist_provisioning_pk.public_key_hex()
+                );
+            };
+        }
+
+        Ok(())
+    }
+
     /// Check if the journalist keys need to be rotated, if so, rotate them.
     pub async fn check_and_rotate_keys(
         &self,
@@ -791,7 +865,7 @@ impl JournalistVault {
 
     /// Generate a new ID key pair for this journalist and use the identity API to rotate to it
     ///
-    /// Note that this function does *NOT* check if it's appropraite to rotate a key yet. That is,
+    /// Note that this function does *NOT* check if it's appropriate to rotate a key yet. That is,
     /// it will not check if sufficient time has passed since the last key rotation before attempting to
     /// upload a new key. This is primarily so that we can test that everything will still work in the cases
     /// where timings are not well behaved.
@@ -827,7 +901,7 @@ impl JournalistVault {
                     .get_journalist_id_pk_with_epoch(candidate_id_key_pair.public_key())
                     .await?
                 {
-                    tracing::info!("Candidate key appears to have been rotated already, promoting vault key from candidate to published");
+                    tracing::info!("Candidate key appears to have been rotated already, promoting vault key from candidate to published. Candidate key {:?}", candidate_id_key_pair.public_key_hex());
                     let epoch = signed_id_pk_with_epoch.epoch;
 
                     self.promote_candidate_id_key_pair_to_published(
