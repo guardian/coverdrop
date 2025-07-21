@@ -193,7 +193,7 @@ export const SettingsPopover = () => {
           <EuiContextMenuItem>
             <strong>Helpers</strong>
           </EuiContextMenuItem>
-           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
+          <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>

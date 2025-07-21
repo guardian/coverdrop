@@ -33,13 +33,13 @@ export const AddTrustAnchorModal = (props: { closeModal: () => void }) => {
         iconType="warning"
       >
         <p>
-          You should only add a new trust anchor if instructed to by a Secure Messaging
-          administrator, whose identity you have verified.
+          You should only add a new trust anchor if instructed to by a Secure
+          Messaging administrator, whose identity you have verified.
         </p>
         <p>
           If you are not absolutely confident that the person who instructed you
-          to do this is who they say they are then do{" "}
-          <strong>NOT</strong> proceed.
+          to do this is who they say they are then do <strong>NOT</strong>{" "}
+          proceed.
         </p>
         <EuiButton
           onClick={async () => {

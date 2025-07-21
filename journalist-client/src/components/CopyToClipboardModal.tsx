@@ -94,8 +94,9 @@ export const CopyToClipboardModal = ({
               color="warning"
               iconType="warning"
             >
-              The following text may contain sensitive information and should only be
-              shared through secure channels. You can edit the text before copying it.
+              The following text may contain sensitive information and should
+              only be shared through secure channels. You can edit the text
+              before copying it.
             </EuiCallOut>
           </EuiFlexItem>
           <EuiFlexItem grow={true}>
