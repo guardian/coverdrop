@@ -19,6 +19,7 @@ import { palette } from "../styles/palette";
 import { useUserStore } from "../state/users";
 import { useErrorStore } from "../state/errors";
 import { PerChatMenu } from "./PerChatMenu";
+import { Message } from "../model/bindings/Message";
 
 type Chat = {
   name: string;
@@ -27,7 +28,10 @@ type Chat = {
   lastMessageTimestamp: string;
   hasUnread: boolean;
   userStatus: UserStatus;
-  lastMessage: string;
+  lastMessage: {
+    message: string;
+    messageType: Message["type"];
+  };
 };
 
 type ChatsSideBarProps = {
@@ -137,7 +141,9 @@ const chatsToSideNav = (
                     }}
                     grow={true}
                   >
-                    {lastMessage}
+                    {lastMessage.messageType === "journalistToUserMessage" &&
+                      "You: "}
+                    {lastMessage.message}
                   </EuiFlexItem>
                   <EuiFlexItem grow={false}>
                     <PerChatMenu
@@ -246,7 +252,7 @@ export const ChatsSideBar = ({
             hasUnread: !isRead || maybeExistingInAcc?.hasUnread,
             userStatus: thisUserInfo.status,
             lastMessage: isLatestMessage
-              ? message.message
+              ? { message: message.message, messageType: message.type }
               : maybeExistingInAcc.lastMessage,
           },
         };
