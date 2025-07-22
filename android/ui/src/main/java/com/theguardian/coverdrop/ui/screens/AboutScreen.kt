@@ -25,6 +25,8 @@ import com.theguardian.coverdrop.ui.components.CoverDropTopAppBar
 import com.theguardian.coverdrop.ui.navigation.CoverDropDestinations
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.Padding
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.AboutScreenViewModel
 import java.time.Instant
 
@@ -39,6 +41,7 @@ fun AboutRoute(navController: NavHostController) {
 
 @Composable
 private fun AboutScreen(navController: NavHostController, debugContext: DebugContext?) {
+    ScreenContentWrapper {
     Column(modifier = Modifier.fillMaxHeight(1f)) {
         CoverDropTopAppBar(
             onNavigationOptionPressed = { navController.navigateUp() }
@@ -47,11 +50,14 @@ private fun AboutScreen(navController: NavHostController, debugContext: DebugCon
             modifier = Modifier
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState())
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
-            Column(
-                modifier = Modifier.padding(Padding.L)
-            ) {
-                MainContent(navController, debugContext)
+                Column(
+                    modifier = Modifier
+                        .padding(Padding.L)
+                ) {
+                    MainContent(navController, debugContext)
+                }
             }
         }
     }

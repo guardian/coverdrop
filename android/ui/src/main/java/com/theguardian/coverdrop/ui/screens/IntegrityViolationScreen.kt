@@ -25,48 +25,55 @@ import com.theguardian.coverdrop.ui.components.SecondaryButton
 import com.theguardian.coverdrop.ui.components.TopBarNavigationOption
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.Padding
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.utils.findComponentActivity
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import java.util.EnumSet
 
 @Composable
 internal fun IntegrityViolationScreen(violations: EnumSet<IntegrityViolation>) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        val context = LocalContext.current
-        CoverDropTopAppBar(
-            navigationOption = TopBarNavigationOption.Exit,
-            onNavigationOptionPressed = { context.findComponentActivity()?.finish() }
-        )
-
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f)
-                .padding(Padding.L),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start,
+    ScreenContentWrapper {
+        Column(modifier = Modifier
+            .fillMaxHeight(1f)
+            .padding(bottom = rememberScreenInsets().bottom)
         ) {
-            Text(
-                text = stringResource(id = R.string.screen_violations_header),
-                fontWeight = FontWeight.Bold,
+            val context = LocalContext.current
+            CoverDropTopAppBar(
+                navigationOption = TopBarNavigationOption.Exit,
+                onNavigationOptionPressed = { context.findComponentActivity()?.finish() }
             )
-            for (violation in violations) {
+
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .weight(1f)
+                    .padding(Padding.L),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
+            ) {
                 Text(
-                    modifier = Modifier.padding(top = Padding.M),
-                    text = "- ${violation.description}",
+                    text = stringResource(id = R.string.screen_violations_header),
+                    fontWeight = FontWeight.Bold,
+                )
+                for (violation in violations) {
+                    Text(
+                        modifier = Modifier.padding(top = Padding.M),
+                        text = "- ${violation.description}",
+                    )
+                }
+                Text(
+                    modifier = Modifier.padding(top = Padding.XL),
+                    text = stringResource(id = R.string.screen_violations_dismiss_and_ignore_explanation),
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                SecondaryButton(
+                    modifier = Modifier
+                        .padding(vertical = Padding.M)
+                        .fillMaxWidth(1f),
+                    text = stringResource(id = R.string.screen_violations_dismiss_button),
+                    onClick = { IntegrityGuard.INSTANCE.snooze(violations) }
                 )
             }
-            Text(
-                modifier = Modifier.padding(top = Padding.XL),
-                text = stringResource(id = R.string.screen_violations_dismiss_and_ignore_explanation),
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            SecondaryButton(
-                modifier = Modifier
-                    .padding(vertical = Padding.M)
-                    .fillMaxWidth(1f),
-                text = stringResource(id = R.string.screen_violations_dismiss_button),
-                onClick = { IntegrityGuard.INSTANCE.snooze(violations) }
-            )
         }
     }
 }

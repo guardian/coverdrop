@@ -49,7 +49,9 @@ import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.InfoPastelBlue
 import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.utils.humanFriendlyMessageTimeString
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.InboxDialogState
 import com.theguardian.coverdrop.ui.viewmodels.InboxUiState
 import com.theguardian.coverdrop.ui.viewmodels.InboxViewModel
@@ -156,24 +158,28 @@ private fun MainContent(
     onTryToExit: () -> Unit,
     now: Instant = Instant.now(),
 ) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            navigationOption = TopBarNavigationOption.Exit,
-            onNavigationOptionPressed = onTryToExit
-        )
+    ScreenContentWrapper {
+        Column(modifier = Modifier
+            .fillMaxHeight(1f)
+            .padding(bottom = rememberScreenInsets().bottom)
+        ) {
+            CoverDropTopAppBar(
+                navigationOption = TopBarNavigationOption.Exit,
+                onNavigationOptionPressed = onTryToExit
+            )
 
-        when (screenState) {
-            is InboxUiState.Loading -> {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.padding(20.dp))
+            when (screenState) {
+                is InboxUiState.Loading -> {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.padding(20.dp))
+                    }
                 }
-            }
 
             is InboxUiState.ShowMessages -> {
                 Column(
@@ -185,58 +191,59 @@ private fun MainContent(
                 }
             }
 
-            is InboxUiState.Exit -> {
-                navController.popBackStack(CoverDropDestinations.ENTRY_ROUTE, inclusive = false)
+                is InboxUiState.Exit -> {
+                    navController.popBackStack(CoverDropDestinations.ENTRY_ROUTE, inclusive = false)
+                }
             }
-        }
 
-        // If there are no current conversations, show the send new message button
-        if (screenState is InboxUiState.ShowMessages && screenState.activeConversation == null) {
-            Column(
-                modifier = Modifier.padding(Padding.M)
-            ) {
-                SecondaryButton(
-                    text = stringResource(R.string.screen_conversation_button_send_new),
-                    onClick = { navController.navigate(CoverDropDestinations.NEW_MESSAGE_ROUTE) },
+            // If there are no current conversations, show the send new message button
+            if (screenState is InboxUiState.ShowMessages && screenState.activeConversation == null) {
+                Column(
+                    modifier = Modifier.padding(Padding.M)
+                ) {
+                    SecondaryButton(
+                        text = stringResource(R.string.screen_conversation_button_send_new),
+                        onClick = { navController.navigate(CoverDropDestinations.NEW_MESSAGE_ROUTE) },
+                    )
+                }
+            }
+
+            // If there is a current message, show the delete button
+            if (screenState is InboxUiState.ShowMessages && screenState.activeConversation != null) {
+                FlatTextButton(
+                    text = stringResource(R.string.screen_inbox_delete_your_messages),
+                    icon = CoverDropIcons.Delete,
+                    modifier = Modifier
+                        .align(Alignment.Start)
+                        .padding(start = Padding.M, end = Padding.M),
+                    onClick = onShowDeleteAllDialog,
                 )
             }
-        }
 
-        // If there is a current message, show the delete button
-        if (screenState is InboxUiState.ShowMessages && screenState.activeConversation != null) {
-            FlatTextButton(
-                text = stringResource(R.string.screen_inbox_delete_your_messages),
-                icon = CoverDropIcons.Delete,
+            Divider(color = NeutralMiddle, modifier = Modifier.padding(top = Padding.M))
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .align(Alignment.Start)
-                    .padding(start = Padding.M, end = Padding.M),
-                onClick = onShowDeleteAllDialog,
-            )
-        }
-
-        Divider(color = NeutralMiddle, modifier = Modifier.padding(top = Padding.M))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(all = Padding.M)
-        ) {
-            TextButton(
-                onClick = onShowAbout, modifier = Modifier.align(Alignment.CenterVertically)
+                    .fillMaxWidth()
+                    .padding(all = Padding.M)
             ) {
-                Text(
-                    text = stringResource(R.string.screen_inbox_about_secure_messaging),
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
+                TextButton(
+                    onClick = onShowAbout, modifier = Modifier.align(Alignment.CenterVertically)
+                ) {
+                    Text(
+                        text = stringResource(R.string.screen_inbox_about_secure_messaging),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                PrimaryButton(
+                    onClick = onTryToExit,
+                    text = stringResource(R.string.screen_inbox_leave_inbox),
+                    modifier = Modifier.wrapContentWidth(align = Alignment.End)
                 )
             }
-
-            PrimaryButton(
-                onClick = onTryToExit,
-                text = stringResource(R.string.screen_inbox_leave_inbox),
-                modifier = Modifier.wrapContentWidth(align = Alignment.End)
-            )
         }
     }
 }

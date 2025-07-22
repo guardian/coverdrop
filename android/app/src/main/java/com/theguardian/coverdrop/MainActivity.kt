@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,10 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import com.theguardian.coverdrop.core.CoverDropLib
 import com.theguardian.coverdrop.ui.activities.CoverDropActivity
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -35,9 +36,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        window.statusBarColor = primaryColor.toArgb()
-        setContent { MainScreen() }
+        enableEdgeToEdge()
+        setContent {
+            MainScreen()
+        }
     }
 
     @Composable
@@ -49,7 +51,9 @@ class MainActivity : ComponentActivity() {
 
         MaterialTheme(colors = startScreenColors) {
             Surface {
-                MainContent()
+                ScreenContentWrapper {
+                    MainContent()
+                }
             }
         }
     }

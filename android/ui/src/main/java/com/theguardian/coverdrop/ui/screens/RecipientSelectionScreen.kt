@@ -52,6 +52,8 @@ import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
 import com.theguardian.coverdrop.ui.theme.TextWhiteMuted
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.JournalistCardInfo
 import com.theguardian.coverdrop.ui.viewmodels.RecipientSelectionState
 import com.theguardian.coverdrop.ui.viewmodels.RecipientSelectionViewModel
@@ -120,26 +122,28 @@ private fun RecipientSelectionScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(onNavigationOptionPressed = { onBack() })
-        BackPressHandler { onBack() }
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            CoverDropTopAppBar(onNavigationOptionPressed = { onBack() })
+            BackPressHandler { onBack() }
 
-        when (screenState) {
-            RecipientSelectionState.SHOWING_SELECTION -> TeamAndJournalistSelectionContent(
-                teams = teams,
-                journalists = journalists,
-                selectTeam = selectTeam,
-                selectAndConfirmJournalist = selectAndConfirmJournalist,
-                initialPage = initialPage,
-            )
+            when (screenState) {
+                RecipientSelectionState.SHOWING_SELECTION -> TeamAndJournalistSelectionContent(
+                    teams = teams,
+                    journalists = journalists,
+                    selectTeam = selectTeam,
+                    selectAndConfirmJournalist = selectAndConfirmJournalist,
+                    initialPage = initialPage,
+                )
 
-            RecipientSelectionState.CONFIRM_TEAM -> TeamConfirmationScreen(
-                team = currentlySelectedTeam,
-                confirmTeam = confirmTeam,
-                backToList = backToList,
-            )
+                RecipientSelectionState.CONFIRM_TEAM -> TeamConfirmationScreen(
+                    team = currentlySelectedTeam,
+                    confirmTeam = confirmTeam,
+                    backToList = backToList,
+                )
+            }
+
         }
-
     }
 }
 
@@ -257,6 +261,7 @@ private fun TabTeams(
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             teams.forEach { team ->
                 Card(
@@ -296,6 +301,7 @@ private fun TabJournalists(
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
+            .padding(bottom = rememberScreenInsets().bottom)
     ) {
         for (journalist in journalists ?: emptyList()) {
             Card(

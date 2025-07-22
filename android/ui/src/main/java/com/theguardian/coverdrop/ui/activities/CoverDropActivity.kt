@@ -6,11 +6,19 @@ import android.view.MotionEvent
 import android.view.WindowManager.LayoutParams
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.primarySurface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.theguardian.coverdrop.core.CoverDropConfiguration
@@ -66,6 +74,7 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
         mLifecycleSilenceTicket = silenceableLifecycleCallbackProxy.acquireSilenceTicket()
         mExceptionHandlerSilenceTicket = silenceableUncaughtExceptionHandler.acquireSilenceTicket()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         if (coverDropConfiguration.disableScreenCaptureProtection) {
             // This Logcat output is safe, as it is only reachable in local test mode. And it is
@@ -77,14 +86,13 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
             window.addFlags(LayoutParams.FLAG_SECURE)
         }
 
-        window.statusBarColor = CoverDropColorPalette.primarySurface.toArgb()
-
         IntegrityGuard.INSTANCE.addIntegrityViolationCallback(this)
 
         setContent {
             val integrityViolationsState = integrityViolationMutableStateFlow.collectAsState(
                 initial = EnumSet.noneOf(IntegrityViolation::class.java)
             )
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
             MainActivityContent(integrityViolationsState.value)
         }
     }
@@ -93,13 +101,22 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
     fun MainActivityContent(violations: EnumSet<IntegrityViolation>) {
         val navController = rememberNavController()
         CoverDropSurface {
-            if (violations.isNotEmpty()) {
-                IntegrityViolationScreen(violations = violations)
-            } else {
-                CoverDropApp(
-                    lockFlow = coverDropLib.getLockFlow(),
-                    navController = navController,
-                )
+            // The background colour is set to the primary surface colour, so that the app
+            // background matches the status bar colour.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(CoverDropColorPalette.primarySurface)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+            ) {
+                if (violations.isNotEmpty()) {
+                    IntegrityViolationScreen(violations = violations)
+                } else {
+                    CoverDropApp(
+                        lockFlow = coverDropLib.getLockFlow(),
+                        navController = navController,
+                    )
+                }
             }
         }
     }

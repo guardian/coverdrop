@@ -50,9 +50,11 @@ import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.utils.UiErrorMessage
 import com.theguardian.coverdrop.ui.utils.highlightText
 import com.theguardian.coverdrop.ui.utils.popBackStackAndThenNavigate
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.utils.shouldUiBeEnabled
 import com.theguardian.coverdrop.ui.viewmodels.NewSessionState
 import com.theguardian.coverdrop.ui.viewmodels.NewSessionViewModel
@@ -105,93 +107,96 @@ fun NewSessionScreen(
     hidePassphraseWord: (Int) -> Unit = { },
     confirmPassphraseAndCreateStorage: () -> Unit = {},
 ) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            navigationOption = if (screenState != NewSessionState.CREATING_STORAGE) {
-                TopBarNavigationOption.Back
-            } else {
-                TopBarNavigationOption.None
-            },
-            onNavigationOptionPressed = { navController.navigateUp() }
-        )
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            CoverDropTopAppBar(
+                navigationOption = if (screenState != NewSessionState.CREATING_STORAGE) {
+                    TopBarNavigationOption.Back
+                } else {
+                    TopBarNavigationOption.None
+                },
+                onNavigationOptionPressed = { navController.navigateUp() }
+            )
 
-        when (screenState) {
-            NewSessionState.SHOWING_PASSPHRASE -> HelpBannerPassphrase(navController)
-            NewSessionState.CONFIRMING_PASSPHRASE -> {}
-            NewSessionState.CREATING_STORAGE -> {}
-            NewSessionState.FINISHED -> {}
-        }
+            when (screenState) {
+                NewSessionState.SHOWING_PASSPHRASE -> HelpBannerPassphrase(navController)
+                NewSessionState.CONFIRMING_PASSPHRASE -> {}
+                NewSessionState.CREATING_STORAGE -> {}
+                NewSessionState.FINISHED -> {}
+            }
 
-        // main content in a scrollable container
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f)
-        ) {
+            // main content in a scrollable container
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(top = Padding.L, start = Padding.L, end = Padding.L)
-                    .height(IntrinsicSize.Max)
                     .weight(1f)
+                    .padding(bottom = rememberScreenInsets().bottom)
             ) {
-                when (screenState) {
-                    NewSessionState.SHOWING_PASSPHRASE -> {
-                        ContentShowPassphrase(
-                            generatedPassphrase = generatedPassphrase,
-                            hidePassphrase = hidePassphrase,
-                            revealPassphrase = revealPassphrase,
-                        )
-                        Spacer(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(top = Padding.L)
-                        )
-                        val isRevealed = generatedPassphrase?.any { it.revealed } ?: false
-                        ButtonsForShowingPassphrase(
-                            navController = navController,
-                            isPassphraseRevealed = isRevealed,
-                            revealPassphrase = revealPassphrase,
-                            advanceToConfirmation = advanceToConfirmation
-                        )
-                    }
-
-                    NewSessionState.CONFIRMING_PASSPHRASE -> {
-                        val focusRequester = FocusRequester()
-                        ContentConfirmPassphrase(
-                            passphrase = enteredPassphraseWords,
-                            errorMessage = errorMessage,
-                            updatePassphraseWord = updatePassphraseWord,
-                            revealPassphraseWord = revealPassphraseWord,
-                            hidePassphraseWord = hidePassphraseWord,
-                            revealPassphrase = revealPassphrase,
-                            hidePassphrase = hidePassphrase,
-                            focusNextAction = { focusRequester.requestFocus() },
-                        )
-                        Spacer(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(top = Padding.L)
-                        )
-                        ButtonsForConfirmingPassphrase(
-                            confirmPassphraseAndCreateStorage = confirmPassphraseAndCreateStorage,
-                            enabled = errorMessage.shouldUiBeEnabled(),
-                            focusRequester = focusRequester,
-                        )
-                    }
-
-                    NewSessionState.CREATING_STORAGE -> {
-                        ContentCreatingStorage()
-                    }
-
-                    NewSessionState.FINISHED -> {
-                        // we pop up to the entry screen to ensure the user cannot accidentally go back
-                        // to this screen (which might then only show an indefinite progress spinner)
-                        LaunchedEffect(true) {
-                            navController.popBackStackAndThenNavigate(
-                                popUpTo = CoverDropDestinations.ENTRY_ROUTE,
-                                destination = CoverDropDestinations.NEW_MESSAGE_ROUTE,
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = Padding.L, start = Padding.L, end = Padding.L)
+                        .height(IntrinsicSize.Max)
+                        .weight(1f)
+                ) {
+                    when (screenState) {
+                        NewSessionState.SHOWING_PASSPHRASE -> {
+                            ContentShowPassphrase(
+                                generatedPassphrase = generatedPassphrase,
+                                hidePassphrase = hidePassphrase,
+                                revealPassphrase = revealPassphrase,
                             )
+                            Spacer(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(top = Padding.L)
+                            )
+                            val isRevealed = generatedPassphrase?.any { it.revealed } ?: false
+                            ButtonsForShowingPassphrase(
+                                navController = navController,
+                                isPassphraseRevealed = isRevealed,
+                                revealPassphrase = revealPassphrase,
+                                advanceToConfirmation = advanceToConfirmation
+                            )
+                        }
+
+                        NewSessionState.CONFIRMING_PASSPHRASE -> {
+                            val focusRequester = FocusRequester()
+                            ContentConfirmPassphrase(
+                                passphrase = enteredPassphraseWords,
+                                errorMessage = errorMessage,
+                                updatePassphraseWord = updatePassphraseWord,
+                                revealPassphraseWord = revealPassphraseWord,
+                                hidePassphraseWord = hidePassphraseWord,
+                                revealPassphrase = revealPassphrase,
+                                hidePassphrase = hidePassphrase,
+                                focusNextAction = { focusRequester.requestFocus() },
+                            )
+                            Spacer(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(top = Padding.L)
+                            )
+                            ButtonsForConfirmingPassphrase(
+                                confirmPassphraseAndCreateStorage = confirmPassphraseAndCreateStorage,
+                                enabled = errorMessage.shouldUiBeEnabled(),
+                                focusRequester = focusRequester,
+                            )
+                        }
+
+                        NewSessionState.CREATING_STORAGE -> {
+                            ContentCreatingStorage()
+                        }
+
+                        NewSessionState.FINISHED -> {
+                            // we pop up to the entry screen to ensure the user cannot accidentally go back
+                            // to this screen (which might then only show an indefinite progress spinner)
+                            LaunchedEffect(true) {
+                                navController.popBackStackAndThenNavigate(
+                                    popUpTo = CoverDropDestinations.ENTRY_ROUTE,
+                                    destination = CoverDropDestinations.NEW_MESSAGE_ROUTE,
+                                )
+                            }
                         }
                     }
                 }

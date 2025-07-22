@@ -34,6 +34,8 @@ import com.theguardian.coverdrop.ui.navigation.BackPressHandler
 import com.theguardian.coverdrop.ui.navigation.CoverDropDestinations
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.Padding
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.MessageSentUiState
 import com.theguardian.coverdrop.ui.viewmodels.MessageSentViewModel
 
@@ -82,10 +84,12 @@ fun MessageSentScreen(
             onDismissClick = onDismissDialog,
         )
     }
+    ScreenContentWrapper {
 
     Column(
         modifier = Modifier
             .fillMaxHeight(1f)
+            .padding(bottom = rememberScreenInsets().bottom)
     ) {
 
         CoverDropTopAppBar(
@@ -158,6 +162,7 @@ fun MessageSentScreen(
                 modifier = Modifier.fillMaxWidth(1f),
             )
         }
+    }
     }
 }
 

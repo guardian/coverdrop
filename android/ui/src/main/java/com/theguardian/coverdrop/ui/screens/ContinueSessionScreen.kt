@@ -51,8 +51,10 @@ import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.utils.UiErrorMessage
 import com.theguardian.coverdrop.ui.utils.popBackStackAndThenNavigate
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.utils.shouldUiBeEnabled
 import com.theguardian.coverdrop.ui.viewmodels.ContinueSessionState
 import com.theguardian.coverdrop.ui.viewmodels.ContinueSessionViewModel
@@ -118,55 +120,58 @@ fun ContinueSessionScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            navigationOption = if (screenState != ContinueSessionState.UNLOCKING_STORAGE) {
-                TopBarNavigationOption.Back
-            } else {
-                TopBarNavigationOption.None
-            },
-            onNavigationOptionPressed = { navController.navigateUp() }
-        )
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            CoverDropTopAppBar(
+                navigationOption = if (screenState != ContinueSessionState.UNLOCKING_STORAGE) {
+                    TopBarNavigationOption.Back
+                } else {
+                    TopBarNavigationOption.None
+                },
+                onNavigationOptionPressed = { navController.navigateUp() }
+            )
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f)
-        ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(top = Padding.L, start = Padding.L, end = Padding.L)
-                    .height(IntrinsicSize.Max)
                     .weight(1f)
+                    .padding(bottom = rememberScreenInsets().bottom)
             ) {
-                when (screenState) {
-                    ContinueSessionState.ENTERING_PASSPHRASE -> {
-                        ContentConfirmingPassphrase(
-                            passphraseWords = passphraseWords,
-                            errorMessage = errorMessage,
-                            updatePassphraseWord = updatePassphraseWord,
-                            revealPassphraseWord = revealPassphraseWord,
-                            hidePassphraseWord = hidePassphraseWord,
-                            revealPassphrase = revealPassphrase,
-                            hidePassphrase = hidePassphrase,
-                            unlock = unlock,
-                            onStartNewSession = { showGetStartedDialog = true }
-                        )
-                    }
-
-                    ContinueSessionState.UNLOCKING_STORAGE -> {
-                        ContentUnlockingStorage()
-                    }
-
-                    ContinueSessionState.FINISHED -> {
-                        // we pop up to the entry screen to ensure the user cannot accidentally go back
-                        // to this screen (which might then only show an indefinite progress spinner)
-                        LaunchedEffect(true) {
-                            navController.popBackStackAndThenNavigate(
-                                popUpTo = CoverDropDestinations.ENTRY_ROUTE,
-                                destination = CoverDropDestinations.INBOX_ROUTE,
+                Column(
+                    modifier = Modifier
+                        .verticalScroll(rememberScrollState())
+                        .padding(top = Padding.L, start = Padding.L, end = Padding.L)
+                        .height(IntrinsicSize.Max)
+                        .weight(1f)
+                ) {
+                    when (screenState) {
+                        ContinueSessionState.ENTERING_PASSPHRASE -> {
+                            ContentConfirmingPassphrase(
+                                passphraseWords = passphraseWords,
+                                errorMessage = errorMessage,
+                                updatePassphraseWord = updatePassphraseWord,
+                                revealPassphraseWord = revealPassphraseWord,
+                                hidePassphraseWord = hidePassphraseWord,
+                                revealPassphrase = revealPassphrase,
+                                hidePassphrase = hidePassphrase,
+                                unlock = unlock,
+                                onStartNewSession = { showGetStartedDialog = true }
                             )
+                        }
+
+                        ContinueSessionState.UNLOCKING_STORAGE -> {
+                            ContentUnlockingStorage()
+                        }
+
+                        ContinueSessionState.FINISHED -> {
+                            // we pop up to the entry screen to ensure the user cannot accidentally go back
+                            // to this screen (which might then only show an indefinite progress spinner)
+                            LaunchedEffect(true) {
+                                navController.popBackStackAndThenNavigate(
+                                    popUpTo = CoverDropDestinations.ENTRY_ROUTE,
+                                    destination = CoverDropDestinations.INBOX_ROUTE,
+                                )
+                            }
                         }
                     }
                 }

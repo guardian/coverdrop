@@ -41,8 +41,11 @@ import com.theguardian.coverdrop.ui.components.TopBarNavigationOption
 import com.theguardian.coverdrop.ui.navigation.CoverDropDestinations
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.theme.Padding
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.utils.findComponentActivity
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.EntryViewModel
+
 
 @Composable
 fun EntryRoute(navController: NavHostController) {
@@ -88,58 +91,65 @@ private fun EntryScreenTopBar() {
 
 @Composable
 private fun EntryScreenWaiting() {
+    ScreenContentWrapper {
     Column(modifier = Modifier.fillMaxHeight(1f)) {
         EntryScreenTopBar()
 
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = rememberScreenInsets().bottom),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator()
         }
     }
+    }
 }
 
 @Composable
 private fun EntryScreenUnavailable(navController: NavHostController, status: StatusEvent) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        EntryScreenTopBar()
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            EntryScreenTopBar()
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f)
-        ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(Padding.L)
                     .weight(1f)
+                    .padding(bottom = rememberScreenInsets().bottom)
             ) {
-                StrapLine(
+                Column(
                     modifier = Modifier
-                )
+                        .verticalScroll(rememberScrollState())
+                        .padding(Padding.L)
+                        .weight(1f)
+                ) {
+                    StrapLine(
+                        modifier = Modifier
+                    )
 
-                ChevronTextDirectlyAfterButton(
-                    text = stringResource(R.string.screen_entry_link_about),
-                    modifier = Modifier,
-                    onClick = { navController.navigate(CoverDropDestinations.ABOUT_ROUTE) }
-                )
+                    ChevronTextDirectlyAfterButton(
+                        text = stringResource(R.string.screen_entry_link_about),
+                        modifier = Modifier,
+                        onClick = { navController.navigate(CoverDropDestinations.ABOUT_ROUTE) }
+                    )
 
-                Spacer(Modifier.weight(1f))
+                    Spacer(Modifier.weight(1f))
 
-                Divider(Modifier.padding(vertical = Padding.L))
+                    Divider(Modifier.padding(vertical = Padding.L))
 
-                Text(text = stringResource(R.string.screen_entry_coverdrop_not_available))
+                    Text(text = stringResource(R.string.screen_entry_coverdrop_not_available))
 
-                Text(
-                    text = "${status.status}: ${status.description}",
-                    fontFamily = FontFamily.Monospace,
-                    modifier = Modifier.padding(top = Padding.M)
-                )
+                    Text(
+                        text = "${status.status}: ${status.description}",
+                        fontFamily = FontFamily.Monospace,
+                        modifier = Modifier.padding(top = Padding.M)
+                    )
 
-                Divider(Modifier.padding(vertical = Padding.L))
+                    Divider(Modifier.padding(vertical = Padding.L))
+                }
             }
         }
     }
@@ -165,46 +175,49 @@ private fun EntryScreenHappy(
         )
     }
 
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        EntryScreenTopBar()
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            EntryScreenTopBar()
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .weight(1f)
-        ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(Padding.L)
                     .weight(1f)
+                    .padding(bottom = rememberScreenInsets().bottom)
             ) {
-                StrapLine(
+                Column(
                     modifier = Modifier
-                )
+                        .verticalScroll(rememberScrollState())
+                        .padding(Padding.L)
+                        .weight(1f)
+                ) {
+                    StrapLine(
+                        modifier = Modifier
+                    )
 
-                ChevronTextDirectlyAfterButton(
-                    text = stringResource(R.string.screen_entry_link_about),
-                    modifier = Modifier,
-                    onClick = { navController.navigate(CoverDropDestinations.ABOUT_ROUTE) }
-                )
+                    ChevronTextDirectlyAfterButton(
+                        text = stringResource(R.string.screen_entry_link_about),
+                        modifier = Modifier,
+                        onClick = { navController.navigate(CoverDropDestinations.ABOUT_ROUTE) }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier.padding(Padding.L)
+                ) {
+                    PrimaryButton(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        text = stringResource(R.string.screen_entry_button_get_started),
+                        onClick = { showGetStartedDialog = true },
+                    )
+                    SecondaryButton(
+                        modifier = Modifier.fillMaxWidth(1f),
+                        text = stringResource(R.string.screen_entry_button_check_your_inbox),
+                        onClick = { navController.navigate(CoverDropDestinations.CONTINUE_SESSION_ROUTE) },
+                    )
+                }
+
             }
-
-            Column(
-                modifier = Modifier.padding(Padding.L)
-            ) {
-                PrimaryButton(
-                    modifier = Modifier.fillMaxWidth(1f),
-                    text = stringResource(R.string.screen_entry_button_get_started),
-                    onClick = { showGetStartedDialog = true },
-                )
-                SecondaryButton(
-                    modifier = Modifier.fillMaxWidth(1f),
-                    text = stringResource(R.string.screen_entry_button_check_your_inbox),
-                    onClick = { navController.navigate(CoverDropDestinations.CONTINUE_SESSION_ROUTE) },
-                )
-            }
-
         }
     }
 }

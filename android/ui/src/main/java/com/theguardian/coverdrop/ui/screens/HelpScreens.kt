@@ -19,6 +19,7 @@ import com.theguardian.coverdrop.ui.components.HelpScreenContent
 import com.theguardian.coverdrop.ui.components.parseHelpScreenMarkup
 import com.theguardian.coverdrop.ui.navigation.CoverDropDestinations
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 
 
 @Composable
@@ -92,14 +93,16 @@ private fun HelpScreen(
     helpTextResId: Int,
     onClickMapping: Map<String, () -> Unit> = emptyMap(),
 ) {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(onNavigationOptionPressed = { navController.navigateUp() })
-        val components = loadHelpScreenComponents(
-            context = LocalContext.current,
-            resId = helpTextResId,
-            highlightColor = MaterialTheme.colors.primary,
-        )
-        HelpScreenContent(components, onClickMapping = onClickMapping)
+    ScreenContentWrapper {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            CoverDropTopAppBar(onNavigationOptionPressed = { navController.navigateUp() })
+            val components = loadHelpScreenComponents(
+                context = LocalContext.current,
+                resId = helpTextResId,
+                highlightColor = MaterialTheme.colors.primary,
+            )
+            HelpScreenContent(components, onClickMapping = onClickMapping)
+        }
     }
 }
 

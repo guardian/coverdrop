@@ -57,6 +57,8 @@ import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
 import com.theguardian.coverdrop.ui.theme.RoundedCorners
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.viewmodels.ConversationViewModel
 import java.time.Duration
 import java.time.Instant
@@ -90,11 +92,14 @@ private fun ConversationScreen(
     now: Instant = Instant.now(),
 ) {
     val messages = thread?.messages ?: emptyList()
-
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            onNavigationOptionPressed = navigateBack,
-        )
+    ScreenContentWrapper {
+        Column(modifier = Modifier
+            .fillMaxHeight(1f)
+            .padding(bottom = rememberScreenInsets().bottom)
+        ) {
+            CoverDropTopAppBar(
+                onNavigationOptionPressed = navigateBack,
+            )
 
         val scrollState = rememberScrollState()
         Column(
@@ -106,21 +111,22 @@ private fun ConversationScreen(
             ConversationMainContent(messages, thread, now)
         }
 
-        LaunchedEffect(messages) {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
+            LaunchedEffect(messages) {
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
 
-        Divider(color = NeutralMiddle)
+            Divider(color = NeutralMiddle)
 
-        Column(
-            modifier = Modifier.padding(start = Padding.M, end = Padding.M, bottom = Padding.M)
-        ) {
-            ConversationMessageComposer(
-                onMessageChanged,
-                totalMessageSizePercent,
-                onSendMessage,
-                initialMessage
-            )
+            Column(
+                modifier = Modifier.padding(start = Padding.M, end = Padding.M, bottom = Padding.M)
+            ) {
+                ConversationMessageComposer(
+                    onMessageChanged,
+                    totalMessageSizePercent,
+                    onSendMessage,
+                    initialMessage
+                )
+            }
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import com.theguardian.coverdrop.ui.navigation.CoverDropDestinations
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
+import com.theguardian.coverdrop.ui.utils.ScreenContentWrapper
 import com.theguardian.coverdrop.ui.viewmodels.SplashViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +54,7 @@ fun SplashScreen(
             }
         }
     }
-
+ScreenContentWrapper {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -61,6 +62,7 @@ fun SplashScreen(
     ) {
         CircularProgressIndicator(modifier = Modifier.testTag("coverdrop_splash_screen_spinner"))
     }
+}
 }
 
 @Preview(device = Devices.PIXEL_6)
