@@ -7,7 +7,7 @@ java = "17"
 
 # For the released libraries
 libraryGroupId = "com.gu.coverdrop"
-libraryVersion = "0.9.0-rc2"
+libraryVersion = "0.9.0-rc3"
 
 # Dependencies
 accompanist-pager = "0.28.0"
@@ -24,7 +24,7 @@ compose-constraintLayout = "1.1.1"
 core-ktx = "1.16.0"
 espresso-core = "3.6.1"
 gson = "2.11.0"
-google-hilt = "2.56.2"
+google-hilt = "2.57"
 jetbrains-kotlin-android = "2.1.0"
 junit = "4.13.2"
 lifecycle = "2.9.0"
