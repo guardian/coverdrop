@@ -11,7 +11,7 @@ public struct AppInitalView: View {
 
     public let uiConfig = CoverDropUserInterfaceConfiguration(
         showAboutScreenDebugInformation: true,
-        showBetaBanner: true
+        showBetaBanner: false
     )
 
     public var body: some View {

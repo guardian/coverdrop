@@ -51,6 +51,9 @@ struct OnboardingView: View {
         // so the content can still be viewed at larger text sizes
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .center, spacing: 0) {
+                // Spacers do not work in scroll views, so we add a frame to give it min and max values
+                Spacer().frame(minHeight: 30, maxHeight: 200)
+
                 Group {
                     step.image
                         .aspectRatio(contentMode: .fit)
@@ -59,7 +62,7 @@ struct OnboardingView: View {
                 }
 
                 // Spacers do not work in scroll views, so we add a frame to give it min and max values
-                Spacer().frame(minHeight: 30, maxHeight: 100)
+                Spacer().frame(minHeight: 30, maxHeight: 200)
 
                 Text("How this works")
                     .textStyle(TitleStyle())
