@@ -14,7 +14,8 @@
     "check-format": "prettier --check src/**/*.{ts,tsx}",
     "format": "prettier --write src/**/*.{ts,tsx}",
     "lint": "eslint src/**/*.{ts,tsx}",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "cd .. && husky install journalist-client/.husky"
   },
   "lint-staged": {
     "*": "prettier --ignore-unknown --write",
