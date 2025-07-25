@@ -5,7 +5,7 @@ use tracing::Level;
 use ts_rs::TS;
 
 // Basically a mirror for the journalist_vault::LogEntry type but with the
-// appropraite annotations to work with Tauri and our TypeScript
+// appropriate annotations to work with Tauri and our TypeScript
 //
 // Maybe we should add the TS library to the journalist_vault directly but
 // that feels like it's pulling down concerns from the client.

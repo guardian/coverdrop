@@ -20,6 +20,9 @@ import { getChats, getUsers, markAsUnread } from "./commands/chats";
 import { MuteToggleModal } from "./components/MuteToggleModal.tsx";
 import { EditUserModal } from "./components/EditUserModal.tsx";
 import { CopyToClipboardModal } from "./components/CopyToClipboardModal.tsx";
+import { JournalistStatus } from "./model/bindings/JournalistStatus.ts";
+import { ToggleJournalistStatusModal } from "./components/ToggleJournalistStatusModal.tsx";
+import { getPublicInfo } from "./commands/admin.ts";
 
 const App = ({
   panelled,
@@ -48,7 +51,33 @@ const App = ({
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,
   );
+  const [journalistStatus, setJournalistStatus] = useState<
+    JournalistStatus | undefined
+  >();
 
+  // Find initial journalist status from public info object
+  useEffect(() => {
+    if (!vaultState) {
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        const publicInfo = await getPublicInfo();
+        const journalistStatus = publicInfo.journalist_profiles.find(
+          (p) => p.id == vaultState?.id,
+        )?.status;
+        setJournalistStatus(journalistStatus);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+
+    fetchData();
+  }, [vaultState]);
+
+  const [maybeJournalistStatusForModal, setMaybeJournalistStatusForModal] =
+    useState<JournalistStatus | null>(null);
   const [maybeEditModalForReplyKey, setMaybeEditModalForReplyKey] = useState<
     string | null
   >(null);
@@ -155,7 +184,8 @@ const App = ({
             minWidth={325}
           >
             <ChatsSideBar
-              userAlias={vaultState.id}
+              journalistId={vaultState.id}
+              journalistStatus={journalistStatus}
               currentUserReplyKey={currentUserReplyKey}
               setChat={setCurrentUserReplyKey}
               markChatAsUnread={markChatAsUnread}
@@ -163,6 +193,9 @@ const App = ({
               setMaybeMuteModalForReplyKey={setMaybeMuteModalForReplyKey}
               setMaybeCopyToClipboardModalForReplyKey={
                 setMaybeCopyToClipboardModalForReplyKey
+              }
+              setMaybeJournalistStatusForModal={
+                setMaybeJournalistStatusForModal
               }
             />
           </EuiPageTemplate.Sidebar>
@@ -186,6 +219,12 @@ const App = ({
               }
             />
           ) : null}
+
+          <ToggleJournalistStatusModal
+            newStatus={maybeJournalistStatusForModal}
+            setJournalistStatus={setJournalistStatus}
+            closeModal={() => setMaybeJournalistStatusForModal(null)}
+          />
 
           <MuteToggleModal
             maybeReplyKey={maybeMuteModalForReplyKey}

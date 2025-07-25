@@ -9,6 +9,7 @@ use api::controllers::general::{
     get_healthcheck, get_latest_status, post_reload_tracing, post_status_event,
 };
 use api::controllers::journalist_message::post_forward_journalist_to_covernode_msg;
+use api::controllers::journalist_status::patch_journalist_status;
 use api::controllers::keys::{
     delete_journalist, get_journalist_id_pk_rotation_forms, get_journalist_id_pk_with_epoch,
     get_public_keys, patch_journalist, post_admin_key, post_covernode_id_key,
@@ -141,6 +142,10 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/public-keys/journalists/update-profile",
             patch(patch_journalist),
+        )
+        .route(
+            "/public-keys/journalists/update-status",
+            patch(patch_journalist_status),
         )
         .route(
             "/public-keys/covernode/provisioning-public-key",

@@ -10,6 +10,7 @@ import {
   EuiTabs,
   EuiHorizontalRule,
   useEuiTheme,
+  EuiBadge,
 } from "@elastic/eui";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
@@ -20,6 +21,7 @@ import { useUserStore } from "../state/users";
 import { useErrorStore } from "../state/errors";
 import { PerChatMenu } from "./PerChatMenu";
 import { Message } from "../model/bindings/Message";
+import { JournalistStatus } from "../model/bindings/JournalistStatus";
 
 type Chat = {
   name: string;
@@ -35,13 +37,17 @@ type Chat = {
 };
 
 type ChatsSideBarProps = {
-  userAlias: string;
+  journalistId: string;
+  journalistStatus?: JournalistStatus;
   currentUserReplyKey: string | null;
   setChat: (userReplyKey: string) => void;
   markChatAsUnread: (replyKey: string) => void;
   setMaybeEditModalForReplyKey: (maybeReplyKey: string | null) => void;
   setMaybeMuteModalForReplyKey: (maybeReplyKey: string | null) => void;
   setMaybeCopyToClipboardModalForReplyKey: (replyKey: string | null) => void;
+  setMaybeJournalistStatusForModal: (
+    newStatus: JournalistStatus | null,
+  ) => void;
 };
 
 const chatsToSideNav = (
@@ -185,13 +191,15 @@ const chatsToSideNav = (
 };
 
 export const ChatsSideBar = ({
-  userAlias,
+  journalistId,
+  journalistStatus,
   currentUserReplyKey: currentUserReplyKey,
   setChat,
   markChatAsUnread,
   setMaybeEditModalForReplyKey,
   setMaybeMuteModalForReplyKey,
   setMaybeCopyToClipboardModalForReplyKey,
+  setMaybeJournalistStatusForModal,
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
   const messageStore = useMessageStore();
@@ -350,9 +358,24 @@ export const ChatsSideBar = ({
         alignItems="center"
       >
         <EuiFlexItem grow={false}>
-          <SettingsPopover />
+          <SettingsPopover
+            journalistStatus={journalistStatus}
+            setMaybeJournalistStatusForModal={setMaybeJournalistStatusForModal}
+          />
         </EuiFlexItem>
-        <EuiFlexItem grow={true}>{userAlias}</EuiFlexItem>
+        <EuiFlexItem grow={true}>{journalistId}</EuiFlexItem>
+        <EuiFlexItem grow={false}>
+          {journalistStatus !== "VISIBLE" ? (
+            <EuiBadge
+              color="#FFA500"
+              title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
+            >
+              Hidden
+            </EuiBadge>
+          ) : (
+            <></>
+          )}
+        </EuiFlexItem>
       </EuiFlexGroup>
       <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>

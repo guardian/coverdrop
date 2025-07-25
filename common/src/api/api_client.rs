@@ -1,11 +1,13 @@
 use chrono::{DateTime, Utc};
 use reqwest::Url;
 
+use crate::api::forms::PatchJournalistStatusForm;
 use crate::api::models::dead_drops::{
     UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
     UnverifiedUserToJournalistDeadDropsList,
 };
 
+use crate::client::JournalistStatus;
 use crate::crypto::keys::public_key::PublicKey;
 use crate::epoch::Epoch;
 use crate::healthcheck::HealthCheck;
@@ -294,6 +296,33 @@ impl ApiClient {
             is_desk,
             description,
             journalist_provisioning_key_pair,
+            now,
+        )?;
+
+        let resp = self.client.patch(url).json(&body).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn patch_journalist_status(
+        &self,
+        journalist_id: JournalistIdentity,
+        journalist_id_key_pair: &JournalistIdKeyPair,
+        journalist_status: JournalistStatus,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("journalists")
+            .push("update-status");
+
+        let body = PatchJournalistStatusForm::new(
+            journalist_id,
+            journalist_status,
+            journalist_id_key_pair,
             now,
         )?;
 

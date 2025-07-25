@@ -34,6 +34,8 @@ pub enum AppError {
     Base64Decode(#[from] DecodeError),
     #[error("signature verification failed")]
     SignatureVerificationFailed,
+    #[error("client unauthorized to update record")]
+    JournalistUnauthorized,
     #[error("journalist id not found")]
     JournalistIdNotFound,
     #[error("journalist description too long")]
@@ -72,6 +74,10 @@ impl IntoResponse for AppError {
             Self::SignatureVerificationFailed => (
                 StatusCode::UNAUTHORIZED,
                 "signature verification failed".into(),
+            ),
+            Self::JournalistUnauthorized => (
+                StatusCode::UNAUTHORIZED,
+                "client unauthorized to update record".into(),
             ),
             Self::JournalistIdNotFound => {
                 (StatusCode::NOT_FOUND, "journalist id key not found".into())

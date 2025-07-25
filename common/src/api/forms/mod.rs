@@ -1,5 +1,6 @@
 mod delete_journalist;
 mod patch_journalist;
+mod patch_journalist_status;
 mod post_admin_pk;
 mod post_covernode_id_pk;
 mod post_covernode_msg_pk;
@@ -14,6 +15,7 @@ mod post_system_status_event;
 
 pub use delete_journalist::*;
 pub use patch_journalist::*;
+pub use patch_journalist_status::*;
 pub use post_admin_pk::*;
 pub use post_covernode_id_pk::*;
 pub use post_covernode_msg_pk::*;

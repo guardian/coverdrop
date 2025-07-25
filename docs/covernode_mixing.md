@@ -1,7 +1,7 @@
 # CoverNode mixing strategy and parameters
 
 The CoverNode in our system design fulfills two tasks.
-First, it unlinks[^1] the messages forwarded to the journalists from the orignal sender, hence ensuring anonymity.
+First, it unlinks[^1] the messages forwarded to the journalists from the original sender, hence ensuring anonymity.
 Seconds, it filters out cover messages which make up the vast majority of ingress so that the dead-drops are of reasonable size.
 
 ## Operations and mixing strategy

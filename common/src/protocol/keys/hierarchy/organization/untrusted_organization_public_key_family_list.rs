@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::protocol::keys::UntrustedOrganizationPublicKey;
 
 use super::UntrustedOrganizationPublicKeyFamily;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, TS)]
 #[serde(deny_unknown_fields)]
 pub struct UntrustedOrganizationPublicKeyFamilyList(pub Vec<UntrustedOrganizationPublicKeyFamily>);
 

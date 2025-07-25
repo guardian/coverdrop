@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{Decode, Encode};
+use strum::AsRefStr;
+use ts_rs::TS;
 
 use crate::{
     api::models::journalist_id::JournalistIdentity, protocol::recipient_tag::RecipientTag,
@@ -9,12 +11,14 @@ use crate::{
     Clone,
     Serialize,
     Deserialize,
-    Debug,
-    Decode,
     Encode,
+    Decode,
+    AsRefStr,
+    Debug,
     strum::Display,
     strum::EnumString,
     PartialEq,
+    TS,
 )]
 #[sqlx(rename_all = "SCREAMING_SNAKE_CASE")]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -25,7 +29,8 @@ pub enum JournalistStatus {
     HiddenFromResponse,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct JournalistProfile {
     pub id: JournalistIdentity,

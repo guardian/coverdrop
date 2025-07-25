@@ -467,6 +467,31 @@ impl JournalistQueries {
         }
     }
 
+    pub async fn update_journalist_status(
+        &self,
+        journalist_id: JournalistIdentity,
+        status: JournalistStatus,
+    ) -> anyhow::Result<()> {
+        let mut connection = self.pool.acquire().await?;
+
+        sqlx::query!(
+            r#"
+            UPDATE journalist_profiles SET
+                status_id = (
+                    SELECT id FROM journalist_statuses
+                    WHERE status = $1
+                )
+            WHERE id = $2
+            "#,
+            status.as_ref(),
+            &journalist_id
+        )
+        .execute(&mut *connection)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn delete_journalist(&self, id: &JournalistIdentity) -> anyhow::Result<()> {
         let mut connection = self.pool.acquire().await?;
 

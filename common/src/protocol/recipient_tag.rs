@@ -3,12 +3,17 @@ use crate::protocol::constants::RECIPIENT_TAG_LEN;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use ts_rs::TS;
 
 /// A type alias for the tag at the beginning of the serialized message that indicates the intended
 /// recipient (or the fact it's a cover message).
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Hash, TS)]
 #[serde(transparent, deny_unknown_fields)]
-pub struct RecipientTag(#[serde(with = "hex")] [u8; RECIPIENT_TAG_LEN]);
+pub struct RecipientTag(
+    #[serde(with = "hex")]
+    #[ts(as = "String")]
+    [u8; RECIPIENT_TAG_LEN],
+);
 
 pub const RECIPIENT_TAG_FOR_COVER: RecipientTag = RecipientTag::new([0u8; RECIPIENT_TAG_LEN]);
 

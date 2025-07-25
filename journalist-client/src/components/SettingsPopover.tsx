@@ -19,6 +19,7 @@ import { VaultKeysPanel } from "./VaultKeysPanel";
 import { TrustedKeyDigestsModal } from "./TrustedKeyDigestsModal";
 import { AddTrustAnchorModal } from "./AddTrustAnchorModal";
 import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
+import { JournalistStatus } from "../model/bindings/JournalistStatus";
 
 type FlyoverContent =
   | {
@@ -35,7 +36,15 @@ type FlyoverContent =
       json: string;
     };
 
-export const SettingsPopover = () => {
+export const SettingsPopover = ({
+  journalistStatus,
+  setMaybeJournalistStatusForModal,
+}: {
+  journalistStatus?: JournalistStatus;
+  setMaybeJournalistStatusForModal: (
+    newStatus: JournalistStatus | null,
+  ) => void;
+}) => {
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   const [flyoutContent, setFlyoutContent] = useState<FlyoverContent | null>(
     null,
@@ -50,6 +59,11 @@ export const SettingsPopover = () => {
     useState(false);
 
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+  const setStatusClicked = (newStatus: JournalistStatus) => {
+    setMaybeJournalistStatusForModal(newStatus);
+    setIsPopoverOpen(false);
+  };
 
   const forceIdRotationClicked = () => {
     forceRotateIdPk();
@@ -76,7 +90,7 @@ export const SettingsPopover = () => {
     getPublicInfo().then((i) => {
       setFlyoutContent({
         type: "public-info",
-        json: i,
+        json: JSON.stringify(i, null, 3),
       });
       setIsFlyoutVisible(true);
     });
@@ -192,6 +206,24 @@ export const SettingsPopover = () => {
         <EuiContextMenuPanel>
           <EuiContextMenuItem>
             <strong>Helpers</strong>
+          </EuiContextMenuItem>
+          {journalistStatus == "VISIBLE" ? (
+            <EuiContextMenuItem
+              icon="eyeClosed"
+              onClick={() => setStatusClicked("HIDDEN_FROM_UI")}
+            >
+              Set status to Hidden
+            </EuiContextMenuItem>
+          ) : (
+            <EuiContextMenuItem
+              icon="eye"
+              onClick={() => setStatusClicked("VISIBLE")}
+            >
+              Set status to Visible
+            </EuiContextMenuItem>
+          )}
+          <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>
+            View Vault Keys
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs

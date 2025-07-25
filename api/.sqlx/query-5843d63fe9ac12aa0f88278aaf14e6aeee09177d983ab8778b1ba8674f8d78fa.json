@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE journalist_profiles SET\n                status_id = (\n                    SELECT id FROM journalist_statuses\n                    WHERE status = $1\n                )\n            WHERE id = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5843d63fe9ac12aa0f88278aaf14e6aeee09177d983ab8778b1ba8674f8d78fa"
+}

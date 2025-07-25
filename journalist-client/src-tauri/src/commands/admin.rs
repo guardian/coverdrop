@@ -1,4 +1,6 @@
 use common::{
+    api::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles,
+    client::JournalistStatus,
     crypto::{human_readable_digest, keys::public_key::PublicKey as _},
     time,
 };
@@ -8,8 +10,8 @@ use tauri::State;
 use crate::{
     app_state::AppStateHandle,
     error::{
-        ApiClientUnavailableSnafu, CommandError, JsonSerializeSnafu, PublicInfoUnavailableSnafu,
-        VaultLockedSnafu, VaultSnafu,
+        AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, GenericSnafu, JsonSerializeSnafu,
+        PublicInfoUnavailableSnafu, VaultLockedSnafu, VaultSnafu,
     },
     model::{SentinelLogEntry, TrustedOrganizationPublicKeyAndDigest},
 };
@@ -85,16 +87,14 @@ pub async fn force_rotate_msg_pk(app: State<'_, AppStateHandle>) -> Result<(), C
 }
 
 #[tauri::command]
-pub async fn get_public_info(app: State<'_, AppStateHandle>) -> Result<String, CommandError> {
+pub async fn get_public_info(
+    app: State<'_, AppStateHandle>,
+) -> Result<UntrustedKeysAndJournalistProfiles, CommandError> {
     let public_info = app.public_info().await;
     let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
-
     let public_info = public_info.to_untrusted();
 
-    let public_info_json =
-        serde_json::to_string_pretty(&public_info).context(JsonSerializeSnafu)?;
-
-    Ok(public_info_json)
+    Ok(public_info)
 }
 
 #[tauri::command]
@@ -123,4 +123,45 @@ pub async fn get_vault_keys(app: State<'_, AppStateHandle>) -> Result<String, Co
     let vault_keys_json = serde_json::to_string_pretty(&vault_keys).context(JsonSerializeSnafu)?;
 
     Ok(vault_keys_json)
+}
+
+#[tauri::command]
+pub async fn update_journalist_status(
+    app: State<'_, AppStateHandle>,
+    new_status: JournalistStatus,
+) -> Result<(), CommandError> {
+    let new_status = new_status.clone();
+
+    let api_client = app
+        .inner()
+        .api_client()
+        .await
+        .context(ApiClientUnavailableSnafu)?;
+
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+    let journalist_id = vault.journalist_id().await.context(VaultSnafu {
+        failed_to: "get latest identity key pair",
+    })?;
+
+    let now = time::now();
+    let latest_id_key_pair = vault
+        .latest_id_key_pair(now)
+        .await
+        // Deal with failure to read the vault
+        .context(VaultSnafu {
+            failed_to: "get latest identity key pair",
+        })?
+        // Deal with vault read ok but there are no keys
+        .context(GenericSnafu {
+            ctx: "No identity keys in vault, you will need to reach out to an administrator",
+        })?;
+
+    api_client
+        .patch_journalist_status(journalist_id, &latest_id_key_pair, new_status, now)
+        .await
+        .context(AnyhowSnafu {
+            failed_to: "send patch request to API",
+        })?;
+
+    Ok(())
 }

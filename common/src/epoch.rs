@@ -5,9 +5,10 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 #[derive(
-    Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, sqlx::Type, PartialOrd, Ord,
+    Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, sqlx::Type, PartialOrd, Ord, TS,
 )]
 #[serde(transparent)]
 #[sqlx(transparent)]

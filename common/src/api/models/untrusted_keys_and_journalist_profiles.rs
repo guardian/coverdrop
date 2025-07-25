@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     client::{JournalistProfile, VerifiedKeysAndJournalistProfiles},
@@ -15,7 +16,8 @@ use super::journalist_id::JournalistIdentity;
 /// Not a huge fan of this structure - we should perhaps separate out the keys and the journalist info
 /// there's potentially a lot of data in the journalist info that doesn't change very much which makes
 /// pulling them both down together a bit wasteful.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(deny_unknown_fields)]
 pub struct UntrustedKeysAndJournalistProfiles {
     pub journalist_profiles: Vec<JournalistProfile>,

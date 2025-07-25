@@ -5,13 +5,15 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::Error;
 
 pub const MAX_JOURNALIST_IDENTITY_LEN: usize = 128;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, sqlx::Type)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, sqlx::Type, TS)]
 #[serde(transparent, deny_unknown_fields)]
+#[ts(type = "string")]
 #[sqlx(transparent)]
 pub struct JournalistIdentity(String);
 

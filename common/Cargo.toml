@@ -46,6 +46,7 @@ sodiumoxide.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["json"] }
+ts-rs = { workspace = true, features = ["no-serde-warnings"] }
 uuid = { workspace = true }
 strum.workspace = true
 thiserror.workspace = true

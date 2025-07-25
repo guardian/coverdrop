@@ -25,6 +25,8 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 
 use cli::Cli;
 
+use crate::commands::admin::update_journalist_status;
+
 mod app_state;
 mod cli;
 mod commands;
@@ -148,6 +150,7 @@ pub fn run() {
             force_rotate_id_pk,
             force_rotate_msg_pk,
             get_public_info,
+            update_journalist_status,
             check_message_length,
             mark_as_read,
             mark_as_unread,

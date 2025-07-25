@@ -1781,6 +1781,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "ts-rs",
  "uuid",
  "x25519-dalek",
 ]
