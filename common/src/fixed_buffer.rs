@@ -56,7 +56,7 @@ impl<T: CoverSerializable, const N: usize> FixedBuffer<T, N> {
         &self.values
     }
 
-    pub fn iter(&self) -> FixedBufferIter<T> {
+    pub fn iter(&self) -> FixedBufferIter<'_, T> {
         FixedBufferIter {
             values: &self.values,
             index: 0,

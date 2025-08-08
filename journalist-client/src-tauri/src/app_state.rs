@@ -53,7 +53,7 @@ impl PublicInfo {
         *guard = Some(public_info);
     }
 
-    pub async fn get(&self) -> RwLockReadGuard<Option<VerifiedKeysAndJournalistProfiles>> {
+    pub async fn get(&self) -> RwLockReadGuard<'_, Option<VerifiedKeysAndJournalistProfiles>> {
         self.0.read().await
     }
 }
@@ -182,7 +182,9 @@ impl AppStateHandle {
         }
     }
 
-    pub async fn public_info(&self) -> RwLockReadGuard<Option<VerifiedKeysAndJournalistProfiles>> {
+    pub async fn public_info(
+        &self,
+    ) -> RwLockReadGuard<'_, Option<VerifiedKeysAndJournalistProfiles>> {
         self.public_info.0.read().await
     }
 }

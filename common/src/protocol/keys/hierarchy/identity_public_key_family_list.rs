@@ -105,7 +105,7 @@ impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
 
     pub fn iter(
         &self,
-    ) -> Iter<IdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>> {
+    ) -> Iter<'_, IdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>> {
         self.0.iter()
     }
 

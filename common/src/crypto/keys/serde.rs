@@ -24,7 +24,7 @@ pub(crate) struct PublicSigningKeyHex;
 impl Hex<Ed25519PublicKey> for PublicSigningKeyHex {
     type Error = &'static str;
 
-    fn create_bytes(value: &Ed25519PublicKey) -> Cow<[u8]> {
+    fn create_bytes(value: &Ed25519PublicKey) -> Cow<'_, [u8]> {
         Cow::from(&value.as_bytes()[..])
     }
 
@@ -44,7 +44,7 @@ pub(crate) struct SigningKeyPairHex;
 impl Hex<SigningKey> for SigningKeyPairHex {
     type Error = &'static str;
 
-    fn create_bytes(value: &SigningKey) -> Cow<[u8]> {
+    fn create_bytes(value: &SigningKey) -> Cow<'_, [u8]> {
         Cow::Owned(Vec::from(value.to_bytes()))
     }
 
@@ -62,7 +62,7 @@ pub(crate) struct PublicEncryptionKeyHex;
 impl Hex<X25519PublicKey> for PublicEncryptionKeyHex {
     type Error = &'static str;
 
-    fn create_bytes(value: &X25519PublicKey) -> Cow<[u8]> {
+    fn create_bytes(value: &X25519PublicKey) -> Cow<'_, [u8]> {
         Cow::from(value.as_bytes().to_vec())
     }
 
@@ -80,7 +80,7 @@ pub(crate) struct SecretEncryptionKeyHex;
 impl Hex<X25519SecretKey> for SecretEncryptionKeyHex {
     type Error = &'static str;
 
-    fn create_bytes(value: &X25519SecretKey) -> Cow<[u8]> {
+    fn create_bytes(value: &X25519SecretKey) -> Cow<'_, [u8]> {
         Cow::from(value.to_bytes().to_vec())
     }
 
@@ -98,7 +98,7 @@ pub(crate) struct SignatureHex;
 impl<T> Hex<Signature<T>> for SignatureHex {
     type Error = &'static str;
 
-    fn create_bytes(value: &Signature<T>) -> Cow<[u8]> {
+    fn create_bytes(value: &Signature<T>) -> Cow<'_, [u8]> {
         Cow::from(value.signature.to_vec())
     }
 
