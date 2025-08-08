@@ -48,20 +48,15 @@ internal class EncryptionKeyWithExpiryCertificateData(private val byteArray: Byt
     }
 }
 
-@Deprecated("Replaced with DeadDropSignatureData that also covers the created_at field")
-internal class DeadDropCertificateData(private val byteArray: ByteArray) : Signable {
-    override fun asBytes() = byteArray
-
-    companion object {
-        fun from(data: ByteArray) = DeadDropCertificateData(data)
-    }
-}
-
 internal class DeadDropSignatureData(private val byteArray: ByteArray) : Signable {
     override fun asBytes() = byteArray
 
     companion object {
-        fun from(libSodium: SodiumAndroid, data: ByteArray, createdAt: Instant): DeadDropSignatureData {
+        fun from(
+            libSodium: SodiumAndroid,
+            data: ByteArray,
+            createdAt: Instant
+        ): DeadDropSignatureData {
             // See: `journalist_to_user_dead_drop_signature_data_v2.rs`
             val buffer = ByteBuffer.allocate(data.size + Long.SIZE_BYTES)
             buffer.put(data)

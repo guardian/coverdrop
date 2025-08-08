@@ -51,7 +51,7 @@ use common::{
     protocol::{
         constants::{
             HOUR_IN_SECONDS, JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS,
-            JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS, JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS,
+            JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS, MESSAGE_VALID_FOR_DURATION_IN_SECONDS,
         },
         keys::{
             generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
@@ -344,28 +344,6 @@ impl JournalistVault {
         Ok(())
     }
 
-    /// TODO: Remove - used by signal bridge and CLI, but CLI shouldn't use it :)
-    pub async fn add_message_from_journalist_to_user(
-        &self,
-        user_pk: &UserPublicKey,
-        message: &FixedSizeMessageText,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-        message_queries::add_j2u_message(&mut conn, user_pk, message, now, None).await
-    }
-
-    /// TODO: Remove - only used by the signal bridge
-    pub async fn enqueue_message(
-        &self,
-        message: EncryptedJournalistToCoverNodeMessage,
-    ) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-        _ = message_queries::enqueue_message(&mut conn, message).await?;
-
-        Ok(())
-    }
-
     // TODO:
     // This should be the only option. The two partial versions of this are not
     // transaction safe.
@@ -421,6 +399,15 @@ impl JournalistVault {
     pub async fn mark_as_unread(&self, message_id: i64) -> anyhow::Result<()> {
         let mut conn = self.pool.acquire().await?;
         message_queries::mark_as_unread(&mut conn, message_id).await
+    }
+
+    pub async fn set_custom_expiry(
+        &self,
+        message: &VaultMessage,
+        custom_expiry: Option<DateTime<Utc>>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        message_queries::set_custom_expiry(&mut conn, message, custom_expiry).await
     }
 
     pub async fn messages(&self) -> anyhow::Result<Vec<VaultMessage>> {
@@ -1113,11 +1100,10 @@ impl JournalistVault {
 
     /// - Delete expired id and msg key pairs.
     /// - Delete expired organization and provisioning public keys
-    /// - Remove messages that are more than JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS old
+    /// - Remove messages that are more than MESSAGE_VALID_FOR_DURATION_IN_SECONDS  old
     /// - Delete old logs
     pub async fn clean_up(&self, now: DateTime<Utc>) -> anyhow::Result<()> {
-        let message_deletion_duration =
-            Duration::seconds(JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS);
+        let message_deletion_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
 
         let mut tx = self.pool.begin().await?;
 

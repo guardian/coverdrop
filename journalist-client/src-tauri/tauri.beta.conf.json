@@ -1,0 +1,22 @@
+{
+  "productName": "Sentinel BETA",
+  "identifier": "com.theguardian.coverdrop-journalist-client.BETA",
+  "app": {
+    "windows": [
+      {
+        "title": "Sentinel BETA",
+        "width": 800,
+        "height": 600
+      }
+    ]
+  },
+  "bundle": {
+    "icon": [
+      "icons/beta/32x32.png",
+      "icons/beta/128x128.png",
+      "icons/beta/128x128@2x.png",
+      "icons/beta/icon.icns",
+      "icons/beta/icon.ico"
+    ]
+  }
+}

@@ -61,25 +61,14 @@ public struct VerifiedDeadDrop {
     /// Otherwise, we fallback to the "legacy" check against the `cert` field. This fallback
     /// behaviour is only temporary and should be removed once the migration is complete, see #2998.
     init?(unverifiedDeadDrop: DeadDrop, signingPk: CoverNodeIdPublicKey) {
-        let unverifiedDeadDropCertificateData = DeadDropCertificateData(from: unverifiedDeadDrop)
         let unverifiedDeadDropSignatureData = DeadDropSignatureData(from: unverifiedDeadDrop)
-        let hasMeaningfulSignature = VerifiedDeadDrop.isMeaningfulSignature(signature: unverifiedDeadDrop.signature)
 
         do {
-            let verified = if hasMeaningfulSignature {
-                VerifiedDeadDrop.verify(
-                    signingPk: signingPk,
-                    data: unverifiedDeadDropSignatureData.bytes,
-                    signature: Signature.fromBytes(bytes: unverifiedDeadDrop.signature?.bytes ?? [])
-                )
-            } else {
-                // if the signature is not meaningful, we fallback to the cert check; see #2998
-                VerifiedDeadDrop.verify(
-                    signingPk: signingPk,
-                    data: unverifiedDeadDropCertificateData.bytes,
-                    signature: Signature.fromBytes(bytes: unverifiedDeadDrop.cert?.bytes ?? [])
-                )
-            }
+            let verified = VerifiedDeadDrop.verify(
+                signingPk: signingPk,
+                data: unverifiedDeadDropSignatureData.bytes,
+                signature: Signature.fromBytes(bytes: unverifiedDeadDrop.signature.bytes)
+            )
 
             if verified {
                 let parsedDeadDropData = try VerifiedDeadDrop.parseDeadDropData(data: unverifiedDeadDrop.data.bytes)
@@ -98,24 +87,6 @@ public struct VerifiedDeadDrop {
                 publishedDate = verifiedCreatedAt
             } else { return nil }
         } catch { return nil }
-    }
-
-    /// Returns `true` if the signature is present and has at least one non-zero byte. In that case
-    /// we can assume that  we have a dead-drop with the new signature scheme and we should
-    /// check this signature instead of the legacy `cert` field. See #2998.
-    static func isMeaningfulSignature(signature: HexEncodedString?) -> Bool {
-        guard let signature = signature else {
-            // missing signatures are never meaningful
-            return false
-        }
-
-        for byte in signature.bytes where byte != 0x00 {
-            // if the signature contains at least one non-zero byte, we can
-            // assume that it is a meaningful signature
-            return true
-        }
-
-        return false
     }
 
     /// Parse the verified dead drop data into a list of JournalistToUserMessages

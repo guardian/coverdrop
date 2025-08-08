@@ -1,0 +1,22 @@
+{
+  "productName": "Sentinel",
+  "identifier": "com.theguardian.coverdrop-journalist-client",
+  "app": {
+    "windows": [
+      {
+        "title": "Sentinel",
+        "width": 800,
+        "height": 600
+      }
+    ]
+  },
+  "bundle": {
+    "icon": [
+      "icons/prod/32x32.png",
+      "icons/prod/128x128.png",
+      "icons/prod/128x128@2x.png",
+      "icons/prod/icon.icns",
+      "icons/prod/icon.ico"
+    ]
+  }
+}

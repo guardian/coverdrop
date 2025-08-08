@@ -101,21 +101,28 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
     fun MainActivityContent(violations: EnumSet<IntegrityViolation>) {
         val navController = rememberNavController()
         CoverDropSurface {
-            // The background colour is set to the primary surface colour, so that the app
-            // background matches the status bar colour.
+            // The background colour is set to the primary surface colour, so that the status bar
+            // colour blends with the top bar. The background colour is set to the normal background
+            // colour to ensure contrast.
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(CoverDropColorPalette.primarySurface)
                     .windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                if (violations.isNotEmpty()) {
-                    IntegrityViolationScreen(violations = violations)
-                } else {
-                    CoverDropApp(
-                        lockFlow = coverDropLib.getLockFlow(),
-                        navController = navController,
-                    )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(CoverDropColorPalette.background)
+                ) {
+                    if (violations.isNotEmpty()) {
+                        IntegrityViolationScreen(violations = violations)
+                    } else {
+                        CoverDropApp(
+                            lockFlow = coverDropLib.getLockFlow(),
+                            navController = navController,
+                        )
+                    }
                 }
             }
         }

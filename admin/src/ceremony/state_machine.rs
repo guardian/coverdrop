@@ -2,7 +2,10 @@ use chrono::{DateTime, Utc};
 
 use common::{
     api::{forms::PostCoverNodeIdPublicKeyForm, models::covernode_id::CoverNodeIdentity},
-    crypto::keys::signing::{SignedPublicSigningKey, SigningKeyPair},
+    crypto::keys::{
+        serde::StorableKeyMaterial,
+        signing::{SignedPublicSigningKey, SigningKeyPair},
+    },
     protocol::{
         keys::{
             generate_covernode_id_key_pair, generate_covernode_provisioning_key_pair,
@@ -32,11 +35,12 @@ pub struct CeremonyState {
     pub covernode_provisioning_key_pair: Option<CoverNodeProvisioningKeyPair>,
     pub admin_key_pair: Option<AdminKeyPair>,
 
+    // Key pair files
+    pub org_key_pair_file: Option<PathBuf>,
+    pub journalist_provisioning_key_pair_file: Option<PathBuf>,
+    pub covernode_provisioning_key_pair_file: Option<PathBuf>,
+    pub admin_key_pair_file: Option<PathBuf>,
     // Bundles
-    pub org_key_pair_bundle: Option<PathBuf>,
-    pub journalist_provisioning_key_pair_bundle: Option<PathBuf>,
-    pub covernode_provisioning_key_pair_bundle: Option<PathBuf>,
-    pub admin_key_pair_bundle: Option<PathBuf>,
     pub set_system_status_available_bundle: Option<PathBuf>,
     pub anchor_org_pk_bundle: Option<PathBuf>,
     pub public_key_forms_bundle: Option<PathBuf>,
@@ -76,10 +80,10 @@ impl CeremonyState {
             covernode_provisioning_key_pair: None,
             admin_key_pair: None,
             // Bundles
-            org_key_pair_bundle: None,
-            journalist_provisioning_key_pair_bundle: None,
-            covernode_provisioning_key_pair_bundle: None,
-            admin_key_pair_bundle: None,
+            org_key_pair_file: None,
+            journalist_provisioning_key_pair_file: None,
+            covernode_provisioning_key_pair_file: None,
+            admin_key_pair_file: None,
             set_system_status_available_bundle: None,
             anchor_org_pk_bundle: None,
             public_key_forms_bundle: None,
@@ -91,11 +95,11 @@ impl CeremonyState {
 pub enum CeremonyStep {
     /// The initial step prompting the user to start the ceremony
     Zero,
-    /// Generates the trusted organization key pair bundle
+    /// Generates the trusted organization key pair
     One,
-    /// Generates the journalist provisioning key pair bundle
+    /// Generates the journalist provisioning key pair
     Two,
-    /// Generates the CoverNode provisioning key pair bundle
+    /// Generates the CoverNode provisioning key pair
     Three,
     /// Generates a CoverNode key database for each CoverNode
     Four,
@@ -165,8 +169,9 @@ impl CeremonyStep {
                     }
                 };
 
-                let bundle = save_organization_key_pair_bundle(output_directory, &org_key_pair)?;
-                state.org_key_pair_bundle = Some(bundle);
+                let org_key_pair_file =
+                    org_key_pair.to_untrusted().save_to_disk(output_directory)?;
+                state.org_key_pair_file = Some(org_key_pair_file);
 
                 if org_key_pair_preprovided {
                     ask_user_to_confirm(SKIP_CREATE_ANCHOR_ORG_KEY_PAIR, *assume_yes)?;
@@ -184,11 +189,10 @@ impl CeremonyStep {
                 state.journalist_provisioning_key_pair =
                     Some(journalist_provisioning_key_pair.clone());
 
-                let bundle = save_journalist_provisioning_bundle(
-                    output_directory,
-                    &journalist_provisioning_key_pair,
-                )?;
-                state.journalist_provisioning_key_pair_bundle = Some(bundle);
+                let file_path = journalist_provisioning_key_pair
+                    .to_untrusted()
+                    .save_to_disk(output_directory)?;
+                state.journalist_provisioning_key_pair_file = Some(file_path);
 
                 ask_user_to_confirm(JOURNALIST_PROVISIONING_KEY_PAIR, *assume_yes)?;
                 Ok(())
@@ -201,11 +205,10 @@ impl CeremonyStep {
                 state.covernode_provisioning_key_pair =
                     Some(covernode_provisioning_key_pair.clone());
 
-                let bundle = save_covernode_provisioning_bundle(
-                    output_directory,
-                    &covernode_provisioning_key_pair,
-                )?;
-                state.covernode_provisioning_key_pair_bundle = Some(bundle);
+                let file_path = covernode_provisioning_key_pair
+                    .to_untrusted()
+                    .save_to_disk(output_directory)?;
+                state.covernode_provisioning_key_pair_file = Some(file_path);
 
                 ask_user_to_confirm(COVERNODE_PROVISIONING_KEY_PAIR, *assume_yes)?;
                 Ok(())
@@ -245,8 +248,10 @@ impl CeremonyStep {
                     generate_admin_key_pair(state.org_key_pair.as_ref().unwrap(), *now);
                 state.admin_key_pair = Some(admin_key_pair.clone());
 
-                let bundle = save_admin_key_pair_bundle(output_directory, &admin_key_pair)?;
-                state.admin_key_pair_bundle = Some(bundle);
+                let file_path = admin_key_pair
+                    .to_untrusted()
+                    .save_to_disk(output_directory)?;
+                state.admin_key_pair_file = Some(file_path);
 
                 ask_user_to_confirm(ADMIN_KEY_PAIR, *assume_yes)?;
                 Ok(())
@@ -270,7 +275,14 @@ impl CeremonyStep {
                     .clone()
                     .into_anchor();
 
-                let bundle = save_anchor_public_key_bundle(output_directory, &anchor_org_pk)?;
+                let bundle = save_anchor_public_key_bundle(&output_directory, &anchor_org_pk)?;
+
+                // save trust anchor in .pub.json file
+                // TODO can we get rid of the bundle format above
+                anchor_org_pk
+                    .to_untrusted()
+                    .save_to_disk(output_directory)?;
+
                 state.anchor_org_pk_bundle = Some(bundle);
 
                 ask_user_to_confirm(ANCHOR_ORG_PK_BUNDLE, *assume_yes)?;

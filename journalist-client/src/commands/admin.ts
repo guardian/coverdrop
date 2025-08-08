@@ -19,7 +19,7 @@ export const forceRotateMsgPk = (): Promise<void> => {
 };
 
 export const getPublicInfo =
-  (): Promise<UntrustedKeysAndJournalistProfiles> => {
+  (): Promise<UntrustedKeysAndJournalistProfiles | null> => {
     return invokeWithErrorMessage("get_public_info");
   };
 

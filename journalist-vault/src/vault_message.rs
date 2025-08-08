@@ -1,33 +1,35 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use common::{
-    client::mailbox::mailbox_message::UserStatus, protocol::keys::UserPublicKey,
+    protocol::{constants::MESSAGE_VALID_FOR_DURATION_IN_SECONDS, keys::UserPublicKey},
     FixedSizeMessageText,
 };
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct U2JMessage {
     pub id: i64,
     pub user_pk: UserPublicKey,
-    // TODO: should be in a new user type
-    pub user_status: UserStatus,
-    pub message: FixedSizeMessageText,
+    pub message: String,
     pub received_at: DateTime<Utc>,
+    pub normal_expiry: DateTime<Utc>,
+    pub custom_expiry: Option<DateTime<Utc>>,
     pub read: bool,
-    pub user_alias: Option<String>,
-    pub user_description: Option<String>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct J2UMessage {
     pub id: i64,
     pub user_pk: UserPublicKey,
-    // TODO: should be in a new user type
-    pub user_status: UserStatus,
-    pub message: FixedSizeMessageText,
+    pub message: String,
     pub is_sent: bool,
     pub sent_at: DateTime<Utc>,
-    pub user_alias: Option<String>,
-    pub user_description: Option<String>,
+    pub normal_expiry: DateTime<Utc>,
+    pub custom_expiry: Option<DateTime<Utc>>,
 }
 
 impl U2JMessage {
@@ -35,23 +37,21 @@ impl U2JMessage {
     pub fn new(
         id: i64,
         from: UserPublicKey,
-        user_status: UserStatus,
-        message: &FixedSizeMessageText,
+        message: FixedSizeMessageText,
         received_at: DateTime<Utc>,
+        custom_expiry: Option<DateTime<Utc>>,
         read: bool,
-        user_alias: Option<String>,
-        user_description: Option<String>,
-    ) -> Self {
-        Self {
+    ) -> anyhow::Result<Self> {
+        let message_retention_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
+        Ok(Self {
             id,
             user_pk: from,
-            user_status,
-            message: message.clone(),
+            message: message.to_string()?,
             received_at,
+            normal_expiry: received_at + message_retention_duration,
+            custom_expiry,
             read,
-            user_alias,
-            user_description,
-        }
+        })
     }
 }
 
@@ -60,28 +60,31 @@ impl J2UMessage {
     pub fn new(
         id: i64,
         to: UserPublicKey,
-        user_status: UserStatus,
-        message: &FixedSizeMessageText,
+        message: FixedSizeMessageText,
         is_sent: bool,
         sent_at: DateTime<Utc>,
-        user_alias: Option<String>,
-        user_description: Option<String>,
-    ) -> Self {
-        Self {
+        custom_expiry: Option<DateTime<Utc>>,
+    ) -> anyhow::Result<Self> {
+        let message_retention_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
+        Ok(Self {
             id,
             user_pk: to,
-            user_status,
-            message: message.clone(),
+            message: message.to_string()?,
             is_sent,
             sent_at,
-            user_alias,
-            user_description,
-        }
+            normal_expiry: sent_at + message_retention_duration,
+            custom_expiry,
+        })
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[serde(tag = "type")]
+#[ts(export)]
+#[ts(rename = "Message")]
 pub enum VaultMessage {
+    #[serde(rename = "userToJournalistMessage")]
     U2J(U2JMessage),
+    #[serde(rename = "journalistToUserMessage")]
     J2U(J2UMessage),
 }

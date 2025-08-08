@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE u2j_messages\n        SET custom_expiry = ?1\n        WHERE id = ?2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "aea622f3d8e7aecf428988702e4cb9aa23524fae8019742a634f42444110be42"
+}

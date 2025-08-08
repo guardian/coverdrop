@@ -30,18 +30,11 @@ pub async fn print_journalist_dead_drops(vault: &JournalistVault) -> anyhow::Res
             VaultMessage::U2J(msg) => {
                 println!(
                     "{}\t{:?}\t{}",
-                    msg.received_at,
-                    msg.user_pk.key,
-                    msg.message.to_string()?
+                    msg.received_at, msg.user_pk.key, msg.message
                 );
             }
             VaultMessage::J2U(msg) => {
-                println!(
-                    "{}\t{:?}\t{}",
-                    msg.sent_at,
-                    msg.user_pk.key,
-                    msg.message.to_string()?
-                );
+                println!("{}\t{:?}\t{}", msg.sent_at, msg.user_pk.key, msg.message);
             }
         }
     }

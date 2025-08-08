@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM j2u_messages\n        WHERE (sent_at < ?1 AND custom_expiry IS NULL) OR custom_expiry < ?2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "61399ee4a0729b9406671226111f92d800007362112911b3de1dbb5102301cad"
+}

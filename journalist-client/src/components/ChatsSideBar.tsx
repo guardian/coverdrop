@@ -11,6 +11,8 @@ import {
   EuiHorizontalRule,
   useEuiTheme,
   EuiBadge,
+  EuiIcon,
+  EuiSkeletonRectangle,
 } from "@elastic/eui";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
@@ -29,6 +31,7 @@ type Chat = {
   replyKey: string;
   lastMessageTimestamp: string;
   hasUnread: boolean;
+  hasMessagesWithCustomExpiry: boolean;
   userStatus: UserStatus;
   lastMessage: {
     message: string;
@@ -99,7 +102,7 @@ const chatsToSideNav = (
                   setMaybeContextMenuOpenForReplyKey(chat.replyKey);
                 }}
               >
-                <EuiFlexGroup gutterSize="s">
+                <EuiFlexGroup gutterSize="s" alignItems="center">
                   <EuiFlexItem
                     grow={true}
                     style={{ fontWeight: font.weight.bold }}
@@ -107,6 +110,14 @@ const chatsToSideNav = (
                   >
                     {chat.name}
                   </EuiFlexItem>
+                  {chat.hasMessagesWithCustomExpiry && (
+                    <EuiIcon
+                      type="clockCounter"
+                      color="primary"
+                      size="m"
+                      title="Some messages in this chat have custom expiries."
+                    />
+                  )}
                   {chat.hasUnread && (
                     <div>
                       <EuiFlexItem
@@ -258,6 +269,9 @@ export const ChatsSideBar = ({
               ? messageTimestamp
               : maybeExistingInAcc.lastMessageTimestamp,
             hasUnread: !isRead || maybeExistingInAcc?.hasUnread,
+            hasMessagesWithCustomExpiry:
+              !!message.customExpiry ||
+              maybeExistingInAcc?.hasMessagesWithCustomExpiry,
             userStatus: thisUserInfo.status,
             lastMessage: isLatestMessage
               ? { message: message.message, messageType: message.type }
@@ -364,18 +378,26 @@ export const ChatsSideBar = ({
           />
         </EuiFlexItem>
         <EuiFlexItem grow={true}>{journalistId}</EuiFlexItem>
-        <EuiFlexItem grow={false}>
-          {journalistStatus !== "VISIBLE" ? (
-            <EuiBadge
-              color="#FFA500"
-              title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
+        {/* Journalist status skeleton or badge */}
+        {(journalistStatus == "HIDDEN_FROM_UI" ||
+          journalistStatus === undefined) && (
+          <EuiFlexItem grow={false}>
+            <EuiSkeletonRectangle
+              width="54.16px"
+              height="20px"
+              isLoading={journalistStatus === undefined}
+              contentAriaLabel="Status pending"
+              title="Status pending"
             >
-              Hidden
-            </EuiBadge>
-          ) : (
-            <></>
-          )}
-        </EuiFlexItem>
+              <EuiBadge
+                color="#FFA500"
+                title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
+              >
+                Hidden
+              </EuiBadge>
+            </EuiSkeletonRectangle>
+          </EuiFlexItem>
+        )}
       </EuiFlexGroup>
       <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
+    "tauri": "VITE_GIT_SHA=$(git rev-parse HEAD) VITE_GITHUB_REPO=$(git ls-remote --get-url origin) tauri",
     "createEuiIcons": "node scripts/createEuiIcons.js",
     "createAppIcons": "tauri icon ./src-tauri/icons/base.svg",
     "prepare": "cd .. && husky journalist-client/.husky",

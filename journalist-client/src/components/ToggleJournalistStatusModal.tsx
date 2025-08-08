@@ -1,12 +1,15 @@
 import { JournalistStatus } from "../model/bindings/JournalistStatus.ts";
 import { updateJournalistStatus } from "../commands/admin.ts";
 import { EuiConfirmModal } from "@elastic/eui";
+import { JournalistProfile } from "../model/bindings/JournalistProfile.ts";
 
 export const ToggleJournalistStatusModal = ({
+  journalistProfile,
   newStatus,
   closeModal,
   setJournalistStatus,
 }: {
+  journalistProfile: JournalistProfile;
   newStatus: JournalistStatus | null;
   closeModal: () => void;
   setJournalistStatus: (newStatus: JournalistStatus) => void;
@@ -17,12 +20,17 @@ export const ToggleJournalistStatusModal = ({
 
   const title =
     newStatus === "HIDDEN_FROM_UI"
-      ? "Set status to Hidden"
-      : "Set status to Visible";
+      ? "Hide me as a Secure Messaging recipient"
+      : "Show me as a Secure Messaging recipient";
+  const teamsOrJournalists = journalistProfile.is_desk
+    ? "teams"
+    : "journalists";
   const text =
     newStatus === "HIDDEN_FROM_UI"
-      ? "Setting your status to hidden will hide your profile in the app. Sources will not be able to start new conversations with you, but conversations that have already started will continue normally."
-      : "Setting your status to visible will allow app users to start new conversations with you.";
+      ? `This will set your Secure Messaging status to hidden, meaning the vault "${journalistProfile.display_name}" won't appear in the list of ${teamsOrJournalists} in the Guardian mobile app. New sources will not be able to contact you, but conversations that have already started will continue normally.`
+      : `This will set your Secure Messaging status to visible, meaning the vault "${journalistProfile.display_name}" will appear in the list of ${teamsOrJournalists} in the Guardian mobile app, and sources will be able to contact you.`;
+  const confirmButtonText =
+    newStatus === "HIDDEN_FROM_UI" ? "Hide me" : "Show me";
 
   const handleConfirm = async () => {
     try {
@@ -46,7 +54,7 @@ export const ToggleJournalistStatusModal = ({
       onCancel={closeModal}
       onConfirm={handleConfirm}
       cancelButtonText="Cancel"
-      confirmButtonText={title}
+      confirmButtonText={confirmButtonText}
       buttonColor="primary"
     >
       {text}

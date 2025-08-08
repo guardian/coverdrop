@@ -84,7 +84,10 @@ async fn message_round_trip() {
             _ => panic!("Expected a U2J message"),
         };
 
-        assert_eq!(new_message.message, message);
+        assert_eq!(
+            new_message.message,
+            message.to_string().expect("convert to string")
+        );
 
         assert_eq!(new_message.received_at, now);
     }

@@ -2,8 +2,7 @@ use common::crypto::keys::serde::StorableKeyMaterial;
 
 use admin::{
     anchor_public_key_bundle::{save_anchor_public_key_bundle, AnchorOrganizationPublicKeyBundle},
-    api_has_anchor_org_pk, copy_anchor_org_pk, read_bundle_from_disk,
-    save_organization_key_pair_bundle, ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME,
+    api_has_anchor_org_pk, read_bundle_from_disk, ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME,
 };
 use chrono::Duration;
 use common::{
@@ -66,13 +65,14 @@ async fn vault_manager_test() -> anyhow::Result<()> {
         .to_untrusted()
         .save_to_disk(stack.temp_dir_path())?;
 
-    save_organization_key_pair_bundle(stack.temp_dir_path(), &org_key_pair)?;
+    org_key_pair
+        .public_key()
+        .to_untrusted()
+        .save_to_disk(stack.api_keys_path())?;
 
     let anchor_org_pk = org_key_pair.public_key().clone().into_anchor();
 
     save_anchor_public_key_bundle(stack.temp_dir_path(), &anchor_org_pk)?;
-
-    copy_anchor_org_pk(stack.temp_dir_path(), stack.api_keys_path(), stack.now()).await?;
 
     let base_path = stack.temp_dir_path();
 

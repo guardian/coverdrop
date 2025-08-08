@@ -3,7 +3,10 @@ import {
   EuiButtonIcon,
   EuiContextMenuItem,
   EuiContextMenuPanel,
+  EuiLink,
   EuiPopover,
+  EuiSpacer,
+  EuiText,
 } from "@elastic/eui";
 import {
   forceRotateIdPk,
@@ -190,6 +193,17 @@ export const SettingsPopover = ({
     );
   }
 
+  const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
+  const maybeGithubRepoName = maybeRepo.startsWith("git@")
+    ? maybeRepo.substring(maybeRepo.indexOf(":") + 1, maybeRepo.length - 4) // local repo ssh
+    : maybeRepo?.startsWith("https://github.com/")
+      ? maybeRepo.substring(
+          // https (locally or in GHA)
+          19,
+          maybeRepo.endsWith(".git") ? maybeRepo.length - 4 : maybeRepo.length,
+        )
+      : maybeRepo;
+
   return (
     <Fragment>
       <EuiPopover
@@ -207,67 +221,75 @@ export const SettingsPopover = ({
           <EuiContextMenuItem>
             <strong>Helpers</strong>
           </EuiContextMenuItem>
-          {journalistStatus == "VISIBLE" ? (
-            <EuiContextMenuItem
-              icon="eyeClosed"
-              onClick={() => setStatusClicked("HIDDEN_FROM_UI")}
-            >
-              Set status to Hidden
-            </EuiContextMenuItem>
-          ) : (
-            <EuiContextMenuItem
-              icon="eye"
-              onClick={() => setStatusClicked("VISIBLE")}
-            >
-              Set status to Visible
-            </EuiContextMenuItem>
-          )}
-          <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>
-            View Vault Keys
-          </EuiContextMenuItem>
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="lock" onClick={getVaultKeysClicked}>
+          <EuiContextMenuItem icon="key" onClick={getVaultKeysClicked}>
             View vault keys
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="eye" onClick={getPublicInfoClicked}>
+          <EuiContextMenuItem icon="inspect" onClick={getPublicInfoClicked}>
             View all public profiles and keys
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
             View trust anchor digests
           </EuiContextMenuItem>
+          {journalistStatus == "VISIBLE" && (
+            <EuiContextMenuItem
+              icon="eyeClosed"
+              onClick={() => setStatusClicked("HIDDEN_FROM_UI")}
+            >
+              Hide me as a Secure Messaging recipient
+            </EuiContextMenuItem>
+          )}
+          {journalistStatus == "HIDDEN_FROM_UI" && (
+            <EuiContextMenuItem
+              icon="eye"
+              onClick={() => setStatusClicked("VISIBLE")}
+            >
+              Show me as a Secure Messaging recipient
+            </EuiContextMenuItem>
+          )}
+          {journalistStatus === undefined && (
+            <EuiContextMenuItem icon="eye" disabled={true}>
+              Status pending
+            </EuiContextMenuItem>
+          )}
           <EuiContextMenuItem>
             <strong>Danger Zone</strong>
           </EuiContextMenuItem>
-          <EuiContextMenuItem
-            color="warning"
-            icon="sun"
-            onClick={burstCoverMessagesClicked}
-          >
+          <EuiContextMenuItem icon="sun" onClick={burstCoverMessagesClicked}>
             Send cover message burst
           </EuiContextMenuItem>
           <EuiContextMenuItem
-            color="warning"
             icon="timeRefresh"
             onClick={forceIdRotationClicked}
           >
             Force identity key rotation
           </EuiContextMenuItem>
           <EuiContextMenuItem
-            color="warning"
             icon="timeRefresh"
             onClick={forceMsgRotationClicked}
           >
             Force messaging key rotation
           </EuiContextMenuItem>
-          <EuiContextMenuItem
-            color="warning"
-            icon="key"
-            onClick={addTrustAnchorClicked}
-          >
+          <EuiContextMenuItem icon="link" onClick={addTrustAnchorClicked}>
             Add trust anchor
           </EuiContextMenuItem>
+          {import.meta.env.VITE_GIT_SHA && maybeGithubRepoName && (
+            <EuiContextMenuItem size="s">
+              <EuiSpacer size="s" />
+              <EuiText size="xs" textAlign="right" color="grey">
+                built from:{" "}
+                <EuiLink
+                  target="_blank"
+                  href={`https://github.com/${maybeGithubRepoName}/commit/${import.meta.env.VITE_GIT_SHA}`}
+                  style={{ color: "grey" }}
+                >
+                  {import.meta.env.VITE_GIT_SHA?.substring(0, 7) || "DEV"}
+                </EuiLink>
+              </EuiText>
+            </EuiContextMenuItem>
+          )}
         </EuiContextMenuPanel>
       </EuiPopover>
       {flyout}

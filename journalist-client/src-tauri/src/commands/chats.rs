@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use common::{
     client::mailbox::mailbox_message::UserStatus as MailboxUserStatus,
     protocol::{
@@ -10,6 +11,7 @@ use common::{
     },
     time, Error as CommonError, FixedSizeMessageText,
 };
+use journalist_vault::VaultMessage;
 use snafu::{OptionExt as _, ResultExt};
 use tauri::State;
 
@@ -19,7 +21,7 @@ use crate::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, CommonSnafu, GenericSnafu,
         PublicInfoUnavailableSnafu, VaultLockedSnafu, VaultSnafu,
     },
-    model::{Message, User, UserStatus},
+    model::{User, UserStatus},
 };
 
 #[tauri::command]
@@ -41,23 +43,12 @@ pub fn check_message_length(message: String) -> Result<f32, CommandError> {
 }
 
 #[tauri::command]
-pub async fn get_chats(app: State<'_, AppStateHandle>) -> Result<Vec<Message>, CommandError> {
+pub async fn get_chats(app: State<'_, AppStateHandle>) -> Result<Vec<VaultMessage>, CommandError> {
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
 
-    vault
-        .messages()
-        .await
-        .context(VaultSnafu {
-            failed_to: "get messages",
-        })
-        .map(|r| {
-            r.into_iter()
-                .flat_map(|msg| {
-                    Message::from_vault_message(&msg)
-                        .map_err(|e| tracing::error!("Error converting mailbox message {}", e))
-                })
-                .collect()
-        })
+    vault.messages().await.context(VaultSnafu {
+        failed_to: "get messages",
+    })
 }
 
 #[tauri::command]
@@ -112,6 +103,24 @@ pub async fn mark_as_unread(
     vault.mark_as_unread(message_id).await.context(VaultSnafu {
         failed_to: "mark message as unread",
     })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn set_custom_expiry(
+    app: State<'_, AppStateHandle>,
+    message: VaultMessage,
+    custom_expiry: Option<DateTime<Utc>>,
+) -> Result<(), CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+
+    vault
+        .set_custom_expiry(&message, custom_expiry)
+        .await
+        .context(VaultSnafu {
+            failed_to: "set a custom expiry",
+        })?;
 
     Ok(())
 }

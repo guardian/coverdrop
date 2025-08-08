@@ -1,9 +1,11 @@
 package com.theguardian.coverdrop.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
@@ -12,8 +14,11 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -105,9 +110,19 @@ private fun CoverDropTopAppBarUi(
             warningBannerInfo.snoozeDialogDismiss,
         )
     }
-    Column {
+    Column(
+        modifier = Modifier
+            // we clip the shadow so that it does not appear on top of the top bar and thus making
+            // it merge with the status bar which has the same colour
+            .clip(GenericShape { size, _ ->
+                lineTo(size.width, 0f)
+                lineTo(size.width, size.height + 32)
+                lineTo(0f, size.height + 32)
+            })
+            .shadow(4.dp)
+    ) {
         TopAppBar(
-            elevation = 4.dp,
+            elevation = 0.dp, // set to 0 to avoid elevation colour overlaying
             backgroundColor = MaterialTheme.colors.surface,
             navigationIcon = {
                 CoverDropTopBarNavigationIcon(navigationOption, onNavigationOptionPressed)
@@ -128,7 +143,7 @@ private fun CoverDropTopAppBarUi(
                         CoverDropIcons.Refresh.AsComposable()
                     }
                 }
-            },
+            }
         )
         if (warningBannerInfo != null)
             TwoLineBanner(

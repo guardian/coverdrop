@@ -132,7 +132,6 @@ class ApiResponseCacheTest {
             id = id,
             createdAt = createdAt,
             data = "",
-            cert = "",
             signature = ""
         )
 

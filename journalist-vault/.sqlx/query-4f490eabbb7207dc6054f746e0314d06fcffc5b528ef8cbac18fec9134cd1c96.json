@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM u2j_messages\n        WHERE (received_at < ?1 AND custom_expiry IS NULL) OR custom_expiry < ?2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4f490eabbb7207dc6054f746e0314d06fcffc5b528ef8cbac18fec9134cd1c96"
+}

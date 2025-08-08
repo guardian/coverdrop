@@ -56,14 +56,14 @@
             "static_test_journalist": [
               {
                 "id_pk": {
-                  "key": "22f94fa91f3c0dae46982af103ea9b9126f3089fba6c70d2b2aae69e7320b2e0",
-                  "certificate": "77a9d94d4ba823392cdcc50b7b6ba2d9828c65e257e4e8b9656520f94419b3a4796ccef26c8810cd3ed85bf56f5f1daae00099c7e034df1e41afa8d64a50bb06",
+                  "key": "f6bce0cb71bdb722e90899f2d3a087e815c8aa04af5fdf491a649e082792d60a",
+                  "certificate": "95f42ed25a67d957a65947a7d4719f64c93b38dc1e1d0b4cc3d56b4a8502a50f0c87bdd10e837808f3174eae584983bae76bb440998f45dc16371916d5e25b0f",
                   "not_valid_after": "2023-11-29T19:06:19Z"
                 },
                 "msg_pks": [
                   {
-                    "key": "bfd2f41353e331fd3cdea029044e20af6e05b6fb3a40217f3001924d1cd47a04",
-                    "certificate": "cb9dda846f069531dc9ce2e792c80cd474b08868614d72417c3b597b43fe9cc07bbdeba5187287e7a978187f43c098380d46fba9cf07b85fdf0f372e0e21630e",
+                    "key": "0e8eb1e9d48516fa3236b6ad85ec9941a0373c56941f89826157f4c06ebc0d3e",
+                    "certificate": "1727bb7fb4ebadbd883d989040b877de6f1158ebbee22fb3f3fdc4f0166eabfc68772ee089ddb66ff87c99201eea7565b0a31e7b5bdf13ef190a3505ca4c5902",
                     "not_valid_after": "2023-10-18T19:06:19Z"
                   }
                 ]

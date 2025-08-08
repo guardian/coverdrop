@@ -30,7 +30,6 @@ pub enum JournalistStatus {
 }
 
 #[derive(Clone, Serialize, Deserialize, TS)]
-#[ts(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct JournalistProfile {
     pub id: JournalistIdentity,

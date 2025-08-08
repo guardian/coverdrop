@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            WITH messages AS (\n                SELECT\n                    id,\n                    user_pk,\n                    message,\n                    received_at AS timestamp,\n                    custom_expiry,\n                    read,\n                    TRUE AS is_from_user,\n                    NULL AS outbound_queue_id\n                FROM u2j_messages\n                UNION ALL\n                SELECT\n                    id,\n                    user_pk,\n                    message,\n                    sent_at AS timestamp,\n                    custom_expiry,\n                    NULL AS read,\n                    FALSE AS is_from_user,\n                    outbound_queue_id\n                FROM j2u_messages\n            )\n            SELECT\n                m.id                                   AS \"id: i64\",\n                m.user_pk                              AS \"user_pk: Vec<u8>\",\n                m.is_from_user                         AS \"is_from_user: bool\",\n                m.message                              AS \"message: Vec<u8>\",\n                m.timestamp                            AS \"timestamp: DateTime<Utc>\",\n                m.custom_expiry                        AS \"custom_expiry: DateTime<Utc>\",\n                m.read                                 AS \"read: bool\",\n                oq.message IS NULL                     AS \"is_sent: bool\"\n            FROM messages m\n            LEFT JOIN outbound_queue oq\n                ON oq.id = m.outbound_queue_id\n            ORDER by m.timestamp ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "user_pk: Vec<u8>",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "is_from_user: bool",
+        "ordinal": 2,
+        "type_info": "Int"
+      },
+      {
+        "name": "message: Vec<u8>",
+        "ordinal": 3,
+        "type_info": "Blob"
+      },
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "custom_expiry: DateTime<Utc>",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "read: bool",
+        "ordinal": 6,
+        "type_info": "Int64"
+      },
+      {
+        "name": "is_sent: bool",
+        "ordinal": 7,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "9182b2f61fa4ee691a3fd7407abebe1b3df4c2e9a1499afaf6f5659d47705c96"
+}

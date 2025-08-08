@@ -34,7 +34,7 @@ impl Hex<Ed25519PublicKey> for PublicSigningKeyHex {
             .map_err(|_| "Provided public key byte array was the wrong length")?;
 
         Ed25519PublicKey::from_bytes(&bytes).map_err(|_| {
-            "Failed to convert bytes to edwards point, probably point decompresison issue"
+            "Failed to convert bytes to edwards point, probably point decompression issue"
         })
     }
 }

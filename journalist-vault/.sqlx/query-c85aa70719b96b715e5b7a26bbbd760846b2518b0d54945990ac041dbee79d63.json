@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE j2u_messages\n        SET custom_expiry = ?1\n        WHERE id = ?2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c85aa70719b96b715e5b7a26bbbd760846b2518b0d54945990ac041dbee79d63"
+}

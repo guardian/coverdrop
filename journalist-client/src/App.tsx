@@ -23,6 +23,8 @@ import { CopyToClipboardModal } from "./components/CopyToClipboardModal.tsx";
 import { JournalistStatus } from "./model/bindings/JournalistStatus.ts";
 import { ToggleJournalistStatusModal } from "./components/ToggleJournalistStatusModal.tsx";
 import { getPublicInfo } from "./commands/admin.ts";
+import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
+import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 
 const App = ({
   panelled,
@@ -51,30 +53,54 @@ const App = ({
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,
   );
-  const [journalistStatus, setJournalistStatus] = useState<
-    JournalistStatus | undefined
-  >();
+  const [journalistProfile, setJournalistProfile] =
+    useState<JournalistProfile | null>(null);
 
-  // Find initial journalist status from public info object
+  const setJournalistStatus = (newStatus: JournalistStatus) => {
+    setJournalistProfile((prev: JournalistProfile | null) => {
+      if (prev === null) return null;
+      return { ...prev, status: newStatus };
+    });
+  };
+
+  // Find journalist profile from public info object
+  const fetchPublicInfoAndSetJournalistProfile = async (
+    journalistId: JournalistIdentity,
+  ) => {
+    try {
+      const publicInfo = await getPublicInfo();
+      if (publicInfo === null) {
+        return;
+      }
+      const journalistProfile = publicInfo.journalist_profiles.find(
+        (p) => p.id == journalistId,
+      );
+      if (!journalistProfile) {
+        console.warn(
+          `Journalist profile for ${journalistId} not found. It might not have been posted to the API yet.`,
+        );
+        return;
+      }
+      setJournalistProfile(journalistProfile);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    }
+  };
+
+  // attempt to set the initial value of the journalist profile every second until it's populated
   useEffect(() => {
     if (!vaultState) {
       return;
     }
-
-    const fetchData = async () => {
-      try {
-        const publicInfo = await getPublicInfo();
-        const journalistStatus = publicInfo.journalist_profiles.find(
-          (p) => p.id == vaultState?.id,
-        )?.status;
-        setJournalistStatus(journalistStatus);
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-      }
-    };
-
-    fetchData();
-  }, [vaultState]);
+    // only fetch public info if it hasn't been initialised
+    if (journalistProfile !== null) {
+      return;
+    }
+    const intervalId = setInterval(() => {
+      fetchPublicInfoAndSetJournalistProfile(vaultState.id);
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [vaultState, journalistProfile]);
 
   const [maybeJournalistStatusForModal, setMaybeJournalistStatusForModal] =
     useState<JournalistStatus | null>(null);
@@ -185,7 +211,7 @@ const App = ({
           >
             <ChatsSideBar
               journalistId={vaultState.id}
-              journalistStatus={journalistStatus}
+              journalistStatus={journalistProfile?.status}
               currentUserReplyKey={currentUserReplyKey}
               setChat={setCurrentUserReplyKey}
               markChatAsUnread={markChatAsUnread}
@@ -220,11 +246,14 @@ const App = ({
             />
           ) : null}
 
-          <ToggleJournalistStatusModal
-            newStatus={maybeJournalistStatusForModal}
-            setJournalistStatus={setJournalistStatus}
-            closeModal={() => setMaybeJournalistStatusForModal(null)}
-          />
+          {journalistProfile && (
+            <ToggleJournalistStatusModal
+              journalistProfile={journalistProfile}
+              newStatus={maybeJournalistStatusForModal}
+              setJournalistStatus={setJournalistStatus}
+              closeModal={() => setMaybeJournalistStatusForModal(null)}
+            />
+          )}
 
           <MuteToggleModal
             maybeReplyKey={maybeMuteModalForReplyKey}

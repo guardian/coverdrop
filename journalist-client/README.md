@@ -7,7 +7,7 @@ receive messages to and from CoverDrop users.
 
 Create / edit the profile file in the following location:
 
-MacOS `~/Library/Application\ Support/com.theguardian.coverdrop-journalist-client/profiles.json`
+MacOS `~/Library/Application\ Support/com.theguardian.coverdrop-journalist-client.DEV/profiles.json`
 
 Add the following content for staging
 
@@ -54,6 +54,10 @@ generate TypeScript types from Rust types.
 
 To generate TypeScript types, run `./scripts/create-ts-types.sh`
 
-### Manually create production release
+## Release
+The [CI job](../.github/workflows/journalist-client.yaml) (which always checks format, linting and types) will also produce a build **IF** either 
 
-`npm run tauri build`
+- the branch is main (i.e. PROD) 
+- or if the workflow is manually triggered (i.e. BETA) 
+
+...and the resulting artifact is named accordingly. We don't build the app for every push to a PR as the macos GHA runner is 10x the cost and takes at least 10mins - running the GHA to produce a beta release is a easy/reasonable compromise.

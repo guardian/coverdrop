@@ -62,33 +62,33 @@
             "not_valid_after": "2024-03-20T19:06:20.603185Z"
           },
           "journalists": {
-            "static_test_journalist": [
+            "additional_test_journalist_1": [
               {
                 "id_pk": {
-                  "key": "1f3bdab57af9372e647dba629cf60b2186e7353b8fa1c2e88b2461119e4cd5eb",
-                  "certificate": "8e04a7c76035d8c913ce079d8196d9593e9177e68bafafdc1b6c0842b35d18820638094101da75462ccb4ea176ef7ec1c7c86a6eabc6618170588d0d8f159e00",
+                  "key": "f69d64b79af48dbc94e6b33f020eee913c0af2af6fd3c4045d8ad5cdbaea8f13",
+                  "certificate": "1faf9cf66f6f77326b075fc6e040086ead42aff0454771368021cea94f663fad00b2394b23cf6119bd0cf0c7b6144726fc39d05749afa70d116782cd895d420b",
                   "not_valid_after": "2023-11-29T19:06:19Z"
                 },
                 "msg_pks": [
                   {
-                    "key": "5409fd10cf5a718d8f6b505e41bd541e96fa13f54ddc8a41c93285a81ab85f33",
-                    "certificate": "6b7ac2f1df62207cfe3d1c287c79489e231ec709e0ddd542fc54721181c3552fc9d819dd096b551e05a1eeb56fefa7223ed0cf7ba22a871a93d2404ffce7f909",
+                    "key": "4d872a2b4494cf99ab0b3263e52c1166535fdd4b76425eba721491c653028239",
+                    "certificate": "70de16724103f68dcf2d838e356a7c59d97b1e8cdd79e95b3b61aedefa87ffe7448bc9164562e0910b98983a39a583dd5e7fbe120f7a791a7bc3f3a89f450a0c",
                     "not_valid_after": "2023-10-18T19:06:19Z"
                   }
                 ]
               }
             ],
-            "additional_test_journalist_1": [
+            "static_test_journalist": [
               {
                 "id_pk": {
-                  "key": "3154ac13be1f706637180a3afb6ece66bfdf7cc1eea694b5aa2e0ae4b491538b",
-                  "certificate": "05a2f954062124551214955139657a13a3b23bdb7fc5676888baaa10b98cbfd6b69c9ff0410c16254fc759e867e73a5d523a7e40b7adf5274cc4c16d64077002",
+                  "key": "861a3c0e7f8b61d9a33692be41e821fbf6fd5873a8a6a6b5666938ce6f44a02e",
+                  "certificate": "45843655bc008decb90554c27e1368496e2fe335d9595649163e3761be11ddef67b0f3104b8c845a44179513912da5988a3c9816e2e6ac1cf8b722da270b090d",
                   "not_valid_after": "2023-11-29T19:06:19Z"
                 },
                 "msg_pks": [
                   {
-                    "key": "efa968381d3264260b0a1cc8d8520d8e92d6650afeb406efcc5be269b04f1933",
-                    "certificate": "c7024d121f1682ac48df31dd20a2caba336e9be46280ae2232bc2367e3c0e67a274609af7295d41401f5b6b8d6807ba23ca1b9131b808f72b8adf9424e9fb306",
+                    "key": "28334788839bca1cad9c6a581f8e9c88088e514bcf779e671f9a736d5aca3406",
+                    "certificate": "37f3441a627bfc69da1f8968c5b502eda447a1e470d0f785c62093aad4784641c5da76c2c7ef29a3d82dd4a45ae256cb96b627f7a7def49ccf8b5fa91b852802",
                     "not_valid_after": "2023-10-18T19:06:19Z"
                   }
                 ]

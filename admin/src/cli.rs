@@ -44,35 +44,6 @@ pub enum Commands {
         #[clap(long)]
         org_key_pair_path: Option<PathBuf>,
     },
-    /// After the key creation ceremony we need to copy the trusted organization key to various directories.
-    /// This function unpacks the bundle, verifies the organization public key and saves it to a target directory.
-    RunPostCeremonyCopyTrustedOrganizationKey {
-        /// The path to the key bundle that was created during the offline proportion of the ceremony.
-        #[clap(long)]
-        bundle_directory_path: PathBuf,
-        /// The path of the target directory where you would like to copy the unwrapped organization public key
-        #[clap(long)]
-        target_directory: PathBuf,
-    },
-    /// After the key creation ceremony we need to copy the identity API key pairs to the appropriate directory.
-    RunPostCeremonyCopyIdentityApiKeyPairs {
-        /// The path to the key bundle that was created during the offline proportion of the ceremony.
-        #[clap(long)]
-        bundle_directory_path: PathBuf,
-        /// The path of the target directory where you would like to copy the unwrapped key pairs.
-        #[clap(long)]
-        target_directory: PathBuf,
-    },
-    /// After the key creation ceremony we need to copy the admin key pair to developer laptops.
-    /// This function unpacks the bundle and saves it to a target directory.
-    RunPostCeremonyCopyAdminKeyPair {
-        /// The path to the key bundle that was created during the offline proportion of the ceremony.
-        #[clap(long)]
-        bundle_directory_path: PathBuf,
-        /// The path of the target directory where you would like to copy the admin key pair.
-        #[clap(long)]
-        target_directory: PathBuf,
-    },
     /// After a the key creation ceremony has been performed, this command can be used to upload the organization
     /// public key, covernode and journalist provisioning public keys, and admin public key to the API.
     UploadKeysToApi {

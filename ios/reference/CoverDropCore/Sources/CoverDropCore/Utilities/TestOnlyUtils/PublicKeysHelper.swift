@@ -11,22 +11,27 @@ public enum KeysError: Error {
 /// of them all
 public class PublicKeysHelper {
     public let testKeys: VerifiedPublicKeys
+    public let testKeysMultiple: VerifiedPublicKeys
     public let config: StaticConfig
 
     public static let shared = PublicKeysHelper()
 
     private init() {
         config = .devConfig
-        // swiftlint:disable:next force_try
-        let publicKeysData = try! PublicKeysHelper.readLocalKeysFile()
-        // swiftlint:disable:next force_try
-        let trustedOrganizationSigningKeys = try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config)
-        let verifiedPublicKeysData = VerifiedPublicKeys(
-            publicKeysData: publicKeysData,
-            trustedOrganizationPublicKeys: trustedOrganizationSigningKeys,
+        testKeys = VerifiedPublicKeys(
+            // swiftlint:disable:next force_try
+            publicKeysData: try! PublicKeysHelper.readLocalKeysFile(),
+            // swiftlint:disable:next force_try
+            trustedOrganizationPublicKeys: try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config),
             currentTime: DateFunction.currentKeysPublishedTime()
         )
-        testKeys = verifiedPublicKeysData
+        testKeysMultiple = VerifiedPublicKeys(
+            // swiftlint:disable:next force_try
+            publicKeysData: try! PublicKeysHelper.readLocalMultipleMessagingKeysFile(),
+            // swiftlint:disable:next force_try
+            trustedOrganizationPublicKeys: try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config),
+            currentTime: DateFunction.currentKeysPublishedTime()
+        )
     }
 
     public static func readLocalKeysFile() throws -> PublicKeysData {
@@ -40,10 +45,16 @@ public class PublicKeysHelper {
         guard let resourceUrl = Bundle.module.url(
             forResource: name,
             withExtension: ".json",
-            subdirectory: "vectors/create_journalists/published_keys"
+            subdirectory: "vectors/messaging_scenario/published_keys"
         ) else { throw KeysError.cannotFindFileError }
         let data = try Data(contentsOf: resourceUrl)
         return data
+    }
+
+    public static func readLocalMultipleMessagingKeysFile() throws -> PublicKeysData {
+        let data = try readLocalMultipleMessagingKeysJson()
+        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
+        return keys
     }
 
     public static func readLocalMultipleMessagingKeysJson() throws -> Data {

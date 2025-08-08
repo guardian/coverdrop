@@ -43,11 +43,7 @@ export const PerChatMenu = ({
       Options
     </EuiButton>
   ) : (
-    <EuiButtonIcon
-      iconType={"arrowDown"}
-      onClick={toggleButtonClick}
-      aria-label="Options"
-    />
+    <EuiButtonIcon iconType={"arrowDown"} onClick={toggleButtonClick} />
   );
   return (
     <EuiPopover
@@ -56,6 +52,7 @@ export const PerChatMenu = ({
       closePopover={() => setIsOpen(false)}
       anchorPosition="downLeft"
       onClick={(event) => event.stopPropagation()}
+      repositionOnScroll
     >
       <EuiContextMenuPanel
         size="s"

@@ -118,7 +118,7 @@ async fn multiple_journalists_messaging_scenario() {
             VaultMessage::U2J(m) => m.message.clone(),
             _ => panic!("Expected U2J message"),
         };
-        let message = message.to_string().expect("Decode PCS");
+        let message = message.to_string();
 
         assert_eq!(&message, USER_MESSAGE);
     }

@@ -12,8 +12,13 @@ final class DeadDropRepositoryTests: XCTestCase {
 
     func fakeUserFacingDeadDrop(id: Int, createdAt: Date) -> DeadDrop {
         let emptyMessage = Base64EncodedString(bytes: "".asBytes())
-        let emptyCert = HexEncodedString(bytes: "".asBytes())
-        return DeadDrop(id: id, createdAt: RFC3339DateTimeString(date: createdAt), data: emptyMessage, cert: emptyCert)
+        let emptySignature = HexEncodedString(bytes: "".asBytes())
+        return DeadDrop(
+            id: id,
+            createdAt: RFC3339DateTimeString(date: createdAt),
+            data: emptyMessage,
+            signature: emptySignature
+        )
     }
 
     func testFirstRunDoesNotCacheIfAPIResponseFailedAndCacheEnabled() async throws {

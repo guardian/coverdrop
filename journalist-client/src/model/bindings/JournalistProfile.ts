@@ -5,10 +5,10 @@ import type { RecipientTag } from "./RecipientTag";
 
 export type JournalistProfile = {
   id: JournalistIdentity;
-  displayName: string;
-  sortName: string;
+  display_name: string;
+  sort_name: string;
   description: string;
-  isDesk: boolean;
+  is_desk: boolean;
   tag: RecipientTag;
   status: JournalistStatus;
 };

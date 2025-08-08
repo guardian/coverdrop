@@ -1,5 +1,3 @@
-use admin::copy_anchor_org_pk;
-use admin::copy_identity_api_key_pairs;
 use admin::delete_journalist_form;
 use admin::generate_admin_key_pair;
 use admin::generate_constant_files;
@@ -16,8 +14,8 @@ use admin::update_journalist;
 use admin::update_system_status;
 use admin::upload_keys_to_api;
 use admin::{
-    copy_admin_key_pair, generate_covernode_identity_key_pair,
-    generate_covernode_messaging_key_pair, generate_organization_key_pair,
+    generate_covernode_identity_key_pair, generate_covernode_messaging_key_pair,
+    generate_organization_key_pair,
 };
 use clap::Parser;
 use cli::{Cli, Commands};
@@ -58,18 +56,6 @@ async fn main() -> anyhow::Result<()> {
             )
             .await
         }
-        Commands::RunPostCeremonyCopyTrustedOrganizationKey {
-            bundle_directory_path,
-            target_directory,
-        } => copy_anchor_org_pk(bundle_directory_path, target_directory, time::now()).await,
-        Commands::RunPostCeremonyCopyAdminKeyPair {
-            bundle_directory_path,
-            target_directory,
-        } => copy_admin_key_pair(bundle_directory_path, target_directory).await,
-        Commands::RunPostCeremonyCopyIdentityApiKeyPairs {
-            bundle_directory_path,
-            target_directory,
-        } => copy_identity_api_key_pairs(bundle_directory_path, target_directory).await,
         Commands::UploadKeysToApi {
             bundle_directory_path,
             api_url,

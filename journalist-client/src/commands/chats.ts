@@ -36,6 +36,16 @@ export const markAsUnread = async (messageId: bigint): Promise<void> => {
   useMessageStore.getState().markAsUnread(messageId);
 };
 
+export const setCustomExpiry = async (
+  message: Message,
+  customExpiry: string | null,
+): Promise<void> => {
+  await invokeWithErrorMessage("set_custom_expiry", {
+    message,
+    customExpiry,
+  });
+};
+
 export const updateUserStatus = async (
   replyKey: string,
   status: UserStatus,

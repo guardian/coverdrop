@@ -84,7 +84,7 @@ enum Navigation {
     static func selectTestJournalist(in app: XCUIApplication) {
         app.buttons["Change recipient"].tap()
         app.buttons["Journalists"].tap()
-        let journalistSelected = "Generated Test Journalist"
+        let journalistSelected = "Static Test Journalist"
         app.buttons["Select \(journalistSelected)"].tap()
         XCTAssert(app.staticTexts["Selected Recipient is \(journalistSelected)"].exists)
     }

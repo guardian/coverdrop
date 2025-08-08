@@ -3,7 +3,8 @@ use std::marker::PhantomData;
 use chrono::prelude::*;
 use hex_buffer_serde::Hex;
 use rand::thread_rng;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use ts_rs::TS;
 use x25519_dalek::{PublicKey as X25519PublicKey, StaticSecret as X25519SecretKey};
 
 use super::{
@@ -19,14 +20,51 @@ use super::{
 };
 use crate::{
     crypto::signature::Signature,
-    protocol::constants::{X25519_PUBLIC_KEY_LEN, X25519_SECRET_KEY_LEN},
+    protocol::{
+        constants::{X25519_PUBLIC_KEY_LEN, X25519_SECRET_KEY_LEN},
+        roles::User,
+    },
     Error,
 };
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, TS)]
+#[ts(type = "string")]
+// TODO using a concrete Role here is a bit of a hack. Can we derive TS for Role?
+#[ts(concrete (T = User))]
 pub struct PublicEncryptionKey<T: Role> {
     pub key: X25519PublicKey,
     marker: PhantomData<T>,
+}
+
+// Implementing Serialize and Deserialize duplicates some logic in PublicEncryptionKeyHex.
+// Is there a better way?
+impl<T: Role> Serialize for PublicEncryptionKey<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let hex_str = hex::encode(self.key.as_bytes());
+        serializer.serialize_str(&hex_str)
+    }
+}
+
+impl<'de, T: Role> Deserialize<'de> for PublicEncryptionKey<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s: &str = Deserialize::deserialize(deserializer)?;
+        let bytes = hex::decode(s).map_err(serde::de::Error::custom)?;
+
+        let key_bytes: [u8; 32] = bytes
+            .try_into()
+            .map_err(|_| serde::de::Error::custom("Invalid key length"))?;
+
+        Ok(PublicEncryptionKey {
+            key: X25519PublicKey::from(key_bytes),
+            marker: PhantomData,
+        })
+    }
 }
 
 impl<T: Role> PublicEncryptionKey<T> {

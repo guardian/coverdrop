@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO j2u_messages\n            (user_pk, message, sent_at, outbound_queue_id)\n        VALUES (?1, ?2, ?3, ?4)\n        RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "39fcf936fa10f9e42b0c89f005736df5df3b1f677da49bf3724eb98e09e89e8d"
+}

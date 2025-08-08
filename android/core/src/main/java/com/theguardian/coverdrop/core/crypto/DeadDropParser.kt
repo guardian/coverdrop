@@ -85,7 +85,6 @@ internal class DeadDropParser(
         coverNodeKeyHierarchies: List<VerifiedCoverNodeKeyHierarchy>,
     ): VerifiedDeadDrop? {
         val candidateData = candidate.data.base64Decode()
-        val candidateCertificateData = DeadDropCertificateData.from(data = candidateData)
         val candidateSignatureData = DeadDropSignatureData.from(
             libSodium = libSodium,
             data = candidateData,
@@ -98,10 +97,8 @@ internal class DeadDropParser(
             try {
                 verifySignatureOrCertOrThrow(
                     signingKey = signingKey,
-                    candidateCertificateData = candidateCertificateData,
-                    candidateCertBytes = candidate.cert.hexDecode(),
                     candidateSignatureData = candidateSignatureData,
-                    candidateSignatureBytes = candidate.signature?.hexDecode()
+                    candidateSignatureBytes = candidate.signature.hexDecode()
                 )
 
                 // if the signature verifications does not throw, we found a good signing key and
@@ -111,7 +108,7 @@ internal class DeadDropParser(
                     createdAt = candidate.createdAt,
                     messages = parseDeadDropData(candidateData)
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 continue
             }
         }
@@ -130,30 +127,15 @@ internal class DeadDropParser(
      */
     private fun verifySignatureOrCertOrThrow(
         signingKey: VerifiedSignedSigningKey,
-        candidateCertificateData: DeadDropCertificateData,
-        candidateCertBytes: ByteArray,
         candidateSignatureData: DeadDropSignatureData,
-        candidateSignatureBytes: ByteArray?,
+        candidateSignatureBytes: ByteArray,
     ) {
-        val meaningfulSignature = candidateSignatureBytes != null &&
-                candidateSignatureBytes.any { it != 0x00.toByte() }
-
-        if (meaningfulSignature) {
-            Signature.verifyOrThrow(
-                libSodium = libSodium,
-                signingPk = signingKey.pk,
-                data = candidateSignatureData,
-                signature = Signature(candidateSignatureBytes!!),
-            )
-        } else {
-            // if the signature is not meaningful, we fallback to the cert check; see #2998
-            Signature.verifyOrThrow(
-                libSodium = libSodium,
-                signingPk = signingKey.pk,
-                data = candidateCertificateData,
-                signature = Signature(candidateCertBytes),
-            )
-        }
+        Signature.verifyOrThrow(
+            libSodium = libSodium,
+            signingPk = signingKey.pk,
+            data = candidateSignatureData,
+            signature = Signature(candidateSignatureBytes),
+        )
     }
 
     /**

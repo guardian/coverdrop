@@ -137,11 +137,11 @@ async fn messaging_scenario() {
         assert_eq!(messages.len(), 1);
 
         let message = match messages[0] {
-            VaultMessage::U2J(ref m) => m.message.to_string().expect("Decode PCS"),
+            VaultMessage::U2J(ref m) => &m.message,
             _ => panic!("Expected U2J message"),
         };
 
-        assert_eq!(&message, USER_MESSAGE);
+        assert_eq!(message, USER_MESSAGE);
     }
 
     //

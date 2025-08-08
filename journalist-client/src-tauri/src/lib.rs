@@ -9,12 +9,12 @@ use commands::{
     },
     chats::{
         burst_cover_messages, check_message_length, get_chats, get_users, mark_as_read,
-        mark_as_unread, submit_message, update_user_alias_and_description, update_user_status,
+        mark_as_unread, set_custom_expiry, submit_message, update_user_alias_and_description,
+        update_user_status,
     },
     profiles::get_profiles,
     vaults::{add_trust_anchor, get_colocated_password, get_vault_state, unlock_vault},
 };
-use directories::ProjectDirs;
 use logging::JournalistClientLogLayer;
 use model::Profiles;
 use notifications::start_notification_service;
@@ -99,44 +99,35 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(move |app| {
-            if let Some(proj_dirs) =
-                ProjectDirs::from("com", "theguardian", "coverdrop-journalist-client")
-            {
-                let notifications = start_notification_service(app.app_handle());
-                let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
+            let config_dir = app.path().app_data_dir()?;
 
-                tracing_subscriber::registry()
-                    .with(JournalistClientLogLayer::new(app_state.logs.clone()))
-                    .init();
+            let notifications = start_notification_service(app.app_handle());
+            let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
 
-                let config_dir = proj_dirs.config_dir();
+            tracing_subscriber::registry()
+                .with(JournalistClientLogLayer::new(app_state.logs.clone()))
+                .init();
 
-                if let Err(e) = std::fs::create_dir_all(config_dir) {
-                    return fail_setup_with_message(
-                        app,
-                        &format!("Failed to create application config directory: {e:?}"),
-                    );
-                }
-
-                let profiles_path = config_dir.join("profiles.json");
-
-                let profiles = match handle_profiles(profiles_path) {
-                    Ok(profiles) => profiles,
-                    Err(e) => {
-                        return fail_setup_with_message(
-                            app,
-                            &format!("Failed to load profiles: {e:?}"),
-                        )
-                    }
-                };
-
-                app.manage(app_state);
-                app.manage(profiles);
-
-                Ok(())
-            } else {
-                fail_setup_with_message(app, "Cannot get home directory for current user")
+            if let Err(e) = std::fs::create_dir_all(&config_dir) {
+                return fail_setup_with_message(
+                    app,
+                    &format!("Failed to create application config directory: {e:?}"),
+                );
             }
+
+            let profiles_path = &config_dir.join("profiles.json");
+
+            let profiles = match handle_profiles(profiles_path) {
+                Ok(profiles) => profiles,
+                Err(e) => {
+                    return fail_setup_with_message(app, &format!("Failed to load profiles: {e:?}"))
+                }
+            };
+
+            app.manage(app_state);
+            app.manage(profiles);
+
+            Ok(())
         })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
@@ -154,6 +145,7 @@ pub fn run() {
             check_message_length,
             mark_as_read,
             mark_as_unread,
+            set_custom_expiry,
             update_user_status,
             update_user_alias_and_description,
             get_logs,

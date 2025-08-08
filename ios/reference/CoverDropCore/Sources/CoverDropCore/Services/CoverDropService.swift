@@ -225,7 +225,7 @@ public class CoverDropService: ObservableObject {
             // or that the app failed to initialize on first startup ie the user was offline
             // So the service will never initialize until the app is restarted.
             // To avoid this, we check the state on foreground, and start the service if needed.
-            try? CoverDropService.shared.ensureInitialized(config: config)
+            _ = try? CoverDropService.shared.ensureInitialized(config: config)
         }
     }
 

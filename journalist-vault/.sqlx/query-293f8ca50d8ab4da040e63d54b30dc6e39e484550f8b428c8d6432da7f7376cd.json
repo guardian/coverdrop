@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO u2j_messages\n            (user_pk, message, received_at, dead_drop_id)\n        VALUES (?1, ?2, ?3, ?4)\n        RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "293f8ca50d8ab4da040e63d54b30dc6e39e484550f8b428c8d6432da7f7376cd"
+}

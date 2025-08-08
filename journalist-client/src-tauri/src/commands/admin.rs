@@ -11,7 +11,7 @@ use crate::{
     app_state::AppStateHandle,
     error::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, GenericSnafu, JsonSerializeSnafu,
-        PublicInfoUnavailableSnafu, VaultLockedSnafu, VaultSnafu,
+        VaultLockedSnafu, VaultSnafu,
     },
     model::{SentinelLogEntry, TrustedOrganizationPublicKeyAndDigest},
 };
@@ -89,12 +89,14 @@ pub async fn force_rotate_msg_pk(app: State<'_, AppStateHandle>) -> Result<(), C
 #[tauri::command]
 pub async fn get_public_info(
     app: State<'_, AppStateHandle>,
-) -> Result<UntrustedKeysAndJournalistProfiles, CommandError> {
+) -> Result<Option<UntrustedKeysAndJournalistProfiles>, CommandError> {
     let public_info = app.public_info().await;
-    let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
-    let public_info = public_info.to_untrusted();
-
-    Ok(public_info)
+    let public_info = public_info.as_ref();
+    // public_info may be None if the initial run of the task hasn't completed
+    match public_info {
+        Some(public_info) => Ok(Some(public_info.to_untrusted())),
+        None => Ok(None),
+    }
 }
 
 #[tauri::command]

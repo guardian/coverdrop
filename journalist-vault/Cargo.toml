@@ -18,6 +18,7 @@ sqlx = { workspace = true, features = [
 strum.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+ts-rs.workspace = true
 itertools.workspace = true
 
 common = { path = "../common" }
