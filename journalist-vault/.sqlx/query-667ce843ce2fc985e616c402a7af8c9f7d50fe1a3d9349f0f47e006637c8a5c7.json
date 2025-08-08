@@ -31,7 +31,7 @@
       {
         "name": "provisioning_pk_json: String",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Null"
       },
       {
         "name": "org_pk_json: String",

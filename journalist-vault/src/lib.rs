@@ -7,6 +7,8 @@ mod message_queries;
 mod msg_key_queries;
 mod org_key_queries;
 pub mod provisioning_key_queries;
+#[cfg(test)]
+mod test_vault_clean_up;
 mod user_queries;
 mod vault_message;
 mod vault_setup_bundle;
@@ -1111,8 +1113,7 @@ impl JournalistVault {
             .await
             .context("delete old messages")?;
 
-        // Delete expired keys, order is important here to prevent foreign key
-        // constraint issues we delete from the leaves (messaging keys) up to the ID keys.
+        // Delete expired keys
         msg_key_queries::delete_expired_msg_key_pairs(&mut tx, now)
             .await
             .context("delete expired msg key pairs")?;
