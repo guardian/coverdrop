@@ -83,6 +83,22 @@ impl Task for PullDeadDrops {
 
             tracing::info!("Found {} dead drops", dead_drops.len());
 
+            // find the max epoch in the list of dead drops to make sure that the public info epoch is high enough to decrypt
+            let Some(max_dead_drop_epoch) =
+                dead_drops.iter().max_by_key(|d| d.epoch).map(|d| d.epoch)
+            else {
+                // this check is redundant but necessary to turn the epoch into Some
+                tracing::info!("No dead drops in dead drop list");
+                return Ok(());
+            };
+
+            if public_info.max_epoch < max_dead_drop_epoch {
+                tracing::info!("Max epoch of public key hierarchy {} is less than the max dead drop epoch {}. Returning early.", public_info.max_epoch, max_dead_drop_epoch);
+                return Ok(());
+            } else {
+                tracing::info!("Max epoch of public key hierarchy {} is greater than or equal to the max dead drop epoch {}. Attempting to decrypt.", public_info.max_epoch, max_dead_drop_epoch);
+            }
+
             let journalist_msg_key_pairs = self
                 .vault
                 .msg_key_pairs_for_decryption(time::now())
