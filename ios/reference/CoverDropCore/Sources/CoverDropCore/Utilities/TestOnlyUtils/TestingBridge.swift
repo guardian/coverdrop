@@ -57,6 +57,14 @@ public enum TestingBridge {
         return currentTimeOverride
     }
 
+    public static func advanceCurrentTime(by seconds: TimeInterval) {
+        guard let currentTimeOverride = currentTimeOverride else {
+            return
+        }
+
+        self.currentTimeOverride = Date(timeIntervalSince1970: currentTimeOverride.timeIntervalSince1970 + seconds)
+    }
+
     /// Returns `true` if the reference app should enable mocked API resonses
     public static func isMockedDataEnabled(config: CoverDropConfig) -> Bool {
         #if DEBUG

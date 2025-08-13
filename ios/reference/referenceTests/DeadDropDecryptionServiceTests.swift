@@ -7,6 +7,7 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
     override func setUp() async throws {
         try super.setUpWithError()
         try StorageManager.shared.deleteFile(file: CoverDropFiles.encryptedStorage)
+        TestingBridge.setCurrentTimeOverride(override: CoverDropServiceHelper.currentTimeForKeyVerification())
     }
 
     func testDeadDropDecryption() async throws {

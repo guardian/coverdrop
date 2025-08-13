@@ -109,7 +109,9 @@ struct HeaderView<Content: View>: View {
                             "CoverDrop enabled",
                             isOn: $isCoverDropEnabled
                         ).accessibilityIdentifier("toggleCoverDropEnabledButton")
-
+                        Button("Set time +2 day") {
+                            TestingBridge.advanceCurrentTime(by: 60 * 60 * 24 * 2)
+                        }.buttonStyle(.bordered).accessibilityIdentifier("advanceTimeButton")
                         Button("Close") {
                             showPopover = false
                         }.buttonStyle(.bordered).accessibilityIdentifier("closeDevMenuButton")

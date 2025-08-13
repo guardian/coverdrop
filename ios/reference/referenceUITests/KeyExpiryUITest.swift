@@ -17,7 +17,7 @@ final class KeyExpiryUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    func skipped_testAppWithMissingKeysCanOpenExistingConversation() {
+    func testAppWithMissingKeysCanOpenExistingConversation() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [
             .mockedDataExpiredMessagesScenario,
             .startWithNonEmptyStorage
@@ -30,7 +30,21 @@ final class KeyExpiryUITest: XCTestCase {
         app.buttons["Open CoverDrop"].tap()
         _ = app.buttons["Dismiss and ignore warnings"].waitForExistence(timeout: timeout)
         app.buttons["Dismiss and ignore warnings"].tap()
+
+        // Update system time from menu
+        let devMenuButton = app.buttons["toggleDevMenuButton"]
+        _ = devMenuButton.waitForExistence(timeout: timeout)
+        devMenuButton.tap()
+
+        let advanceTimeButton = app.buttons["advanceTimeButton"]
+        _ = advanceTimeButton.waitForExistence(timeout: timeout)
+        advanceTimeButton.tap()
+
+        let closeDevMenuButton = app.buttons["closeDevMenuButton"]
+        closeDevMenuButton.tap()
+
         Navigation.loginToInbox(in: app, state: state)
+
         _ = app.staticTexts["Static Test Journalist"].waitForExistence(timeout: timeout)
         app.staticTexts["Static Test Journalist"].tap()
         XCTAssertTrue(app.staticTexts["Hey this is pending"].exists)

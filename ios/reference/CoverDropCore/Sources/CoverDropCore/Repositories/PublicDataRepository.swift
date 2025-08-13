@@ -78,7 +78,7 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
     /// Once verified, they are added to the `publicData` thus available throughtout the app.
     /// Public keys and dead drops can be updated at any time in the API, so we poll to stay up to date.
     public func loadAndVerifyPublicKeys() async throws -> VerifiedPublicKeys {
-        let currentKeysPublishedTime = DateFunction.currentKeysPublishedTime()
+        let currentTime = DateFunction.currentTime()
 
         // Load public keys
         let publicKeysDataOpt = try? await PublicKeyRepository(
@@ -88,7 +88,7 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
 
         let trustedRootKeysOpt = try? loadTrustedOrganizationPublicKeys(
             envType: config.envType,
-            now: currentKeysPublishedTime
+            now: currentTime
         )
 
         guard let publicKeysData = publicKeysDataOpt,
@@ -99,7 +99,7 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
         let verifiedPublicKeysData = VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedRootKeys,
-            currentTime: currentKeysPublishedTime
+            currentTime: currentTime
         )
 
         await MainActor.run {

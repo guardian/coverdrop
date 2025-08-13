@@ -57,7 +57,7 @@ public class IntegrationTestScenarioContext {
         return VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedOrganizationKeys,
-            currentTime: DateFunction.currentKeysPublishedTime()
+            currentTime: DateFunction.currentTime()
         )
     }
 

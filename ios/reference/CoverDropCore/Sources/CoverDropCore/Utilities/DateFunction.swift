@@ -5,26 +5,13 @@ public enum DateError: Error {
 }
 
 public enum DateFunction {
-    public static func currentKeysPublishedTime() -> Date {
-        var date = Date()
-        #if DEBUG
-            do {
-                if let generatedAtDate = try PublicKeysHelper.readLocalGeneratedAtFile() {
-                    date = generatedAtDate
-                }
-            } catch { Debug.println("Failed to get local keys generated file") }
-        #endif
-        return date
-    }
-
     public static func currentTime() -> Date {
         #if DEBUG
-            if TestingBridge.isEnabled(.mockedDataExpiredMessagesScenario) {
-                let keysDate = DateFunction.currentKeysPublishedTime()
-                return Date(timeInterval: -TimeInterval(60 * 60 * 24 * 13), since: keysDate)
-            }
             if let override = TestingBridge.getCurrentTimeOverride() {
                 return override
+            }
+            if ProcessInfo.processInfo.isRunningXCTest {
+                return CoverDropServiceHelper.currentTimeForKeyVerification()
             }
         #endif
         return Date()

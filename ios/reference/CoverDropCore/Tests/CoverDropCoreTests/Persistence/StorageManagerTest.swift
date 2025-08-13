@@ -22,10 +22,12 @@ final class StorageManagerTests: XCTestCase {
 
         // back date the created-at and last-modified timestamp
         let hour = 60.0 * 60.0
-        let backDate = Date(timeIntervalSinceNow: -hour)
+        let backDate = DateFunction.currentTime().addingTimeInterval(-hour)
         try storageManager.setCreatedAtDate(file: testFilePublic, now: backDate)
         try storageManager.setLastModifiedDate(file: testFilePublic, now: backDate)
-        let age = try storageManager.getFileAge(file: testFilePublic)
+        let age = try storageManager.getFileAge(
+            file: testFilePublic
+        )
         XCTAssertEqual(age, hour, accuracy: 1.0)
         XCTAssertGreaterThan(age, 10.0)
 

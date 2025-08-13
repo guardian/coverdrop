@@ -225,7 +225,7 @@ struct InboxView: View {
         Task {
             let context = IntegrationTestScenarioContext(scenario: .minimal, config: StaticConfig.devConfig)
             let lib = try context.getLibraryWithVerifiedKeys()
-            let data = try await CoverDropServiceHelper.addTestMessagesToLib(lib: lib)
+            let data = try await CoverDropServiceHelper.addTestMessagesForPreview(lib: lib)
             lib.secretDataRepository.setUnlockedDataForTesting(unlockedData: data)
             inboxViewModel = InboxViewModel(lib: lib)
             conversationViewModel = ConversationViewModel(lib: lib)

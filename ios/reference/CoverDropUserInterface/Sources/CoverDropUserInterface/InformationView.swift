@@ -50,6 +50,7 @@ struct InformationView: View {
                             .foregroundColor(textColor)
 
                         Text(message).textStyle(BodyStyle())
+                            .fixedSize(horizontal: false, vertical: true)
                             .padding([.trailing], Padding.medium)
                             .foregroundColor(textColor)
                     }

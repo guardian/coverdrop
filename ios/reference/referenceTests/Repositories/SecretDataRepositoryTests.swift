@@ -5,6 +5,7 @@ import XCTest
 final class SecretDataRepositoryTests: XCTestCase {
     override func setUp() async throws {
         try StorageManager.shared.deleteFile(file: CoverDropFiles.encryptedStorage)
+        TestingBridge.setCurrentTimeOverride(override: CoverDropServiceHelper.currentTimeForKeyVerification())
     }
 
     override func tearDown() {

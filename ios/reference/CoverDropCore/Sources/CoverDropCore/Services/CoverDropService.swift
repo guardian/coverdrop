@@ -135,7 +135,8 @@ public class CoverDropService: ObservableObject {
 
         #if DEBUG
             // Handle all modifications that might need to happen as a result of passed in test flags
-            try await CoverDropServiceHelper.handleTestingFlags(config: config)
+            try await CoverDropServiceHelper
+                .handleTestingFlags(config: config, publicDataRepository: publicDataRepository)
         #endif
 
         // Check the status endpoint first

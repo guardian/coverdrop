@@ -53,7 +53,6 @@ struct JournalistMessageView: View {
     }
 
     private func messageComposeView(recipient: JournalistData) -> some View {
-
         return VStack {
             let expired = isCurrentKeyExpired(recipient: recipient)
             let inactive = !self.conversationViewModel
@@ -75,71 +74,84 @@ struct JournalistMessageView: View {
     func isCurrentKeyExpired(recipient: JournalistData) -> Bool {
         if let verifiedKeys = try? lib.publicDataRepository.getVerifiedKeys(),
            let currentKey = verifiedKeys.getLatestMessagingKey(journalistId: recipient.recipientId) {
-            return currentKey.isExpired(now: DateFunction.currentKeysPublishedTime())
+            return currentKey.isExpired(now: DateFunction.currentTime())
         }
         return false
     }
 
     private func messageListView() -> some View {
         ScrollViewReader { scrollViewProxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading) {
-                    VStack(alignment: .center) {
-                        if let recipient = self.conversationViewModel.messageRecipient {
-                            let headerMessage = "This is a secure conversation with \(recipient.displayName)"
-                            Text(
-                                "\(Image(systemName: "lock.fill")) \(headerMessage)"
-                            ).textStyle(BodyStyle())
-                                .bold()
+            GeometryReader { geometry in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading) {
+                        VStack(alignment: .center) {
+                            if let recipient = self.conversationViewModel.messageRecipient {
+                                let headerMessage = "This is a secure conversation with \(recipient.displayName)"
+                                Text(
+                                    "\(Image(systemName: "lock.fill")) \(headerMessage)"
+                                ).textStyle(BodyStyle())
+                                    .bold()
+                            }
+                        }
+                        switch self.conversationViewModel.state {
+                        case .initial, .loading, .ready, .sending:
+                            switch lib.secretDataRepository.getSecretData() {
+                            case let .unlockedSecretData(unlockedData: unlockedData):
+                                messageListContents(
+                                    unlockedData: unlockedData,
+                                    scrollViewProxy: scrollViewProxy
+                                )
+                            case _:
+                                EmptyView()
+                            }
+                        case let .error(error):
+                            Text("Error: \(error)")
                         }
                     }
-                    switch self.conversationViewModel.state {
-                    case .initial, .loading, .ready, .sending:
-                        switch lib.secretDataRepository.getSecretData() {
-                        case let .unlockedSecretData(unlockedData: unlockedData):
-                            ForEach(conversationViewModel.currentConversationForUi.indices, id: \.self) { index in
-                                if let message = conversationViewModel.currentConversationForUi[index] {
-                                    MessageView(message: message, id: index)
-                                }
-                            }.onChange(of: unlockedData.messageMailbox.count) {
-                                scrollToLastMessage(scrollViewProxy: scrollViewProxy)
-                            }.onAppear {
-                                scrollToLastMessage(scrollViewProxy: scrollViewProxy)
-                            }
-                            if conversationViewModel.isMostRecentMessageFromUser() {
-                                if conversationViewModel
-                                    .isMostRecentMessagePending() {
-                                    Text(
-                                    """
-                                    Your message is now queued up for secure transmission \
-                                    within routine Guardian app activity. \
-                                    We recommend that you exit Secure Messaging and wait \
-                                    for a response before you send another message.
-                                    """
-                                    ).textStyle(UserNotificationTextStyle())
-                                } else {
-                                    Text(
-                                    """
-                                    Your message has been sent. \
-                                    We recommend that you exit Secure Messaging and \
-                                    wait for a response before you send another message.
-                                    """
-                                    )
-                                    .textStyle(UserNotificationTextStyle())
-                                }
-                            }
-                        case _:
-                            EmptyView()
-                        }
-                    case let .error(error):
-                        Text("Error: \(error)")
-                    }
+                }.padding(Padding.medium)
+                    .background(Color.JournalistNewMessageView.messageListBackgroundColor)
+                    .foregroundColor(Color.JournalistNewMessageView.messageListForegroundColor)
+                    .frame(maxHeight: geometry.size.height)
+                // This spacer keeps the middle pane in full height
+                Spacer()
+            }
+        }
+    }
+
+    func messageListContents(unlockedData: UnlockedSecretData, scrollViewProxy: ScrollViewProxy) -> some View {
+        Group {
+            let count = conversationViewModel.currentConversationForUi.count
+            ForEach(conversationViewModel.currentConversationForUi.indices, id: \.self) { index in
+                if let message = conversationViewModel.currentConversationForUi[index] {
+                    MessageView(message: message, id: index)
                 }
-            }.padding(Padding.medium)
-                .background(Color.JournalistNewMessageView.messageListBackgroundColor)
-                .foregroundColor(Color.JournalistNewMessageView.messageListForegroundColor)
-            // This spacer keeps the middle pane in full height
-            Spacer()
+            }.onChange(of: unlockedData.messageMailbox.count) {
+                scrollToLastMessage(scrollViewProxy: scrollViewProxy, count: count)
+            }.onAppear {
+                scrollToLastMessage(scrollViewProxy: scrollViewProxy, count: count)
+            }
+            if conversationViewModel.isMostRecentMessageFromUser() {
+                if conversationViewModel
+                    .isMostRecentMessagePending() {
+                    Text(
+                        """
+                        Your message is now queued up for secure transmission \
+                        within routine Guardian app activity. \
+                        We recommend that you exit Secure Messaging and wait \
+                        for a response before you send another message.
+                        """
+                    ).textStyle(UserNotificationTextStyle())
+                } else {
+                    Text(
+                        """
+                        Your message has been sent. \
+                        We recommend that you exit Secure Messaging and \
+                        wait for a response before you send another message.
+                        """
+                    )
+                    .textStyle(UserNotificationTextStyle())
+                }
+            }
         }
     }
 
@@ -195,10 +207,10 @@ struct JournalistMessageView: View {
         }
     }
 
-    private func scrollToLastMessage(scrollViewProxy: ScrollViewProxy) {
+    private func scrollToLastMessage(scrollViewProxy: ScrollViewProxy, count: Int) {
         switch lib.secretDataRepository.getSecretData() {
         case let .unlockedSecretData(unlockedData: unlockedData):
-            let unwrappedId = unlockedData.messageMailbox.count - 1
+            let unwrappedId = count - 1
             withAnimation {
                 scrollViewProxy.scrollTo(unwrappedId, anchor: .bottom)
             }
@@ -233,7 +245,7 @@ struct JournalistMessageView: View {
         Task {
             let context = IntegrationTestScenarioContext(scenario: .minimal, config: StaticConfig.devConfig)
             let library = try context.getLibraryWithVerifiedKeys()
-            let data = try await CoverDropServiceHelper.addTestMessagesToLib(lib: library)
+            let data = try await CoverDropServiceHelper.addTestMessagesForPreview(lib: library)
             library.secretDataRepository.setUnlockedDataForTesting(unlockedData: data)
             inboxViewModel = InboxViewModel(lib: library)
             conversationViewModel = ConversationViewModel(lib: library)

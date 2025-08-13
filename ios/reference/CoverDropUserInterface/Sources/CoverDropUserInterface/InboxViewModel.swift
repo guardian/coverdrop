@@ -121,17 +121,19 @@ class InboxViewModel: ObservableObject {
         }
         guard let inactiveMailbox, inactiveMailbox.count > 0 else { return nil }
 
-        // 3. Find the remaining recipients
-        let recipients: [JournalistData] = inactiveMailbox.compactMap {
-            guard case let .incomingMessage(message: incomingMessageType) = $0 else { return nil }
-            guard case let .textMessage(activeMessage) = incomingMessageType else {
-                return nil
+        // 3. Find the remaining recipients without duplicates
+        let recipientsSet: Set<JournalistData> = Set(
+            inactiveMailbox.compactMap {
+                guard case let .incomingMessage(message: incomingMessageType) = $0,
+                      case let .textMessage(activeMessage) = incomingMessageType else {
+                    return nil
+                }
+                return activeMessage.sender
             }
-            return activeMessage.sender
-        }
+        )
 
         // 4. Return an array of inactive threads, in no particular order
-        return recipients.map {
+        return recipientsSet.map {
             let allMessagesInConversation = messagesForRecipient(recipient: $0, mailbox: mailbox)
             return InactiveConversation(recipient: $0, messages: allMessagesInConversation)
         }

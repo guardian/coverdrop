@@ -24,6 +24,12 @@
       "parallelizable" : true,
       "skippedTests" : [
         "DeletedAllMessagesUITest",
+        "LifecycleUITest",
+        "LifecycleUITest\/testappOffline_CoverDropDisabled_ShouldShowErrorPageTest()",
+        "LifecycleUITest\/testappOffline_CoverDropEnabled_ShouldFailWithoutCache()",
+        "LifecycleUITest\/testappOffline_CoverDropEnabled_ShouldSucceedWithCache()",
+        "LifecycleUITest\/testappOnline_CoverDropDisabled_ShouldShowErrorPageTest()",
+        "LifecycleUITest\/testappOnline_CoverDropEnabledAfterInit_ShouldSucceedOnForeground()",
         "MessageStatusUITest",
         "NavigationUITest",
         "NewPassphraseUITest",

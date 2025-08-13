@@ -15,9 +15,27 @@ public enum CoverDropServiceHelper {
         }
     }
 
-    public static func handleTestingFlags(config: CoverDropConfig) async throws {
+    public static func handleTestingFlags(
+        config: CoverDropConfig,
+        publicDataRepository: PublicDataRepository
+    ) async throws {
+        // By default we want to set the current time to the current keys published time
+        TestingBridge
+            .setCurrentTimeOverride(
+                override: currentTimeForKeyVerification()
+            )
+
         if TestingBridge.isEnabled(.removeBackgroundSendStateOnStart) {
             BackgroundMessageSendState.clearAllState()
+        }
+
+        if TestingBridge.isEnabled(.mockedDataExpiredMessagesScenario) {
+            let keysDate = currentTimeForKeyVerification()
+            let futureDateToMakeKeysExpired = Date(timeInterval: TimeInterval(60 * 60 * 24 * 13), since: keysDate)
+            TestingBridge
+                .setCurrentTimeOverride(
+                    override: futureDateToMakeKeysExpired
+                )
         }
 
         // checking for accidentally conflicting testing flags
@@ -25,11 +43,20 @@ public enum CoverDropServiceHelper {
             throw CoverDropServiceHelperError.bothEmptyAndNonEmptyTestStorageRequested
         }
 
-        let verifiedKeys = PublicKeysHelper.shared.testKeys
         if TestingBridge.isEnabled(.startWithEmptyStorage) {
-            try await addTestStorage(includeMessages: false, config: config, verifiedKeys: verifiedKeys)
+            try await addTestStorage(
+                includeMessages: false,
+                config: config,
+                verifiedKeys: PublicKeysHelper.shared.testKeys,
+                publicDataRepository: publicDataRepository
+            )
         } else if TestingBridge.isEnabled(.startWithNonEmptyStorage) {
-            try await addTestStorage(includeMessages: true, config: config, verifiedKeys: verifiedKeys)
+            try await addTestStorage(
+                includeMessages: true,
+                config: config,
+                verifiedKeys: PublicKeysHelper.shared.testKeys,
+                publicDataRepository: publicDataRepository
+            )
         }
 
         if TestingBridge.isEnabled(.startWithCachedPublicKeys) {
@@ -44,7 +71,7 @@ public enum CoverDropServiceHelper {
         }
     }
 
-    public static func addTestMessagesToLib(
+    public static func addTestMessagesForPreview(
         lib: CoverDropLibrary
     ) async throws -> UnlockedSecretData {
         guard let testDefaultJournalist = PublicKeysHelper.shared.testDefaultJournalist else {
@@ -111,7 +138,8 @@ public enum CoverDropServiceHelper {
     private static func addTestStorage(
         includeMessages _: Bool,
         config _: CoverDropConfig,
-        verifiedKeys: VerifiedPublicKeys
+        verifiedKeys: VerifiedPublicKeys,
+        publicDataRepository: PublicDataRepository
     ) async throws {
         guard let testDefaultJournalist = PublicKeysHelper.shared.testDefaultJournalist else {
             throw CoverDropServiceHelperError.cannotGetTestJournalist
@@ -127,6 +155,17 @@ public enum CoverDropServiceHelper {
         let userPublicMessageKey = try PublicKeysHelper.shared.getTestUserMessagePublicKey()
         let userKeyPair = EncryptionKeypair(publicKey: userPublicMessageKey, secretKey: userSecretMessageKey)
         let privateSendingQueueSecret = try PrivateSendingQueueSecret.fromSecureRandom()
+
+        //  get the verified keys
+        guard (try? await publicDataRepository.loadAndVerifyPublicKeys()) != nil else {
+            throw CoverDropServicesError.verifiedPublicKeysNotAvailable
+        }
+
+        guard let coverMessageFactory = try? publicDataRepository.getCoverMessageFactory() else {
+            throw CoverDropServicesError.failedToGenerateCoverMessage
+        }
+        // create the private sending queue on disk if it does not exist
+        _ = try await PrivateSendingQueueRepository.shared.loadOrInitialiseQueue(coverMessageFactory)
 
         let encryptedMessage = try await UserToCoverNodeMessageData.createMessage(
             message: "Hey this is pending",
@@ -162,14 +201,24 @@ public enum CoverDropServiceHelper {
             .incomingMessage(message: .textMessage(message: IncomingMessageData(
                 sender: testDefaultJournalist,
                 messageText: "Hey this has expired",
-                dateReceived: Date(timeIntervalSinceNow: -TimeInterval(60 * 60 * 24 * 15))
+                dateReceived: Date(timeInterval: -TimeInterval(60 * 60 * 24 * 15), since: DateFunction.currentTime())
             ))),
             .incomingMessage(message: .textMessage(message: IncomingMessageData(
                 sender: testDefaultJournalist,
                 messageText: "Hey this has expiry warning",
-                dateReceived: Date(timeIntervalSinceNow: -TimeInterval(60 * 60 * 24 * 13))
+                dateReceived: Date(timeInterval: -TimeInterval(60 * 60 * 24 * 13), since: DateFunction.currentTime())
             )))
         ]
+
+        if TestingBridge.isEnabled(.mockedDataMultipleJournalists) {
+            if let additionalJournalist = PublicKeysHelper.shared.testAdditionalJournalist {
+                messages.insert(.incomingMessage(message: .textMessage(message: IncomingMessageData(
+                    sender: additionalJournalist,
+                    messageText: "Hey this was sent today from additional journalist",
+                    dateReceived: DateFunction.currentTime()
+                ))))
+            }
+        }
 
         let data = UnlockedSecretData(
             messageMailbox: messages,
@@ -180,5 +229,17 @@ public enum CoverDropServiceHelper {
             session: session,
             state: data
         )
+    }
+
+    public static func currentTimeForKeyVerification() -> Date {
+        var date = Date()
+        #if DEBUG
+            do {
+                if let generatedAtDate = try PublicKeysHelper.readLocalGeneratedAtFile() {
+                    date = generatedAtDate
+                }
+            } catch { Debug.println("Failed to get local keys generated file") }
+        #endif
+        return date
     }
 }

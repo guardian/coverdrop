@@ -23,19 +23,37 @@ public class PublicKeysHelper {
             publicKeysData: try! PublicKeysHelper.readLocalKeysFile(),
             // swiftlint:disable:next force_try
             trustedOrganizationPublicKeys: try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config),
-            currentTime: DateFunction.currentKeysPublishedTime()
+            currentTime: DateFunction.currentTime()
         )
         testKeysMultiple = VerifiedPublicKeys(
             // swiftlint:disable:next force_try
             publicKeysData: try! PublicKeysHelper.readLocalMultipleMessagingKeysFile(),
             // swiftlint:disable:next force_try
             trustedOrganizationPublicKeys: try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config),
-            currentTime: DateFunction.currentKeysPublishedTime()
+            currentTime: DateFunction.currentTime()
         )
+    }
+
+    public static func verifyPublicKeysFromFile(_ publicKeysData: PublicKeysData,
+                                                config: StaticConfig) throws -> VerifiedPublicKeys? {
+        // swiftlint:disable:next force_try
+        let trustedOrganizationSigningKeys = try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config)
+        let verifiedPublicKeysData = VerifiedPublicKeys(
+            publicKeysData: publicKeysData,
+            trustedOrganizationPublicKeys: trustedOrganizationSigningKeys,
+            currentTime: DateFunction.currentTime()
+        )
+        return verifiedPublicKeysData
     }
 
     public static func readLocalKeysFile() throws -> PublicKeysData {
         let data = try readLocalKeysJson()
+        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
+        return keys
+    }
+
+    public static func readLocalMultipleMessagingKeysFile() throws -> PublicKeysData {
+        let data = try readLocalMultipleMessagingKeysJson()
         let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
         return keys
     }
@@ -49,12 +67,6 @@ public class PublicKeysHelper {
         ) else { throw KeysError.cannotFindFileError }
         let data = try Data(contentsOf: resourceUrl)
         return data
-    }
-
-    public static func readLocalMultipleMessagingKeysFile() throws -> PublicKeysData {
-        let data = try readLocalMultipleMessagingKeysJson()
-        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
-        return keys
     }
 
     public static func readLocalMultipleMessagingKeysJson() throws -> Data {
@@ -140,6 +152,22 @@ public class PublicKeysHelper {
         guard let mostRecentCoverNodeMessagingKey = coverNodeMessagingKeys["covernode_001"] else { return nil }
 
         return mostRecentCoverNodeMessagingKey
+    }
+
+    public var testAdditionalJournalist: JournalistData? {
+        let additionalJournalistKeys = try? PublicKeysHelper.verifyPublicKeysFromFile(
+            // swiftlint:disable:next force_try
+            try! PublicKeysHelper.readLocalMultipleMessagingKeysFile(),
+            config: config
+        )
+
+        let keys = try? MessageRecipients(
+            verifiedPublicKeys: additionalJournalistKeys!,
+            excludingDefaultRecipient: false
+        ).journalists
+        return keys?.first(where: { value -> Bool in
+            value.recipientId == "additional_test_journalist_1"
+        })
     }
 
     public var testDefaultJournalist: JournalistData? {
