@@ -1,5 +1,6 @@
 package com.theguardian.coverdrop.ui.tracking
 
+import android.annotation.SuppressLint
 import android.os.Process
 import com.theguardian.coverdrop.core.ui.interfaces.SilenceableUncaughtExceptionHandler
 import com.theguardian.coverdrop.core.ui.interfaces.UncaughtExceptionHandlerProxySilenceTicket
@@ -40,6 +41,7 @@ class SilenceableUncaughtExceptionHandlerProxyImpl private constructor() :
     // SilenceableUncaughtExceptionHandlerProxy
     //
 
+    @SuppressLint("DefaultUncaughtExceptionDelegation") // false positive
     override fun init(originalExceptionHandler: UncaughtExceptionHandler) {
         originalUncaughtExceptionHandler = originalExceptionHandler
         Thread.setDefaultUncaughtExceptionHandler(this)

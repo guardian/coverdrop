@@ -7,12 +7,12 @@ java = "17"
 
 # For the released libraries
 libraryGroupId = "com.gu.coverdrop"
-libraryVersion = "0.9.0"
+libraryVersion = "1.0.0-rc1"
 
 # Dependencies
 accompanist-pager = "0.28.0"
 accompanist-pager-indicators = "0.28.0"
-android-agp = "8.10.1"
+android-agp = "8.12.0"
 androidx-junit = "1.2.1"
 androidx-hilt = "1.2.0"
 appcompat = "1.7.0"
