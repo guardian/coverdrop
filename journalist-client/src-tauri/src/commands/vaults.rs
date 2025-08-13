@@ -11,8 +11,7 @@ use tauri::State;
 use crate::{
     app_state::AppStateHandle,
     error::{
-        AnyhowSnafu, CommandError, GenericSnafu, IoSnafu, MissingProfileSnafu, VaultLockedSnafu,
-        VaultSnafu,
+        AnyhowSnafu, CommandError, GenericSnafu, MissingProfileSnafu, VaultLockedSnafu, VaultSnafu,
     },
     model::{OpenVaultOutcome, Profiles, VaultState},
 };
@@ -90,21 +89,24 @@ pub async fn unlock_vault(
 }
 
 #[tauri::command]
-pub async fn get_colocated_password(path: &Path) -> Result<String, CommandError> {
+pub async fn get_colocated_password(path: &Path) -> Result<Option<String>, CommandError> {
     let password_path = path.with_extension("password");
 
-    let password = std::fs::read_to_string(&password_path).context(IoSnafu {
-        failed_to: "read password file from disk",
-    })?;
+    let password_result = std::fs::read_to_string(&password_path);
 
-    if password.contains('\n') {
-        return Err(GenericSnafu {
-            ctx: "Password file found, but it was not a single line",
+    match password_result {
+        Ok(password) => {
+            if password.contains('\n') {
+                return Err(GenericSnafu {
+                    ctx: "Password file found, but it was not a single line",
+                }
+                .build());
+            }
+
+            Ok(Some(password))
         }
-        .build());
+        Err(_) => Ok(None),
     }
-
-    Ok(password)
 }
 
 #[tauri::command]
