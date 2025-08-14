@@ -1,3 +1,4 @@
+mod backup_queries;
 mod id_key_queries;
 mod id_pk_family_queries;
 mod info_queries;
@@ -1134,5 +1135,25 @@ impl JournalistVault {
         tx.commit().await?;
 
         Ok(())
+    }
+
+    //
+    // Backups
+    //
+
+    pub async fn record_successful_backup(
+        &self,
+        timestamp: DateTime<Utc>,
+        path: &str,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::record_successful_backup(&mut conn, timestamp, path).await
+    }
+
+    pub async fn get_count_of_keys_created_since_last_backup(&self) -> anyhow::Result<i64> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::get_count_of_keys_created_since_last_backup(&mut conn).await
     }
 }

@@ -51,6 +51,7 @@ type ChatsSideBarProps = {
   setMaybeJournalistStatusForModal: (
     newStatus: JournalistStatus | null,
   ) => void;
+  openBackupModal: () => void;
 };
 
 const chatsToSideNav = (
@@ -211,6 +212,7 @@ export const ChatsSideBar = ({
   setMaybeMuteModalForReplyKey,
   setMaybeCopyToClipboardModalForReplyKey,
   setMaybeJournalistStatusForModal,
+  openBackupModal,
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
   const messageStore = useMessageStore();
@@ -375,6 +377,7 @@ export const ChatsSideBar = ({
           <SettingsPopover
             journalistStatus={journalistStatus}
             setMaybeJournalistStatusForModal={setMaybeJournalistStatusForModal}
+            openBackupModal={openBackupModal}
           />
         </EuiFlexItem>
         <EuiFlexItem grow={true}>{journalistId}</EuiFlexItem>

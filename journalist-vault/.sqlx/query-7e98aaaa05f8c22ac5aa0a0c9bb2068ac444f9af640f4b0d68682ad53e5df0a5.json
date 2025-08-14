@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO backup_history\n                (timestamp, path)\n            VALUES (?1, ?2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7e98aaaa05f8c22ac5aa0a0c9bb2068ac444f9af640f4b0d68682ad53e5df0a5"
+}

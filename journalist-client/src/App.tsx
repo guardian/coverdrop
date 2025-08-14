@@ -25,6 +25,7 @@ import { ToggleJournalistStatusModal } from "./components/ToggleJournalistStatus
 import { getPublicInfo } from "./commands/admin.ts";
 import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
+import { BackupModal } from "./components/BackupModal.tsx";
 
 const App = ({
   panelled,
@@ -104,6 +105,9 @@ const App = ({
 
   const [maybeJournalistStatusForModal, setMaybeJournalistStatusForModal] =
     useState<JournalistStatus | null>(null);
+
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+
   const [maybeEditModalForReplyKey, setMaybeEditModalForReplyKey] = useState<
     string | null
   >(null);
@@ -117,13 +121,22 @@ const App = ({
 
   const errorsState = useErrorStore();
 
-  const toasts = errorsState.errors.map((e) => ({
+  const [customToasts, setCustomToasts] = useState<Toast[]>([]);
+  const addCustomToast = (toast: Toast) => {
+    setCustomToasts((prev) => [toast, ...prev]);
+  };
+  const removeCustomToast = (toastId: string) =>
+    setCustomToasts((prev) => prev.filter((_) => _.id !== toastId));
+
+  const errorToasts = errorsState.errors.map((e) => ({
     id: e.id,
     title: "Error",
     color: "danger" as const,
     iconType: "warning",
     text: <p>{e.message}</p>,
   }));
+
+  const toasts = [...customToasts, ...errorToasts];
 
   const messageStore = useMessageStore();
   const userStore = useUserStore();
@@ -223,6 +236,7 @@ const App = ({
               setMaybeJournalistStatusForModal={
                 setMaybeJournalistStatusForModal
               }
+              openBackupModal={() => setIsBackupModalOpen(true)}
             />
           </EuiPageTemplate.Sidebar>
           {currentUserReplyKey ? (
@@ -272,6 +286,14 @@ const App = ({
             closeModal={() => setMaybeCopyToClipboardModalForReplyKey(null)}
             vaultId={vaultState.id}
           />
+
+          <BackupModal
+            isOpen={isBackupModalOpen}
+            vaultPath={vaultState.path}
+            setIsBackupModalOpen={setIsBackupModalOpen}
+            addCustomToast={addCustomToast}
+            removeCustomToast={removeCustomToast}
+          />
         </EuiPageTemplate>
       )}
 
@@ -279,8 +301,9 @@ const App = ({
         toasts={toasts}
         dismissToast={(t: Toast) => {
           errorsState.removeError(t.id);
+          removeCustomToast(t.id);
         }}
-        toastLifeTimeMs={6000}
+        toastLifeTimeMs={60_000}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   invokeWithErrorMessage,
   invokeWithSilencedErrorMessage,
 } from "./invokeWithErrorMessage";
+import { BackupChecks } from "../model/bindings/BackupChecks.ts";
 
 export const getVaultState = (): Promise<VaultState | null> => {
   return invokeWithErrorMessage("get_vault_state");
@@ -53,4 +54,16 @@ export const getColocatedPassword = (path: string): Promise<string | null> => {
 
 export const addTrustAnchor = (path: string): Promise<string | null> => {
   return invokeWithErrorMessage("add_trust_anchor", { path });
+};
+
+export const getBackupChecks = (): Promise<BackupChecks> => {
+  return invokeWithErrorMessage("get_backup_checks");
+};
+
+export const getShouldRequireBackup = (): Promise<boolean> => {
+  return invokeWithErrorMessage("should_require_backup");
+};
+
+export const performBackup = (): Promise<void> => {
+  return invokeWithErrorMessage("perform_backup");
 };

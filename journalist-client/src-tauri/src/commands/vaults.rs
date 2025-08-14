@@ -1,11 +1,10 @@
-use std::{collections::HashSet, path::Path};
-
 use common::{
     crypto::keys::{public_key::PublicKey, serde::StorableKeyMaterial},
     protocol::keys::{anchor_org_pk, UntrustedOrganizationPublicKey},
     time,
 };
 use snafu::{OptionExt as _, ResultExt as _};
+use std::{collections::HashSet, path::Path};
 use tauri::State;
 
 use crate::{

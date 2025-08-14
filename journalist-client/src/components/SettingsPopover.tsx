@@ -39,15 +39,19 @@ type FlyoverContent =
       json: string;
     };
 
-export const SettingsPopover = ({
-  journalistStatus,
-  setMaybeJournalistStatusForModal,
-}: {
+interface SettingsPopoverProps {
   journalistStatus?: JournalistStatus;
   setMaybeJournalistStatusForModal: (
     newStatus: JournalistStatus | null,
   ) => void;
-}) => {
+  openBackupModal: () => void;
+}
+
+export const SettingsPopover = ({
+  journalistStatus,
+  setMaybeJournalistStatusForModal,
+  openBackupModal,
+}: SettingsPopoverProps) => {
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
   const [flyoutContent, setFlyoutContent] = useState<FlyoverContent | null>(
     null,
@@ -123,6 +127,11 @@ export const SettingsPopover = ({
 
   const trustedKeyDigestClicked = () => {
     setTrustedKeyDigestModalVisible(true);
+    setIsPopoverOpen(false);
+  };
+
+  const backUpVaultClicked = () => {
+    openBackupModal();
     setIsPopoverOpen(false);
   };
 
@@ -232,6 +241,9 @@ export const SettingsPopover = ({
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
             View trust anchor digests
+          </EuiContextMenuItem>
+          <EuiContextMenuItem icon="save" onClick={backUpVaultClicked}>
+            Back up vault
           </EuiContextMenuItem>
           {journalistStatus == "VISIBLE" && (
             <EuiContextMenuItem
