@@ -19,7 +19,8 @@ use logging::JournalistClientLogLayer;
 use model::Profiles;
 use notifications::start_notification_service;
 use reqwest::Url;
-use tauri::{App, Manager as _};
+use tauri::{tray::TrayIconBuilder, App, Manager as _};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
@@ -101,7 +102,28 @@ pub fn run() {
         .setup(move |app| {
             let config_dir = app.path().app_data_dir()?;
 
-            let notifications = start_notification_service(app.app_handle());
+            let tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .on_tray_icon_event(|tray, event| match event {
+                    TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } => {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    _ => {
+                        println!("unhandled event {event:?}");
+                    }
+                })
+                .build(app)?;
+
+                let notifications = start_notification_service(app.app_handle());
             let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
 
             tracing_subscriber::registry()
@@ -154,6 +176,13 @@ pub fn run() {
             get_vault_keys,
             add_trust_anchor
         ])
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                api.prevent_close();
+                window.hide().expect("Could not hide main window, when CloseRequested");
+            },
+            _ => {}
+        })
         .run(tauri::generate_context!())
         .expect("Run tauri application");
 }
