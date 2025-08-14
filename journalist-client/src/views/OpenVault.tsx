@@ -167,6 +167,9 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
                 onChange={(e) => {
                   setPassword(e.target.value);
                 }}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
               />
             </EuiFormRow>
             <EuiFormRow>
