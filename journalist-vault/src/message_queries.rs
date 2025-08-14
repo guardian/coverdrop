@@ -398,13 +398,13 @@ mod test {
             .await
             .expect("test user added to DB"); // add the test user to satisfy foreign key constraints
 
-        let _u2j_1 = add_u2j_message(&mut conn, &user_pk, &message, before_cutoff, dead_drop_id)
+        let _u2j_1 = add_u2j_message(&mut conn, user_pk, &message, before_cutoff, dead_drop_id)
             .await
             .expect("u2j message received before cutoff, so we will expect it to be deleted");
-        let _u2j_2 = add_u2j_message(&mut conn, &user_pk, &message, after_cutoff, dead_drop_id)
+        let _u2j_2 = add_u2j_message(&mut conn, user_pk, &message, after_cutoff, dead_drop_id)
             .await
             .expect("u2j message received after cutoff, so we will expect it not to be deleted");
-        let u2j_3 = add_u2j_message(&mut conn, &user_pk, &message, after_cutoff, dead_drop_id)
+        let u2j_3 = add_u2j_message(&mut conn, user_pk, &message, after_cutoff, dead_drop_id)
             .await
             .expect("u2j message received after cutoff, but will add custom expiry below");
         set_custom_expiry(
@@ -416,7 +416,7 @@ mod test {
         .expect(
             "custom expiry set on u2j message 3, to BEFORE now, so we will expect it to be deleted",
         );
-        let u2j_4 = add_u2j_message(&mut conn, &user_pk, &message, before_cutoff, dead_drop_id)
+        let u2j_4 = add_u2j_message(&mut conn, user_pk, &message, before_cutoff, dead_drop_id)
             .await
             .expect("u2j message received before cutoff, but will add custom expiry below"); // id 4
         set_custom_expiry(
@@ -429,7 +429,7 @@ mod test {
 
         let _j2u_1 = add_j2u_message(
             &mut conn,
-            &user_pk,
+            user_pk,
             &message,
             before_cutoff,
             outbound_queue_id,
@@ -438,7 +438,7 @@ mod test {
         .expect("j2u message sent before cutoff, so we will expect it to be deleted");
         let _j2u_2 = add_j2u_message(
             &mut conn,
-            &user_pk,
+            user_pk,
             &message,
             after_cutoff,
             outbound_queue_id,
@@ -447,7 +447,7 @@ mod test {
         .expect("j2u message sent after cutoff, so we will expect it not to be deleted");
         let j2u_3 = add_j2u_message(
             &mut conn,
-            &user_pk,
+            user_pk,
             &message,
             after_cutoff,
             outbound_queue_id,
@@ -465,7 +465,7 @@ mod test {
         );
         let j2u_4 = add_j2u_message(
             &mut conn,
-            &user_pk,
+            user_pk,
             &message,
             before_cutoff,
             outbound_queue_id,
@@ -533,7 +533,7 @@ mod test {
             .unwrap();
 
         let messages_after_clearing_some_custom_expiry_and_running_final_deletion =
-            messages(&mut *conn).await.unwrap();
+            messages(&mut conn).await.unwrap();
         assert_eq!(
             messages_after_clearing_some_custom_expiry_and_running_final_deletion.len(),
             2,

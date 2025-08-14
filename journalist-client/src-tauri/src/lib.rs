@@ -106,12 +106,13 @@ pub fn run() {
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .tooltip(&app.package_info().name)
-                .on_tray_icon_event(|tray, event| match event {
-                    TrayIconEvent::Click {
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
                         button: MouseButton::Left,
                         button_state: MouseButtonState::Up,
                         ..
-                    } => {
+                    } = event
+                    {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
                             if window.is_focused().unwrap_or(false) {
@@ -123,7 +124,6 @@ pub fn run() {
                             }
                         }
                     }
-                    _ => {}
                 })
                 .build(app)?;
 
@@ -183,14 +183,13 @@ pub fn run() {
             get_vault_keys,
             add_trust_anchor
         ])
-        .on_window_event(|window, event| match event {
-            tauri::WindowEvent::CloseRequested { api, .. } => {
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 window
                     .hide()
                     .expect("Could not hide main window, when CloseRequested");
             }
-            _ => {}
         })
         .run(tauri::generate_context!())
         .expect("Run tauri application");
