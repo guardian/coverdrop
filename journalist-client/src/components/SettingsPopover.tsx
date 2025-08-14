@@ -8,13 +8,7 @@ import {
   EuiSpacer,
   EuiText,
 } from "@elastic/eui";
-import {
-  forceRotateIdPk,
-  forceRotateMsgPk,
-  getLogs,
-  getPublicInfo,
-  getVaultKeys,
-} from "../commands/admin";
+import { getLogs, getPublicInfo, getVaultKeys } from "../commands/admin";
 import { LogsPanel } from "./LogsPanel";
 import { PublicInfoPanel } from "./PublicInfoPanel";
 import { BurstCoverMessageModal } from "./BurstMessageModal";
@@ -23,6 +17,7 @@ import { TrustedKeyDigestsModal } from "./TrustedKeyDigestsModal";
 import { AddTrustAnchorModal } from "./AddTrustAnchorModal";
 import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
+import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
 
 type FlyoverContent =
   | {
@@ -65,20 +60,14 @@ export const SettingsPopover = ({
   const [addTrustAnchorModalVisible, setAddTrustAnchorModalVisible] =
     useState(false);
 
+  const [forceRotateKeyType, setForceRotateKeyType] = useState<
+    "msg" | "id" | null
+  >(null);
+
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const setStatusClicked = (newStatus: JournalistStatus) => {
     setMaybeJournalistStatusForModal(newStatus);
-    setIsPopoverOpen(false);
-  };
-
-  const forceIdRotationClicked = () => {
-    forceRotateIdPk();
-    setIsPopoverOpen(false);
-  };
-
-  const forceMsgRotationClicked = () => {
-    forceRotateMsgPk();
     setIsPopoverOpen(false);
   };
 
@@ -169,38 +158,38 @@ export const SettingsPopover = ({
     }
   }
 
-  let burstCoverMessagesModal = null;
-  if (burstCoverMessagesModalVisible) {
-    burstCoverMessagesModal = (
-      <BurstCoverMessageModal
-        closeModal={() => {
-          setBurstCoverMessagesModalVisible(false);
-        }}
-      />
-    );
-  }
+  const burstCoverMessagesModal = burstCoverMessagesModalVisible && (
+    <BurstCoverMessageModal
+      closeModal={() => {
+        setBurstCoverMessagesModalVisible(false);
+      }}
+    />
+  );
 
-  let trustedKeyDigestModal = null;
-  if (trustedKeyDigestModalVisible) {
-    trustedKeyDigestModal = (
-      <TrustedKeyDigestsModal
-        closeModal={() => {
-          setTrustedKeyDigestModalVisible(false);
-        }}
-      />
-    );
-  }
+  const trustedKeyDigestModal = trustedKeyDigestModalVisible && (
+    <TrustedKeyDigestsModal
+      closeModal={() => {
+        setTrustedKeyDigestModalVisible(false);
+      }}
+    />
+  );
 
-  let addTrustAnchorModal = null;
-  if (addTrustAnchorModalVisible) {
-    addTrustAnchorModal = (
-      <AddTrustAnchorModal
-        closeModal={() => {
-          setAddTrustAnchorModalVisible(false);
-        }}
-      />
-    );
-  }
+  const addTrustAnchorModal = addTrustAnchorModalVisible && (
+    <AddTrustAnchorModal
+      closeModal={() => {
+        setAddTrustAnchorModalVisible(false);
+      }}
+    />
+  );
+
+  const forceRotateKeyModal = forceRotateKeyType && (
+    <ForceRotateKeyModal
+      closeModal={() => {
+        setForceRotateKeyType(null);
+      }}
+      keyType={forceRotateKeyType}
+    />
+  );
 
   const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
   const maybeGithubRepoName = maybeRepo.startsWith("git@")
@@ -230,6 +219,7 @@ export const SettingsPopover = ({
           <EuiContextMenuItem>
             <strong>Helpers</strong>
           </EuiContextMenuItem>
+
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
@@ -266,21 +256,29 @@ export const SettingsPopover = ({
               Status pending
             </EuiContextMenuItem>
           )}
+
           <EuiContextMenuItem>
             <strong>Danger Zone</strong>
           </EuiContextMenuItem>
+
           <EuiContextMenuItem icon="sun" onClick={burstCoverMessagesClicked}>
             Send cover message burst
           </EuiContextMenuItem>
           <EuiContextMenuItem
             icon="timeRefresh"
-            onClick={forceIdRotationClicked}
+            onClick={() => {
+              setForceRotateKeyType("id");
+              setIsPopoverOpen(false);
+            }}
           >
             Force identity key rotation
           </EuiContextMenuItem>
           <EuiContextMenuItem
             icon="timeRefresh"
-            onClick={forceMsgRotationClicked}
+            onClick={() => {
+              setForceRotateKeyType("msg");
+              setIsPopoverOpen(false);
+            }}
           >
             Force messaging key rotation
           </EuiContextMenuItem>
@@ -308,6 +306,7 @@ export const SettingsPopover = ({
       {burstCoverMessagesModal}
       {trustedKeyDigestModal}
       {addTrustAnchorModal}
+      {forceRotateKeyModal}
     </Fragment>
   );
 };
