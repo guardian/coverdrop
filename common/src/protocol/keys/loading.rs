@@ -33,7 +33,7 @@ pub fn load_anchor_org_pks(
         .iter()
         .flat_map(|org_pk| {
             anchor_org_pk(org_pk, now).map_err(|e| {
-                tracing::error!(
+                tracing::warn!(
                     "Failed to trust org_pk {}: {}",
                     hex::encode(org_pk.key.as_bytes()),
                     e,
