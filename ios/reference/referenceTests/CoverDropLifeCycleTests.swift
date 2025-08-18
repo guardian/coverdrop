@@ -36,7 +36,7 @@ final class CoverDropLifeCycleTests: XCTestCase {
             return
         }
 
-        _ = try await CoverDropService.getLibraryBlocking()
+        _ = try await CoverDropService.getLibraryBlocking(config: config)
 
         // check that base directory exists
         XCTAssertTrue(fileManager.fileExists(atPath: baseUrl.path))

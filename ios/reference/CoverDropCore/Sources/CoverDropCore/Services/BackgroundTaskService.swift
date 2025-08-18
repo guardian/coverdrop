@@ -19,17 +19,13 @@ public enum BackgroundTaskService {
     static func scheduleBackgroundSendJob(
         extraDelaySeconds: Int = 0,
         bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared
-    ) async {
+    ) {
         if !hasBeenRegistered {
             Debug.println("Background task not registered yet")
             return
         }
 
-        let request = BGProcessingTaskRequest(identifier: serviceName)
-        // We want to make sure we have network connectivity when sending messages
-        request.requiresNetworkConnectivity = true
-        // but we don't require power
-        request.requiresExternalPower = false
+        let request = BGAppRefreshTaskRequest(identifier: serviceName)
 
         let delay = try? Int(SecureRandomUtils.nextDurationFromExponentialDistribution(
             expectedMeanDuration: Duration.seconds(expectedMeanDelaySeconds),
@@ -64,13 +60,20 @@ public enum BackgroundTaskService {
         bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared
     ) {
         _ = bgTaskScheduler.register(forTaskWithIdentifier: serviceName, using: nil) { task in
-            // Downcast the parameter to an processing task as this identifier is used for a processing request request.
-            Task {
-                await BackgroundTaskService.handleAppRefresh(
-                    task: task as! BGProcessingTask,
-                    config: config
-                )
+            guard let task = task as? BGAppRefreshTask else {
+                NotificationCenter.default
+                    .post(
+                        name: backgroundTaskFailedNotification,
+                        object: self,
+                        userInfo: ["message": "Background task registration failed"]
+                    )
+                return
             }
+
+            BackgroundTaskService.handleAppRefresh(
+                task: task,
+                config: config
+            )
         }
         hasBeenRegistered = true
 
@@ -84,50 +87,78 @@ public enum BackgroundTaskService {
         Debug.println("Registered Background task")
     }
 
-    static func handleAppRefresh(
-        task: BGProcessingTask,
+    public static func handleAppRefresh(
+        task: BGAppRefreshTask,
         config: CoverDropConfig
-    ) async {
+    ) {
+        scheduleBackgroundSendJob()
+        Task {
+            let result = await handleBackgroundMessasgeSendTask(config: config)
+            backgroundTaskCompletionHandler(result: result, task: task)
+        }
+    }
+
+    public static func backgroundTaskNotificationHandler(result: Result<Void, BackgroundMessageSendServiceError>) {
+        switch result {
+        case .success:
+            NotificationCenter.default
+                .post(
+                    name: backgroundTaskSuccessNotification,
+                    object: self,
+                    userInfo: ["message": "Background task completed successfully"]
+                )
+        case let .failure(reason):
+            NotificationCenter.default
+                .post(
+                    name: backgroundTaskFailedNotification,
+                    object: self,
+                    userInfo: ["message": "Background task execution failed: \(reason)"]
+                )
+        }
+    }
+
+    public static func manuallyTriggerBackgroundMessageSendTask(config: CoverDropConfig) async
+    -> Result<Void, BackgroundMessageSendServiceError> {
+        await handleBackgroundMessasgeSendTask(config: config)
+    }
+
+    private static func handleBackgroundMessasgeSendTask(config: CoverDropConfig) async
+        -> Result<Void, BackgroundMessageSendServiceError> {
         Debug.println("Background task run start...")
         // Need to notify the containing app we have started the background process
         NotificationCenter.default
             .post(name: backgroundTaskStartedNotification, object: self)
 
-        do {
-            let lib = try await CoverDropService.getLibraryBlocking()
+        var result: Result<Void, BackgroundMessageSendServiceError> = .failure(
+            .failedToGetCoverDropService
+        )
 
-            let result = await BackgroundMessageSendJob.run(
-                publicDataRepository: lib.publicDataRepository,
-                now: DateFunction.currentTime(),
-                numMessagesPerBackgroundRun: config.numMessagesPerBackgroundRun,
-                minDurationBetweenBackgroundRunsInSecs: config.minDurationBetweenBackgroundRunsInSecs
-            )
+        guard let lib = try? await CoverDropService.getLibraryBlocking(config: config) else {
+            return result
+        }
 
-            switch result {
-            case .success:
-                // Wnat to log if we have succeeded or failed
-                NotificationCenter.default
-                    .post(
-                        name: backgroundTaskSuccessNotification,
-                        object: self,
-                        userInfo: ["message": "Background task completed successfully"]
-                    )
-                task.setTaskCompleted(success: true)
-            case let .failure(reason):
-                NotificationCenter.default
-                    .post(
-                        name: backgroundTaskFailedNotification,
-                        object: self,
-                        userInfo: ["message": "Background task execution failed: \(reason)"]
-                    )
-                task.setTaskCompleted(success: false)
-            }
-        } catch {
-            NotificationCenter.default
-                .post(name: backgroundTaskFailedNotification, object: self,
-                      userInfo: ["message": "Background task failed: \(error)"])
+        result = await BackgroundMessageSendJob.run(
+            publicDataRepository: lib.publicDataRepository,
+            now: DateFunction.currentTime(),
+            numMessagesPerBackgroundRun: config.numMessagesPerBackgroundRun,
+            minDurationBetweenBackgroundRunsInSecs: config.minDurationBetweenBackgroundRunsInSecs
+        )
+
+        backgroundTaskNotificationHandler(result: result)
+
+        Debug.println("Background task run finished")
+        return result
+    }
+
+    public static func backgroundTaskCompletionHandler(
+        result: Result<Void, BackgroundMessageSendServiceError>,
+        task: BGAppRefreshTask
+    ) {
+        switch result {
+        case .success:
+            task.setTaskCompleted(success: true)
+        case .failure:
             task.setTaskCompleted(success: false)
         }
-        Debug.println("Background task run finished")
     }
 }

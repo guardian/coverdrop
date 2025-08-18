@@ -59,7 +59,9 @@ public class CoverDropService: ObservableObject {
     public func didLaunch(config: CoverDropConfig) throws {
         // We must ONLY register background tasks if we are actually in an app launch sequence. We msut not
         // do so during any of the fallback mechanisms (https://github.com/guardian/coverdrop/issues/2899)
-        BackgroundTaskService.registerBackgroundSendJob(config: config)
+        if config.backgroundTaskEnabled {
+            BackgroundTaskService.registerBackgroundSendJob(config: config)
+        }
 
         try ensureInitialized(config: config)
     }
@@ -105,8 +107,10 @@ public class CoverDropService: ObservableObject {
         }
     }
 
-    public static func getLibraryBlocking() async throws -> CoverDropLibrary {
+    public static func getLibraryBlocking(config: CoverDropConfig) async throws -> CoverDropLibrary {
         while true {
+            let initializeTask = try CoverDropService.shared.ensureInitialized(config: config)
+            await initializeTask?.value
             switch CoverDropService.shared.state {
             case let .initialized(lib: lib):
                 return lib
@@ -231,7 +235,7 @@ public class CoverDropService: ObservableObject {
     }
 
     /// This is called when the app enters the background
-    public static func didEnterBackground() {
+    public static func didEnterBackground(config: CoverDropConfig) {
         UserDefaults.standard.set(DateFunction.currentTime(), forKey: "LastBackgroundDate")
 
         Task {
@@ -252,6 +256,8 @@ public class CoverDropService: ObservableObject {
         // But if they don't it will required a http round trip.
         // If this doesn't complete in time, we won't schedule a background task, but this will get picked up
         // by the BackgroundMessageScheduleService.onAppStart cleanup function
-        Task { await BackgroundMessageScheduleService.onEnterBackground() }
+        if config.backgroundTaskEnabled {
+            Task { await BackgroundMessageScheduleService.onEnterBackground() }
+        }
     }
 }

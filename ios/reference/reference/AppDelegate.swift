@@ -10,6 +10,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     var window: UIWindow?
     var backgroundView: UIView?
     let coverProvider = CoverdropCoverProvider()
+    let secureMessageTracking = SecureMessagingTracking()
 
     public let coverDropService = CoverDropService.shared
 
@@ -54,6 +55,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         } else {
             try? coverDropService.didLaunch(config: config)
         }
+
         return true
     }
 
@@ -71,7 +73,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 
     func applicationDidEnterBackground(_: UIApplication) {
         if TestingBridge.isEnabled(.coverDropDisabled) == false {
-            CoverDropService.didEnterBackground()
+            CoverDropService.didEnterBackground(config: config)
         } else {
             CoverDropService.shared.state = .notInitialized
         }

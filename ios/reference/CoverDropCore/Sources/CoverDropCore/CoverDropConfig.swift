@@ -13,6 +13,7 @@ public protocol CoverDropConfig {
     var maxBackgroundDurationInSeconds: Int { get }
     var numMessagesPerBackgroundRun: Int { get }
     var withSecureDns: Bool { get }
+    var backgroundTaskEnabled: Bool { get }
 }
 
 public enum EnvType {
@@ -73,6 +74,10 @@ public enum StaticConfig: CoverDropConfig {
     public var numMessagesPerBackgroundRun: Int {
         return internalGetConfig().numMessagesPerBackgroundRun
     }
+
+    public var backgroundTaskEnabled: Bool {
+        return internalGetConfig().backgroundTaskEnabled
+    }
 }
 
 public struct ProdConfig: CoverDropConfig {
@@ -89,6 +94,7 @@ public struct ProdConfig: CoverDropConfig {
     public let maxBackgroundDurationInSeconds = Constants.maxBackgroundDurationInSeconds
     public var minDurationBetweenBackgroundRunsInSecs = 60 * 60
     public var numMessagesPerBackgroundRun = 2
+    public var backgroundTaskEnabled = true
 }
 
 public struct StagingConfig: CoverDropConfig {
@@ -106,6 +112,7 @@ public struct StagingConfig: CoverDropConfig {
     public var minDurationBetweenBackgroundRunsInSecs = 60 * 60
     public var numMessagesPerBackgroundRun = 2
     public var removeBackgroundSendStateOnStart = false
+    public var backgroundTaskEnabled = true
 }
 
 // TODO: This is only for setting the cache enabled to true in the UITests
@@ -126,6 +133,7 @@ public struct DevConfigWithCache: CoverDropConfig {
     public let maxBackgroundDurationInSeconds = 20
     public var minDurationBetweenBackgroundRunsInSecs = 10
     public var numMessagesPerBackgroundRun = 2
+    public var backgroundTaskEnabled = true
 }
 
 public struct DevConfig: CoverDropConfig {
@@ -144,4 +152,5 @@ public struct DevConfig: CoverDropConfig {
     public let maxBackgroundDurationInSeconds = 20
     public var minDurationBetweenBackgroundRunsInSecs = 10
     public var numMessagesPerBackgroundRun = 2
+    public var backgroundTaskEnabled = true
 }

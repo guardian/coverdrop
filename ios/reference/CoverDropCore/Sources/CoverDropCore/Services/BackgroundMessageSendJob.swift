@@ -12,10 +12,11 @@ import Foundation
 /// since last run.
 /// Note that this is also triggered by the `BackgroundTaskService`
 
-enum BackgroundMessageSendServiceError: Error {
+public enum BackgroundMessageSendServiceError: Error {
     case failedToSendAllMessages
     case skippedRun
     case failedToGetCoverMessage
+    case failedToGetCoverDropService
 }
 
 /// Note that testing background tasks isn't very straightforward on iOS
@@ -33,7 +34,7 @@ enum BackgroundMessageSendServiceError: Error {
 /// 6. Check the background task logs, you should see an succesful run
 /// https://developer.apple.com/documentation/backgroundtasks/starting-and-terminating-tasks-during-development
 
-enum BackgroundMessageSendJob {
+public enum BackgroundMessageSendJob {
     public static func run(
         publicDataRepository: any PublicDataRepositoryProtocol,
         now: Date,

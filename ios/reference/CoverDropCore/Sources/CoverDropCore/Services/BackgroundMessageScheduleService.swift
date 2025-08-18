@@ -23,19 +23,23 @@ enum BackgroundMessageScheduleService {
                 minDurationBetweenBackgroundRunsInSecs: config.minDurationBetweenBackgroundRunsInSecs
             )
         }
-        // This code always runs and schedules a background task optimistically in the future.
+        // This code schedules a background task optimistically in the future.
         // The task is likey to be overwritten when we background the app, but set it here just in case
-        await BackgroundTaskService.scheduleBackgroundSendJob(
-            extraDelaySeconds: extraDelaySeconds,
-            bgTaskScheduler: bgTaskScheduler
-        )
+        // This is only done if backgroundTaskEnabled is set, as the hosting app is allowed to handle
+        // the setup of background jobs
+        if config.backgroundTaskEnabled {
+            BackgroundTaskService.scheduleBackgroundSendJob(
+                extraDelaySeconds: extraDelaySeconds,
+                bgTaskScheduler: bgTaskScheduler
+            )
+        }
         BackgroundMessageSendState.writeBackgroundWorkPending(true)
     }
 
     /// This should be called when the app enters the background from `applicationDidEnterBackground` in app delegate
     /// This will overwrite any previously scheduled background tasks with this most recent one
     public static func onEnterBackground(bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared) async {
-        await BackgroundTaskService.scheduleBackgroundSendJob(bgTaskScheduler: bgTaskScheduler)
+        BackgroundTaskService.scheduleBackgroundSendJob(bgTaskScheduler: bgTaskScheduler)
         BackgroundMessageSendState.writeBackgroundWorkPending(true)
     }
 }

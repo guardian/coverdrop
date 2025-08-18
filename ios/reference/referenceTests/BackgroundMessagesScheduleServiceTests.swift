@@ -35,6 +35,23 @@ class MockTaskScheduler: TaskScheduler {
     }
 }
 
+public struct ConfigWithoutBackgroundTask: CoverDropConfig {
+    public var envType: EnvType = .prod
+    public var withSecureDns: Bool = true
+
+    public var passphraseWordCount = 3
+
+    public let apiBaseUrl = "https://secure-messaging-api.guardianapis.com/v1"
+    public let messageBaseUrl = "https://secure-messaging-msg.guardianapis.com"
+
+    public let cacheEnabled = true
+
+    public let maxBackgroundDurationInSeconds = Constants.maxBackgroundDurationInSeconds
+    public var minDurationBetweenBackgroundRunsInSecs = 60 * 60
+    public var numMessagesPerBackgroundRun = 2
+    public var backgroundTaskEnabled = false
+}
+
 final class BackgroundMessageScheduleServiceTests: XCTestCase {
     override func setUp() async throws {
         // remove UserDefaults keys so they do not intefer with future test runs
@@ -123,5 +140,81 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
 
         let pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertTrue(pendingTasks.isEmpty)
+    }
+
+    func testBackgroundTaskDisabledStillCallsCleanupMessageSendingTask() async throws {
+        // On app foreground we will only scheduleBackgroundSendJob if backgroundTaskEnabled is true
+        // We do write writeBackgroundWorkPending, so the next time the app is foregrounded, we will
+        // run the cleanup job, but a background task will never have been scheduled to run.
+        // We check this by making sure no background tasks are pending after foregrounding.
+
+        let context = IntegrationTestScenarioContext(scenario: .minimal)
+        let publicDataRepository = try context.getPublicDataRepositoryWithVerifiedKeys()
+        let taskScheduler = MockTaskScheduler()
+
+        // Note we are using config with background tasks disabled
+        let config = ConfigWithoutBackgroundTask()
+
+        try await BackgroundMessageScheduleService.onAppForeground(
+            bgTaskScheduler: taskScheduler,
+            publicDataRepository: publicDataRepository,
+            config: config
+        )
+
+        let pendingTasks = await taskScheduler.pendingTaskRequests()
+        XCTAssertTrue(pendingTasks.isEmpty)
+        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+    }
+
+    func testBackgroundTaskEnabledStillCallsCleanupMessageSendingTaskAndScheduleBackgroundJob() async throws {
+        // On app foreground we scheduleBackgroundSendJob as backgroundTaskEnabled is true
+        // We check that a background job has been registered and submitted by observing the notification.
+        // We then verify this by checking the pendingTaskRequests list is not empty.
+        // Sadly we cannot trigger the background task run from tests so we cannot check the task runs succesfully
+
+        let context = IntegrationTestScenarioContext(scenario: .minimal)
+        let publicDataRepository = try context.getPublicDataRepositoryWithVerifiedKeys()
+        let taskScheduler = MockTaskScheduler()
+
+        // Note we are using regular config with background tasks enabled
+        let config = StaticConfig.devConfig
+
+        let registrationExpecation = expectation(
+            forNotification: BackgroundTaskService.backgroundTaskRegisteredNotification,
+            object: nil,
+            handler: nil
+        )
+
+        BackgroundTaskService.registerBackgroundSendJob(
+            config: context.config,
+            bgTaskScheduler: taskScheduler
+        )
+
+        await fulfillment(of: [registrationExpecation], timeout: 5)
+
+        let submissionExpecation = expectation(
+            forNotification: BackgroundTaskService.backgroundTaskScheduledNotification,
+            object: nil,
+            handler: nil
+        )
+
+        await BackgroundMessageScheduleService.onEnterBackground(
+            bgTaskScheduler: taskScheduler
+        )
+
+        await fulfillment(of: [submissionExpecation], timeout: 5)
+
+        let pendingTasks = await taskScheduler.pendingTaskRequests()
+        XCTAssertFalse(pendingTasks.isEmpty)
+        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+
+        try await BackgroundMessageScheduleService.onAppForeground(
+            bgTaskScheduler: taskScheduler,
+            publicDataRepository: publicDataRepository,
+            config: config
+        )
+
+        XCTAssertFalse(pendingTasks.isEmpty)
+        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
     }
 }
