@@ -197,7 +197,7 @@ const chatsToSideNav = (
     : [
         {
           id: htmlIdGenerator(id)(),
-          name: "No messages yet",
+          name: "No messages",
         },
       ];
 };
