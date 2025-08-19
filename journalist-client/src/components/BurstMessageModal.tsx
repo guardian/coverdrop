@@ -10,7 +10,7 @@ export const BurstCoverMessageModal = (props: { closeModal: () => void }) => {
   return (
     <EuiConfirmModal
       style={{ width: sizes.coverMessageBurstModal.width }}
-      title={<div>Send cover message burst</div>}
+      title="Send cover message burst"
       onCancel={props.closeModal}
       onConfirm={async () => {
         setBusy(true);
@@ -23,15 +23,22 @@ export const BurstCoverMessageModal = (props: { closeModal: () => void }) => {
       confirmButtonText="Send"
       buttonColor="primary"
     >
-      <EuiFormRow>
-        <EuiRange
-          showInput
-          value={count}
-          min={1}
-          max={1000}
-          onChange={(v) => setCount(Number(v.currentTarget.value))}
-        />
-      </EuiFormRow>
+      <div>
+        <p>
+          Send journalist-to-user cover traffic to the CoverNode.
+          <br />
+          This is a testing feature intended for developer use only.
+        </p>
+        <EuiFormRow label="Number of messages">
+          <EuiRange
+            showInput
+            value={count}
+            min={1}
+            max={1000}
+            onChange={(v) => setCount(Number(v.currentTarget.value))}
+          />
+        </EuiFormRow>
+      </div>
     </EuiConfirmModal>
   );
 };
