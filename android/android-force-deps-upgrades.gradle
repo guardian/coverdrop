@@ -9,7 +9,8 @@ configurations {
                     "com.google.protobuf:protobuf-java:3.25.5",
                     "com.google.protobuf:protobuf-java-util:3.25.5",
                     // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-8707739
-                    "io.netty:netty-codec-http2:4.1.118.Final"
+                    // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-11799531
+                    "io.netty:netty-codec-http2:4.1.124.Final"
             )
         }
     }
