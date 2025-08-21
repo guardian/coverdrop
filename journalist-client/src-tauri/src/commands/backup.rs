@@ -24,18 +24,7 @@ pub async fn should_require_backup(app: State<'_, AppStateHandle>) -> Result<boo
 
 #[tauri::command]
 pub async fn get_backup_checks() -> Result<BackupChecks, CommandError> {
-    let is_backup_volume_mounted = fs::exists(BACKUP_VOLUME_PATH).context(IoSnafu {
-        failed_to: "check if backup volume is mounted",
-    })?;
-
-    if !is_backup_volume_mounted {
-        return Ok(BackupChecks {
-            is_backup_volume_mounted,
-            is_encrypted: false,
-            maybe_existing_backups: None,
-        });
-    }
-
+    tracing::debug!("get backup checks");
     let volume_info_output = process::Command::new("diskutil")
         .arg("info")
         .arg(BACKUP_VOLUME_PATH)
@@ -44,11 +33,14 @@ pub async fn get_backup_checks() -> Result<BackupChecks, CommandError> {
             failed_to: "check backup volume encryption status",
         })?;
 
+    tracing::debug!("diskutil command exited with {}", volume_info_output.status);
     if !volume_info_output.status.success() {
-        return Err(GenericSnafu {
-            ctx: "check backup volume encryption status",
-        }
-        .build());
+        tracing::debug!("The backup volume either doesn't exist or hasn't been mounted.");
+        return Ok(BackupChecks {
+            is_backup_volume_mounted: false,
+            is_encrypted: false,
+            maybe_existing_backups: None,
+        });
     }
 
     let is_encrypted = String::from_utf8_lossy(&volume_info_output.stdout)
@@ -73,7 +65,7 @@ pub async fn get_backup_checks() -> Result<BackupChecks, CommandError> {
         .collect();
     existing_backups.sort_by(|a, b| b.cmp(a));
     Ok(BackupChecks {
-        is_backup_volume_mounted,
+        is_backup_volume_mounted: true,
         is_encrypted,
         maybe_existing_backups: Some(existing_backups),
     })
