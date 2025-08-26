@@ -21,6 +21,8 @@ pub mod healthcheck;
 pub mod identity_api;
 pub mod metrics;
 pub mod monitoring;
+#[allow(dead_code)]
+mod padded_byte_vector;
 mod padded_compressed_string;
 pub mod protocol;
 mod read_ext;

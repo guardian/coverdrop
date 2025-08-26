@@ -13,7 +13,7 @@ use crate::Error;
 /// The default size of `PaddedCompressedString` for use in the CoverDrop protocol
 pub type FixedSizeMessageText = PaddedCompressedString<MESSAGE_PADDING_LEN>;
 
-/// A string of UTF-8 which has been compressed using GZip then padded to a specifed length.
+/// A string of UTF-8 which has been compressed using GZip then padded to a specified length.
 ///
 /// This is useful when you want to be able to send variable length messages using a fixed size buffer.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -25,7 +25,7 @@ pub struct PaddedCompressedString<const PAD_TO: LengthHeader>(Vec<u8>);
 // We could also parametize the PaddedCompressedString type by the type of the length header
 
 /// The type of the header which indicates how long the **compressed** string is.
-/// By keepign this small we save extra bytes for the users message
+/// By keeping this small we save extra bytes for the users message
 type LengthHeader = u16;
 
 impl<const PAD_TO: LengthHeader> PaddedCompressedString<PAD_TO> {

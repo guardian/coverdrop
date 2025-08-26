@@ -65,4 +65,12 @@ pub enum Error {
     SigningKeyExpired,
     #[error("Invalid X25519 public key bytes")]
     InvalidPublicKeyBytes,
+    #[error("Content exceeds maximum length: {0}")]
+    PaddedContentTooLarge(u64),
+    #[error("Padded byte array {0} has not enough size, needs least {1}")]
+    PaddedByteVectorNotEnoughSpace(u64, u64),
+    #[error("Invalid padded byte array")]
+    PaddedByteArrayInvalid,
+    #[error("Stepping padded byte vector is not a multiple of the expected step size")]
+    PaddedByteVectorNotMultipleOfStepSize,
 }
