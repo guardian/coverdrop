@@ -13,6 +13,10 @@ export const sizes = {
   chatMessage: {
     minWidth: "100px",
   },
+  chatsSideBar: {
+    height: "100vh",
+    minWidth: "325px",
+  },
   addTrustAnchorModal: {
     width: widths.genericModalWidth,
   },

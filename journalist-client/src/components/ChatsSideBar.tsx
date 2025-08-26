@@ -39,7 +39,7 @@ type Chat = {
   };
 };
 
-type ChatsSideBarProps = {
+export type ChatsSideBarProps = {
   journalistId: string;
   journalistStatus?: JournalistStatus;
   currentUserReplyKey: string | null;
@@ -393,7 +393,7 @@ export const ChatsSideBar = ({
               title="Status pending"
             >
               <EuiBadge
-                color="#FFA500"
+                color={palette("chat-sidebar-hidden-from-ui-color")}
                 title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
               >
                 Hidden

@@ -40,6 +40,10 @@ const PALETTE = {
     light: "#D3DAE6",
     dark: "#D3DAE6",
   },
+  "--chat-sidebar-hidden-from-ui-color": {
+    light: "#FFA500",
+    dark: "#FFA500",
+  },
   "--chat-sidebar-journalist-name-border-color": {
     light: "#D3DAE6",
     dark: "#D3DAE6",

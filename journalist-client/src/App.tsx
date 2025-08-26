@@ -26,6 +26,7 @@ import { getPublicInfo } from "./commands/admin.ts";
 import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 import { BackupModal } from "./components/BackupModal.tsx";
+import { sizes } from "./styles/sizes.ts";
 
 const App = ({
   panelled,
@@ -216,11 +217,11 @@ const App = ({
             style={{
               position: "sticky",
               top: "0",
-              height: "100vh",
+              height: sizes.chatsSideBar.height,
               overflowY: "auto",
               padding: size.s,
             }}
-            minWidth={325}
+            minWidth={sizes.chatsSideBar.minWidth}
           >
             <ChatsSideBar
               journalistId={vaultState.id}

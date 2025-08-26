@@ -192,7 +192,7 @@ export const SettingsPopover = ({
   );
 
   const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
-  const maybeGithubRepoName = maybeRepo.startsWith("git@")
+  const maybeGithubRepoName = maybeRepo?.startsWith("git@")
     ? maybeRepo.substring(maybeRepo.indexOf(":") + 1, maybeRepo.length - 4) // local repo ssh
     : maybeRepo?.startsWith("https://github.com/")
       ? maybeRepo.substring(
