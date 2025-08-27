@@ -147,15 +147,24 @@ export const CustomExpiryModal = ({
   return (
     <EuiModal onClose={close}>
       <EuiModalHeader>
-        <EuiModalHeaderTitle>Custom Expiry for Message</EuiModalHeaderTitle>
+        <EuiModalHeaderTitle>Custom expiry for message</EuiModalHeaderTitle>
       </EuiModalHeader>
       <EuiModalBody>
-        {maybeExistingCustomExpiry && (
+        {maybeExistingCustomExpiry ? (
           <div>
             <EuiCallOut
               size="s"
               title={`This message already has a custom expiry (${maybeExistingCustomExpiry.format(DATETIME_FORMAT)})`}
               iconType="clockCounter"
+            />
+            <br />
+          </div>
+        ) : (
+          <div>
+            <EuiCallOut
+              size="s"
+              title={`This message is due to expire at the normal time of ${normalExpiryMoment.format(DATETIME_FORMAT)}`}
+              iconType="clock"
             />
             <br />
           </div>
@@ -173,8 +182,20 @@ export const CustomExpiryModal = ({
         <EuiCallOut title="Important" color="warning" iconType="warning">
           Setting a custom expiry only affects your copy of the message.
           <br />
-          The source&apos;s message will still expire at its normal expiry time
-          (around {normalExpiryMoment.format(DATETIME_FORMAT)}).
+          <br />
+          {message.type === "userToJournalistMessage" ? (
+            <>
+              The source&apos;s copy of this message will expire at its normal
+              expiry time, which will be some time before{" "}
+              {normalExpiryMoment.format(DATETIME_FORMAT)}.
+            </>
+          ) : (
+            <>
+              The source&apos;s copy of this message will expire at its normal
+              time, which will be 14 days after whenever they received it: some
+              time after {normalExpiryMoment.format(DATETIME_FORMAT)}.
+            </>
+          )}
         </EuiCallOut>
         <br />
         <div>
