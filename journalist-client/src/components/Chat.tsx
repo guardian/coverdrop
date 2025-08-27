@@ -186,7 +186,7 @@ export const Chat = ({
               const now = moment();
               const expiry = moment(m.customExpiry ?? m.normalExpiry);
 
-              const timeUntilExpiry = moment.duration(now.diff(expiry));
+              const timeUntilExpiry = moment.duration(expiry.diff(now));
 
               const nearExpiry = timeUntilExpiry.asDays() < NEAR_EXPIRY_DAYS;
 

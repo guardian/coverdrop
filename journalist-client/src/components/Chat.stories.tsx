@@ -13,6 +13,9 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 const date = new Date("2025-08-01 15:00:00").toISOString();
+// note normalExpiry here is based on 'now' because Chat's internals compare with 'now' (in reality normalExpiry is 14 days after receivedAt/sentAt)
+const normalExpiry = moment().add(14, "days").toISOString();
+const customExpiry = moment().add(30, "days").toISOString();
 const nearExpiry = moment().add(2, "days").toISOString();
 const urgentExpiry = moment().add(12, "hours").toISOString();
 const userPk =
@@ -29,7 +32,7 @@ const u2jMessage = {
   userPk,
   message: "Hey there fella",
   receivedAt: date,
-  normalExpiry: date,
+  normalExpiry: normalExpiry,
   customExpiry: null,
   read: true,
 } satisfies Partial<Message>;
@@ -39,7 +42,7 @@ const j2uMessage = {
   id: BigInt(10),
   userPk,
   message: "Hey there fella",
-  normalExpiry: date,
+  normalExpiry: normalExpiry,
   customExpiry: null,
   isSent: true,
   sentAt: date,
@@ -48,21 +51,21 @@ const j2uMessage = {
 const mockU2JMessage = (
   id: number,
   message: string,
-  normalExpiry?: string,
+  normalExpiryOverride?: string,
 ) => ({
   ...u2jMessage,
   id: BigInt(id),
-  normalExpiry: normalExpiry ?? date,
+  normalExpiry: normalExpiryOverride ?? normalExpiry,
   message,
 });
 const mockJ2UMessage = (
   id: number,
   message: string,
-  normalExpiry?: string,
+  normalExpiryOverride?: string,
 ) => ({
   ...j2uMessage,
   id: BigInt(id),
-  normalExpiry: normalExpiry ?? date,
+  normalExpiry: normalExpiryOverride ?? normalExpiry,
   message,
 });
 
@@ -127,11 +130,11 @@ export const CustomExpiry: Story = {
     messages: [
       {
         ...mockU2JMessage(1, "Hi, I'm a very important source."),
-        customExpiry: date,
+        customExpiry,
       },
       {
         ...mockJ2UMessage(2, "Have you got anything interesting to say?"),
-        customExpiry: date,
+        customExpiry,
       },
     ],
   },
