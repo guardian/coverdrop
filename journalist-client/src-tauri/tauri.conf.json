@@ -14,7 +14,9 @@
       {
         "title": "Sentinel DEV",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "minWidth": 780,
+        "minHeight": 400
       }
     ],
     "security": {
