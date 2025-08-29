@@ -186,14 +186,14 @@ export const CustomExpiryModal = ({
           {message.type === "userToJournalistMessage" ? (
             <>
               The source&apos;s copy of this message will expire at its normal
-              expiry time, which will be some time before{" "}
-              {normalExpiryMoment.format(DATETIME_FORMAT)}.
+              expiry time (some time before{" "}
+              {normalExpiryMoment.format(DATETIME_FORMAT)}).
             </>
           ) : (
             <>
               The source&apos;s copy of this message will expire at its normal
-              time, which will be 14 days after whenever they received it: some
-              time after {normalExpiryMoment.format(DATETIME_FORMAT)}.
+              time, which will be 14 days after whenever they received it (some
+              time after {normalExpiryMoment.format(DATETIME_FORMAT)}).
             </>
           )}
         </EuiCallOut>
