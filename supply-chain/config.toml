@@ -677,10 +677,6 @@ criteria = "safe-to-deploy"
 version = "0.12.4"
 criteria = "safe-to-deploy"
 
-[[exemptions.home]]
-version = "0.5.11"
-criteria = "safe-to-deploy"
-
 [[exemptions.html5ever]]
 version = "0.26.0"
 criteria = "safe-to-deploy"
@@ -1117,10 +1113,6 @@ criteria = "safe-to-deploy"
 version = "0.10.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.phf]]
-version = "0.11.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.phf_codegen]]
 version = "0.8.0"
 criteria = "safe-to-deploy"
@@ -1137,10 +1129,6 @@ criteria = "safe-to-deploy"
 version = "0.10.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.phf_generator]]
-version = "0.11.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.phf_macros]]
 version = "0.8.0"
 criteria = "safe-to-deploy"
@@ -1155,10 +1143,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.phf_shared]]
 version = "0.10.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.phf_shared]]
-version = "0.11.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.pin-project]]
@@ -1167,10 +1151,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.pin-project-internal]]
 version = "1.1.9"
-criteria = "safe-to-deploy"
-
-[[exemptions.pin-project-lite]]
-version = "0.2.16"
 criteria = "safe-to-deploy"
 
 [[exemptions.piper]]
@@ -1275,10 +1255,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.redox_users]]
 version = "0.4.6"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex]]
-version = "1.11.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.reqwest]]
@@ -1401,10 +1377,6 @@ criteria = "safe-to-deploy"
 version = "0.1.6"
 criteria = "safe-to-deploy"
 
-[[exemptions.serde-value]]
-version = "0.7.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.serde_derive_internals]]
 version = "0.29.1"
 criteria = "safe-to-deploy"
@@ -1451,10 +1423,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.siphasher]]
 version = "0.3.10"
-criteria = "safe-to-deploy"
-
-[[exemptions.siphasher]]
-version = "1.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.slab]]
@@ -1701,28 +1669,12 @@ criteria = "safe-to-deploy"
 version = "0.3.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.tracing]]
-version = "0.1.41"
-criteria = "safe-to-deploy"
-
-[[exemptions.tracing-attributes]]
-version = "0.1.28"
-criteria = "safe-to-deploy"
-
-[[exemptions.tracing-core]]
-version = "0.1.33"
-criteria = "safe-to-deploy"
-
 [[exemptions.tracing-log]]
 version = "0.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tracing-serde]]
 version = "0.2.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.tracing-subscriber]]
-version = "0.3.19"
 criteria = "safe-to-deploy"
 
 [[exemptions.tray-icon]]
@@ -1753,22 +1705,6 @@ criteria = "safe-to-deploy"
 version = "1.1.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.unic-char-property]]
-version = "0.9.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.unic-char-range]]
-version = "0.9.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.unic-common]]
-version = "0.9.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.unic-ucd-ident]]
-version = "0.9.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.unicode-properties]]
 version = "0.1.3"
 criteria = "safe-to-deploy"
@@ -1785,24 +1721,12 @@ criteria = "safe-to-deploy"
 version = "2.1.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.urlpattern]]
-version = "0.3.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.utf-8]]
 version = "0.7.6"
 criteria = "safe-to-deploy"
 
-[[exemptions.utf8parse]]
-version = "0.2.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.uuid]]
 version = "1.13.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.valuable]]
-version = "0.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-bag]]
