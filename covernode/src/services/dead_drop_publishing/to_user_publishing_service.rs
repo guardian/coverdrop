@@ -55,9 +55,7 @@ impl ToUserPublishingService {
                 panic!("No CoverNode identity key available, cannot continue!");
             };
 
-            let mut dead_drop = inbound.dead_drop_content;
-            dead_drop.shuffle();
-
+            let dead_drop = inbound.dead_drop_content;
             let serialized_dead_drop = dead_drop.serialize();
 
             // V1 signature

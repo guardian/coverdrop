@@ -1,5 +1,3 @@
-use rand::{seq::SliceRandom, thread_rng};
-
 use crate::{
     api::models::messages::journalist_to_user_message::EncryptedJournalistToUserMessage,
     protocol::constants::JOURNALIST_TO_USER_ENCRYPTED_MESSAGE_LEN,
@@ -29,10 +27,5 @@ impl JournalistToUserDeadDropMessages {
         }
 
         SerializedJournalistToUserDeadDropMessages::from_vec_unchecked(buf)
-    }
-
-    pub fn shuffle(&mut self) {
-        let mut rng = thread_rng();
-        self.messages.shuffle(&mut rng);
     }
 }

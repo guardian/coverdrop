@@ -55,9 +55,7 @@ impl ToJournalistPublishingService {
             let signing_max_epoch = latest_id_key_pair.epoch;
             let max_epoch = max(inbound.encryption_max_epoch, signing_max_epoch);
 
-            let mut dead_drop = inbound.dead_drop_content;
-            dead_drop.shuffle();
-
+            let dead_drop = inbound.dead_drop_content;
             let serialized_dead_drop_messages = dead_drop.serialize();
 
             // V1 signature

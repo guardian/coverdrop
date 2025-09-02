@@ -297,7 +297,14 @@ fun PassphraseWordEditField(
                 color = if (passphraseWord.isValid) foregroundColor else WarningPastelRed,
                 shape = RoundedCornerShape.XS,
             )
-            .onKeyEvent { it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER && onDone() }
+            .onKeyEvent {
+                val nativeKeyEvent = it.nativeKeyEvent
+                if (nativeKeyEvent.action == KeyEvent.ACTION_UP && nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER) {
+                    onDone()
+                } else {
+                    false
+                }
+            }
             .testTag(testTag)
             .semantics {
                 passphraseWordHidden = !passphraseWord.revealed
