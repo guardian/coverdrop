@@ -1,0 +1,27 @@
+repos:
+  - repo: local
+    hooks:
+      - id: SwiftFormat
+        name: Swift Format
+        description: Enforces formatting guidelines for Swift files before committing.
+        language: system
+        entry: bash -c 'ios/scripts/tidy_current_branch.sh && git add $(git ls-files -m "*.swift")'
+        files: ^ios/reference/
+        types: [file, swift]
+        pass_filenames: false
+        require_serial: true
+        verbose: true
+        stages:
+          - pre-commit
+
+      - id: Lint Journalist Client
+        name: Lint Journalist Client
+        description: Lints Journalist Client code before committing.
+        language: system
+        entry: bash -c 'cd journalist-client && npx lint-staged'
+        pass_filenames: false
+        require_serial: true
+        files: ^journalist-client/
+        verbose: true
+        stages:
+          - pre-commit

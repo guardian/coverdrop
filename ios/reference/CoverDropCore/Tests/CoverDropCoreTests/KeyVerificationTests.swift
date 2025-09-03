@@ -2,7 +2,7 @@
 import Sodium
 import XCTest
 
-// swiftlint:disable identifier_name line_length
+// swiftlint:disable identifier_name
 final class KeyVerificationTests: XCTestCase {
     func testSuccessfullVerification() throws {
         let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
@@ -88,6 +88,9 @@ final class KeyVerificationTests: XCTestCase {
             now: now
         ))
     }
+
+    // really long testUnSuccessfullInitialisation testUnSuccessfullInitialisation --- IGNORE --- // really long
+    // testUnSuccessfullInitialisation testUnSuccessfullInitialisation --- IGNORE ---
 
     func testUnSuccessfullInitialisation() throws {
         let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
@@ -195,4 +198,4 @@ final class KeyVerificationTests: XCTestCase {
     }
 }
 
-// swiftlint:enable identifier_name line_length
+// swiftlint:enable identifier_name
