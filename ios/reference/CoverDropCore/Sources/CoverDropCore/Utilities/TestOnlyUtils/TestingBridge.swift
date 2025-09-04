@@ -47,22 +47,31 @@ public enum TestingBridge {
         }
     }
 
-    static var currentTimeOverride: Date?
+    // As we want time to advance while the app is running, we store a time offset
+    // rather than an absolute date.
+    static var currentTimeOffset: TimeInterval?
 
-    static func setCurrentTimeOverride(override: Date?) {
-        currentTimeOverride = override
+    static func setCurrentTimeOverride(override: Date) {
+        let offset = Date.now.distance(to: override)
+        currentTimeOffset = offset
+    }
+
+    static func resetCurrentTimeOverride() {
+        currentTimeOffset = nil
     }
 
     public static func getCurrentTimeOverride() -> Date? {
-        return currentTimeOverride
+        guard let offset = currentTimeOffset else {
+            return nil
+        }
+        return Date.now.addingTimeInterval(offset)
     }
 
     public static func advanceCurrentTime(by seconds: TimeInterval) {
-        guard let currentTimeOverride = currentTimeOverride else {
+        guard let offset = currentTimeOffset else {
             return
         }
-
-        self.currentTimeOverride = Date(timeIntervalSince1970: currentTimeOverride.timeIntervalSince1970 + seconds)
+        currentTimeOffset = offset + seconds
     }
 
     /// Returns `true` if the reference app should enable mocked API resonses

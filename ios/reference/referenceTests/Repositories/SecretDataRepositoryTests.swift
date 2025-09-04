@@ -1,4 +1,5 @@
 @testable import CoverDropCore
+import Foundation
 import Sodium
 import XCTest
 
@@ -10,7 +11,7 @@ final class SecretDataRepositoryTests: XCTestCase {
 
     override func tearDown() {
         // Remove the time override we set in the expiration test
-        TestingBridge.setCurrentTimeOverride(override: nil)
+        TestingBridge.resetCurrentTimeOverride()
     }
 
     func testSecretDataRepositoryRoundTrip() async throws {
@@ -262,7 +263,7 @@ final class SecretDataRepositoryTests: XCTestCase {
         //
         // Move forward to the expiry time minus one second (the messages should survive locking
         // and subsequent unlocking)
-        try TestingBridge.setCurrentTimeOverride(override: expiryTime.minusSeconds(1))
+        try TestingBridge.setCurrentTimeOverride(override: expiryTime.minusSeconds(10))
 
         _ = try await secretDataRepository.unlock(passphrase: passphrase)
         guard case let .unlockedSecretData(unlockedData: unlockedData) = secretDataRepository.secretData else {
@@ -283,7 +284,7 @@ final class SecretDataRepositoryTests: XCTestCase {
         //
         // Move forward to the expiry time plus one second (the messages should appear once, but
         // then deleted on save so that they do not appear on te next unlock)
-        try TestingBridge.setCurrentTimeOverride(override: expiryTime.plusSeconds(1))
+        try TestingBridge.setCurrentTimeOverride(override: expiryTime.plusSeconds(10))
 
         _ = try await secretDataRepository.unlock(passphrase: passphrase)
         guard case let .unlockedSecretData(unlockedData: unlockedData) = secretDataRepository.secretData else {
