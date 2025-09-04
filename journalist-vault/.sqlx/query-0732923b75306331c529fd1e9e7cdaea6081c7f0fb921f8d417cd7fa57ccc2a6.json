@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE users SET marked_as_unread = false WHERE user_pk = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "0732923b75306331c529fd1e9e7cdaea6081c7f0fb921f8d417cd7fa57ccc2a6"
+}

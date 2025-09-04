@@ -30,7 +30,8 @@ pub(crate) async fn users(conn: &mut SqliteConnection) -> anyhow::Result<Vec<Use
                 user_pk AS "user_pk: Vec<u8>",
                 alias AS "alias: String",
                 description AS "description: String",
-                status AS "status: UserStatus"
+                status AS "status: UserStatus",
+                marked_as_unread AS "marked_as_unread: bool"
             FROM users
         "#
     )
@@ -44,6 +45,7 @@ pub(crate) async fn users(conn: &mut SqliteConnection) -> anyhow::Result<Vec<Use
             status: row.status,
             alias: row.alias,
             description: row.description,
+            marked_as_unread: row.marked_as_unread,
         })
     })
     .collect::<anyhow::Result<Vec<_>>>()?;
@@ -88,6 +90,38 @@ pub(crate) async fn update_user_status(
             SET status = ?1
             WHERE user_pk = ?2"#,
         status_string,
+        user_pk_bytes
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}
+
+pub(crate) async fn mark_as_read(
+    conn: &mut SqliteConnection,
+    user_pk: &UserPublicKey,
+) -> anyhow::Result<()> {
+    let user_pk_bytes = &user_pk.as_bytes()[..];
+
+    sqlx::query!(
+        r#"UPDATE users SET marked_as_unread = false WHERE user_pk = ?1"#,
+        user_pk_bytes
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}
+
+pub(crate) async fn mark_as_unread(
+    conn: &mut SqliteConnection,
+    user_pk: &UserPublicKey,
+) -> anyhow::Result<()> {
+    let user_pk_bytes = &user_pk.as_bytes()[..];
+
+    sqlx::query!(
+        r#"UPDATE users SET marked_as_unread = true WHERE user_pk = ?1"#,
         user_pk_bytes
     )
     .execute(conn)

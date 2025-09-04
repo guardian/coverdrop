@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN marked_as_unread INTEGER NOT NULL DEFAULT 0;

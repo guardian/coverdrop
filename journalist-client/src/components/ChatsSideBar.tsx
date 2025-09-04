@@ -270,7 +270,10 @@ export const ChatsSideBar = ({
             lastMessageTimestamp: isLatestMessage
               ? messageTimestamp
               : maybeExistingInAcc.lastMessageTimestamp,
-            hasUnread: !isRead || maybeExistingInAcc?.hasUnread,
+            hasUnread:
+              thisUserInfo.markedAsUnread ||
+              !isRead ||
+              maybeExistingInAcc?.hasUnread,
             hasMessagesWithCustomExpiry:
               !!message.customExpiry ||
               maybeExistingInAcc?.hasMessagesWithCustomExpiry,

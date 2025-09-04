@@ -104,6 +104,7 @@ pub struct User {
     pub alias: Option<String>,
     pub description: Option<String>,
     pub status: UserStatus,
+    pub marked_as_unread: bool,
 }
 
 #[derive(Clone)]
@@ -394,14 +395,17 @@ impl JournalistVault {
         message_queries::delete_queue_message(&mut conn, id).await
     }
 
-    pub async fn mark_as_read(&self, message_id: i64) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-        message_queries::mark_as_read(&mut conn, message_id).await
+    pub async fn mark_as_read(&self, user_pk: &UserPublicKey) -> anyhow::Result<()> {
+        let mut tx = self.pool.begin().await?;
+        message_queries::mark_as_read(&mut tx, user_pk).await?;
+        user_queries::mark_as_read(&mut tx, user_pk).await?;
+        tx.commit().await?;
+        Ok(())
     }
 
-    pub async fn mark_as_unread(&self, message_id: i64) -> anyhow::Result<()> {
+    pub async fn mark_as_unread(&self, user_pk: &UserPublicKey) -> anyhow::Result<()> {
         let mut conn = self.pool.acquire().await?;
-        message_queries::mark_as_unread(&mut conn, message_id).await
+        user_queries::mark_as_unread(&mut conn, user_pk).await
     }
 
     pub async fn set_custom_expiry(

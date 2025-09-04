@@ -29,6 +29,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         displayName: user.displayName,
         description: user.description,
         status: user.status,
+        markedAsUnread: user.markedAsUnread,
       };
       return acc;
     }, {}),

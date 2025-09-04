@@ -156,9 +156,7 @@ const App = ({
     }
 
     fetchUsersAndChats();
-    const intervalId = setInterval(() => {
-      fetchUsersAndChats();
-    }, 5000);
+    const intervalId = setInterval(fetchUsersAndChats, 5000);
 
     return () => clearInterval(intervalId);
   }, [vaultState]);
@@ -171,21 +169,12 @@ const App = ({
     });
   }, []);
 
-  const markChatAsUnread = (replyKey: string) => {
-    const messagesFromUser = messageStore.messages.filter(
-      (msg) =>
-        msg.userPk === replyKey && msg.type === "userToJournalistMessage",
-    );
+  const markChatAsUnread = async (replyKey: string) => {
     if (replyKey === currentUserReplyKey) {
       setCurrentUserReplyKey(null); // must clear before markAsUnread, so it doesn't get immediately marked as read elsewhere
     }
-    if (messagesFromUser.length > 0) {
-      markAsUnread(messagesFromUser[messagesFromUser.length - 1].id);
-    } else {
-      useErrorStore
-        .getState()
-        .addWarning("Cannot mark chat as unread, no messages found from user.");
-    }
+    await markAsUnread(replyKey);
+    getUsers().then(userStore.setUsers);
   };
 
   useEffect(() => {

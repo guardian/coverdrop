@@ -32,6 +32,7 @@ pub struct User {
     display_name: String,
     alias: Option<String>,
     description: Option<String>,
+    marked_as_unread: bool,
 }
 
 impl User {
@@ -41,6 +42,7 @@ impl User {
         status: UserStatus,
         alias: Option<String>,
         description: Option<String>,
+        marked_as_unread: bool,
     ) -> Self {
         let display_name = name_generator.name_from_bytes(user_pk.key.as_bytes(), 2);
         Self {
@@ -49,6 +51,7 @@ impl User {
             display_name,
             alias,
             description,
+            marked_as_unread,
         }
     }
 }

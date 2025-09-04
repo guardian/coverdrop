@@ -68,6 +68,7 @@ pub async fn get_users(app: State<'_, AppStateHandle>) -> Result<Vec<User>, Comm
                 UserStatus::from_mailbox_message_user_status(user.status),
                 user.alias,
                 user.description,
+                user.marked_as_unread,
             )
         })
         .collect();
@@ -78,14 +79,16 @@ pub async fn get_users(app: State<'_, AppStateHandle>) -> Result<Vec<User>, Comm
 #[tauri::command]
 pub async fn mark_as_read(
     app: State<'_, AppStateHandle>,
-    message_id: i64,
+    reply_key: String,
 ) -> Result<(), CommandError> {
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
 
-    tracing::info!("Marking message {} as read", message_id);
+    tracing::info!("Marking chat {} as read", &reply_key);
 
-    vault.mark_as_read(message_id).await.context(VaultSnafu {
-        failed_to: "mark message as read",
+    let user_pk = user_pk_from_hex(&reply_key)?;
+
+    vault.mark_as_read(&user_pk).await.context(VaultSnafu {
+        failed_to: "mark chat as read",
     })?;
 
     Ok(())
@@ -94,14 +97,16 @@ pub async fn mark_as_read(
 #[tauri::command]
 pub async fn mark_as_unread(
     app: State<'_, AppStateHandle>,
-    message_id: i64,
+    reply_key: String,
 ) -> Result<(), CommandError> {
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
 
-    tracing::info!("Marking message {} as unread", message_id);
+    tracing::info!("Marking chat {} as unread", reply_key);
 
-    vault.mark_as_unread(message_id).await.context(VaultSnafu {
-        failed_to: "mark message as unread",
+    let user_pk = user_pk_from_hex(&reply_key)?;
+
+    vault.mark_as_unread(&user_pk).await.context(VaultSnafu {
+        failed_to: "mark chat as unread",
     })?;
 
     Ok(())

@@ -1,7 +1,6 @@
 import { Message } from "../model/bindings/Message";
 import { User } from "../model/bindings/User";
 import { UserStatus } from "../model/bindings/UserStatus";
-import { useMessageStore } from "../state/messages";
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
 
 export const getUsers = (): Promise<User[]> => {
@@ -26,14 +25,12 @@ export const checkMessageLength = (message: string): Promise<number> => {
   return invokeWithErrorMessage("check_message_length", { message });
 };
 
-export const markAsRead = async (messageId: bigint): Promise<void> => {
-  await invokeWithErrorMessage("mark_as_read", { messageId });
-  useMessageStore.getState().markAsRead(messageId);
+export const markAsRead = async (replyKey: string): Promise<void> => {
+  await invokeWithErrorMessage("mark_as_read", { replyKey });
 };
 
-export const markAsUnread = async (messageId: bigint): Promise<void> => {
-  await invokeWithErrorMessage("mark_as_unread", { messageId });
-  useMessageStore.getState().markAsUnread(messageId);
+export const markAsUnread = async (replyKey: string): Promise<void> => {
+  await invokeWithErrorMessage("mark_as_unread", { replyKey });
 };
 
 export const setCustomExpiry = async (

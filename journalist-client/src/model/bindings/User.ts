@@ -8,4 +8,5 @@ export type User = {
   displayName: string;
   alias: string | null;
   description: string | null;
+  markedAsUnread: boolean;
 };

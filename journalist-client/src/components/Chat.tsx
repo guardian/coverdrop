@@ -12,6 +12,7 @@ import {
 import {
   checkMessageLength,
   getChats,
+  getUsers,
   markAsRead,
   submitMessage,
 } from "../commands/chats";
@@ -25,6 +26,7 @@ import { sizes } from "../styles/sizes";
 import { CustomExpiryModal } from "./CustomExpiryModal.tsx";
 import { PerMessageMenu } from "./PerMessageMenu.tsx";
 import moment from "moment";
+import { useUserStore } from "../state/users.ts";
 
 const NEAR_EXPIRY_DAYS = 3;
 const URGENT_EXPIRY_HOURS = 24;
@@ -72,6 +74,7 @@ export const Chat = ({
 
   const draftStore = useDraftStore();
   const messageStore = useMessageStore();
+  const userStore = useUserStore();
 
   const prevUserReplyKey = useRef<string | null>(null);
 
@@ -83,15 +86,22 @@ export const Chat = ({
   const { size } = euiTheme;
 
   useEffect(() => {
-    messages.forEach((m) => {
-      if (
+    const has_unread_messages = messages.some(
+      (m) =>
         m.type === "userToJournalistMessage" &&
         m.userPk === userReplyKey &&
-        !m.read
-      ) {
-        markAsRead(m.id);
-      }
-    });
+        !m.read,
+    );
+    const is_marked_as_unread = userStore.users.find(
+      (user) => user.userPk === userReplyKey,
+    )?.markedAsUnread;
+
+    if (has_unread_messages || is_marked_as_unread) {
+      markAsRead(userReplyKey);
+    }
+
+    getChats().then(messageStore.setMessages);
+    getUsers().then(userStore.setUsers);
 
     if (userReplyKey !== prevUserReplyKey.current) {
       const draft = draftStore.drafts[userReplyKey] || "";

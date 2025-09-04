@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT\n                user_pk AS \"user_pk: Vec<u8>\",\n                alias AS \"alias: String\",\n                description AS \"description: String\",\n                status AS \"status: UserStatus\"\n            FROM users\n        ",
+  "query": "\n            SELECT\n                user_pk AS \"user_pk: Vec<u8>\",\n                alias AS \"alias: String\",\n                description AS \"description: String\",\n                status AS \"status: UserStatus\",\n                marked_as_unread AS \"marked_as_unread: bool\"\n            FROM users\n        ",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,11 @@
         "name": "status: UserStatus",
         "ordinal": 3,
         "type_info": "Text"
+      },
+      {
+        "name": "marked_as_unread: bool",
+        "ordinal": 4,
+        "type_info": "Int64"
       }
     ],
     "parameters": {
@@ -31,8 +36,9 @@
       false,
       true,
       true,
+      false,
       false
     ]
   },
-  "hash": "8b184db94c6f89aba33bed0f589fb8d0247298df0658e42506cc2ced05c7e862"
+  "hash": "ce7d274db68f7127d7a246bd77ddb44c78f5277008bc2d336cd8d1e68d3d4a1f"
 }

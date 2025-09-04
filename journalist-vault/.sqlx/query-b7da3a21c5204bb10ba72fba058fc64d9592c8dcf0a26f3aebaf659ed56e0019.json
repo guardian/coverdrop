@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            UPDATE u2j_messages\n            SET read = true\n            WHERE read = false AND user_pk = ?1\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "b7da3a21c5204bb10ba72fba058fc64d9592c8dcf0a26f3aebaf659ed56e0019"
+}

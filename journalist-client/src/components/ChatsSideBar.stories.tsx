@@ -54,6 +54,7 @@ const users = [
     displayName: "Fake user",
     alias: "Callout user",
     description: "Description of a fake user",
+    markedAsUnread: false,
   },
   {
     type: "User",
@@ -62,6 +63,7 @@ const users = [
     displayName: "Fake user",
     alias: "Another callout user",
     description: "Description of another fake user",
+    markedAsUnread: true,
   },
 ] satisfies User[];
 

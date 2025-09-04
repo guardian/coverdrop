@@ -165,29 +165,22 @@ pub(crate) async fn messages(conn: &mut SqliteConnection) -> anyhow::Result<Vec<
 
 pub(crate) async fn mark_as_read(
     conn: &mut SqliteConnection,
-    message_id: i64,
+    user_pk: &UserPublicKey,
 ) -> anyhow::Result<()> {
+    let user_pk_bytes = &user_pk.as_bytes()[..];
+
     sqlx::query!(
-        r#"UPDATE u2j_messages SET read = true WHERE id = ?1"#,
-        message_id
+        r#"
+            UPDATE u2j_messages
+            SET read = true
+            WHERE read = false AND user_pk = ?1
+    "#,
+        user_pk_bytes
     )
     .execute(conn)
     .await?;
 
-    Ok(())
-}
-
-pub(crate) async fn mark_as_unread(
-    conn: &mut SqliteConnection,
-    message_id: i64,
-) -> anyhow::Result<()> {
-    sqlx::query!(
-        r#"UPDATE u2j_messages SET read = false WHERE id = ?1"#,
-        message_id
-    )
-    .execute(conn)
-    .await?;
-
+    // TODO consider returning the number of messages marked as read
     Ok(())
 }
 
