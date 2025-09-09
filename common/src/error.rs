@@ -73,4 +73,8 @@ pub enum Error {
     PaddedByteArrayInvalid,
     #[error("Stepping padded byte vector is not a multiple of the expected step size")]
     PaddedByteVectorNotMultipleOfStepSize,
+    #[error("Too few secret shares provided; at least {0} required, but got {1}")]
+    SecretSharingTooFewShares(u64, u64),
+    #[error("Share size mismatch; expected {0} bytes, but got {1}")]
+    SecretSharingShareSizeMismatch(usize, usize),
 }

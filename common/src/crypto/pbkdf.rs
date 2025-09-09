@@ -8,7 +8,7 @@ use argon2::{
 };
 use chacha20poly1305::aead::OsRng;
 
-use super::secret_box::{SecretBoxKey, KEY_LEN};
+use super::secret_box::{SecretBoxKey, SECRET_BOX_KEY_LEN};
 
 /// Default passphrase length for Argon2 when using the EFF word list.
 /// See: `docs/client_passphrase_configurations.md`
@@ -67,10 +67,10 @@ pub fn derive_secret_box_key_with_configuration(
 
     let salt = Salt::try_from(salt.as_ref())
         .map_err(|_| anyhow::anyhow!("Failed to create salt from salt string"))?;
-    let mut salt_arr = [0u8; KEY_LEN];
+    let mut salt_arr = [0u8; SECRET_BOX_KEY_LEN];
     let salt_bytes = salt.decode_b64(&mut salt_arr).unwrap();
 
-    let mut key: [u8; KEY_LEN] = [0; KEY_LEN];
+    let mut key: [u8; SECRET_BOX_KEY_LEN] = [0; SECRET_BOX_KEY_LEN];
     argon2
         .hash_password_into(password.as_bytes(), salt_bytes, &mut key)
         .unwrap();

@@ -1,3 +1,6 @@
+#[allow(dead_code)]
+mod backup;
+mod backup_data;
 pub mod constants;
 pub mod covernode;
 pub mod journalist;

@@ -12,11 +12,11 @@ use super::encryptable::Encryptable;
 
 pub type SecretBoxKey = Key<XChaCha20Poly1305>;
 
-pub const KEY_LEN: usize = 32;
-pub const NONCE_LEN: usize = 24;
-pub const TAG_LEN: usize = constants::POLY1305_AUTH_TAG_LEN;
+pub const SECRET_BOX_KEY_LEN: usize = 32;
+pub const SECRET_BOX_NONCE_LEN: usize = 24;
+pub const SECRET_BOX_TAG_LEN: usize = constants::POLY1305_AUTH_TAG_LEN;
 
-pub const SECRET_BOX_FOOTER_LEN: usize = NONCE_LEN + TAG_LEN;
+pub const SECRET_BOX_FOOTER_LEN: usize = SECRET_BOX_NONCE_LEN + SECRET_BOX_TAG_LEN;
 
 /// Serialized values which are encrypted by a secret key. Uses XChaCha20Poly1305 internally.
 /// Unlike NaCl-like libraries it also handles the nonce, by appending it to the end of the buffer.
@@ -24,6 +24,7 @@ pub const SECRET_BOX_FOOTER_LEN: usize = NONCE_LEN + TAG_LEN;
 /// Encryption and decryption and be performed on structures which implement the [`Encryptable`] trait.
 ///
 /// [`Encryptable`]: super::Encryptable
+#[derive(Eq, PartialEq, Debug, Clone)]
 pub struct SecretBox<T> {
     ciphertext_tag_and_nonce: Vec<u8>,
     marker: PhantomData<T>,
@@ -85,7 +86,7 @@ impl<T> SecretBox<T> {
     fn decrypt_bytes(key: &SecretBoxKey, secretbox_bytes: &[u8]) -> Result<Vec<u8>, Error> {
         let aead = XChaCha20Poly1305::new(key);
 
-        let nonce_start = secretbox_bytes.len() - NONCE_LEN;
+        let nonce_start = secretbox_bytes.len() - SECRET_BOX_NONCE_LEN;
 
         let nonce = XNonce::from_slice(&secretbox_bytes[nonce_start..]);
         let ciphertext = &secretbox_bytes[..nonce_start];

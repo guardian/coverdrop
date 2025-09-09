@@ -39,6 +39,7 @@ regex.workspace = true
 reqwest.workspace = true
 rpassword.workspace = true
 serde.workspace = true
+serde_cbor.workspace = true
 serde_json.workspace = true
 serde_with.workspace = true
 sha2.workspace = true
@@ -52,6 +53,7 @@ strum.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 x25519-dalek.workspace = true
+zeroize.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

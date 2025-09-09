@@ -1,3 +1,4 @@
+use crate::crypto::Encryptable;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use sodiumoxide::randombytes::randombytes;
@@ -119,6 +120,16 @@ impl<const PAD_TO_STEP_SIZE: usize> SteppingPaddedByteVector<PAD_TO_STEP_SIZE> {
             return Err(Error::PaddedByteVectorNotMultipleOfStepSize);
         }
         self.0.into_unpadded()
+    }
+}
+
+impl<const PAD_TO_STEP_SIZE: usize> Encryptable for SteppingPaddedByteVector<PAD_TO_STEP_SIZE> {
+    fn as_unencrypted_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+
+    fn from_unencrypted_bytes(bytes: Vec<u8>) -> Result<Self, Error> {
+        SteppingPaddedByteVector::from(bytes)
     }
 }
 
