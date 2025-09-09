@@ -25,3 +25,38 @@ repos:
         verbose: true
         stages:
           - pre-commit
+
+      - id: cargo-fmt
+        name: Cargo fmt
+        description: Format files with cargo fmt.
+        entry: cargo fmt
+        language: system
+        types: [rust]
+        args: ["--"]
+        verbose: true
+        require_serial: true
+        stages:
+          - pre-commit
+
+      - id: cargo-check
+        name: Cargo check
+        description: Check the package for errors.
+        entry: cargo check
+        language: system
+        types: [rust]
+        pass_filenames: false
+        verbose: true
+        stages:
+          - pre-commit
+
+      - id: clippy
+        name: clippy
+        description: Lint rust sources
+        entry: cargo clippy
+        language: system
+        args: ["--", "-D", "warnings"]
+        types: [rust]
+        pass_filenames: false
+        verbose: true
+        stages:
+          - pre-commit
