@@ -64,7 +64,7 @@ impl Task for PullDeadDrops {
 
             let dead_drop_list = self
                 .api_client
-                .pull_journalist_dead_drops(ids_greater_than, None)
+                .pull_all_journalist_dead_drops(ids_greater_than)
                 .await?;
 
             let Some(max_dead_drop_id) = dead_drop_list
