@@ -249,6 +249,12 @@ criteria = "safe-to-deploy"
 version = "0.0.1"
 notes = "This is required by the dirs create, and is to support redox-os within dirs"
 
+[[audits.matchers]]
+who = "Daniel Hugenroth <daniel.hugenroth.contractor@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.0 -> 0.2.0"
+notes = "Security update regarding ANSI escape injections"
+
 [[audits.metrics]]
 who = "zekehuntergreen <zeke.huntergreen@guardian.co.uk>"
 criteria = "safe-to-deploy"
@@ -288,6 +294,12 @@ version = "3.1.0"
 who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
 version = "0.1.0"
+
+[[audits.nu-ansi-term]]
+who = "Daniel Hugenroth <daniel.hugenroth.contractor@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.46.0 -> 0.50.1"
+notes = "Security update regarding ANSI escape injections"
 
 [[audits.object]]
 who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
@@ -539,6 +551,12 @@ who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
 criteria = "safe-to-deploy"
 delta = "0.24.1 -> 0.25.0"
 notes = "https://github.com/rustls/tokio-rustls/compare/v/0.24.1...v/0.25.0 moved to web_pki types , looks good"
+
+[[audits.tracing-subscriber]]
+who = "Daniel Hugenroth <daniel.hugenroth.contractor@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.3.19 -> 0.3.20"
+notes = "Security update regarding ANSI escape injections"
 
 [[audits.untrusted]]
 who = "Mario Savarese <mario.savarese@guardian.co.uk>"

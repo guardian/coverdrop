@@ -120,7 +120,7 @@ tokio-util = { version = "0.7.12", features = ["compat"] }
 tower = "0.4.13"
 tower-http = { version = "0.6.1", features = ["trace"] }
 tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.17", features = ["json", "env-filter"] }
+tracing-subscriber = { version = "0.3.20", features = ["json", "env-filter"] }
 ts-rs = { version = "10.1.0", features = ["chrono-impl"] }
 uuid = { version = "1.2.1", features = ["serde", "v4"] }
 walkdir = "2.5.0"
