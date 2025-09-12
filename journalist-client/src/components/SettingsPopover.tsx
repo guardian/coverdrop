@@ -220,6 +220,17 @@ export const SettingsPopover = ({
             <strong>Helpers</strong>
           </EuiContextMenuItem>
 
+          <EuiContextMenuItem icon="documentEdit">
+            <EuiLink
+              href="https://docs.google.com/document/d/1QvVbPchfN5Hqf9TuNQ9QPHFeRJXiXN9P4H-ZBmDojsE"
+              target="_blank"
+              rel="noopener noreferrer"
+              color="text"
+            >
+              Standard replies
+            </EuiLink>
+          </EuiContextMenuItem>
+
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
