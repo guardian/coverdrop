@@ -7,6 +7,13 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "core:tray:default",
+    "core:app:allow-default-window-icon",
+    "core:window:allow-hide",
+    "core:window:allow-unminimize",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-icon"
   ]
 }

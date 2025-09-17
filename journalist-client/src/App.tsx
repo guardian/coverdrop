@@ -27,6 +27,7 @@ import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 import { BackupModal } from "./components/BackupModal.tsx";
 import { sizes } from "./styles/sizes.ts";
+import { useTrayIcon } from "./hooks/useTrayIcon.ts";
 
 const App = ({
   panelled,
@@ -52,6 +53,9 @@ const App = ({
   }, [colorMode]);
 
   const [vaultState, setVaultState] = useState<VaultState | null>(null);
+
+  useTrayIcon({ isVaultOpen: !!vaultState });
+
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,
   );

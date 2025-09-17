@@ -20,8 +20,7 @@ use logging::JournalistClientLogLayer;
 use model::Profiles;
 use notifications::start_notification_service;
 use reqwest::Url;
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
-use tauri::{tray::TrayIconBuilder, App, Manager as _};
+use tauri::{App, Manager as _};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
@@ -103,30 +102,6 @@ pub fn run() {
         .setup(move |app| {
             let config_dir = app.path().app_data_dir()?;
 
-            let _tray = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
-                .tooltip(&app.package_info().name)
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            if window.is_focused().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.unminimize();
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
-                        }
-                    }
-                })
-                .build(app)?;
-
             let notifications = start_notification_service(app.app_handle());
             let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
 
@@ -191,6 +166,15 @@ pub fn run() {
                     .expect("Could not hide main window, when CloseRequested");
             }
         })
-        .run(tauri::generate_context!())
-        .expect("Run tauri application");
+        .build(tauri::generate_context!())
+        .expect("Build tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Reopen { .. } = event {
+                app_handle
+                    .get_webview_window("main")
+                    .expect("Could not get main window on Reopen event")
+                    .show()
+                    .expect("Could not show main window on Reopen event");
+            }
+        });
 }
