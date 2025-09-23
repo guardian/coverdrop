@@ -169,13 +169,19 @@ pub fn run() {
         })
         .build(tauri::generate_context!())
         .expect("Build tauri application")
-        .run(|app_handle, event| {
-            if let tauri::RunEvent::Reopen { .. } = event {
-                app_handle
-                    .get_webview_window("main")
-                    .expect("Could not get main window on Reopen event")
-                    .show()
-                    .expect("Could not show main window on Reopen event");
-            }
-        });
+        .run(
+            #[cfg(target_os = "macos")] // the below Reopen event is only relevant on macOS
+            |app_handle, event| {
+                if let tauri::RunEvent::Reopen { .. } = event {
+                    // Reopen is when the dock icon is clicked
+                    app_handle
+                        .get_webview_window("main")
+                        .expect("Could not get main window on Reopen event")
+                        .show()
+                        .expect("Could not show main window on Reopen event");
+                }
+            },
+            #[cfg(not(target_os = "macos"))]
+            |_, _| {},
+        );
 }
