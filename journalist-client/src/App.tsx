@@ -1,9 +1,9 @@
 import { ReactElement, useEffect, useState } from "react";
 
 import {
+  EuiGlobalToastList,
   EuiPageTemplate,
   EuiPageTemplateProps,
-  EuiGlobalToastList,
   useEuiTheme,
 } from "@elastic/eui";
 import { ChatsSideBar } from "./components/ChatsSideBar";
@@ -28,6 +28,7 @@ import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 import { BackupModal } from "./components/BackupModal.tsx";
 import { sizes } from "./styles/sizes.ts";
 import { useTrayIcon } from "./hooks/useTrayIcon.ts";
+import { BackgroundTaskTrackerWithLoadingBarIfApplicable } from "./components/BackgroundTaskTrackerWithLoadingBarIfApplicable.tsx";
 
 const App = ({
   panelled,
@@ -54,7 +55,9 @@ const App = ({
 
   const [vaultState, setVaultState] = useState<VaultState | null>(null);
 
-  useTrayIcon({ isVaultOpen: !!vaultState });
+  const [isImportantStuffInProgress, setIsImportantStuffInProgress] =
+    useState(false);
+  useTrayIcon({ isVaultOpen: !!vaultState, isImportantStuffInProgress });
 
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,
@@ -216,6 +219,10 @@ const App = ({
             }}
             minWidth={sizes.chatsSideBar.minWidth}
           >
+            <BackgroundTaskTrackerWithLoadingBarIfApplicable
+              isImportantStuffInProgress={isImportantStuffInProgress}
+              setIsImportantStuffInProgress={setIsImportantStuffInProgress}
+            />
             <ChatsSideBar
               journalistId={vaultState.id}
               journalistStatus={journalistProfile?.status}

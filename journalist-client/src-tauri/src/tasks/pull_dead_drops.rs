@@ -16,10 +16,14 @@ use common::{
     time,
 };
 use journalist_vault::JournalistVault;
+use tauri::AppHandle;
 
 use crate::{app_state::PublicInfo, notifications::Notifications};
 
+use crate::model::BackendToFrontendEvent;
+
 pub struct PullDeadDrops {
+    app_handle: AppHandle,
     api_client: ApiClient,
     vault: JournalistVault,
     public_info: PublicInfo,
@@ -28,12 +32,14 @@ pub struct PullDeadDrops {
 
 impl PullDeadDrops {
     pub fn new(
+        app_handle: &AppHandle,
         api_client: &ApiClient,
         vault: &JournalistVault,
         public_info: &PublicInfo,
         notifications: &Notifications,
     ) -> Self {
         Self {
+            app_handle: app_handle.clone(),
             api_client: api_client.clone(),
             vault: vault.clone(),
             public_info: public_info.clone(),
@@ -55,6 +61,8 @@ impl Task for PullDeadDrops {
             let now = time::now();
             let keys = &public_info.keys;
 
+            self.app_handle.emit_dead_drops_pull_started()?;
+
             let ids_greater_than = self.vault.max_dead_drop_id().await?;
 
             tracing::info!(
@@ -66,6 +74,11 @@ impl Task for PullDeadDrops {
                 .api_client
                 .pull_all_journalist_dead_drops(ids_greater_than)
                 .await?;
+
+            let total_dead_drops_to_process = dead_drop_list.len();
+
+            self.app_handle
+                .emit_dead_drops_remaining_event(total_dead_drops_to_process)?;
 
             let Some(max_dead_drop_id) = dead_drop_list
                 .dead_drops
@@ -112,19 +125,25 @@ impl Task for PullDeadDrops {
 
             let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> = dead_drops
                 .iter()
-                .flat_map(|dead_drop| {
-                    dead_drop
-                        .data
-                        .messages
-                        .iter()
-                        .filter_map(|encrypted_message| {
-                            get_decrypted_journalist_dead_drop_message(
-                                &covernode_msg_pks,
-                                &journalist_msg_key_pairs,
-                                encrypted_message,
-                                dead_drop.id,
-                            )
-                        })
+                .enumerate()
+                .flat_map(|(index, dead_drop)| {
+                    let processed_dead_drop =
+                        dead_drop
+                            .data
+                            .messages
+                            .iter()
+                            .filter_map(|encrypted_message| {
+                                get_decrypted_journalist_dead_drop_message(
+                                    &covernode_msg_pks,
+                                    &journalist_msg_key_pairs,
+                                    encrypted_message,
+                                    dead_drop.id,
+                                )
+                            });
+                    let _ = self
+                        .app_handle
+                        .emit_dead_drops_remaining_event(total_dead_drops_to_process - index - 1);
+                    processed_dead_drop
                 })
                 .collect();
 

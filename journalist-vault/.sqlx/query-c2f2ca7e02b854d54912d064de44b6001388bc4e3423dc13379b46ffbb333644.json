@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT() FROM outbound_queue",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT()",
+        "ordinal": 0,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c2f2ca7e02b854d54912d064de44b6001388bc4e3423dc13379b46ffbb333644"
+}

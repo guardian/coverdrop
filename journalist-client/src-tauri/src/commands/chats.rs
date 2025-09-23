@@ -24,6 +24,8 @@ use crate::{
     model::{User, UserStatus},
 };
 
+use crate::model::BackendToFrontendEvent;
+
 #[tauri::command]
 pub fn check_message_length(message: String) -> Result<f32, CommandError> {
     let padded = FixedSizeMessageText::new(&message);
@@ -232,7 +234,7 @@ pub async fn submit_message(
         ctx: "Failed to encrypt message",
     })?;
 
-    vault
+    let queue_length = vault
         .add_message_from_journalist_to_user_and_enqueue(
             &user_pk,
             &unencrypted_message,
@@ -242,6 +244,12 @@ pub async fn submit_message(
         .await
         .context(VaultSnafu {
             failed_to: "enqueue message",
+        })?;
+
+    app.app_handle
+        .emit_outbound_queue_length_event(queue_length)
+        .context(VaultSnafu {
+            failed_to: "get outbound queue length",
         })?;
 
     Ok(())

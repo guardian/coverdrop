@@ -359,7 +359,7 @@ impl JournalistVault {
         unencrypted_message: &FixedSizeMessageText,
         encrypted_message: EncryptedJournalistToCoverNodeMessage,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<i32> {
         let mut tx = self.pool.begin().await?;
 
         // insert into users table if not already present
@@ -375,9 +375,11 @@ impl JournalistVault {
         )
         .await?;
 
+        let queue_length = message_queries::get_queue_length(&mut tx).await?;
+
         tx.commit().await?;
 
-        Ok(())
+        Ok(queue_length)
     }
 
     /// Get the oldest message in a journalist's outbound queue
@@ -388,11 +390,18 @@ impl JournalistVault {
         message_queries::peek_head_queue_message(&mut conn).await
     }
 
-    /// Delete a message from the outbound queue. This should only be called after
-    /// a message has successfully been sent to the Kinesis stream
-    pub async fn delete_queue_message(&self, id: i64) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-        message_queries::delete_queue_message(&mut conn, id).await
+    /// Delete a message from the outbound queue and returns the new queue length.
+    /// This should only be called after a message has successfully been sent to the Kinesis stream
+    pub async fn delete_queue_message(&self, id: i64) -> anyhow::Result<i32> {
+        let mut tx = self.pool.begin().await?;
+
+        message_queries::delete_queue_message(&mut tx, id).await?;
+
+        let new_queue_length = message_queries::get_queue_length(&mut tx).await?;
+
+        tx.commit().await?;
+
+        Ok(new_queue_length)
     }
 
     pub async fn mark_as_read(&self, user_pk: &UserPublicKey) -> anyhow::Result<()> {

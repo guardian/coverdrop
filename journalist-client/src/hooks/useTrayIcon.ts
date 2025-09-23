@@ -6,7 +6,15 @@ import { useMessageStore } from "../state/messages.ts";
 import { Image } from "@tauri-apps/api/image";
 import { useUserStore } from "../state/users.ts";
 
-export const useTrayIcon = ({ isVaultOpen }: { isVaultOpen: boolean }) => {
+interface UseTrayIconProps {
+  isVaultOpen: boolean;
+  isImportantStuffInProgress: boolean;
+}
+
+export const useTrayIcon = ({
+  isVaultOpen,
+  isImportantStuffInProgress,
+}: UseTrayIconProps) => {
   const [maybeTrayPromise, setMaybeTrayPromise] = useState<Promise<TrayIcon>>();
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
@@ -61,55 +69,90 @@ export const useTrayIcon = ({ isVaultOpen }: { isVaultOpen: boolean }) => {
     if (!maybeTrayPromise) {
       return;
     }
-    Promise.all([maybeTrayPromise, defaultWindowIcon()]).then(
-      async ([tray, maybeStartingIcon]) => {
-        if (!maybeStartingIcon) {
-          console.error("No default window icon found, cannot set tray icon");
-          return;
+    const maybeSpinningIconIntervalPromise = Promise.all([
+      maybeTrayPromise,
+      defaultWindowIcon(),
+    ]).then(async ([tray, maybeStartingIcon]) => {
+      if (!maybeStartingIcon) {
+        console.error("No default window icon found, cannot set tray icon");
+        return;
+      }
+      const { width, height } = await maybeStartingIcon.size();
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const startingImageData = new ImageData(
+        new Uint8ClampedArray(await maybeStartingIcon.rgba()),
+        width,
+        height,
+      );
+      ctx.putImageData(startingImageData, 0, 0);
+
+      if (hasUnreadMessages) {
+        // place a blue circle in the top right corner (same symbol as in Sentinel itself, to denote unread)
+        ctx.beginPath();
+        ctx.arc(width * 0.75, height * 0.25, width / 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#0066CC";
+        ctx.fill();
+      }
+
+      const afterImageData = ctx.getImageData(0, 0, width, height);
+
+      if (!isVaultOpen) {
+        // desaturate the image to greyscale when the vault is closed
+        const pixels = afterImageData.data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          const lightness = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+          pixels[i] = lightness;
+          pixels[i + 1] = lightness;
+          pixels[i + 2] = lightness;
         }
-        const { width, height } = await maybeStartingIcon.size();
-        // TODO consider re-using canvas (with clearRect) instead of creating a new one each time
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        const startingImageData = new ImageData(
-          new Uint8ClampedArray(await maybeStartingIcon.rgba()),
-          width,
-          height,
-        );
-        ctx.putImageData(startingImageData, 0, 0);
+      }
+      const newIcon = await Image.new(
+        afterImageData.data.buffer,
+        width,
+        height,
+      );
+      await tray.setIcon(newIcon);
+      await getCurrentWindow().setIcon(newIcon);
 
-        if (hasUnreadMessages) {
-          // place a blue circle in the top right corner (same symbol as in Sentinel itself, to denote unread)
-          ctx.beginPath();
-          ctx.arc(width * 0.75, height * 0.25, width / 4, 0, 2 * Math.PI);
-          ctx.fillStyle = "#0066CC";
-          ctx.fill();
-        }
+      if (isImportantStuffInProgress) {
+        // start spinning the icon round once per second
+        let counter = 0;
+        return setInterval(async () => {
+          counter++;
+          const finalCanvas = document.createElement("canvas");
+          finalCanvas.width = width;
+          finalCanvas.height = height;
+          const finalCtx = finalCanvas.getContext("2d");
+          if (!finalCtx) return;
+          finalCtx.translate(width / 2, height / 2);
+          finalCtx.rotate((Math.PI / 180) * (counter * 12)); // 12 degrees per frame
+          finalCtx.translate(-width / 2, -height / 2);
+          finalCtx.drawImage(canvas, 0, 0);
+          const finalImageData = finalCtx.getImageData(0, 0, width, height);
 
-        const afterImageData = ctx.getImageData(0, 0, width, height);
-
-        if (!isVaultOpen) {
-          // desaturate the image to greyscale when the vault is closed
-          const pixels = afterImageData.data;
-          for (let i = 0; i < pixels.length; i += 4) {
-            const lightness = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
-            pixels[i] = lightness;
-            pixels[i + 1] = lightness;
-            pixels[i + 2] = lightness;
-          }
-        }
-
-        const newIcon = await Image.new(
-          afterImageData.data.buffer,
-          width,
-          height,
-        );
-        await tray.setIcon(newIcon);
-        await getCurrentWindow().setIcon(newIcon);
-      },
-    );
-  }, [maybeTrayPromise, isVaultOpen, hasUnreadMessages]);
+          const newIcon = await Image.new(
+            finalImageData.data.buffer,
+            width,
+            height,
+          );
+          await tray.setIcon(newIcon);
+          await getCurrentWindow().setIcon(newIcon);
+        }, 33); // roughly 30fps
+      }
+    });
+    return () => {
+      maybeSpinningIconIntervalPromise.then((maybeSpinnerInterval) =>
+        clearInterval(maybeSpinnerInterval),
+      );
+    };
+  }, [
+    maybeTrayPromise,
+    isVaultOpen,
+    hasUnreadMessages,
+    isImportantStuffInProgress,
+  ]);
 };

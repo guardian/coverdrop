@@ -103,7 +103,8 @@ pub fn run() {
             let config_dir = app.path().app_data_dir()?;
 
             let notifications = start_notification_service(app.app_handle());
-            let app_state = AppStateHandle::new(notifications, cli.no_background_tasks);
+            let app_state =
+                AppStateHandle::new(app.handle().clone(), notifications, cli.no_background_tasks);
 
             tracing_subscriber::registry()
                 .with(JournalistClientLogLayer::new(app_state.logs.clone()))

@@ -10,21 +10,31 @@ use common::{
     time,
 };
 use journalist_vault::JournalistVault;
+use tauri::AppHandle;
 
 use crate::app_state::PublicInfo;
+
+use crate::model::BackendToFrontendEvent;
 
 pub struct SendJournalistMessages {
     api_client: ApiClient,
     vault: JournalistVault,
     public_info: PublicInfo,
+    app_handle: AppHandle,
 }
 
 impl SendJournalistMessages {
-    pub fn new(api_client: &ApiClient, vault: &JournalistVault, public_info: &PublicInfo) -> Self {
+    pub fn new(
+        api_client: &ApiClient,
+        vault: &JournalistVault,
+        public_info: &PublicInfo,
+        app_handle: &AppHandle,
+    ) -> Self {
         Self {
             api_client: api_client.clone(),
             vault: vault.clone(),
             public_info: public_info.clone(),
+            app_handle: app_handle.clone(),
         }
     }
 }
@@ -62,7 +72,10 @@ impl Task for SendJournalistMessages {
 
                 tracing::debug!("Posting message was successful, deleting message from queue");
 
-                self.vault.delete_queue_message(message.id).await?;
+                let queue_length = self.vault.delete_queue_message(message.id).await?;
+
+                self.app_handle
+                    .emit_outbound_queue_length_event(queue_length)?;
 
                 tracing::debug!("Successfully deleted message from queue");
             } else {

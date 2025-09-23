@@ -12,6 +12,7 @@ use common::{
 };
 use journalist_vault::JournalistVault;
 use reqwest::Url;
+use tauri::AppHandle;
 use tokio::{
     sync::{RwLock, RwLockReadGuard},
     task::JoinHandle,
@@ -59,6 +60,7 @@ impl PublicInfo {
 }
 
 pub struct AppStateHandle {
+    pub app_handle: AppHandle,
     pub name_generator: NameGenerator,
     public_info: PublicInfo,
     notifications: Notifications,
@@ -68,8 +70,13 @@ pub struct AppStateHandle {
 }
 
 impl AppStateHandle {
-    pub fn new(notifications: Notifications, no_background_tasks: bool) -> Self {
+    pub fn new(
+        app_handle: AppHandle,
+        notifications: Notifications,
+        no_background_tasks: bool,
+    ) -> Self {
         Self {
+            app_handle,
             name_generator: NameGenerator::default(),
             public_info: PublicInfo::default(),
             inner: RwLock::new(AppState::default()),
@@ -114,10 +121,19 @@ impl AppStateHandle {
                     RefreshPublicInfo::new(&api_client, &vault, &self.public_info);
                 let sync_public_keys_task =
                     SyncJournalistProvisioningPublicKeys::new(&vault, &self.public_info);
-                let pull_dead_drops_task =
-                    PullDeadDrops::new(&api_client, &vault, &self.public_info, &self.notifications);
-                let send_journalist_messages_task =
-                    SendJournalistMessages::new(&api_client, &vault, &self.public_info);
+                let pull_dead_drops_task = PullDeadDrops::new(
+                    &self.app_handle,
+                    &api_client,
+                    &vault,
+                    &self.public_info,
+                    &self.notifications,
+                );
+                let send_journalist_messages_task = SendJournalistMessages::new(
+                    &api_client,
+                    &vault,
+                    &self.public_info,
+                    &self.app_handle,
+                );
                 let rotate_keys_task = RotateJournalistKeys::new(&api_client, &vault);
                 let clean_up_vault_task = CleanUpVault::new(&vault);
 

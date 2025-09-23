@@ -221,6 +221,14 @@ pub(crate) async fn set_custom_expiry(
     Ok(())
 }
 
+pub(crate) async fn get_queue_length(conn: &mut SqliteConnection) -> anyhow::Result<i32> {
+    let queue_length = sqlx::query_scalar!(r#"SELECT COUNT() FROM outbound_queue"#,)
+        .fetch_one(conn)
+        .await?;
+
+    Ok(queue_length)
+}
+
 /// Adds a new messages to the FIFO outbound queue.
 pub(crate) async fn enqueue_message(
     conn: &mut SqliteConnection,
