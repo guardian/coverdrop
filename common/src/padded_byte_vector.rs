@@ -109,14 +109,14 @@ impl<const PAD_TO_STEP_SIZE: usize> SteppingPaddedByteVector<PAD_TO_STEP_SIZE> {
     /// Prefer this method over `PaddedByteVector::from` to ensure the byte vector is a multiple of
     /// the step size. This can give additional type safety when deserializing.
     pub fn from(bytes: Vec<u8>) -> Result<Self, Error> {
-        if bytes.len() % PAD_TO_STEP_SIZE != 0 {
+        if !bytes.len().is_multiple_of(PAD_TO_STEP_SIZE) {
             return Err(Error::PaddedByteVectorNotMultipleOfStepSize);
         }
         Ok(SteppingPaddedByteVector(PaddedByteVector(bytes)))
     }
 
     pub fn into_unpadded(self) -> Result<Vec<u8>, Error> {
-        if self.0.total_len() % PAD_TO_STEP_SIZE != 0 {
+        if !self.0.total_len().is_multiple_of(PAD_TO_STEP_SIZE) {
             return Err(Error::PaddedByteVectorNotMultipleOfStepSize);
         }
         self.0.into_unpadded()
