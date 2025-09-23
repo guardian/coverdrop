@@ -1,4 +1,5 @@
 use crate::api::models::journalist_id::JournalistIdentity;
+use crate::backup::roles::BackupMsg;
 use crate::crypto::keys::encryption::{SignedEncryptionKeyPair, SignedPublicEncryptionKey};
 use crate::crypto::keys::signing::{SignedPublicSigningKey, SignedSigningKeyPair};
 use crate::crypto::{
@@ -7,11 +8,12 @@ use crate::crypto::{
 };
 use crate::padded_byte_vector::SteppingPaddedByteVector;
 use crate::protocol::backup_data::{
-    BackupData, BackupEncryptedPaddedVault, BackupEncryptedSecretShare, EncryptedSecretShare,
-    SignedBackupData,
+    BackupData, BackupDataWithSignature, BackupEncryptedPaddedVault, BackupEncryptedSecretShare,
+    EncryptedSecretShare, VerifiedBackupData,
 };
-use crate::protocol::roles::{BackupAdminEncryption, JournalistId, JournalistMessaging};
-use crate::time::now;
+use crate::protocol::roles::{JournalistId, JournalistMessaging};
+use anyhow::Context;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
@@ -35,10 +37,11 @@ pub fn sentinel_create_backup(
     encrypted_vault: Vec<u8>,
     journalist_identity: JournalistIdentity,
     journalist_identity_key: SignedSigningKeyPair<JournalistId>,
-    backup_admin_encryption_key: SignedPublicEncryptionKey<BackupAdminEncryption>,
+    backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
     recovery_contacts: Vec<RecoveryContact>,
     k: usize,
-) -> anyhow::Result<SignedBackupData> {
+    now: DateTime<Utc>,
+) -> anyhow::Result<VerifiedBackupData> {
     let n = recovery_contacts.len();
 
     if k != 1 {
@@ -78,9 +81,7 @@ pub fn sentinel_create_backup(
         .zip(recovery_contacts)
         .map(|(share, contact)| {
             let key = contact.latest_messaging_key.to_public_encryption_key();
-            let encrypted_share = AnonymousBox::encrypt(&key, share)
-                .map_err(|e| anyhow::anyhow!("Failed to encrypt share: {}", e));
-            encrypted_share
+            AnonymousBox::encrypt(&key, share).context("Failed to encrypt share")
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -91,8 +92,7 @@ pub fn sentinel_create_backup(
             let key = backup_admin_encryption_key
                 .clone()
                 .to_public_encryption_key();
-            AnonymousBox::encrypt(&key, encrypted_share)
-                .map_err(|e| anyhow::anyhow!("Failed to wrap encrypted share: {}", e))
+            AnonymousBox::encrypt(&key, encrypted_share).context("Failed to wrap encrypted share")
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -101,14 +101,16 @@ pub fn sentinel_create_backup(
         journalist_identity,
         backup_encrypted_padded_vault,
         wrapped_encrypted_shares,
-        created_at: now(),
+        created_at: now,
     };
+    let backup_data_with_signature = backup_data
+        .to_backup_data_with_signature(&journalist_identity_key)
+        .context("Failed to generate backup data")?;
+    let verified_backup_data = backup_data_with_signature
+        .to_verified(journalist_identity_key.public_key(), now)
+        .context("Failed to freshly-created verify backup data")?;
 
-    let signed_backup_data = backup_data
-        .to_signed_backup_data(&journalist_identity_key)
-        .map_err(|e| anyhow::anyhow!("Failed to sign backup data: {}", e))?;
-
-    Ok(signed_backup_data)
+    Ok(verified_backup_data)
 }
 
 /// The initial state during the recovery process after the backup admin has retrieved the
@@ -118,7 +120,7 @@ pub struct BackupRestorationInProgress {
     journalist_identity: JournalistIdentity,
     #[serde(with = "BackupEncryptedPaddedVault")]
     backup_encrypted_padded_vault: BackupEncryptedPaddedVault,
-    encrypted_shares: Vec<EncryptedSecretShare>,
+    pub encrypted_shares: Vec<EncryptedSecretShare>,
 }
 
 /// Runs on the backup admin's device to initiate the restoration of a Sentinel backup. It
@@ -132,16 +134,16 @@ pub struct BackupRestorationInProgress {
 /// `sentinel_restore_try_unwrap_share_step`).
 pub fn coverup_initiate_restore_step(
     journalist_identity: JournalistIdentity,
-    signed_backup_data: SignedBackupData,
+    signed_backup_data: BackupDataWithSignature,
     journalist_identity_public_key: &SignedPublicSigningKey<JournalistId>,
-    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupAdminEncryption>,
+    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupMsg>,
+    now: DateTime<Utc>,
 ) -> anyhow::Result<BackupRestorationInProgress> {
     // Retrieve and verify the backup data
-    let backup_data = BackupData::from_signed_backup_data(
-        signed_backup_data,
-        journalist_identity_public_key,
-        now(),
-    )?;
+    let verified_backup_data = signed_backup_data
+        .to_verified(journalist_identity_public_key, now)
+        .context("Failed to verify backup data signature")?;
+    let backup_data = verified_backup_data.backup_data()?;
 
     if backup_data.journalist_identity != journalist_identity {
         return Err(anyhow::anyhow!(
@@ -183,7 +185,7 @@ type WrappedSecretShare = AnonymousBox<SecretSharingShare>;
 pub fn sentinel_restore_try_unwrap_share_step(
     encrypted_share_candidates: Vec<EncryptedSecretShare>,
     recovery_contact_messaging_key_pairs: Vec<SignedEncryptionKeyPair<JournalistMessaging>>,
-    backup_admin_encryption_key: SignedPublicEncryptionKey<BackupAdminEncryption>,
+    backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
 ) -> anyhow::Result<Option<WrappedSecretShare>> {
     let admin_key = backup_admin_encryption_key.to_public_encryption_key();
     for key_pair in recovery_contact_messaging_key_pairs.iter() {
@@ -212,7 +214,7 @@ pub fn sentinel_restore_try_unwrap_share_step(
 pub fn sentinel_finish_restore_step(
     backup_state: BackupRestorationInProgress,
     wrapped_shares: Vec<WrappedSecretShare>,
-    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupAdminEncryption>,
+    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupMsg>,
 ) -> anyhow::Result<Vec<u8>> {
     if wrapped_shares.is_empty() {
         return Err(anyhow::anyhow!("No wrapped shares provided"));
@@ -264,13 +266,11 @@ mod tests {
     use crate::api::models::journalist_id::JournalistIdentity;
     use crate::crypto::keys::encryption::{SignedEncryptionKeyPair, UnsignedEncryptionKeyPair};
     use crate::crypto::keys::signing::UnsignedSigningKeyPair;
-    use crate::protocol::roles::{
-        BackupAdminEncryption, JournalistId, JournalistMessaging, JournalistProvisioning,
-    };
+    use crate::protocol::roles::{JournalistId, JournalistMessaging, JournalistProvisioning};
     use crate::time::now;
 
-    fn create_test_journalist_identity(identifier: String) -> JournalistIdentity {
-        JournalistIdentity::new(identifier.as_str()).unwrap()
+    fn create_test_journalist_identity(identifier: String) -> anyhow::Result<JournalistIdentity> {
+        JournalistIdentity::new(identifier.as_str()).map_err(|e| anyhow::anyhow!(e))
     }
 
     fn create_test_journalist_signing_key_pair() -> SignedSigningKeyPair<JournalistId> {
@@ -292,19 +292,18 @@ mod tests {
 
     fn create_test_journalist(
         identifier: String,
-    ) -> (
+    ) -> anyhow::Result<(
         JournalistIdentity,
         SignedSigningKeyPair<JournalistId>,
         SignedEncryptionKeyPair<JournalistMessaging>,
-    ) {
-        let identity = create_test_journalist_identity(identifier);
+    )> {
+        let identity = create_test_journalist_identity(identifier)?;
         let signing_key_pair = create_test_journalist_signing_key_pair();
         let messaging_key_pair = create_test_journalist_messaging_key_pair(&signing_key_pair);
-        (identity, signing_key_pair, messaging_key_pair)
+        Ok((identity, signing_key_pair, messaging_key_pair))
     }
 
-    fn create_test_backup_admin_encryption_key_pair(
-    ) -> SignedEncryptionKeyPair<BackupAdminEncryption> {
+    fn create_test_backup_admin_encryption_key_pair() -> SignedEncryptionKeyPair<BackupMsg> {
         let unsigned_signing_pair: UnsignedSigningKeyPair<JournalistProvisioning> =
             UnsignedSigningKeyPair::generate();
         let not_valid_after = now() + chrono::Duration::days(30);
@@ -323,13 +322,13 @@ mod tests {
     }
 
     #[test]
-    fn test_round_trip_backup_and_restore_k1() {
+    fn test_round_trip_backup_and_restore_k1() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         // Create recovery contact
@@ -346,15 +345,17 @@ mod tests {
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1, // k=1
+            now(),
         )
         .expect("Failed to create backup");
 
         // Step 2: Initiate restore
         let backup_state = coverup_initiate_restore_step(
             journalist_identity.clone(),
-            signed_backup_data,
+            signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         )
         .expect("Failed to initiate restore");
 
@@ -377,16 +378,18 @@ mod tests {
 
         // Verify the round-trip worked
         assert_eq!(encrypted_vault, restored_vault);
+
+        Ok(())
     }
 
     #[test]
-    fn test_tampered_wrapped_encrypted_secret_shares_fail() {
+    fn test_tampered_wrapped_encrypted_secret_shares_fail() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -402,22 +405,21 @@ mod tests {
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
         // Tamper with the wrapped encrypted secret shares; for this first deserialize
         // the backup data, modify it, and then serialize it back
-        let backup_data_bytes = &signed_backup_data.backup_data_bytes;
-        let mut backup_data = BackupData::from_bytes(&backup_data_bytes.0).unwrap();
+        let mut backup_data = signed_backup_data.backup_data()?;
         let first_share_bytes = &mut backup_data.wrapped_encrypted_shares[0].as_bytes().to_vec();
         first_share_bytes[0] ^= 0x01; // Flip a bit to simulate tampering
         backup_data.wrapped_encrypted_shares[0] =
             AnonymousBox::from_vec_unchecked(first_share_bytes.clone());
 
         // Re-pack and re-sign the tampered data
-        let signed_backup_data = backup_data
-            .to_signed_backup_data(&journalist_signing_pair)
-            .unwrap();
+        let signed_backup_data =
+            backup_data.to_backup_data_with_signature(&journalist_signing_pair)?;
 
         // Attempt to restore - should fail during initiation
         let result = coverup_initiate_restore_step(
@@ -425,23 +427,26 @@ mod tests {
             signed_backup_data,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         );
 
         assert!(
             result.is_err(),
             "Restore should fail with tampered wrapped shares"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_different_backup_admin_key_fails() {
+    fn test_different_backup_admin_key_fails() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let different_backup_admin_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -457,31 +462,35 @@ mod tests {
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
         // Attempt to restore with different admin key - should fail
         let result = coverup_initiate_restore_step(
             journalist_identity,
-            signed_backup_data,
+            signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
             &different_backup_admin_pair, // Different key!
+            now(),
         );
 
         assert!(
             result.is_err(),
             "Restore should fail with different backup admin key"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_tampered_signed_backup_data_fails() {
+    fn test_tampered_signed_backup_data_fails() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -490,20 +499,19 @@ mod tests {
         };
 
         // Create backup
-        let mut signed_backup_data = sentinel_create_backup(
+        let verified_backup_data = sentinel_create_backup(
             encrypted_vault,
             journalist_identity.clone(),
             journalist_signing_pair.clone(),
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
-        // Tamper with the wrapped encrypted secret shares; for this first deserialize
-        // the backup data, modify it, and then serialize it back
-        let backup_data_bytes = &signed_backup_data.backup_data_bytes;
-        let mut backup_data = BackupData::from_bytes(&backup_data_bytes.0).unwrap();
+        // Tamper with the encrypted vault
+        let mut backup_data = verified_backup_data.backup_data()?;
         let backup_encrypted_vault_bytes = &mut backup_data
             .backup_encrypted_padded_vault
             .as_bytes()
@@ -513,34 +521,37 @@ mod tests {
             SecretBox::from_vec_unchecked(backup_encrypted_vault_bytes.clone());
 
         // Re-pack, but do not resign
-        signed_backup_data = SignedBackupData {
-            backup_data_bytes: backup_data.to_bytes().unwrap(),
-            backup_data_signature: signed_backup_data.backup_data_signature, // Old signature
-            signed_with: signed_backup_data.signed_with.clone(),
-        };
+        let tampered_backup_data_with_signature = BackupDataWithSignature::new(
+            backup_data.to_bytes()?,
+            verified_backup_data.backup_data_signature.clone(),
+            verified_backup_data.signed_with.to_untrusted(),
+        )?;
 
         // Attempt to restore - should fail during signature verification
         let result = coverup_initiate_restore_step(
             journalist_identity,
-            signed_backup_data,
+            tampered_backup_data_with_signature,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         );
 
         assert!(
             result.is_err(),
             "Restore should fail with tampered signed backup data"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_tampered_encrypted_vault_fails() {
+    fn test_tampered_encrypted_vault_fails() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -549,19 +560,19 @@ mod tests {
         };
 
         // Create backup
-        let mut signed_backup_data = sentinel_create_backup(
+        let verified_backup_data = sentinel_create_backup(
             encrypted_vault,
             journalist_identity.clone(),
             journalist_signing_pair.clone(),
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
         // Tamper with the encrypted vault
-        let backup_data_bytes = &signed_backup_data.backup_data_bytes;
-        let mut backup_data = BackupData::from_bytes(&backup_data_bytes.0).unwrap();
+        let mut backup_data = verified_backup_data.backup_data()?;
         let backup_encrypted_vault_bytes = &mut backup_data
             .backup_encrypted_padded_vault
             .as_bytes()
@@ -571,9 +582,8 @@ mod tests {
             SecretBox::from_vec_unchecked(backup_encrypted_vault_bytes.clone());
 
         // Re-pack and re-sign the tampered data
-        signed_backup_data = backup_data
-            .to_signed_backup_data(&journalist_signing_pair)
-            .unwrap();
+        let signed_backup_data =
+            backup_data.to_backup_data_with_signature(&journalist_signing_pair)?;
 
         // Initiate restore (should succeed since signature is valid)
         let backup_state = coverup_initiate_restore_step(
@@ -581,6 +591,7 @@ mod tests {
             signed_backup_data,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         )
         .expect("Failed to initiate restore");
 
@@ -604,16 +615,18 @@ mod tests {
             result.is_err(),
             "Restore should fail with tampered encrypted vault"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_tampered_wrapped_secret_shares_before_final_step_fails() {
+    fn test_tampered_wrapped_secret_shares_before_final_step_fails() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -622,21 +635,23 @@ mod tests {
         };
 
         // Create backup and initiate restore
-        let signed_backup_data = sentinel_create_backup(
+        let verified_backup_data = sentinel_create_backup(
             encrypted_vault,
             journalist_identity.clone(),
             journalist_signing_pair.clone(),
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
         let backup_state = coverup_initiate_restore_step(
             journalist_identity,
-            signed_backup_data,
+            verified_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         )
         .expect("Failed to initiate restore");
 
@@ -665,18 +680,20 @@ mod tests {
             result.is_err(),
             "Restore should fail with tampered wrapped shares"
         );
+
+        Ok(())
     }
 
     #[test]
-    fn test_journalist_identity_verification() {
+    fn test_journalist_identity_verification() -> anyhow::Result<()> {
         // Create test data
         let (journalist_identity, journalist_signing_pair, _) =
-            create_test_journalist("journalist1".to_string());
+            create_test_journalist("journalist1".to_string())?;
         let different_identity =
-            create_test_journalist_identity("different-journalist".to_string());
+            create_test_journalist_identity("different-journalist".to_string())?;
         let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
         let (_, _, recovery_contact_messaging_pair) =
-            create_test_journalist("recovery_contact1".to_string());
+            create_test_journalist("recovery_contact1".to_string())?;
         let encrypted_vault = create_test_vault_data();
 
         let recovery_contact = RecoveryContact {
@@ -692,15 +709,17 @@ mod tests {
             backup_admin_encryption_pair.public_key().clone(),
             vec![recovery_contact],
             1,
+            now(),
         )
         .expect("Failed to create backup");
 
         // Attempt to restore with different identity - should fail
         let result = coverup_initiate_restore_step(
             different_identity, // Different identity!
-            signed_backup_data,
+            signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
             &backup_admin_encryption_pair,
+            now(),
         );
 
         assert!(
@@ -711,5 +730,7 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("journalist identity does not match"));
+
+        Ok(())
     }
 }

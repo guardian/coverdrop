@@ -1,7 +1,10 @@
 use chrono::{DateTime, Utc};
 use reqwest::Url;
 
-use crate::api::forms::PatchJournalistStatusForm;
+use crate::api::forms::{
+    GetBackupDataForm, PatchJournalistStatusForm, PostBackupDataForm, PostBackupIdKeyForm,
+    PostBackupMsgKeyForm,
+};
 use crate::api::models::dead_drops::{
     UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
     UnverifiedUserToJournalistDeadDropsList,
@@ -12,6 +15,7 @@ use crate::crypto::keys::public_key::PublicKey;
 use crate::epoch::Epoch;
 use crate::healthcheck::HealthCheck;
 use crate::identity_api::models::UntrustedJournalistIdPublicKeyWithEpoch;
+use crate::protocol::backup_data::BackupDataWithSignature;
 use crate::protocol::keys::{
     CoverNodeIdKeyPair, CoverNodeIdPublicKey, CoverNodeMessagingPublicKey,
     CoverNodeProvisioningKeyPair, JournalistIdKeyPair, JournalistMessagingPublicKey,
@@ -80,6 +84,66 @@ impl ApiClient {
         let keys = handle_response_json(keys).await?;
 
         Ok(keys)
+    }
+
+    pub async fn post_backup_data(&self, form: PostBackupDataForm) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("backups")
+            .push("data");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn get_backup_data(
+        &self,
+        form: GetBackupDataForm,
+    ) -> anyhow::Result<BackupDataWithSignature> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("backups")
+            .push("data");
+
+        let resp = self.client.get(url).json(&form).send().await?;
+
+        let backup_data = handle_response_json(resp).await?;
+
+        Ok(backup_data)
+    }
+
+    pub async fn post_backup_signing_pk(&self, form: PostBackupIdKeyForm) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("backups")
+            .push("signing-public-key");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn post_backup_encryption_pk(
+        &self,
+        form: PostBackupMsgKeyForm,
+    ) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("backups")
+            .push("encryption-public-key");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
     }
 
     pub async fn post_covernode_provisioning_pk(

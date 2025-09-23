@@ -1,4 +1,4 @@
-use api::services::queries::organization_key_queries::OrganizationKeyQueries;
+use api::services::queries::OrganizationKeyQueries;
 use chrono::{DateTime, Utc};
 use common::{
     api::api_client::ApiClient,

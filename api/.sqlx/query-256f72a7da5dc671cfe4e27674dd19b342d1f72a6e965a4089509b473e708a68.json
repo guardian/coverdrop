@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                backup_id_pks.pk_json AS \"id_pk: Value\",\n                organization_pks.pk_json  AS \"org_pk: Value\"\n            FROM backup_id_pks\n            LEFT JOIN organization_pks\n                ON backup_id_pks.org_pk_id = organization_pks.id\n            WHERE decode(backup_id_pks.pk_json #>>'{key}', 'hex') = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id_pk: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 1,
+        "name": "org_pk: Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "256f72a7da5dc671cfe4e27674dd19b342d1f72a6e965a4089509b473e708a68"
+}

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id AS journalist_id_pk\n                FROM journalist_id_pks\n                WHERE decode(pk_json #>>'{key}', 'hex') = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "journalist_id_pk",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3597e2c4daad66413e5ea69b6f73610f36eacb40532a9e3aa1db04734f22eb91"
+}

@@ -1,6 +1,7 @@
 use axum::response::{IntoResponse, Response};
 use axum::{http::StatusCode, Json};
 use base64::DecodeError;
+use common::api::models::journalist_id::JournalistIdentity;
 use common::crypto::keys::untrusted::UntrustedKeyError;
 use hex::FromHexError;
 use serde_json::json;
@@ -36,6 +37,8 @@ pub enum AppError {
     SignatureVerificationFailed,
     #[error("client unauthorized to update record")]
     JournalistUnauthorized,
+    #[error("journalist id does not match signing key for journalist id: {0}")]
+    JournalistIdDoesNotMatchSigningKey(JournalistIdentity),
     #[error("journalist id not found")]
     JournalistIdNotFound,
     #[error("journalist description too long")]
@@ -52,6 +55,8 @@ pub enum AppError {
     KeyRotationTooRecent,
     #[error("failed to put message on kinesis stream")]
     KinesisStreamPut,
+    #[error("backup data not found for journalist id: {0}")]
+    BackupDataNotFound(JournalistIdentity),
 }
 
 impl IntoResponse for AppError {
@@ -115,6 +120,12 @@ impl IntoResponse for AppError {
             Self::KinesisStreamPut => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to put message onto stream".into(),
+            ),
+            Self::BackupDataNotFound(_) => (StatusCode::NOT_FOUND, "No backup data found".into()),
+            Self::JournalistIdDoesNotMatchSigningKey(_) => (
+                StatusCode::BAD_REQUEST,
+                "The provided journalist id does not match the signing key for journalist id"
+                    .into(),
             ),
         };
 

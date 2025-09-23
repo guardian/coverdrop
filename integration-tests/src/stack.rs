@@ -691,6 +691,19 @@ impl CoverDropStack {
         .expect("Load static journalist vault")
     }
 
+    pub async fn load_static_journalist_vault_bytes(&self) -> Vec<u8> {
+        fs::read(self.temp_dir_path().join("static_test_journalist.vault"))
+            .expect("Load static journalist vault")
+    }
+
+    pub async fn save_static_journalist_vault_bytes(&self, contents: Vec<u8>) {
+        fs::write(
+            self.temp_dir_path().join("static_test_journalist.vault"),
+            contents,
+        )
+        .expect("Save static journalist vault")
+    }
+
     pub async fn load_additional_journalist_vault(&self, index: usize) -> JournalistVault {
         JournalistVault::open(
             self.temp_dir_path()

@@ -1,23 +1,19 @@
+use super::queries::*;
 use reqwest::Url;
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions,
 };
 
-use super::queries::{
-    covernode_key_queries::CoverNodeKeyQueries, dead_drop_queries::DeadDropQueries,
-    hierarchy_queries::HierarchyQueries, journalist_queries::JournalistQueries,
-    organization_key_queries::OrganizationKeyQueries, system_key_queries::SystemKeyQueries,
-    system_queries::SystemQueries,
-};
-
 #[derive(Clone)]
 pub struct Database {
-    pub hierarchy_queries: HierarchyQueries,
-    pub organization_key_queries: OrganizationKeyQueries,
+    pub backup_data_queries: BackupDataQueries,
+    pub backup_key_queries: BackupKeyQueries,
     pub covernode_key_queries: CoverNodeKeyQueries,
     pub dead_drop_queries: DeadDropQueries,
+    pub hierarchy_queries: HierarchyQueries,
     pub journalist_queries: JournalistQueries,
+    pub organization_key_queries: OrganizationKeyQueries,
     pub system_key_queries: SystemKeyQueries,
     pub system_queries: SystemQueries,
 }
@@ -35,10 +31,12 @@ impl Database {
         sqlx::migrate!().run(&pool).await?;
 
         Ok(Database {
-            dead_drop_queries: DeadDropQueries::new(pool.clone()),
-            journalist_queries: JournalistQueries::new(pool.clone()),
+            backup_data_queries: BackupDataQueries::new(pool.clone()),
+            backup_key_queries: BackupKeyQueries::new(pool.clone()),
             covernode_key_queries: CoverNodeKeyQueries::new(pool.clone()),
+            dead_drop_queries: DeadDropQueries::new(pool.clone()),
             hierarchy_queries: HierarchyQueries::new(pool.clone()),
+            journalist_queries: JournalistQueries::new(pool.clone()),
             organization_key_queries: OrganizationKeyQueries::new(pool.clone()),
             system_key_queries: SystemKeyQueries::new(pool.clone()),
             system_queries: SystemQueries::new(pool),

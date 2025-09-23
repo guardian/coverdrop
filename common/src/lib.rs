@@ -7,6 +7,7 @@
 pub mod api;
 pub mod argon2_sqlcipher;
 pub mod aws;
+pub mod backup;
 pub mod clap;
 pub mod client;
 pub mod clients;

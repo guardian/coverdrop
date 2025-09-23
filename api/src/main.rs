@@ -1,6 +1,10 @@
 use api::anchor_org_pk_cache::AnchorOrganizationPublicKeyCache;
 use api::api_state::ApiState;
 use api::cli::Cli;
+use api::controllers::backups::{
+    get_backup_data, post_backup_data, post_backup_encryption_pk, post_backup_signing_pk,
+    BACKUP_DATA_MAX_SIZE_BYTES,
+};
 use api::controllers::dead_drops::{
     get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
     get_user_recent_dead_drop_summary, post_journalist_dead_drops, post_user_dead_drops,
@@ -21,6 +25,7 @@ use api::dead_drop_limits::DeadDropLimits;
 use api::services::database::Database;
 use api::services::tasks::{AnchorOrganizationPublicKeyPollTask, DeleteOldDeadDropsTask};
 use api::DEFAULT_PORT;
+use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, patch, post};
 use axum::Router;
 use chrono::Duration;
@@ -200,6 +205,15 @@ async fn main() -> anyhow::Result<()> {
             "/journalist-messages",
             post(post_forward_journalist_to_covernode_msg),
         )
+        // Backups
+        .route("/backups/signing-public-key", post(post_backup_signing_pk))
+        .route(
+            "/backups/encryption-public-key",
+            post(post_backup_encryption_pk),
+        )
+        .route("/backups/data", post(post_backup_data))
+        .route_layer(DefaultBodyLimit::max(BACKUP_DATA_MAX_SIZE_BYTES)) // This sets the maximum body size to 300 MB as the default is 1MB
+        .route("/backups/data", get(get_backup_data))
         .with_state(api_state);
 
     let app = Router::new()

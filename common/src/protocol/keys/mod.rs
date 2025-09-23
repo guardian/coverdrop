@@ -26,6 +26,11 @@ use crate::crypto::keys::{
     },
 };
 
+use super::roles::{
+    AnchorOrganization, CoverNodeId, CoverNodeMessaging, CoverNodeProvisioning, JournalistId,
+    JournalistMessaging, JournalistProvisioning, Mailbox, Organization, UnregisteredCoverNodeId,
+    UnregisteredJournalistId, User,
+};
 pub use generation::*;
 pub use hierarchy::*;
 pub use key_pair_with_epoch::*;
@@ -33,12 +38,6 @@ pub use latest::*;
 pub use loading::*;
 pub use sign::*;
 pub use verification::*;
-
-use super::roles::{
-    AnchorOrganization, CoverNodeId, CoverNodeMessaging, CoverNodeProvisioning, JournalistId,
-    JournalistMessaging, JournalistProvisioning, Mailbox, Organization, UnregisteredCoverNodeId,
-    UnregisteredJournalistId, User,
-};
 
 // Type aliases for various keys used in the protocol
 

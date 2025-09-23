@@ -83,13 +83,3 @@ define_role!(User, "user", "user");
 // The mailbox role is used when storing public keys in the mailbox since we're not
 // differentiating between a users send key and a journalists reply key.
 define_role!(Mailbox, "mailbox", "mailbox");
-
-/////////////
-// BACKUPS //
-/////////////
-
-define_role!(
-    BackupAdminEncryption,
-    "backup admin encryption",
-    "backup_admin_enc"
-);

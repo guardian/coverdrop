@@ -1,0 +1,257 @@
+use common::protocol::backup::coverup_initiate_restore_step;
+use common::protocol::backup::sentinel_finish_restore_step;
+use common::protocol::backup::sentinel_restore_try_unwrap_share_step;
+use common::{
+    api::forms::{
+        GetBackupDataForm, PostBackupDataForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
+    },
+    backup::{
+        keys::{generate_backup_id_key_pair, generate_backup_msg_key_pair},
+        roles::{BackupId, BackupMsg},
+    },
+    crypto::keys::{encryption::SignedEncryptionKeyPair, signing::SignedSigningKeyPair},
+    protocol::{
+        backup::{sentinel_create_backup, RecoveryContact},
+        roles::JournalistMessaging,
+    },
+};
+use integration_tests::{
+    api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
+};
+use journalist_vault::JournalistVault;
+
+#[tokio::test]
+/// This test covers the creation and retrieval of a backup for a journalist's vault.
+/// This does not cover the actual restoration of a backup but this will be added later.
+async fn backup_scenario() {
+    pretty_env_logger::try_init().unwrap();
+
+    // generated_test_desk in the identity which we are backing up the vault for
+    let default_journalist_id = "generated_test_desk";
+    let stack = CoverDropStack::builder()
+        .with_default_journalist_id(default_journalist_id)
+        .build()
+        .await;
+
+    // Create a backup keypair for the sentinel to use to encrypt the backup and connect to the journalist vault
+    let org_keypair = stack.keys().org_key_pair.clone();
+    let backup_signing_key = create_test_backup_id_key_pair(&stack);
+    let backup_encryption_key = create_test_backup_msg_key_pair(&stack, backup_signing_key.clone());
+
+    // Upload the backup signing key
+    let post_backup_signing_pk = PostBackupIdKeyForm::new(
+        backup_signing_key.public_key().to_untrusted(),
+        &org_keypair,
+        stack.now(),
+    )
+    .expect("Create PostBackupDataForm");
+
+    stack
+        .api_client_uncached()
+        .post_backup_signing_pk(post_backup_signing_pk)
+        .await
+        .expect("Upload backup signing key");
+
+    // Upload the backup encryption key
+    let post_backup_encryption_pk = PostBackupMsgKeyForm::new(
+        backup_encryption_key.public_key().to_untrusted(),
+        &backup_signing_key,
+        stack.now(),
+    )
+    .expect("Create PostBackupMsgKeyForm");
+
+    stack
+        .api_client_uncached()
+        .post_backup_encryption_pk(post_backup_encryption_pk)
+        .await
+        .expect("Upload backup encryption key");
+
+    // Create the journalist vault to back up
+    let journalist_vault = stack.load_static_journalist_vault().await;
+
+    // Extract the journalist identity and signing keypair
+    let journalist_identity = journalist_vault.journalist_id().await.unwrap();
+
+    let journalist_signing_pair = journalist_vault
+        .latest_id_key_pair(stack.now())
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Create recovery contact which is another journalist who can help recover the vault
+    let (recovery_contact_vault, recovery_contact_messaging_pair) =
+        create_recovery_contact_vault_and_return_messaging_keys(&stack).await;
+
+    // Create the signed backup data
+    let journalist_vault_bytes = stack.load_static_journalist_vault_bytes().await;
+    let recovery_contact = RecoveryContact {
+        identity: recovery_contact_vault.journalist_id().await.unwrap(),
+        latest_messaging_key: recovery_contact_messaging_pair.public_key().clone(),
+    };
+    let verified_backup_data = sentinel_create_backup(
+        journalist_vault_bytes.clone(),
+        journalist_identity.clone(),
+        journalist_signing_pair.clone(),
+        backup_encryption_key.public_key().clone(),
+        vec![recovery_contact],
+        1, // k=1
+        stack.now(),
+    )
+    .expect("Failed to create backup");
+
+    assert!(!verified_backup_data.backup_data_bytes.0.is_empty());
+
+    // Upload the signed backup data to the API
+    let backup_form = PostBackupDataForm::new(
+        verified_backup_data.clone().to_unverified().unwrap(),
+        &journalist_signing_pair,
+        stack.now(),
+    )
+    .expect("Create PostBackupDataForm");
+
+    stack
+        .api_client_uncached()
+        .post_backup_data(backup_form.clone())
+        .await
+        .expect("Upload backup data");
+
+    // Testing Duplicated Insert prevention - re-posting the backup should fail since we have a unique constraint on the data hash
+    let result = stack
+        .api_client_uncached()
+        .post_backup_data(backup_form)
+        .await;
+    assert!(result.is_err());
+
+    // Testing using different signing key between form and backup data - this should fail
+    let incorrect_signing_key = recovery_contact_vault
+        .latest_id_key_pair(stack.now())
+        .await
+        .unwrap()
+        .unwrap();
+    let backup_form = PostBackupDataForm::new(
+        verified_backup_data.clone().to_unverified().unwrap(),
+        &incorrect_signing_key,
+        stack.now(),
+    )
+    .expect("Create PostBackupDataForm");
+
+    let result = stack
+        .api_client_uncached()
+        .post_backup_data(backup_form.clone())
+        .await;
+    assert!(result.is_err());
+
+    let journalist_identity_get_backup_form = GetBackupDataForm::new(
+        journalist_identity.clone(),
+        &backup_signing_key,
+        stack.now(),
+    )
+    .expect("Create GetBackupDataForm");
+
+    // Retrieve the backup data from the API
+    let retrieved_signed_backup_data = stack
+        .api_client_uncached()
+        .get_backup_data(journalist_identity_get_backup_form)
+        .await
+        .expect("Failed to retrieve backup data");
+
+    assert_eq!(
+        verified_backup_data.to_unverified().unwrap(),
+        retrieved_signed_backup_data
+    );
+
+    // Verify the retrieved backup data
+    let verified_retrieved_signed_backup_data =
+        retrieved_signed_backup_data.to_verified(journalist_signing_pair.public_key(), stack.now());
+
+    assert!(verified_retrieved_signed_backup_data.is_ok());
+
+    let verified_retrieved_signed_backup_data = verified_retrieved_signed_backup_data.unwrap();
+
+    // Check the contents of the backup data matches what we originally created
+    let retrieved_backup_data_bytes = verified_retrieved_signed_backup_data.backup_data().unwrap();
+
+    // Initiate restore
+    let backup_state = coverup_initiate_restore_step(
+        journalist_identity.clone(),
+        retrieved_backup_data_bytes
+            .to_backup_data_with_signature(&journalist_signing_pair)
+            .unwrap(),
+        journalist_signing_pair.public_key(),
+        &backup_encryption_key,
+        stack.now(),
+    )
+    .expect("Failed to initiate restore");
+
+    // Recovery contact unwraps share
+    let wrapped_share = sentinel_restore_try_unwrap_share_step(
+        backup_state.encrypted_shares.clone(),
+        vec![recovery_contact_messaging_pair],
+        backup_encryption_key.public_key().clone(),
+    )
+    .expect("Failed to unwrap share")
+    .expect("No share could be unwrapped");
+
+    // Complete restore
+    let restored_vault =
+        sentinel_finish_restore_step(backup_state, vec![wrapped_share], &backup_encryption_key)
+            .expect("Failed to finish restore");
+
+    // Verify the round-trip worked
+    assert_eq!(journalist_vault_bytes.clone(), restored_vault);
+
+    // Replace the vault file with the restored vault to verify it can be opened
+    stack
+        .save_static_journalist_vault_bytes(restored_vault)
+        .await;
+
+    let restored_vault = stack.load_static_journalist_vault().await;
+
+    assert_eq!(
+        restored_vault.journalist_id().await.unwrap(),
+        journalist_identity
+    );
+}
+
+async fn create_recovery_contact_vault_and_return_messaging_keys(
+    stack: &CoverDropStack,
+) -> (
+    JournalistVault,
+    SignedEncryptionKeyPair<JournalistMessaging>,
+) {
+    // generated_test_journalist is a recovery contact for generated_test_desk
+    generate_test_journalist(
+        stack.api_client_cached(),
+        stack.keys_path(),
+        stack.temp_dir_path(),
+        stack.now(),
+    )
+    .await;
+
+    let vault_path = stack
+        .temp_dir_path()
+        .join("generated_test_journalist.vault");
+
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+        .await
+        .expect("Load journalist vault");
+
+    let journalist_id_keys = vault
+        .latest_msg_key_pair(stack.now())
+        .await
+        .unwrap()
+        .unwrap();
+
+    (vault, journalist_id_keys)
+}
+
+fn create_test_backup_msg_key_pair(
+    stack: &CoverDropStack,
+    signing_key_pair: SignedSigningKeyPair<BackupId>,
+) -> SignedEncryptionKeyPair<BackupMsg> {
+    generate_backup_msg_key_pair(&signing_key_pair, stack.now())
+}
+
+fn create_test_backup_id_key_pair(stack: &CoverDropStack) -> SignedSigningKeyPair<BackupId> {
+    generate_backup_id_key_pair(&stack.keys().org_key_pair, stack.now())
+}

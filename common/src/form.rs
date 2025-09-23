@@ -28,7 +28,7 @@ use crate::{
 const DEFAULT_FORM_TTL_SECONDS: i64 = HOUR_IN_SECONDS;
 
 #[serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Form<FormData, SignerRole>
 where

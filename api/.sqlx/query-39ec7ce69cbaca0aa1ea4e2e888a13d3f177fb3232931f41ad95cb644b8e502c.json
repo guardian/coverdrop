@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO backups (created_at, data, signature, signing_key_json, journalist_id_pk_id)\n                VALUES ($1, $2, $3, $4, $5)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Bytea",
+        "Bytea",
+        "Jsonb",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "39ec7ce69cbaca0aa1ea4e2e888a13d3f177fb3232931f41ad95cb644b8e502c"
+}

@@ -11,6 +11,7 @@ use crate::Error;
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::Decode;
 use std::fmt::Debug;
 
 /// We pad the Sentinel backups to the next multiple of 1 MiB.
@@ -82,45 +83,32 @@ impl BackupData {
         serde_cbor::from_slice(bytes).context("Failed to deserialize BackupData from bytes")
     }
 
-    pub fn to_signed_backup_data(
+    pub fn to_backup_data_with_signature(
         &self,
         journalist_identity_key_pair: &SignedSigningKeyPair<JournalistId>,
-    ) -> anyhow::Result<SignedBackupData> {
-        let backup_data_bytes = self.to_bytes()?;
-        let backup_data_signature = journalist_identity_key_pair.sign(&backup_data_bytes);
-        Ok(SignedBackupData {
-            backup_data_bytes,
-            backup_data_signature,
+    ) -> anyhow::Result<BackupDataWithSignature> {
+        let bytes = self.to_bytes()?;
+        let signature = journalist_identity_key_pair.sign(&bytes);
+        Ok(BackupDataWithSignature {
+            backup_data_bytes: bytes,
+            backup_data_signature: signature,
             signed_with: journalist_identity_key_pair
                 .public_key()
                 .clone()
                 .to_untrusted(),
         })
     }
-
-    pub fn from_signed_backup_data(
-        signed: SignedBackupData,
-        journalist_identity_public_key: &SignedPublicSigningKey<JournalistId>,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<Self> {
-        if signed.signed_with.key != journalist_identity_public_key.key {
-            return Err(anyhow::anyhow!(
-                "The signed_with key does not match the provided journalist identity public key"
-            ));
-        }
-
-        journalist_identity_public_key.verify(
-            &signed.backup_data_bytes,
-            &signed.backup_data_signature,
-            now,
-        )?;
-        Self::from_bytes(&signed.backup_data_bytes.0)
-    }
 }
 
 /// Helper for (de)serializing the `BackupData` as a byte array that can be signed/verified.
-#[derive(Serialize, Deserialize)]
-pub(crate) struct BackupDataBytes(pub(crate) Vec<u8>);
+#[derive(Serialize, Deserialize, Clone, Decode, PartialEq, Eq, Debug)]
+pub struct BackupDataBytes(pub Vec<u8>);
+
+impl BackupDataBytes {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+}
 
 impl Signable for BackupDataBytes {
     fn as_signable_bytes(&self) -> &[u8] {
@@ -130,11 +118,84 @@ impl Signable for BackupDataBytes {
 
 /// A `BackupData` along with a signature by the journalist's identity key. This allows
 /// verification that the backup was indeed created by the journalist who owns the identity.
-#[derive(Serialize, Deserialize)]
-pub struct SignedBackupData {
-    pub(crate) backup_data_bytes: BackupDataBytes,
-    pub(crate) backup_data_signature: Signature<BackupDataBytes>,
-    pub(crate) signed_with: UntrustedSignedPublicSigningKey<JournalistId>,
+/// The fields are non-public to ensure that callsites need to verify.
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+pub struct BackupDataWithSignature {
+    backup_data_bytes: BackupDataBytes,
+    backup_data_signature: Signature<BackupDataBytes>,
+    signed_with: UntrustedSignedPublicSigningKey<JournalistId>,
+}
+
+impl BackupDataWithSignature {
+    pub fn new(
+        backup_data_bytes: BackupDataBytes,
+        backup_data_signature: Signature<BackupDataBytes>,
+        journalist_identity_key_pair: UntrustedSignedPublicSigningKey<JournalistId>,
+    ) -> anyhow::Result<Self> {
+        Ok(Self {
+            backup_data_bytes,
+            backup_data_signature,
+            signed_with: journalist_identity_key_pair,
+        })
+    }
+
+    pub fn from_vec_unchecked(data: Vec<u8>) -> anyhow::Result<Self> {
+        let signed_backup_data: BackupDataWithSignature = serde_json::from_slice(&data)
+            .map_err(|e| anyhow::anyhow!("Failed to deserialize SignedBackupData: {}", e))?;
+        Ok(signed_backup_data)
+    }
+
+    pub fn signed_with(&self) -> &UntrustedSignedPublicSigningKey<JournalistId> {
+        &self.signed_with
+    }
+
+    pub fn to_verified(
+        self,
+        journalist_identity_public_key: &SignedPublicSigningKey<JournalistId>,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<VerifiedBackupData> {
+        // Verify that the keys match
+        if self.signed_with.key != journalist_identity_public_key.key {
+            return Err(anyhow::anyhow!(
+                "The signed_with key does not match the provided journalist identity public key"
+            ));
+        }
+
+        // Verify the signature
+        journalist_identity_public_key.verify(
+            &self.backup_data_bytes,
+            &self.backup_data_signature,
+            now,
+        )?;
+
+        Ok(VerifiedBackupData {
+            backup_data_bytes: self.backup_data_bytes,
+            backup_data_signature: self.backup_data_signature,
+            signed_with: journalist_identity_public_key.clone(),
+        })
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct VerifiedBackupData {
+    pub backup_data_bytes: BackupDataBytes,
+    pub backup_data_signature: Signature<BackupDataBytes>,
+    pub signed_with: SignedPublicSigningKey<JournalistId>,
+}
+
+impl VerifiedBackupData {
+    pub fn to_unverified(self) -> anyhow::Result<BackupDataWithSignature> {
+        let res = BackupDataWithSignature {
+            backup_data_bytes: self.backup_data_bytes,
+            backup_data_signature: self.backup_data_signature,
+            signed_with: self.signed_with.to_untrusted(),
+        };
+        Ok(res)
+    }
+
+    pub fn backup_data(&self) -> anyhow::Result<BackupData> {
+        BackupData::from_bytes(self.backup_data_bytes.as_bytes())
+    }
 }
 
 #[cfg(test)]
@@ -171,17 +232,15 @@ mod tests {
         let journalist_identity_public_key = journalist_identity_key_pair.public_key().clone();
 
         let signed_backup_data =
-            backup_data.to_signed_backup_data(&journalist_identity_key_pair)?;
+            backup_data.to_backup_data_with_signature(&journalist_identity_key_pair)?;
         let signed_backup_data_bytes = serde_json::to_vec(&signed_backup_data)?;
 
         // Happy path
-        let signed_backup_data: SignedBackupData =
+        let signed_backup_data: BackupDataWithSignature =
             serde_json::from_slice(&signed_backup_data_bytes)?;
-        let deserialized_backup_data = BackupData::from_signed_backup_data(
-            signed_backup_data,
-            &journalist_identity_public_key,
-            now,
-        )?;
+        let verified_backup_data =
+            signed_backup_data.to_verified(&journalist_identity_public_key, now)?;
+        let deserialized_backup_data = verified_backup_data.backup_data()?;
         assert_eq!(backup_data, deserialized_backup_data);
 
         // Failure path: tampered data
@@ -189,24 +248,16 @@ mod tests {
         // Flip a bit to simulate tampering. For the next person editing: be careful to not break
         // the JSON structure...
         tampered_bytes[32] ^= 0x01;
-        let tampered_signed_backup_data: SignedBackupData =
+        let tampered_signed_backup_data: BackupDataWithSignature =
             serde_json::from_slice(&tampered_bytes)?;
-        let result = BackupData::from_signed_backup_data(
-            tampered_signed_backup_data,
-            &journalist_identity_public_key,
-            now,
-        );
+        let result = tampered_signed_backup_data.to_verified(&journalist_identity_public_key, now);
         assert!(result.is_err(), "Tampered data should fail verification");
 
         // Failure path: expired key
         let expired_time = now + chrono::Duration::days(31);
         let signed_backup_data =
-            backup_data.to_signed_backup_data(&journalist_identity_key_pair)?;
-        let result = BackupData::from_signed_backup_data(
-            signed_backup_data,
-            &journalist_identity_public_key,
-            expired_time,
-        );
+            backup_data.to_backup_data_with_signature(&journalist_identity_key_pair)?;
+        let result = signed_backup_data.to_verified(&journalist_identity_public_key, expired_time);
         assert!(result.is_err(), "Expired key should fail verification");
 
         Ok(())

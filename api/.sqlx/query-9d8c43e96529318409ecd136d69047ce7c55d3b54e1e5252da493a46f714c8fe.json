@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id AS backup_id_pk_id\n                FROM backup_id_pks\n                WHERE decode(pk_json #>>'{key}', 'hex') = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "backup_id_pk_id",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9d8c43e96529318409ecd136d69047ce7c55d3b54e1e5252da493a46f714c8fe"
+}
