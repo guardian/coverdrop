@@ -58,10 +58,6 @@ impl ToUserPublishingService {
             let dead_drop = inbound.dead_drop_content;
             let serialized_dead_drop = dead_drop.serialize();
 
-            // V1 signature
-            let certificate = latest_id_key_pair.key_pair.sign(&serialized_dead_drop);
-
-            // V2 signature
             let created_at = time::now();
             let signature_data =
                 JournalistToUserDeadDropSignatureDataV2::new(&serialized_dead_drop, created_at);
@@ -75,7 +71,6 @@ impl ToUserPublishingService {
             let signed_dead_drop = UnpublishedJournalistToUserDeadDrop::new(
                 serialized_dead_drop,
                 created_at,
-                certificate,
                 signature,
             );
 

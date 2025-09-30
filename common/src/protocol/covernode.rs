@@ -4,8 +4,7 @@ use crate::api::models::dead_drops::{
     JournalistToUserDeadDrop, JournalistToUserDeadDropSignatureDataV2,
     UnpublishedJournalistToUserDeadDrop, UnpublishedUserToJournalistDeadDrop,
     UnverifiedJournalistToUserDeadDropsList, UnverifiedUserToJournalistDeadDropsList,
-    UserToJournalistDeadDrop, UserToJournalistDeadDropCertificateDataV1,
-    UserToJournalistDeadDropSignatureDataV2,
+    UserToJournalistDeadDrop, UserToJournalistDeadDropSignatureDataV2,
 };
 use crate::api::models::messages::covernode_to_journalist_message::{
     CoverNodeToJournalistMessage, EncryptedCoverNodeToJournalistMessage,
@@ -129,42 +128,21 @@ pub fn verify_user_to_journalist_dead_drop_list(
         .filter_map(|dead_drop| {
             // For each ID PK, check the dead drop
             for (_, id_pk) in keys.covernode_id_pk_iter() {
-                // Can remove this once we have no more legacy dead drops
-                let is_legacy_dead_drop = dead_drop.signature.to_bytes().iter().all(|b| *b == 0);
+                let signature_data = dead_drop.signature_data();
 
-                if is_legacy_dead_drop {
-                    let cert_data = dead_drop.certificate_data();
+                if id_pk
+                    .verify(&signature_data, &dead_drop.signature, now)
+                    .is_ok()
+                {
+                    let verified_dead_drop = UserToJournalistDeadDrop::new(
+                        dead_drop.id,
+                        dead_drop.created_at,
+                        dead_drop.data.deserialize(),
+                        dead_drop.signature,
+                        dead_drop.epoch,
+                    );
 
-                    if id_pk.verify(&cert_data, &dead_drop.cert, now).is_ok() {
-                        let verified_dead_drop = UserToJournalistDeadDrop::new(
-                            dead_drop.id,
-                            dead_drop.created_at,
-                            dead_drop.data.deserialize(),
-                            dead_drop.cert,
-                            dead_drop.signature,
-                            dead_drop.epoch,
-                        );
-
-                        return Some(verified_dead_drop);
-                    }
-                } else {
-                    let signature_data = dead_drop.signature_data();
-
-                    if id_pk
-                        .verify(&signature_data, &dead_drop.signature, now)
-                        .is_ok()
-                    {
-                        let verified_dead_drop = UserToJournalistDeadDrop::new(
-                            dead_drop.id,
-                            dead_drop.created_at,
-                            dead_drop.data.deserialize(),
-                            dead_drop.cert,
-                            dead_drop.signature,
-                            dead_drop.epoch,
-                        );
-
-                        return Some(verified_dead_drop);
-                    }
+                    return Some(verified_dead_drop);
                 }
             }
 
@@ -188,36 +166,19 @@ pub fn verify_journalist_to_user_dead_drop_list(
         .filter_map(|dead_drop| {
             // For each ID PK, check the dead drop
             for (_, id_pk) in keys.covernode_id_pk_iter() {
-                // Can remove this once we have no more legacy dead drops
-                let is_legacy_dead_drop = dead_drop.signature.to_bytes().iter().all(|b| *b == 0);
+                let signature_data = dead_drop.signature_data();
 
-                if is_legacy_dead_drop {
-                    if id_pk.verify(&dead_drop.data, &dead_drop.cert, now).is_ok() {
-                        let verified_dead_drop = JournalistToUserDeadDrop::new(
-                            dead_drop.id,
-                            dead_drop.created_at,
-                            dead_drop.data.deserialize(),
-                            dead_drop.cert.clone(),
-                        );
+                if id_pk
+                    .verify(&signature_data, &dead_drop.signature, now)
+                    .is_ok()
+                {
+                    let verified_dead_drop = JournalistToUserDeadDrop::new(
+                        dead_drop.id,
+                        dead_drop.created_at,
+                        dead_drop.data.deserialize(),
+                    );
 
-                        return Some(verified_dead_drop);
-                    }
-                } else {
-                    let signature_data = dead_drop.signature_data();
-
-                    if id_pk
-                        .verify(&signature_data, &dead_drop.signature, now)
-                        .is_ok()
-                    {
-                        let verified_dead_drop = JournalistToUserDeadDrop::new(
-                            dead_drop.id,
-                            dead_drop.created_at,
-                            dead_drop.data.deserialize(),
-                            dead_drop.cert.clone(),
-                        );
-
-                        return Some(verified_dead_drop);
-                    }
+                    return Some(verified_dead_drop);
                 }
             }
 
@@ -234,35 +195,18 @@ pub fn verify_unpublished_user_to_journalist_dead_drop(
     dead_drop: UnpublishedUserToJournalistDeadDrop,
     now: DateTime<Utc>,
 ) -> anyhow::Result<Verified<UnpublishedUserToJournalistDeadDrop>> {
-    let is_legacy_dead_drop = dead_drop.signature.to_bytes().iter().all(|b| *b == 0);
+    let signature_data = UserToJournalistDeadDropSignatureDataV2::new(
+        &dead_drop.data,
+        dead_drop.created_at,
+        dead_drop.epoch,
+    );
 
-    if is_legacy_dead_drop {
-        let certificate_data =
-            UserToJournalistDeadDropCertificateDataV1::new(&dead_drop.data, dead_drop.epoch);
-
-        for (_, id_pk) in keys.covernode_id_pk_iter() {
-            if id_pk
-                .verify(&certificate_data, &dead_drop.cert, now)
-                .is_ok()
-            {
-                return Ok(Verified(dead_drop));
-            }
-        }
-    } else {
-        let signature_data = UserToJournalistDeadDropSignatureDataV2::new(
-            &dead_drop.data,
-            dead_drop.created_at,
-            dead_drop.epoch,
-        );
-
-        for (_, id_pk) in keys.covernode_id_pk_iter() {
-            // V2 technique, used for newer dead drops
-            if id_pk
-                .verify(&signature_data, &dead_drop.signature, now)
-                .is_ok()
-            {
-                return Ok(Verified(dead_drop));
-            }
+    for (_, id_pk) in keys.covernode_id_pk_iter() {
+        if id_pk
+            .verify(&signature_data, &dead_drop.signature, now)
+            .is_ok()
+        {
+            return Ok(Verified(dead_drop));
         }
     }
 
@@ -280,25 +224,15 @@ pub fn verify_unpublished_journalist_to_user_dead_drop(
     dead_drop: UnpublishedJournalistToUserDeadDrop,
     now: DateTime<Utc>,
 ) -> anyhow::Result<Verified<UnpublishedJournalistToUserDeadDrop>> {
-    let is_legacy_dead_drop = dead_drop.signature.to_bytes().iter().all(|b| *b == 0);
+    let signature_data =
+        JournalistToUserDeadDropSignatureDataV2::new(&dead_drop.data, dead_drop.created_at);
 
-    if is_legacy_dead_drop {
-        for (_, id_pk) in keys.covernode_id_pk_iter() {
-            if id_pk.verify(&dead_drop.data, &dead_drop.cert, now).is_ok() {
-                return Ok(Verified(dead_drop));
-            }
-        }
-    } else {
-        let signature_data =
-            JournalistToUserDeadDropSignatureDataV2::new(&dead_drop.data, dead_drop.created_at);
-
-        for (_, id_pk) in keys.covernode_id_pk_iter() {
-            if id_pk
-                .verify(&signature_data, &dead_drop.signature, now)
-                .is_ok()
-            {
-                return Ok(Verified(dead_drop));
-            }
+    for (_, id_pk) in keys.covernode_id_pk_iter() {
+        if id_pk
+            .verify(&signature_data, &dead_drop.signature, now)
+            .is_ok()
+        {
+            return Ok(Verified(dead_drop));
         }
     }
 

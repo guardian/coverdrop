@@ -3,7 +3,6 @@ mod unpublished_user_to_journalist_dead_drop;
 mod unverified_user_to_journalist_dead_drop;
 mod unverified_user_to_journalist_dead_drop_list;
 mod user_to_journalist_dead_drop;
-mod user_to_journalist_dead_drop_certificate_data_v1;
 mod user_to_journalist_dead_drop_messages;
 mod user_to_journalist_dead_drop_signature_data_v2;
 
@@ -12,7 +11,6 @@ pub use unpublished_user_to_journalist_dead_drop::UnpublishedUserToJournalistDea
 pub use unverified_user_to_journalist_dead_drop::UnverifiedUserToJournalistDeadDrop;
 pub use unverified_user_to_journalist_dead_drop_list::UnverifiedUserToJournalistDeadDropsList;
 pub use user_to_journalist_dead_drop::UserToJournalistDeadDrop;
-pub use user_to_journalist_dead_drop_certificate_data_v1::UserToJournalistDeadDropCertificateDataV1;
 pub use user_to_journalist_dead_drop_messages::UserToJournalistDeadDropMessages;
 pub use user_to_journalist_dead_drop_signature_data_v2::UserToJournalistDeadDropSignatureDataV2;
 

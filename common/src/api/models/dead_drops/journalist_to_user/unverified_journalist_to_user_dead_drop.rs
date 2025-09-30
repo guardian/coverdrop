@@ -18,8 +18,6 @@ pub struct UnverifiedJournalistToUserDeadDrop {
     pub created_at: DateTime<Utc>,
     pub data: SerializedJournalistToUserDeadDropMessages,
     #[serde(with = "SignatureHex")]
-    pub cert: Signature<SerializedJournalistToUserDeadDropMessages>,
-    #[serde(with = "SignatureHex")]
     pub signature: Signature<JournalistToUserDeadDropSignatureDataV2>,
 }
 

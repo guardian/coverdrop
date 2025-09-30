@@ -17,8 +17,6 @@ pub struct UnpublishedJournalistToUserDeadDrop {
     pub data: SerializedJournalistToUserDeadDropMessages,
     pub created_at: DateTime<Utc>,
     #[serde(with = "SignatureHex")]
-    pub cert: Signature<SerializedJournalistToUserDeadDropMessages>,
-    #[serde(with = "SignatureHex")]
     pub signature: Signature<JournalistToUserDeadDropSignatureDataV2>,
 }
 
@@ -26,13 +24,11 @@ impl UnpublishedJournalistToUserDeadDrop {
     pub fn new(
         data: SerializedJournalistToUserDeadDropMessages,
         created_at: DateTime<Utc>,
-        cert: Signature<SerializedJournalistToUserDeadDropMessages>,
         signature: Signature<JournalistToUserDeadDropSignatureDataV2>,
     ) -> Self {
         Self {
             data,
             created_at,
-            cert,
             signature,
         }
     }

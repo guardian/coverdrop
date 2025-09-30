@@ -3,8 +3,7 @@ use crate::key_state::KeyState;
 use crate::update_checkpoint;
 use common::api::api_client::ApiClient;
 use common::api::models::dead_drops::{
-    UnpublishedUserToJournalistDeadDrop, UserToJournalistDeadDropCertificateDataV1,
-    UserToJournalistDeadDropSignatureDataV2,
+    UnpublishedUserToJournalistDeadDrop, UserToJournalistDeadDropSignatureDataV2,
 };
 use common::aws::kinesis::client::StreamKind;
 use common::protocol::keys::LatestKey;
@@ -58,16 +57,8 @@ impl ToJournalistPublishingService {
             let dead_drop = inbound.dead_drop_content;
             let serialized_dead_drop_messages = dead_drop.serialize();
 
-            // V1 signature
-            let certificate_data = UserToJournalistDeadDropCertificateDataV1::new(
-                &serialized_dead_drop_messages,
-                max_epoch,
-            );
-            let cert = latest_id_key_pair.key_pair.sign(&certificate_data);
-
-            let created_at = time::now();
-
             // V2 signature
+            let created_at = time::now();
             let signature_data = UserToJournalistDeadDropSignatureDataV2::new(
                 &serialized_dead_drop_messages,
                 created_at,
@@ -82,7 +73,6 @@ impl ToJournalistPublishingService {
 
             let dead_drop = UnpublishedUserToJournalistDeadDrop::new(
                 serialized_dead_drop_messages,
-                cert,
                 signature,
                 created_at,
                 max_epoch,

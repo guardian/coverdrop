@@ -9,7 +9,7 @@ use common::{
             SerializedJournalistToUserDeadDropMessages, SerializedUserToJournalistDeadDropMessages,
             UnpublishedJournalistToUserDeadDrop, UnpublishedUserToJournalistDeadDrop,
             UnverifiedJournalistToUserDeadDrop, UnverifiedUserToJournalistDeadDrop,
-            UserToJournalistDeadDropCertificateDataV1, UserToJournalistDeadDropSignatureDataV2,
+            UserToJournalistDeadDropSignatureDataV2,
         },
     },
     crypto::{Signable, Signature, Verified},
@@ -43,7 +43,6 @@ impl DeadDropQueries {
                 id,
                 created_at AS "created_at: DateTime<Utc>",
                 data       AS "data: SerializedJournalistToUserDeadDropMessages",
-                cert       AS "cert: Signature<SerializedJournalistToUserDeadDropMessages>",
                 signature  AS "signature: Signature<JournalistToUserDeadDropSignatureDataV2>"
             FROM user_dead_drops
             WHERE id > $1
@@ -73,7 +72,6 @@ impl DeadDropQueries {
                 id,
                 created_at AS "created_at: DateTime<Utc>",
                 data       AS "data: SerializedUserToJournalistDeadDropMessages",
-                cert       AS "cert: Signature<UserToJournalistDeadDropCertificateDataV1>",
                 signature  AS "signature: Signature<UserToJournalistDeadDropSignatureDataV2>",
                 epoch      AS "epoch: Epoch"
             FROM journalist_dead_drops
@@ -98,19 +96,17 @@ impl DeadDropQueries {
         let mut connection = self.pool.acquire().await?;
 
         let data = message.data.as_signable_bytes();
-        let cert = message.cert.to_bytes();
         let signature = message.signature.to_bytes();
         let created_at = message.created_at;
 
         let id = sqlx::query_scalar!(
             r#"
-                INSERT INTO user_dead_drops (data, cert, signature, created_at, published_at)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO user_dead_drops (data, signature, created_at, published_at)
+                VALUES ($1, $2, $3, $4)
                 ON CONFLICT DO NOTHING
                 RETURNING id
             "#,
             data,
-            &cert,
             &signature,
             created_at,
             now
@@ -129,20 +125,18 @@ impl DeadDropQueries {
         let mut connection = self.pool.acquire().await?;
 
         let data = message.data.as_bytes();
-        let cert = message.cert.to_bytes();
         let signature = message.signature.to_bytes();
         let created_at = message.created_at;
         let epoch = *message.epoch;
 
         let id = sqlx::query_scalar!(
             r#"
-                INSERT INTO journalist_dead_drops (data, cert, signature, created_at, epoch, published_at)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO journalist_dead_drops (data, signature, created_at, epoch, published_at)
+                VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT DO NOTHING
                 RETURNING id
             "#,
             data,
-            &cert,
             &signature,
             created_at,
             epoch,
