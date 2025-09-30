@@ -13,7 +13,6 @@ use super::{SerializedUserToJournalistDeadDropMessages, UserToJournalistDeadDrop
 /// A dead drop that has been served from the API but has not yet
 /// been verified against the key hierarchy.
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(deny_unknown_fields)]
 pub struct UnverifiedUserToJournalistDeadDrop {
     pub id: DeadDropId,
     pub created_at: DateTime<Utc>,
