@@ -20,6 +20,7 @@ import { BackupChecks } from "../model/bindings/BackupChecks.ts";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { BackupReminderToastBody } from "./BackupReminderToastBody.tsx";
 import { ask } from "@tauri-apps/plugin-dialog";
+import { listen } from "@tauri-apps/api/event";
 
 type BackupModalProps = {
   isOpen: boolean;
@@ -91,11 +92,13 @@ export const BackupModal = ({
 
   useEffect(() => {
     refreshIsBackupRequired();
-    const timer = setInterval(
+    const unlistenFnPromise = listen(
+      "journalist_keys_rotated",
       refreshIsBackupRequired,
-      1000 * 60 /*every minute*/,
     );
-    return () => clearInterval(timer);
+    return () => {
+      unlistenFnPromise.then((unlisten) => unlisten());
+    };
   }, []);
 
   const [backupChecks, setBackupChecks] = useState<BackupChecks | null>(null);

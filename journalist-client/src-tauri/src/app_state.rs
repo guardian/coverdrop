@@ -134,7 +134,8 @@ impl AppStateHandle {
                     &self.public_info,
                     &self.app_handle,
                 );
-                let rotate_keys_task = RotateJournalistKeys::new(&api_client, &vault);
+                let rotate_keys_task =
+                    RotateJournalistKeys::new(&self.app_handle, &api_client, &vault);
                 let clean_up_vault_task = CleanUpVault::new(&vault);
 
                 async move {

@@ -6,6 +6,7 @@ use ts_rs::TS;
 enum EventType {
     OutboundQueueLength,
     DeadDropsRemaining,
+    JournalistKeysRotated,
 }
 
 impl EventType {
@@ -13,6 +14,7 @@ impl EventType {
         match self {
             EventType::OutboundQueueLength => "outbound_queue_length",
             EventType::DeadDropsRemaining => "dead_drops_remaining",
+            EventType::JournalistKeysRotated => "journalist_keys_rotated",
         }
     }
 }
@@ -22,6 +24,7 @@ pub trait BackendToFrontendEvent {
 
     fn emit_dead_drops_pull_started(&self) -> anyhow::Result<()>;
     fn emit_dead_drops_remaining_event(&self, count: usize) -> anyhow::Result<()>;
+    fn emit_journalist_keys_rotated_event(&self) -> anyhow::Result<()>;
 }
 
 impl BackendToFrontendEvent for AppHandle {
@@ -36,6 +39,11 @@ impl BackendToFrontendEvent for AppHandle {
     }
     fn emit_dead_drops_remaining_event(&self, count: usize) -> anyhow::Result<()> {
         self.emit(EventType::DeadDropsRemaining.as_str(), count)?;
+        Ok(())
+    }
+
+    fn emit_journalist_keys_rotated_event(&self) -> anyhow::Result<()> {
+        self.emit(EventType::JournalistKeysRotated.as_str(), None::<i32>)?;
         Ok(())
     }
 }

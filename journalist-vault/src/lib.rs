@@ -808,10 +808,12 @@ impl JournalistVault {
         &self,
         api_client: &ApiClient,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         if self.latest_id_key_pair(now).await?.is_none() {
             anyhow::bail!("No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded")
         };
+
+        let mut did_rotate_some_keys = false;
 
         //
         // Identity key rotation
@@ -830,7 +832,10 @@ impl JournalistVault {
                 .generate_id_key_pair_and_rotate_pk(api_client, now)
                 .await
             {
-                Ok(_) => tracing::info!("Refreshed identity keys"),
+                Ok(_) => {
+                    tracing::info!("Refreshed identity keys");
+                    did_rotate_some_keys = true;
+                }
                 Err(e) => tracing::error!("Failed to refresh identity key: {:?}", e),
             }
         } else {
@@ -855,7 +860,10 @@ impl JournalistVault {
                 .generate_msg_key_pair_and_upload_pk(api_client, now)
                 .await
             {
-                Ok(_) => tracing::info!("Refreshed messaging keys"),
+                Ok(_) => {
+                    tracing::info!("Refreshed messaging keys");
+                    did_rotate_some_keys = true;
+                }
                 Err(e) => tracing::error!("Failed to refresh messaging key: {:?}", e),
             }
         } else {
@@ -863,7 +871,7 @@ impl JournalistVault {
                     seconds_since_last_update / HOUR_IN_SECONDS);
         }
 
-        Ok(())
+        Ok(did_rotate_some_keys)
     }
 
     /// Generate a new ID key pair for this journalist and use the identity API to rotate to it
