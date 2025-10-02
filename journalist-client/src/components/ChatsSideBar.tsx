@@ -220,6 +220,11 @@ export const ChatsSideBar = ({
   removeCustomToast,
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
+
+  // Dev mode is for experimental features that aren't ready to be rolled out to everyone.
+  // It might make sense to lift this state up to App.tsx if other components need it.
+  const [devMode, setDevMode] = useState(false);
+
   const messageStore = useMessageStore();
   const userStore = useUserStore();
 
@@ -368,6 +373,25 @@ export const ChatsSideBar = ({
     ));
   };
 
+  // if the user clicks on journalist id 5 times within 1 second, toggle dev mode
+  let clickCount = 0;
+  let firstClickTime = 0;
+  const handleJournalistIdClick = () => {
+    const now = Date.now();
+    if (now - firstClickTime > 1000) {
+      // reset if more than 1 second has passed since first click
+      clickCount = 0;
+      firstClickTime = now;
+    }
+    clickCount++;
+    if (clickCount >= 5) {
+      setDevMode(!devMode);
+      clickCount = 0;
+      firstClickTime = 0;
+      console.log("Dev mode toggled:", !devMode);
+    }
+  };
+
   return (
     <>
       <EuiFlexGroup
@@ -389,9 +413,29 @@ export const ChatsSideBar = ({
             openBackupModal={openBackupModal}
             addCustomToast={addCustomToast}
             removeCustomToast={removeCustomToast}
+            devMode={devMode}
           />
         </EuiFlexItem>
-        <EuiFlexItem grow={true}>{journalistId}</EuiFlexItem>
+        <EuiFlexItem grow={true}>
+          <div
+            onClick={handleJournalistIdClick}
+            style={{
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              MozUserSelect: "none",
+              msUserSelect: "none",
+              cursor: "pointer",
+            }}
+          >
+            {journalistId}
+          </div>
+        </EuiFlexItem>
+        {/* Dev mode badge */}
+        {devMode && (
+          <EuiFlexItem grow={false}>
+            <EuiBadge color="primary">Dev Mode</EuiBadge>
+          </EuiFlexItem>
+        )}
         {/* Journalist status skeleton or badge */}
         {(journalistStatus == "HIDDEN_FROM_UI" ||
           journalistStatus === undefined) && (

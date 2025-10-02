@@ -21,8 +21,6 @@ import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
 import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 
-const ENABLE_BACKUP_CONTACTS = false;
-
 type FlyoverContent =
   | {
       type: "vault-keys";
@@ -41,6 +39,7 @@ type FlyoverContent =
 interface SettingsPopoverProps {
   journalistId: string;
   journalistStatus?: JournalistStatus;
+  devMode: boolean;
   setMaybeJournalistStatusForModal: (
     newStatus: JournalistStatus | null,
   ) => void;
@@ -52,6 +51,7 @@ interface SettingsPopoverProps {
 export const SettingsPopover = ({
   journalistId,
   journalistStatus,
+  devMode,
   setMaybeJournalistStatusForModal,
   addCustomToast,
   removeCustomToast,
@@ -208,7 +208,7 @@ export const SettingsPopover = ({
     />
   );
 
-  const chooseBackupContactModal = ENABLE_BACKUP_CONTACTS && (
+  const chooseBackupContactModal = devMode && (
     <ChooseBackupContactModal
       isOpen={chooseBackupContactModalVisible}
       journalistId={journalistId}
@@ -249,7 +249,6 @@ export const SettingsPopover = ({
           <EuiContextMenuItem>
             <strong>Helpers</strong>
           </EuiContextMenuItem>
-
           <EuiContextMenuItem icon="documentEdit">
             <EuiLink
               href="https://docs.google.com/document/d/1QvVbPchfN5Hqf9TuNQ9QPHFeRJXiXN9P4H-ZBmDojsE"
@@ -260,7 +259,6 @@ export const SettingsPopover = ({
               Standard replies
             </EuiLink>
           </EuiContextMenuItem>
-
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
@@ -273,7 +271,7 @@ export const SettingsPopover = ({
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
             View trust anchor digests
           </EuiContextMenuItem>
-          {ENABLE_BACKUP_CONTACTS && (
+          {devMode && (
             <EuiContextMenuItem
               icon="accessibility"
               onClick={chooseBackupContactClicked}
@@ -305,14 +303,14 @@ export const SettingsPopover = ({
               Status pending
             </EuiContextMenuItem>
           )}
-
           <EuiContextMenuItem>
             <strong>Danger Zone</strong>
           </EuiContextMenuItem>
-
-          <EuiContextMenuItem icon="sun" onClick={burstCoverMessagesClicked}>
-            Send cover message burst
-          </EuiContextMenuItem>
+          {devMode && (
+            <EuiContextMenuItem icon="sun" onClick={burstCoverMessagesClicked}>
+              Send cover message burst
+            </EuiContextMenuItem>
+          )}
           <EuiContextMenuItem
             icon="timeRefresh"
             onClick={() => {
@@ -331,9 +329,11 @@ export const SettingsPopover = ({
           >
             Force messaging key rotation
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="link" onClick={addTrustAnchorClicked}>
-            Add trust anchor
-          </EuiContextMenuItem>
+          {devMode && (
+            <EuiContextMenuItem icon="link" onClick={addTrustAnchorClicked}>
+              Add trust anchor
+            </EuiContextMenuItem>
+          )}
           {import.meta.env.VITE_GIT_SHA && maybeGithubRepoName && (
             <EuiContextMenuItem size="s">
               <EuiSpacer size="s" />
