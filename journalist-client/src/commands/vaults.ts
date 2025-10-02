@@ -1,3 +1,5 @@
+import { BackupChecks } from "../model/bindings/BackupChecks.ts";
+import { JournalistIdentity } from "../model/bindings/JournalistIdentity.ts";
 import { OpenVaultOutcome } from "../model/bindings/OpenVaultOutcome";
 import { VaultState } from "../model/bindings/VaultState";
 import { useErrorStore } from "../state/errors";
@@ -5,7 +7,6 @@ import {
   invokeWithErrorMessage,
   invokeWithSilencedErrorMessage,
 } from "./invokeWithErrorMessage";
-import { BackupChecks } from "../model/bindings/BackupChecks.ts";
 
 export const getVaultState = (): Promise<VaultState | null> => {
   return invokeWithErrorMessage("get_vault_state");
@@ -70,4 +71,14 @@ export const performBackup = (): Promise<void> => {
 
 export const ejectBackupVolume = (): Promise<boolean> => {
   return invokeWithErrorMessage("eject_backup_volume");
+};
+
+export const getBackupContacts = (): Promise<JournalistIdentity[]> => {
+  return invokeWithErrorMessage("get_backup_contacts");
+};
+
+export const setBackupContacts = (
+  contacts: JournalistIdentity[],
+): Promise<void> => {
+  return invokeWithErrorMessage("set_backup_contacts", { contacts });
 };

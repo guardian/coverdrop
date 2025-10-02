@@ -1177,4 +1177,19 @@ impl JournalistVault {
 
         backup_queries::get_count_of_keys_created_since_last_backup(&mut conn).await
     }
+
+    pub async fn get_backup_contacts(&self) -> anyhow::Result<Vec<JournalistIdentity>> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::get_backup_contacts(&mut conn).await
+    }
+
+    pub async fn set_backup_contacts(
+        &self,
+        contacts: Vec<JournalistIdentity>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::set_backup_contacts(&mut conn, contacts).await
+    }
 }

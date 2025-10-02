@@ -18,6 +18,10 @@ import { AddTrustAnchorModal } from "./AddTrustAnchorModal";
 import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
 import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
+import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
+import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
+
+const ENABLE_BACKUP_CONTACTS = false;
 
 type FlyoverContent =
   | {
@@ -35,16 +39,22 @@ type FlyoverContent =
     };
 
 interface SettingsPopoverProps {
+  journalistId: string;
   journalistStatus?: JournalistStatus;
   setMaybeJournalistStatusForModal: (
     newStatus: JournalistStatus | null,
   ) => void;
+  addCustomToast: (toast: Toast) => void;
+  removeCustomToast: (id: string) => void;
   openBackupModal: () => void;
 }
 
 export const SettingsPopover = ({
+  journalistId,
   journalistStatus,
   setMaybeJournalistStatusForModal,
+  addCustomToast,
+  removeCustomToast,
   openBackupModal,
 }: SettingsPopoverProps) => {
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
@@ -64,6 +74,13 @@ export const SettingsPopover = ({
     "msg" | "id" | null
   >(null);
 
+  const [chooseBackupContactModalVisible, setChooseBackupContactModalVisible] =
+    useState(false);
+
+  const chooseBackupContactClicked = () => {
+    setChooseBackupContactModalVisible(true);
+    setIsPopoverOpen(false);
+  };
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const setStatusClicked = (newStatus: JournalistStatus) => {
@@ -191,6 +208,19 @@ export const SettingsPopover = ({
     />
   );
 
+  const chooseBackupContactModal = ENABLE_BACKUP_CONTACTS && (
+    <ChooseBackupContactModal
+      isOpen={chooseBackupContactModalVisible}
+      journalistId={journalistId}
+      addCustomToast={addCustomToast}
+      removeCustomToast={removeCustomToast}
+      closeModal={() => {
+        setChooseBackupContactModalVisible(false);
+      }}
+      openModal={() => setChooseBackupContactModalVisible(true)}
+    />
+  );
+
   const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
   const maybeGithubRepoName = maybeRepo?.startsWith("git@")
     ? maybeRepo.substring(maybeRepo.indexOf(":") + 1, maybeRepo.length - 4) // local repo ssh
@@ -243,6 +273,14 @@ export const SettingsPopover = ({
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
             View trust anchor digests
           </EuiContextMenuItem>
+          {ENABLE_BACKUP_CONTACTS && (
+            <EuiContextMenuItem
+              icon="accessibility"
+              onClick={chooseBackupContactClicked}
+            >
+              Choose backup contact
+            </EuiContextMenuItem>
+          )}
           <EuiContextMenuItem icon="save" onClick={backUpVaultClicked}>
             Back up vault
           </EuiContextMenuItem>
@@ -318,6 +356,7 @@ export const SettingsPopover = ({
       {trustedKeyDigestModal}
       {addTrustAnchorModal}
       {forceRotateKeyModal}
+      {chooseBackupContactModal}
     </Fragment>
   );
 };

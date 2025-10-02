@@ -26,7 +26,10 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 
 use cli::Cli;
 
-use crate::commands::admin::update_journalist_status;
+use crate::commands::{
+    admin::update_journalist_status,
+    backup::{get_backup_contacts, set_backup_contacts},
+};
 
 mod app_state;
 mod cli;
@@ -141,6 +144,8 @@ pub fn run() {
             should_require_backup,
             perform_backup,
             eject_backup_volume,
+            get_backup_contacts,
+            set_backup_contacts,
             get_colocated_password,
             get_profiles,
             submit_message,

@@ -1,6 +1,7 @@
 use crate::app_state::AppStateHandle;
 use crate::error::{CommandError, GenericSnafu, IoSnafu, VaultLockedSnafu, VaultSnafu};
 use crate::model::{BackupChecks, VaultState};
+use common::api::models::journalist_id::JournalistIdentity;
 use common::time;
 use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
@@ -133,4 +134,29 @@ pub async fn eject_backup_volume() -> Result<bool, CommandError> {
     tracing::debug!("diskutil command exited with {}", eject_output.status);
 
     Ok(eject_output.status.success())
+}
+
+#[tauri::command]
+pub async fn get_backup_contacts(
+    app: State<'_, AppStateHandle>,
+) -> Result<Vec<JournalistIdentity>, CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+    vault.get_backup_contacts().await.context(VaultSnafu {
+        failed_to: "get backup contacts",
+    })
+}
+
+#[tauri::command]
+pub async fn set_backup_contacts(
+    app: State<'_, AppStateHandle>,
+    contacts: Vec<JournalistIdentity>,
+) -> Result<(), CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+    vault
+        .set_backup_contacts(contacts)
+        .await
+        .context(VaultSnafu {
+            failed_to: "set backup contacts",
+        })?;
+    Ok(())
 }

@@ -96,6 +96,8 @@ const commonArgs = {
   setMaybeMuteModalForReplyKey: () => {},
   setMaybeCopyToClipboardModalForReplyKey: () => {},
   setMaybeJournalistStatusForModal: () => {},
+  addCustomToast: () => {},
+  removeCustomToast: () => {},
 } satisfies Partial<ChatsSideBarProps>;
 
 const meta = {

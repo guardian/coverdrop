@@ -24,6 +24,7 @@ import { useErrorStore } from "../state/errors";
 import { PerChatMenu } from "./PerChatMenu";
 import { Message } from "../model/bindings/Message";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
+import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 
 type Chat = {
   name: string;
@@ -52,6 +53,8 @@ export type ChatsSideBarProps = {
     newStatus: JournalistStatus | null,
   ) => void;
   openBackupModal: () => void;
+  addCustomToast: (toast: Toast) => void;
+  removeCustomToast: (toastId: string) => void;
 };
 
 const chatsToSideNav = (
@@ -213,6 +216,8 @@ export const ChatsSideBar = ({
   setMaybeCopyToClipboardModalForReplyKey,
   setMaybeJournalistStatusForModal,
   openBackupModal,
+  addCustomToast,
+  removeCustomToast,
 }: ChatsSideBarProps) => {
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
   const messageStore = useMessageStore();
@@ -378,9 +383,12 @@ export const ChatsSideBar = ({
       >
         <EuiFlexItem grow={false}>
           <SettingsPopover
+            journalistId={journalistId}
             journalistStatus={journalistStatus}
             setMaybeJournalistStatusForModal={setMaybeJournalistStatusForModal}
             openBackupModal={openBackupModal}
+            addCustomToast={addCustomToast}
+            removeCustomToast={removeCustomToast}
           />
         </EuiFlexItem>
         <EuiFlexItem grow={true}>{journalistId}</EuiFlexItem>

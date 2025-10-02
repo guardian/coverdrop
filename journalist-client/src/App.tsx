@@ -29,6 +29,7 @@ import { BackupModal } from "./components/BackupModal.tsx";
 import { sizes } from "./styles/sizes.ts";
 import { useTrayIcon } from "./hooks/useTrayIcon.ts";
 import { BackgroundTaskTrackerWithLoadingBarIfApplicable } from "./components/BackgroundTaskTrackerWithLoadingBarIfApplicable.tsx";
+import { usePublicInfoStore } from "./state/publicInfo.ts";
 
 const App = ({
   panelled,
@@ -48,6 +49,10 @@ const App = ({
     colorMode,
     euiTheme: { size },
   } = useEuiTheme();
+
+  const messageStore = useMessageStore();
+  const userStore = useUserStore();
+  const publicInfoStore = usePublicInfoStore();
 
   useEffect(() => {
     applyPalette(colorMode.toLowerCase() as ColorMode);
@@ -81,6 +86,9 @@ const App = ({
       if (publicInfo === null) {
         return;
       }
+
+      publicInfoStore.setPublicInfo(publicInfo);
+
       const journalistProfile = publicInfo.journalist_profiles.find(
         (p) => p.id == journalistId,
       );
@@ -145,9 +153,6 @@ const App = ({
   }));
 
   const toasts = [...customToasts, ...errorToasts];
-
-  const messageStore = useMessageStore();
-  const userStore = useUserStore();
 
   // Fetch initial messages and users and set interval to refresh them
   // every 5 seconds
@@ -238,6 +243,8 @@ const App = ({
                 setMaybeJournalistStatusForModal
               }
               openBackupModal={() => setIsBackupModalOpen(true)}
+              addCustomToast={addCustomToast}
+              removeCustomToast={removeCustomToast}
             />
           </EuiPageTemplate.Sidebar>
           {currentUserReplyKey ? (

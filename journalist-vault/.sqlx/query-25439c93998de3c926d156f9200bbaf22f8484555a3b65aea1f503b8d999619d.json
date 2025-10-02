@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT journalist_id AS \"journalist_id: JournalistIdentity\"\n            FROM backup_contacts\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "journalist_id: JournalistIdentity",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "25439c93998de3c926d156f9200bbaf22f8484555a3b65aea1f503b8d999619d"
+}

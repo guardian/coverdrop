@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use common::api::models::journalist_id::JournalistIdentity;
 use sqlx::SqliteConnection;
 
 pub(crate) async fn record_successful_backup(
@@ -38,4 +39,36 @@ pub(crate) async fn get_count_of_keys_created_since_last_backup(
     .await?;
 
     Ok(row.count)
+}
+
+pub(crate) async fn get_backup_contacts(
+    conn: &mut SqliteConnection,
+) -> anyhow::Result<Vec<JournalistIdentity>> {
+    let rows = sqlx::query!(
+        r#"
+            SELECT journalist_id AS "journalist_id: JournalistIdentity"
+            FROM backup_contacts
+        "#
+    )
+    .fetch_all(conn)
+    .await?;
+
+    Ok(rows.into_iter().map(|r| r.journalist_id).collect())
+}
+
+pub(crate) async fn set_backup_contacts(
+    conn: &mut SqliteConnection,
+    contacts: Vec<JournalistIdentity>,
+) -> anyhow::Result<()> {
+    let mut query_builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> = sqlx::QueryBuilder::new(
+        "DELETE FROM backup_contacts; INSERT INTO backup_contacts (journalist_id) ",
+    );
+
+    query_builder.push_values(contacts.iter(), |mut b, contact| {
+        b.push_bind(contact);
+    });
+
+    query_builder.build().execute(conn).await?;
+
+    Ok(())
 }
