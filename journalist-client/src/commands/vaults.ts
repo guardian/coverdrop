@@ -67,3 +67,7 @@ export const getShouldRequireBackup = (): Promise<boolean> => {
 export const performBackup = (): Promise<void> => {
   return invokeWithErrorMessage("perform_backup");
 };
+
+export const ejectBackupVolume = (): Promise<boolean> => {
+  return invokeWithErrorMessage("eject_backup_volume");
+};

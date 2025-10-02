@@ -119,3 +119,18 @@ pub async fn perform_backup(app: State<'_, AppStateHandle>) -> Result<(), Comman
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn eject_backup_volume() -> Result<bool, CommandError> {
+    let eject_output = process::Command::new("diskutil")
+        .arg("eject")
+        .arg(BACKUP_VOLUME_PATH)
+        .output()
+        .context(IoSnafu {
+            failed_to: "eject backup volume",
+        })?;
+
+    tracing::debug!("diskutil command exited with {}", eject_output.status);
+
+    Ok(eject_output.status.success())
+}

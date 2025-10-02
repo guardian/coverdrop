@@ -12,6 +12,7 @@ import {
 } from "@elastic/eui";
 import { useCallback, useEffect, useState } from "react";
 import {
+  ejectBackupVolume,
   getBackupChecks,
   getShouldRequireBackup,
   performBackup,
@@ -38,6 +39,7 @@ export const BackupModal = ({
   setIsBackupModalOpen,
 }: BackupModalProps) => {
   const [isBackupRequired, setIsBackupRequired] = useState<boolean>();
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   const confirmIgnoringBackupRequired = useCallback(async () => {
     const shouldReturn = await ask(
@@ -58,7 +60,7 @@ export const BackupModal = ({
   const closeModal = useCallback(async () => {
     if (isBackupRequired) {
       await confirmIgnoringBackupRequired();
-    } else {
+    } else if (!isBackingUp) {
       setIsBackupModalOpen(false);
     }
   }, [isBackupRequired]);
@@ -122,10 +124,31 @@ export const BackupModal = ({
   }, [isOpen]);
 
   const backup = useCallback(async () => {
+    setIsBackingUp(true);
     await performBackup();
-    alert("Back up complete! You can now eject the USB stick.");
-    await refreshIsBackupRequired();
     setIsBackupModalOpen(false);
+    const shouldEjectBackupVolume = await ask(
+      "Back up complete! Would you like to 'eject' the backup volume now, so you can then remove it.",
+      {
+        title: "Back up complete",
+        kind: "info",
+        okLabel: "Eject (recommended)",
+        cancelLabel: "Don't eject",
+      },
+    );
+    if (shouldEjectBackupVolume) {
+      if (await ejectBackupVolume()) {
+        alert(
+          "Successfully ejected the backup volume. You can now safely remove the backup usb stick from your machine.",
+        );
+      } else {
+        alert(
+          "Failed to eject the backup volume. Perhaps it has already been ejected, otherwise you'll need to do this manually.",
+        );
+      }
+    }
+    setIsBackingUp(false);
+    await refreshIsBackupRequired();
   }, []);
 
   return !isOpen ? null : (
@@ -189,12 +212,17 @@ export const BackupModal = ({
         )}
       </EuiModalBody>
       <EuiModalFooter>
-        <EuiButtonEmpty onClick={closeModal}>Cancel</EuiButtonEmpty>
+        <EuiButtonEmpty onClick={closeModal} disabled={isBackingUp}>
+          Cancel
+        </EuiButtonEmpty>
         <EuiButton
           type="submit"
           fill
+          isLoading={isBackingUp}
           disabled={
-            !backupChecks?.isBackupVolumeMounted || !backupChecks?.isEncrypted
+            isBackingUp ||
+            !backupChecks?.isBackupVolumeMounted ||
+            !backupChecks?.isEncrypted
           }
           onClick={backup}
         >
