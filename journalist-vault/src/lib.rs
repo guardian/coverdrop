@@ -1192,4 +1192,14 @@ impl JournalistVault {
 
         backup_queries::set_backup_contacts(&mut conn, contacts).await
     }
+
+    pub async fn remove_invalid_backup_contacts(
+        &self,
+        journalist_identities_from_api: Vec<&JournalistIdentity>,
+    ) -> anyhow::Result<u64> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::remove_invalid_backup_contacts(&mut conn, journalist_identities_from_api)
+            .await
+    }
 }

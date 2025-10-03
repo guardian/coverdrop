@@ -72,3 +72,23 @@ pub(crate) async fn set_backup_contacts(
 
     Ok(())
 }
+
+pub(crate) async fn remove_invalid_backup_contacts(
+    conn: &mut SqliteConnection,
+    journalist_identities_from_api: Vec<&JournalistIdentity>,
+) -> anyhow::Result<u64> {
+    let contacts = serde_json::to_string(&journalist_identities_from_api)?;
+    let result = sqlx::query!(
+        r#"
+            DELETE FROM backup_contacts
+            WHERE journalist_id NOT IN (
+                SELECT value FROM json_each(?1)
+            )
+        "#,
+        contacts
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(result.rows_affected())
+}

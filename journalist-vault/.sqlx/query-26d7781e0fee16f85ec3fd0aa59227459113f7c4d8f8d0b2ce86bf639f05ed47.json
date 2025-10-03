@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM backup_contacts\n            WHERE journalist_id NOT IN (\n                SELECT value FROM json_each(?1)\n            )\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "26d7781e0fee16f85ec3fd0aa59227459113f7c4d8f8d0b2ce86bf639f05ed47"
+}

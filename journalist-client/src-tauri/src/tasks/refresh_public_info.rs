@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use chrono::Duration;
 use common::{
-    api::api_client::ApiClient, protocol::constants::MINUTE_IN_SECONDS, task::Task, time,
+    api::{api_client::ApiClient, models::journalist_id::JournalistIdentity},
+    protocol::constants::MINUTE_IN_SECONDS,
+    task::Task,
+    time,
 };
 use journalist_vault::JournalistVault;
 
@@ -40,11 +43,28 @@ impl Task for RefreshPublicInfo {
             .await?
             .into_trusted(&anchor_org_pks, time::now());
 
+        let api_journalist_profiles = public_info.journalist_profiles.clone();
+
         tracing::debug!("Setting public info");
 
         self.public_info.set(public_info).await;
 
-        tracing::debug!("Public info should be set");
+        tracing::debug!("Public info set");
+
+        let api_journalist_ids: Vec<&JournalistIdentity> =
+            api_journalist_profiles.iter().map(|j| &j.id).collect();
+
+        tracing::debug!("Removing backup contacts that no longer appear in API");
+        let removed_count = self
+            .vault
+            .remove_invalid_backup_contacts(api_journalist_ids)
+            .await?;
+
+        if (removed_count) > 0 {
+            tracing::info!("Removed {removed_count} invalid backup contacts");
+        } else {
+            tracing::debug!("No invalid backup contacts to remove");
+        }
 
         Ok(())
     }
