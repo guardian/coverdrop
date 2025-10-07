@@ -31,11 +31,8 @@ RUN cp target/debug/u2j-appender target/release/u2j-appender /dist 2>/dev/null |
 #
 # RUN
 #
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
-RUN apt-get update
-
-# Need to install ca-certificates for AWS TLS
 RUN apt-get update && \
     apt-get install -y ca-certificates && \
     update-ca-certificates

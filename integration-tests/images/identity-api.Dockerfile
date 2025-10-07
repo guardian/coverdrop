@@ -33,13 +33,13 @@ RUN rm -rf target
 #
 # RUN
 #
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 WORKDIR /usr/src/app/
 
-RUN apt-get update
-RUN apt-get install openssl ca-certificates -y
-RUN update-ca-certificates
+RUN apt-get update && \
+    apt-get install -y ca-certificates && \
+    update-ca-certificates
 
 COPY --from=builder /usr/src/app/exec/ .
 

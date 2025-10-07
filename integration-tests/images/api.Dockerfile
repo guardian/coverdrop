@@ -31,11 +31,10 @@ RUN cp target/debug/api target/release/api /dist 2>/dev/null | true;
 #
 # RUN
 #
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 RUN apt-get update
 
-# Need to install ca-certificates for AWS TLS
 RUN apt-get update && \
     apt-get install -y ca-certificates && \
     update-ca-certificates
