@@ -14,7 +14,8 @@ enum PublicDataRepositoryError: Error {
 
 public protocol PublicDataRepositoryProtocol {
     func loadStatus() async throws
-    func loadDeadDrops() async throws -> VerifiedDeadDrops
+    func fetchDeadDrops() async throws
+    func loadDeadDropsFromCache() async throws -> VerifiedDeadDrops
     func pollPublicKeysAndStatusApis() async throws
     func getCoverMessageFactory() throws -> CoverMessageFactory
     func getVerifiedKeys() throws -> VerifiedPublicKeys
@@ -57,15 +58,23 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
         }
     }
 
-    public func loadDeadDrops() async throws -> VerifiedDeadDrops {
+    public func fetchDeadDrops() async throws {
         let deadDropsOpt = try await DeadDropRepository(config: config, urlSession: urlSession)
             .downloadAndUpdateAllCaches(cacheEnabled: config.cacheEnabled)
+
+        guard deadDropsOpt != nil else {
+            throw PublicDataRepositoryError.failedToLoadDeadDrops
+        }
+    }
+
+    public func loadDeadDropsFromCache() async throws -> VerifiedDeadDrops {
+        let deadDropsOpt = try? await DeadDropRepository(config: config, urlSession: urlSession)
+            .loadFromCache()
 
         guard let deadDrops = deadDropsOpt else {
             throw PublicDataRepositoryError.failedToLoadDeadDrops
         }
 
-        // Load dead drops from journalists
         let verifiedDeadDropData = try VerifiedDeadDrops.fromAllDeadDropData(
             deadDrops: deadDrops,
             verifiedKeys: getVerifiedKeys()

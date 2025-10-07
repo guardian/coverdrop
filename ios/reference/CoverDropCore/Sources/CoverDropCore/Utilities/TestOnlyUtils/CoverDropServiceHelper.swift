@@ -19,11 +19,14 @@ public enum CoverDropServiceHelper {
         config: CoverDropConfig,
         publicDataRepository: PublicDataRepository
     ) async throws {
-        // By default we want to set the current time to the current keys published time
-        TestingBridge
-            .setCurrentTimeOverride(
-                override: currentTimeForKeyVerification()
-            )
+        // We want to set the current time to the current keys published time when using local keys in dev
+        // But not when we are connecting to staging and prod
+        if case .dev = config.envType {
+            TestingBridge
+                .setCurrentTimeOverride(
+                    override: currentTimeForKeyVerification()
+                )
+        }
 
         if TestingBridge.isEnabled(.removeBackgroundSendStateOnStart) {
             BackgroundMessageSendState.clearAllState()

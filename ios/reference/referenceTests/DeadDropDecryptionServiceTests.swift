@@ -11,7 +11,10 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
     }
 
     func testDeadDropDecryption() async throws {
-        let context = IntegrationTestScenarioContext(scenario: .messaging)
+        let context = IntegrationTestScenarioContext(
+            scenario: .messaging,
+            config: StaticConfig.devConfigWithCache
+        )
         let publicDataRepository = try context.getPublicDataRepositoryWithVerifiedKeys(
             step: "003_journalist_replied_and_processed"
         )
@@ -19,6 +22,9 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
 
         // Setup the dead drop Id repository to match the Id in the test vector (which is id 1)
         try await DeadDropIdRepository().save(deadDropId: DeadDropId(id: 0))
+
+        // Load deaddrops into cache file
+        try await publicDataRepository.fetchDeadDrops()
 
         // Set up the secrect data repository to use the user keys from the test vector
         let passphrase = ValidPassword(password: "external jersey squeeze luckiness collector")

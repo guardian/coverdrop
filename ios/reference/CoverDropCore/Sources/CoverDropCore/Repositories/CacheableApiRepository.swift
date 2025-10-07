@@ -54,6 +54,10 @@ public class CacheableApiRepository<T: Codable> {
         return try await localRepository.load()
     }
 
+    public func loadFromCache() async throws -> T {
+        return try await localRepository.load()
+    }
+
     /// This tries to load data from the api and then caches and returns the result.
     /// - Returns: Optional T, the result of the web request or the default data if the request fails
     func getFromApiAndCache() async -> T? {

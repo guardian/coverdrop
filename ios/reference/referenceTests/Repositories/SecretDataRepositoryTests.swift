@@ -15,7 +15,10 @@ final class SecretDataRepositoryTests: XCTestCase {
     }
 
     func testSecretDataRepositoryRoundTrip() async throws {
-        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: URLSession.shared)
+        let publicDataRepository = PublicDataRepository(
+            StaticConfig.devConfigWithCache,
+            urlSession: mockApiResponse()
+        )
         let secretDataRepository = SecretDataRepository(publicDataRepository: publicDataRepository)
 
         let verifiedPublicKeys = PublicKeysHelper.shared.testKeys
@@ -25,6 +28,8 @@ final class SecretDataRepositoryTests: XCTestCase {
             XCTFail("Unable to make cover message")
             return
         }
+
+        try await publicDataRepository.fetchDeadDrops()
 
         try await secretDataRepository.onAppStart()
 
@@ -86,7 +91,10 @@ final class SecretDataRepositoryTests: XCTestCase {
 
     func testAddingMessagesSavesToDisk() async throws {
         // Start CoverDrop service, private sending queue, and get keys
-        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: URLSession.shared)
+        let publicDataRepository = PublicDataRepository(
+            StaticConfig.devConfigWithCache,
+            urlSession: mockApiResponse()
+        )
         let secretDataRepository = SecretDataRepository(publicDataRepository: publicDataRepository)
         let verifiedPublicKeys = PublicKeysHelper.shared.testKeys
         publicDataRepository.injectVerifiedPublicKeysForTesting(verifiedPublicKeys: verifiedPublicKeys)
@@ -95,6 +103,8 @@ final class SecretDataRepositoryTests: XCTestCase {
             XCTFail("Unable to make cover message")
             return
         }
+
+        try await publicDataRepository.fetchDeadDrops()
 
         try await secretDataRepository.onAppStart()
 
@@ -201,7 +211,10 @@ final class SecretDataRepositoryTests: XCTestCase {
         TestingBridge.setCurrentTimeOverride(override: baseTime)
 
         // Start CoverDrop service, private sending queue, and get keys
-        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: URLSession.shared)
+        let publicDataRepository = PublicDataRepository(
+            StaticConfig.devConfigWithCache,
+            urlSession: mockApiResponse()
+        )
         let secretDataRepository = SecretDataRepository(publicDataRepository: publicDataRepository)
         let verifiedPublicKeys = PublicKeysHelper.shared.testKeys
         publicDataRepository.injectVerifiedPublicKeysForTesting(verifiedPublicKeys: verifiedPublicKeys)
@@ -210,6 +223,8 @@ final class SecretDataRepositoryTests: XCTestCase {
             XCTFail("Unable to make cover message")
             return
         }
+
+        try await publicDataRepository.fetchDeadDrops()
 
         try await secretDataRepository.onAppStart()
 
@@ -303,7 +318,7 @@ final class SecretDataRepositoryTests: XCTestCase {
     }
 
     func testCallbacks() async throws {
-        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: URLSession.shared)
+        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: mockApiResponse())
         let secretDataRepository = SecretDataRepository(publicDataRepository: publicDataRepository)
         let verifiedPublicKeys = PublicKeysHelper.shared.testKeys
         publicDataRepository.injectVerifiedPublicKeysForTesting(verifiedPublicKeys: verifiedPublicKeys)
@@ -312,6 +327,8 @@ final class SecretDataRepositoryTests: XCTestCase {
             XCTFail("Unable to make cover message")
             return
         }
+
+        try await publicDataRepository.fetchDeadDrops()
 
         let encryptedStorageFilePath = try StorageManager.shared.getFullUrl(file: CoverDropFiles.encryptedStorage).path
 
@@ -347,7 +364,10 @@ final class SecretDataRepositoryTests: XCTestCase {
     }
 
     func testDeleteVault() async throws {
-        let publicDataRepository = PublicDataRepository(StaticConfig.devConfig, urlSession: URLSession.shared)
+        let publicDataRepository = PublicDataRepository(
+            StaticConfig.devConfigWithCache,
+            urlSession: mockApiResponse()
+        )
         let secretDataRepository = SecretDataRepository(publicDataRepository: publicDataRepository)
         let verifiedPublicKeys = PublicKeysHelper.shared.testKeys
         publicDataRepository.injectVerifiedPublicKeysForTesting(verifiedPublicKeys: verifiedPublicKeys)
@@ -356,6 +376,8 @@ final class SecretDataRepositoryTests: XCTestCase {
             XCTFail("Unable to make cover message")
             return
         }
+
+        try await publicDataRepository.fetchDeadDrops()
 
         let encryptedStorageFilePath = try StorageManager.shared.getFullUrl(file: CoverDropFiles.encryptedStorage).path
 
@@ -383,5 +405,16 @@ final class SecretDataRepositoryTests: XCTestCase {
             // Expected error
             XCTAssertTrue(true)
         }
+    }
+
+    /// This overrides the default UrlSessionConfig in our global Config Object, so that calls to our public keys
+    /// endpoint
+    /// return the mock data supplied
+    func mockApiResponse() -> URLSession {
+        let urlSessionConfig = URLSessionConfiguration.ephemeral
+        URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
+        urlSessionConfig.protocolClasses = [URLProtocolMock.self]
+        let urlSession = URLSession(configuration: urlSessionConfig)
+        return urlSession
     }
 }

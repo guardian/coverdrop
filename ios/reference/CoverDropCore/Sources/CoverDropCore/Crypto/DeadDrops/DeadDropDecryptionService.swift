@@ -15,11 +15,12 @@ public struct DeadDropDecryptionService {
         publicDataRepository: any PublicDataRepositoryProtocol,
         secretDataRepository: any SecretDataRepositoryProtocol
     ) async throws {
-        guard let verifiedDeadDrops = try? await publicDataRepository.loadDeadDrops() else {
+        // Load dead drops from cache if they exist
+        guard let verifiedDeadDrops = try? await publicDataRepository.loadDeadDropsFromCache() else {
             throw DeadDropDecryptionServiceError.failedToGetDeadDrops
         }
 
-        // we only have access to the user secret key when we are unlocked
+        // We only have access to the user secret key when we are unlocked
         // so this is the only state we can be in to try and decrypt the data
         if case let .unlockedSecretData(unlockedData: secretData) = secretDataRepository.getSecretData() {
             let verifiedPublicKeys = try publicDataRepository.getVerifiedKeys()

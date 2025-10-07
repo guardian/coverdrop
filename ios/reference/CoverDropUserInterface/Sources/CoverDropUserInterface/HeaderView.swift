@@ -112,6 +112,9 @@ struct HeaderView<Content: View>: View {
                         Button("Set time +2 day") {
                             TestingBridge.advanceCurrentTime(by: 60 * 60 * 24 * 2)
                         }.buttonStyle(.bordered).accessibilityIdentifier("advanceTimeButton")
+                        Button("Refresh cache files") {
+                            Task { await TestingBridge.refreshDeadDropAndPublicKeysCacheFiles() }
+                        }.buttonStyle(.bordered).accessibilityIdentifier("refreshCacheFilesButton")
                         Button("Close") {
                             showPopover = false
                         }.buttonStyle(.bordered).accessibilityIdentifier("closeDevMenuButton")

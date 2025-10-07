@@ -81,9 +81,11 @@ public class CoverDropService: ObservableObject {
                     let lib = try await ensureInitializedAsync(config: config)
                     await MainActor.run {
                         state = .initialized(lib: lib)
-                        // Run foreground checks so that there is the same behavior when app is started,
-                        // as when its foregrounded, and the app needs to be initialized for this to run.
-                        CoverDropService.willEnterForeground(config: config)
+                        // Run background task for message sending, to send any messages that might be queued
+                        Task {
+                            try await BackgroundMessageScheduleService
+                                .onAppForeground(publicDataRepository: lib.publicDataRepository, config: config)
+                        }
                     }
                 } catch {
                     await MainActor.run {
@@ -171,7 +173,7 @@ public class CoverDropService: ObservableObject {
 
         // We load the dead drops after the service is marked ready
         // so we do not delay startup
-        _ = try? await publicDataRepository.loadDeadDrops()
+        try? await publicDataRepository.fetchDeadDrops()
 
         return CoverDropLibrary(
             publicDataRepository: publicDataRepository,
@@ -219,12 +221,12 @@ public class CoverDropService: ObservableObject {
                     .onAppForeground(publicDataRepository: repositories.publicDataRepository, config: config)
                 async let publicKeysAndStatus: () = repositories.publicDataRepository
                     .pollPublicKeysAndStatusApis()
-                async let deadDrops = repositories.publicDataRepository.loadDeadDrops()
+                async let deadDrops: Void = repositories.publicDataRepository.fetchDeadDrops()
 
                 try? await logout
                 try? await messageSending
                 try? await publicKeysAndStatus
-                _ = try? await deadDrops
+                try? await deadDrops
             }
             // It's possible that coverdrop has been enabled remotely while the user still had the app open
             // or that the app failed to initialize on first startup ie the user was offline

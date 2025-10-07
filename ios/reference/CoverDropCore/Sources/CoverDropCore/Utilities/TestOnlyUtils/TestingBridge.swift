@@ -74,6 +74,22 @@ public enum TestingBridge {
         currentTimeOffset = offset + seconds
     }
 
+    public static func refreshDeadDropAndPublicKeysCacheFiles() async {
+        if let config = try? CoverDropService.getLibrary().config {
+            let publicKeyRepository = PublicKeyRepository(
+                config: config,
+                urlSession: URLSession.shared
+            )
+            _ = await publicKeyRepository.getFromApiAndCache()
+
+            let deadDropRespository = DeadDropRepository(
+                config: config,
+                urlSession: URLSession.shared
+            )
+            _ = await deadDropRespository.getFromApiAndCache()
+        }
+    }
+
     /// Returns `true` if the reference app should enable mocked API resonses
     public static func isMockedDataEnabled(config: CoverDropConfig) -> Bool {
         #if DEBUG
