@@ -11,7 +11,9 @@ configurations {
                     // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-12485149
                     // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-12485150
                     // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-12485151
-                    "io.netty:netty-codec-http2:4.1.125.Final"
+                    "io.netty:netty-codec-http2:4.1.125.Final",
+                    // https://security.snyk.io/vuln/SNYK-JAVA-IONETTY-12485149
+                    "io.netty:netty-codec-http:4.1.125.Final"
             )
         }
     }
