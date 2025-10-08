@@ -7,7 +7,7 @@ java = "17"
 
 # For the released libraries
 libraryGroupId = "com.gu.coverdrop"
-libraryVersion = "1.0.1"
+libraryVersion = "1.0.2"
 
 # Dependencies
 accompanist-pager = "0.28.0"
