@@ -39,7 +39,7 @@ where
         }
     }
 
-    /// Wait for the appopriate amount of time given the batch size.
+    /// Wait for the appropriate amount of time given the batch size.
     /// Returns the time slept, if any.
     pub async fn wait(&mut self, batch_size: T) -> Option<Duration> {
         if batch_size < self.target_volume_per_poll {

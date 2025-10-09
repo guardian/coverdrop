@@ -76,19 +76,20 @@ impl FromUserPollingService {
                 Err(err) => {
                     error_count += 1;
 
-                    if error_count >= 3 {
+                    tracing::error!(
+                        "Error reading user to journalist messages from kinesis: {:?}, error count: {}, root cause: {}",
+                        err,
+                        error_count,
+                        err.root_cause()
+                    );
+
+                    if error_count >= 10 {
                         // We've seen behavior where the CoverNode gets stuck in a loop of polling failed
                         // until a reboot - so just panic and let kubernetes pick it back up.
                         //
                         // This is far from ideal since if we are in a position where we panic consistently
                         // before a dead drop is released then we will never move our checkpoint forward and
                         // the system as a whole will stall.
-                        tracing::error!(
-                            "Polling for user messages failed: {:?}, root cause: {}",
-                            err,
-                            err.root_cause()
-                        );
-
                         panic!("Polling user messages failed: {err:?}");
                     }
 

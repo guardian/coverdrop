@@ -11,12 +11,14 @@ use crate::api::models::messages::{
 };
 use crate::protocol::constants::JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
 use aws_config::default_provider::credentials::DefaultCredentialsChain;
+use aws_config::timeout::TimeoutConfig;
 use aws_sdk_kinesis::config::Region;
 use aws_sdk_kinesis::primitives::Blob;
 use aws_sdk_kinesis::types::{Record, ShardIteratorType};
 use aws_sdk_kinesis::Client;
 use base64::prelude::*;
 use chrono::{DateTime, Duration, Utc};
+use std::time::Duration as StdDuration;
 
 use crate::clap::{AwsConfig, KinesisConfig};
 use itertools::Itertools;
@@ -82,11 +84,16 @@ impl KinesisClient {
         let region = Region::new(region.to_owned());
         let credentials_provider = KinesisClient::build_credentials(profile).await;
 
+        let timeout_config = TimeoutConfig::builder()
+            .operation_timeout(StdDuration::from_secs(60))
+            .build();
+
         let config = aws_sdk_kinesis::Config::builder()
             .behavior_version_latest()
             .endpoint_url(endpoint)
             .region(region)
             .credentials_provider(credentials_provider)
+            .timeout_config(timeout_config)
             .build();
 
         let client = Client::from_conf(config);
