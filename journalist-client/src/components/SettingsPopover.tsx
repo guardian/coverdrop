@@ -6,7 +6,6 @@ import {
   EuiLink,
   EuiPopover,
   EuiSpacer,
-  EuiText,
 } from "@elastic/eui";
 import { getLogs, getPublicInfo, getVaultKeys } from "../commands/admin";
 import { LogsPanel } from "./LogsPanel";
@@ -20,6 +19,7 @@ import { JournalistStatus } from "../model/bindings/JournalistStatus";
 import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
 import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
+import { VersionInfo } from "./VersionInfo.tsx";
 
 type FlyoverContent =
   | {
@@ -221,17 +221,6 @@ export const SettingsPopover = ({
     />
   );
 
-  const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
-  const maybeGithubRepoName = maybeRepo?.startsWith("git@")
-    ? maybeRepo.substring(maybeRepo.indexOf(":") + 1, maybeRepo.length - 4) // local repo ssh
-    : maybeRepo?.startsWith("https://github.com/")
-      ? maybeRepo.substring(
-          // https (locally or in GHA)
-          19,
-          maybeRepo.endsWith(".git") ? maybeRepo.length - 4 : maybeRepo.length,
-        )
-      : maybeRepo;
-
   return (
     <Fragment>
       <EuiPopover
@@ -334,21 +323,10 @@ export const SettingsPopover = ({
               Add trust anchor
             </EuiContextMenuItem>
           )}
-          {import.meta.env.VITE_GIT_SHA && maybeGithubRepoName && (
-            <EuiContextMenuItem size="s">
-              <EuiSpacer size="s" />
-              <EuiText size="xs" textAlign="right" color="grey">
-                built from:{" "}
-                <EuiLink
-                  target="_blank"
-                  href={`https://github.com/${maybeGithubRepoName}/commit/${import.meta.env.VITE_GIT_SHA}`}
-                  style={{ color: "grey" }}
-                >
-                  {import.meta.env.VITE_GIT_SHA?.substring(0, 7) || "DEV"}
-                </EuiLink>
-              </EuiText>
-            </EuiContextMenuItem>
-          )}
+          <EuiContextMenuItem size="s">
+            <EuiSpacer size="s" />
+            <VersionInfo />
+          </EuiContextMenuItem>
         </EuiContextMenuPanel>
       </EuiPopover>
       {flyout}

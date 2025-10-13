@@ -32,6 +32,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { getLogs } from "../commands/admin";
 import { LogsPanel } from "../components/LogsPanel";
 import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
+import { VersionInfo } from "../components/VersionInfo.tsx";
 
 type OpenVaultProps = {
   setVaultState: (s: VaultState) => void;
@@ -198,6 +199,16 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
             </EuiFormRow>
           </EuiForm>
         </EuiPanel>
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          padding: "5px",
+        }}
+      >
+        <VersionInfo />
       </div>
       <EuiLink
         style={{

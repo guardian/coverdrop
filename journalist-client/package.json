@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && VITE_BUILD_DATE=$( date +\"%Y-%m-%dT%H:%M:%S%z\") vite build",
     "preview": "vite preview",
     "tauri": "VITE_GIT_SHA=$(git rev-parse HEAD) VITE_GITHUB_REPO=$(git ls-remote --get-url origin) tauri",
     "createEuiIcons": "node scripts/createEuiIcons.js",
