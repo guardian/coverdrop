@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use common::protocol::backup::coverup_initiate_restore_step;
 use common::protocol::backup::sentinel_finish_restore_step;
 use common::protocol::backup::sentinel_restore_try_unwrap_share_step;
@@ -15,6 +17,7 @@ use common::{
         roles::JournalistMessaging,
     },
 };
+use integration_tests::api_wrappers::get_and_verify_public_keys;
 use integration_tests::{
     api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
 };
@@ -35,36 +38,68 @@ async fn backup_scenario() {
 
     // Create a backup keypair for the sentinel to use to encrypt the backup and connect to the journalist vault
     let org_keypair = stack.keys().org_key_pair.clone();
+
+    // Create and upload two sets of backup keys to ensure we can retrieve the latest one later
     let backup_signing_key = create_test_backup_id_key_pair(&stack);
-    let backup_encryption_key = create_test_backup_msg_key_pair(&stack, backup_signing_key.clone());
 
-    // Upload the backup signing key
-    let post_backup_signing_pk = PostBackupIdKeyForm::new(
-        backup_signing_key.public_key().to_untrusted(),
-        &org_keypair,
-        stack.now(),
-    )
-    .expect("Create PostBackupDataForm");
+    let backup_signing_key_2 = create_test_backup_id_key_pair(&stack);
 
-    stack
-        .api_client_uncached()
-        .post_backup_signing_pk(post_backup_signing_pk)
-        .await
-        .expect("Upload backup signing key");
+    // This helper creates multiple backup message keys and uploads them to the API
+    // This is to help test that we can retrieve the latest key later and also supports multiple messages keys per backup id key
+    // It returns the last two keys created so we can use them later
+    async fn upload_backup_keys(
+        stack: &CoverDropStack,
+        backup_signing_key: &SignedSigningKeyPair<BackupId>,
+        org_keypair: &SignedSigningKeyPair<common::protocol::roles::Organization>,
+    ) -> (
+        SignedEncryptionKeyPair<BackupMsg>,
+        SignedEncryptionKeyPair<BackupMsg>,
+    ) {
+        // Upload the backup signing key
+        let post_backup_signing_pk = PostBackupIdKeyForm::new(
+            backup_signing_key.public_key().to_untrusted(),
+            org_keypair,
+            stack.now(),
+        )
+        .expect("Create PostBackupDataForm");
 
-    // Upload the backup encryption key
-    let post_backup_encryption_pk = PostBackupMsgKeyForm::new(
-        backup_encryption_key.public_key().to_untrusted(),
-        &backup_signing_key,
-        stack.now(),
-    )
-    .expect("Create PostBackupMsgKeyForm");
+        stack
+            .api_client_uncached()
+            .post_backup_signing_pk(post_backup_signing_pk)
+            .await
+            .expect("Upload backup signing key");
 
-    stack
-        .api_client_uncached()
-        .post_backup_encryption_pk(post_backup_encryption_pk)
-        .await
-        .expect("Upload backup encryption key");
+        let backup_encryption_key_1 =
+            create_test_backup_msg_key_pair(stack, backup_signing_key.clone());
+
+        let backup_encryption_key_2 =
+            create_test_backup_msg_key_pair(stack, backup_signing_key.clone());
+
+        for key in [&backup_encryption_key_1, &backup_encryption_key_2] {
+            // Upload the backup encryption key
+            let post_backup_encryption_pk = PostBackupMsgKeyForm::new(
+                key.public_key().to_untrusted(),
+                backup_signing_key,
+                stack.now(),
+            )
+            .expect("Create PostBackupMsgKeyForm");
+
+            stack
+                .api_client_uncached()
+                .post_backup_encryption_pk(post_backup_encryption_pk)
+                .await
+                .expect("Upload backup encryption key");
+
+            // Sleep a bit to ensure the keys have different timestamps
+            tokio::time::sleep(Duration::from_millis(1000)).await;
+        }
+        (backup_encryption_key_1, backup_encryption_key_2)
+    }
+
+    let (_, _) = upload_backup_keys(&stack, &backup_signing_key, &org_keypair).await;
+
+    let (_, backup_encryption_key_2b) =
+        upload_backup_keys(&stack, &backup_signing_key_2, &org_keypair).await;
 
     // Create the journalist vault to back up
     let journalist_vault = stack.load_static_journalist_vault().await;
@@ -88,11 +123,32 @@ async fn backup_scenario() {
         identity: recovery_contact_vault.journalist_id().await.unwrap(),
         latest_messaging_key: recovery_contact_messaging_pair.public_key().clone(),
     };
+
+    let anchor_org_pks = stack.keys().anchor_org_pks();
+
+    // Get the backup keys from the api first to simulate a real world scenario
+    let fresh_public_keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+
+    assert!(
+        fresh_public_keys.backup_msg_pk_iter().next().is_some(),
+        "No backup messaging keys found from API"
+    );
+    let backup_encryption_key_from_api = fresh_public_keys.latest_backup_msg_pk().unwrap();
+
+    // Make sure we are getting the most recently uploaded backup key key
+    assert_eq!(
+        backup_encryption_key_from_api,
+        *backup_encryption_key_2b.public_key()
+    );
+
     let verified_backup_data = sentinel_create_backup(
         journalist_vault_bytes.clone(),
         journalist_identity.clone(),
         journalist_signing_pair.clone(),
-        backup_encryption_key.public_key().clone(),
+        backup_encryption_key_from_api.clone(),
         vec![recovery_contact],
         1, // k=1
         stack.now(),
@@ -178,7 +234,7 @@ async fn backup_scenario() {
             .to_backup_data_with_signature(&journalist_signing_pair)
             .unwrap(),
         journalist_signing_pair.public_key(),
-        &backup_encryption_key,
+        &backup_encryption_key_2b,
         stack.now(),
     )
     .expect("Failed to initiate restore");
@@ -187,14 +243,14 @@ async fn backup_scenario() {
     let wrapped_share = sentinel_restore_try_unwrap_share_step(
         backup_state.encrypted_shares.clone(),
         vec![recovery_contact_messaging_pair],
-        backup_encryption_key.public_key().clone(),
+        backup_encryption_key_2b.public_key().clone(),
     )
     .expect("Failed to unwrap share")
     .expect("No share could be unwrapped");
 
     // Complete restore
     let restored_vault =
-        sentinel_finish_restore_step(backup_state, vec![wrapped_share], &backup_encryption_key)
+        sentinel_finish_restore_step(backup_state, vec![wrapped_share], &backup_encryption_key_2b)
             .expect("Failed to finish restore");
 
     // Verify the round-trip worked

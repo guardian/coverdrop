@@ -328,6 +328,18 @@ pub enum JournalistVaultCommand {
         #[clap(long)]
         password_path: Option<PathBuf>,
     },
+    /// Derive an argon2 key given a journalist vault and password, then
+    /// execute an sql query, printing the result to stdout.
+    ExecuteVaultQuery {
+        #[clap(long)]
+        vault_path: PathBuf,
+        #[clap(long)]
+        sql_query: String,
+        #[clap(long)]
+        password: Option<String>,
+        #[clap(long)]
+        password_path: Option<PathBuf>,
+    },
     /// Derive an argon2 key given a journalist vault and password.
     /// This key can be used to open the vault with PRAGMA key="key";
     DeriveKey {

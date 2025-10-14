@@ -1,0 +1,2 @@
+pub mod generate_journalist_messaging_keys;
+pub use crate::integration_tests::generate_journalist_messaging_keys::generate_journalist_messaging_keys_for_integration_test;

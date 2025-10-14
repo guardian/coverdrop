@@ -1,6 +1,7 @@
 //! Public key families are a combination of an identity key and it's child
 //! messaging keys. They are shared across
 
+mod backup;
 mod covernode;
 mod identity_public_key_family;
 mod identity_public_key_family_list;
@@ -9,6 +10,12 @@ mod organization;
 mod untrusted_identity_public_key_family;
 mod untrusted_identity_public_key_family_list;
 
+use crate::backup::roles::{BackupId, BackupMsg};
+use crate::protocol::roles::{
+    CoverNodeId, CoverNodeMessaging, CoverNodeProvisioning, JournalistId, JournalistMessaging,
+    JournalistProvisioning, Organization,
+};
+pub use backup::*;
 pub use covernode::*;
 pub use identity_public_key_family::IdentityPublicKeyFamily;
 pub use identity_public_key_family_list::IdentityPublicKeyFamilyList;
@@ -16,11 +23,6 @@ pub use journalist::*;
 pub use organization::*;
 pub use untrusted_identity_public_key_family::UntrustedIdentityPublicKeyFamily;
 pub use untrusted_identity_public_key_family_list::UntrustedIdentityPublicKeyFamilyList;
-
-use crate::protocol::roles::{
-    CoverNodeId, CoverNodeMessaging, CoverNodeProvisioning, JournalistId, JournalistMessaging,
-    JournalistProvisioning,
-};
 
 // Type aliases for the top level key hierarchies
 pub type CoverDropPublicKeyHierarchy = OrganizationPublicKeyFamilyList;
@@ -56,3 +58,16 @@ pub type JournalistIdPublicKeyFamilyList =
     IdentityPublicKeyFamilyList<JournalistProvisioning, JournalistId, JournalistMessaging>;
 pub type JournalistIdPublicKeyFamily =
     IdentityPublicKeyFamily<JournalistProvisioning, JournalistId, JournalistMessaging>;
+
+// Backup
+
+// Published
+pub type PublishedBackupIdPublicKeyFamilyList =
+    UntrustedIdentityPublicKeyFamilyList<Organization, BackupId, BackupMsg>;
+pub type PublishedBackupIdPublicKeyFamily =
+    UntrustedIdentityPublicKeyFamily<Organization, BackupId, BackupMsg>;
+
+// Verified
+pub type BackupIdPublicKeyFamilyList =
+    IdentityPublicKeyFamilyList<Organization, BackupId, BackupMsg>;
+pub type BackupIdPublicKeyFamily = IdentityPublicKeyFamily<Organization, BackupId, BackupMsg>;

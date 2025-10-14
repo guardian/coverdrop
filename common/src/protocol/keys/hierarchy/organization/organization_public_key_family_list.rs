@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
+    backup::keys::BackupMsgPublicKey,
     crypto::keys::Ed25519PublicKey,
     protocol::keys::{
         AnchorOrganizationPublicKey, CoverNodeIdKeyPair, CoverNodeIdPublicKey,
@@ -366,6 +367,28 @@ impl OrganizationPublicKeyFamilyList {
             self.latest_journalist_msg_pk(journalist_id)
                 .map(|msg_pk| (journalist_id, msg_pk))
         })
+    }
+
+    pub fn backup_msg_pk_iter(&self) -> impl Iterator<Item = &BackupMsgPublicKey> {
+        self.0.iter().flat_map(|org_pk_family| {
+            org_pk_family
+                .backups
+                .iter()
+                .flat_map(|backup| backup.msg_pk_iter())
+        })
+    }
+
+    pub fn latest_backup_msg_pk(&self) -> Option<BackupMsgPublicKey> {
+        self.0
+            .iter()
+            .flat_map(|org_pk_family| {
+                org_pk_family
+                    .backups
+                    .clone()
+                    .into_iter()
+                    .flat_map(|backup| backup.latest_msg_pk().cloned())
+            })
+            .max_by_key(|msg_pk| msg_pk.not_valid_after)
     }
 
     // Getter:

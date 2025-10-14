@@ -1,8 +1,15 @@
 use chrono::{DateTime, Utc};
 
-use crate::protocol::keys::{
-    verify_organization_pk, AnchorOrganizationPublicKey, CoverNodeProvisioningPublicKeyFamilyList,
-    JournalistProvisioningPublicKeyFamilyList, OrganizationPublicKey,
+use crate::{
+    backup::roles::{BackupId, BackupMsg},
+    protocol::{
+        keys::{
+            verify_organization_pk, AnchorOrganizationPublicKey, BackupIdPublicKeyFamilyList,
+            CoverNodeProvisioningPublicKeyFamilyList, IdentityPublicKeyFamilyList,
+            JournalistProvisioningPublicKeyFamilyList, OrganizationPublicKey,
+        },
+        roles::Organization,
+    },
 };
 
 use super::UntrustedOrganizationPublicKeyFamily;
@@ -12,6 +19,7 @@ pub struct OrganizationPublicKeyFamily {
     pub org_pk: OrganizationPublicKey,
     pub covernodes: CoverNodeProvisioningPublicKeyFamilyList,
     pub journalists: JournalistProvisioningPublicKeyFamilyList,
+    pub backups: Option<BackupIdPublicKeyFamilyList>,
 }
 
 impl OrganizationPublicKeyFamily {
@@ -19,11 +27,13 @@ impl OrganizationPublicKeyFamily {
         org_pk: OrganizationPublicKey,
         covernode_keys: CoverNodeProvisioningPublicKeyFamilyList,
         journalists: JournalistProvisioningPublicKeyFamilyList,
+        backups: Option<BackupIdPublicKeyFamilyList>,
     ) -> Self {
         Self {
             org_pk,
             covernodes: covernode_keys,
             journalists,
+            backups,
         }
     }
 
@@ -48,11 +58,22 @@ impl OrganizationPublicKeyFamily {
             &org_pk,
             now,
         );
+        let backups: Option<IdentityPublicKeyFamilyList<Organization, BackupId, BackupMsg>> =
+            if let Some(untrusted_backups) = untrusted.backup {
+                Some(BackupIdPublicKeyFamilyList::from_untrusted(
+                    untrusted_backups,
+                    &org_pk,
+                    now,
+                ))
+            } else {
+                None
+            };
 
         Ok(Self {
             org_pk,
             covernodes,
             journalists,
+            backups,
         })
     }
 
@@ -61,6 +82,7 @@ impl OrganizationPublicKeyFamily {
             org_pk: self.org_pk.to_untrusted(),
             covernodes: self.covernodes.to_untrusted(),
             journalists: self.journalists.to_untrusted(),
+            backup: self.backups.as_ref().map(|backups| backups.to_untrusted()),
         }
     }
 }

@@ -20,16 +20,25 @@ use admin::{
 use clap::Parser;
 use cli::{Cli, Commands};
 use common::api::api_client::ApiClient;
+use common::backup::keys::generate_backup_id_key_pair;
+use common::backup::keys::generate_backup_msg_key_pair;
 use common::clap::validate_password_from_args;
 use common::crypto::human_readable_digest;
 use common::crypto::keys::public_key::PublicKey;
+use common::crypto::keys::serde::StorableKeyMaterial;
 use common::crypto::pbkdf::DEFAULT_PASSPHRASE_WORDS;
 use common::generators::PasswordGenerator;
+use common::protocol::keys::load_anchor_org_pks;
+use common::protocol::keys::load_backup_id_key_pairs;
+use common::protocol::keys::load_latest_org_key_pair;
 use common::time;
 use common::tracing::init_tracing;
 use journalist_vault::JournalistVault;
 use journalist_vault::PASSWORD_EXTENSION;
 use tokio::fs;
+
+#[cfg(feature = "integration-tests")]
+mod integration_tests;
 
 mod cli;
 
@@ -175,6 +184,15 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
+        #[cfg(feature = "integration-tests")]
+        Commands::GenerateJournalistMessagingKeysForIntegrationTest { keys_path } => {
+            integration_tests::generate_journalist_messaging_keys_for_integration_test(
+                keys_path,
+                time::now(),
+            )
+            .await?;
+            Ok(())
+        }
         Commands::ChangeVaultPassword {
             vault_path,
             current_password,
@@ -266,6 +284,22 @@ async fn main() -> anyhow::Result<()> {
                 time::now(),
             )
             .await
+        }
+        Commands::GenerateBackupIdentityKeyPair { keys_path } => {
+            let org_pk = load_latest_org_key_pair(&keys_path, time::now())?;
+            let backup_id_key_pair = generate_backup_id_key_pair(&org_pk, time::now());
+            backup_id_key_pair.to_untrusted().save_to_disk(&keys_path)?;
+            Ok(())
+        }
+        Commands::GenerateBackupMessagingKeyPair { keys_path } => {
+            let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
+            let backup_id_pks = load_backup_id_key_pairs(&keys_path, &anchor_org_pks, time::now())?;
+            backup_id_pks.iter().for_each(|backup_id_pk| {
+                let backup_msg_key_pair = generate_backup_msg_key_pair(backup_id_pk, time::now());
+                let _ = backup_msg_key_pair.to_untrusted().save_to_disk(&keys_path);
+            });
+
+            Ok(())
         }
         Commands::UpdateSystemStatus {
             keys_path,

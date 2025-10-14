@@ -126,6 +126,12 @@ pub enum Commands {
         #[clap(long)]
         do_not_upload_to_api: bool,
     },
+    #[cfg(feature = "integration-tests")]
+    #[clap(name = "generate-journalist-messaging-keys-for-integration-test")]
+    GenerateJournalistMessagingKeysForIntegrationTest {
+        #[clap(long)]
+        keys_path: PathBuf,
+    },
     #[clap(name = "generate-covernode-database")]
     GenerateCoverNodeDatabase {
         /// The ID of the CoverNode
@@ -276,6 +282,16 @@ pub enum Commands {
         /// Don't upload the key to the API, useful when generating keys for test purposes
         #[clap(long)]
         do_not_upload_to_api: bool,
+    },
+    #[clap(name = "generate-backup-identity-key-pair")]
+    GenerateBackupIdentityKeyPair {
+        #[clap(long)]
+        keys_path: PathBuf,
+    },
+    #[clap(name = "generate-backup-messaging-key-pair")]
+    GenerateBackupMessagingKeyPair {
+        #[clap(long)]
+        keys_path: PathBuf,
     },
     /// Update system status. API consumers will be able to get the system
     /// status information using the GET endpoint /v1/status

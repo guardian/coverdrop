@@ -1,0 +1,142 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                org_pk_id AS \"org_pk_id!: i32\",\n                org_pk_json AS \"org_pk_json!: Value\",\n                covernode_provisioning_pk_id AS \"covernode_provisioning_pk_id?: i32\",\n                covernode_provisioning_pk_json AS \"covernode_provisioning_pk_json?: Value\",\n                covernode_id AS \"covernode_id?: CoverNodeIdentity\",\n                covernode_id_pk_id AS \"covernode_id_pk_id?: i32\",\n                covernode_id_pk_json AS \"covernode_id_pk_json?: Value\",\n                covernode_msg_pk_id AS \"covernode_msg_pk_id?: i32\",\n                covernode_msg_pk_json AS \"covernode_msg_pk_json?: Value\",\n                journalist_provisioning_pk_id AS \"journalist_provisioning_pk_id?: i32\",\n                journalist_provisioning_pk_json AS \"journalist_provisioning_pk_json?: Value\",\n                journalist_id AS \"journalist_id?: JournalistIdentity\",\n                journalist_id_pk_id AS \"journalist_id_pk_id?: i32\",\n                journalist_id_pk_json AS \"journalist_id_pk_json?: Value\",\n                journalist_msg_pk_id AS \"journalist_msg_pk_id?: i32\",\n                journalist_msg_pk_json AS \"journalist_msg_pk_json?: Value\",\n                backup_id_pk_id AS \"backup_id_pk_id?: i32\",\n                backup_id_pk_json AS \"backup_id_pk_json?: Value\",\n                backup_msg_pk_id AS \"backup_msg_pk_id?: i32\",\n                backup_msg_pk_json AS \"backup_msg_pk_json?: Value\",\n                -- This may seem like a convoluted way to do it, but we want to make sure that the keys returned match the epoch.\n                -- If we made a second query, new keys could have been added and the epoch value changed.\n                -- As this query is a candidate for refactoring, I will leave that optimization for a future TODO.\n                (\n                     SELECT MAX(epoch)\n                        FROM (\n                            SELECT MAX(epoch) AS epoch FROM organization_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM covernode_provisioning_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM covernode_id_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM covernode_msg_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM journalist_provisioning_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM journalist_id_pks\n                            UNION\n                            SELECT MAX(epoch) AS epoch FROM journalist_msg_pks\n                        ) max\n                ) AS \"max_epoch: i32\"\n            FROM\n                -- We do a union here so that is easier to reason with the query for each side of the hierarchy\n                (\n                    -- This selects the covernode keys portion of the hierarchy\n                    (\n                        SELECT\n                            organization_pks.id AS org_pk_id,\n                            organization_pks.pk_json AS org_pk_json,\n                            covernode_provisioning_pks.id AS covernode_provisioning_pk_id,\n                            covernode_provisioning_pks.pk_json AS covernode_provisioning_pk_json,\n                            covernode_id_pks.covernode_id AS covernode_id,\n                            covernode_id_pks.id AS covernode_id_pk_id,\n                            covernode_id_pks.pk_json AS covernode_id_pk_json,\n                            covernode_msg_pks.id AS covernode_msg_pk_id,\n                            covernode_msg_pks.pk_json AS covernode_msg_pk_json,\n                            NULL AS journalist_provisioning_pk_id,\n                            NULL AS journalist_provisioning_pk_json,\n                            NULL AS journalist_id,\n                            NULL AS journalist_id_pk_id,\n                            NULL AS journalist_id_pk_json,\n                            NULL AS journalist_msg_pk_id,\n                            NULL AS journalist_msg_pk_json,\n                            NULL AS backup_id_pk_id,\n                            NULL AS backup_id_pk_json,\n                            NULL AS backup_msg_pk_id,\n                            NULL AS backup_msg_pk_json\n                        FROM\n                            organization_pks\n                            LEFT JOIN covernode_provisioning_pks ON (\n                                covernode_provisioning_pks.org_pk_id = organization_pks.id\n                                AND covernode_provisioning_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN covernode_id_pks ON (\n                                covernode_id_pks.provisioning_pk_id = covernode_provisioning_pks.id\n                                AND covernode_id_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN covernode_msg_pks ON (\n                                covernode_msg_pks.id_pk_id = covernode_id_pks.id\n                                AND covernode_msg_pks.not_valid_after > $1\n                            )\n                        WHERE (organization_pks.pk_json->>'not_valid_after')::TIMESTAMPTZ > $1\n                    )\n                    UNION\n                    -- This selects the journalist keys portion of the hierarchy\n                    (\n                        SELECT\n                            organization_pks.id AS org_pk_id,\n                            organization_pks.pk_json AS org_pk_json,\n                            NULL AS covernode_provisioning_pk_id,\n                            NULL AS covernode_provisioning_pk_json,\n                            NULL AS covernode_id,\n                            NULL AS covernode_id_pk_id,\n                            NULL AS covernode_id_pk_json,\n                            NULL AS covernode_msg_pk_id,\n                            NULL AS covernode_msg_pk_json,\n                            journalist_provisioning_pks.id AS journalist_provisioning_pk_id,\n                            journalist_provisioning_pks.pk_json AS journalist_provisioning_pk_json,\n                            journalist_id_pks.journalist_profile_id AS journalist_id,\n                            journalist_id_pks.id AS journalist_id_pk_id,\n                            journalist_id_pks.pk_json AS journalist_id_pk_json,\n                            journalist_msg_pks.id AS journalist_msg_pk_id,\n                            journalist_msg_pks.pk_json AS journalist_msg_pk_json,\n                            backup_id_pks.id AS backup_id_pk_id,\n                            backup_id_pks.pk_json AS backup_id_pk_json,\n                            backup_msg_pks.id AS backup_msg_pk_id,\n                            backup_msg_pks.pk_json AS backup_msg_pk_json\n                        FROM\n                            organization_pks\n                            LEFT JOIN journalist_provisioning_pks ON (\n                                journalist_provisioning_pks.org_pk_id = organization_pks.id\n                                AND journalist_provisioning_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN journalist_id_pks ON (\n                                journalist_id_pks.provisioning_pk_id = journalist_provisioning_pks.id\n                                AND journalist_id_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN journalist_msg_pks ON (\n                                journalist_msg_pks.id_pk_id = journalist_id_pks.id\n                                AND journalist_msg_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN backup_id_pks ON (\n                                backup_id_pks.org_pk_id = organization_pks.id\n                                AND backup_id_pks.not_valid_after > $1\n                            )\n                            LEFT JOIN backup_msg_pks ON (\n                                backup_msg_pks.backup_id_pk_id = backup_id_pks.id\n                                AND backup_msg_pks.not_valid_after > $1\n                            )\n                        WHERE (organization_pks.pk_json->>'not_valid_after')::TIMESTAMPTZ > $1\n                    )\n                ) AS keys\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "org_pk_id!: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "org_pk_json!: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 2,
+        "name": "covernode_provisioning_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "covernode_provisioning_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 4,
+        "name": "covernode_id?: CoverNodeIdentity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "covernode_id_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "covernode_id_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "covernode_msg_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "covernode_msg_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 9,
+        "name": "journalist_provisioning_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "journalist_provisioning_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 11,
+        "name": "journalist_id?: JournalistIdentity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "journalist_id_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 13,
+        "name": "journalist_id_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 14,
+        "name": "journalist_msg_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 15,
+        "name": "journalist_msg_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 16,
+        "name": "backup_id_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 17,
+        "name": "backup_id_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 18,
+        "name": "backup_msg_pk_id?: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 19,
+        "name": "backup_msg_pk_json?: Value",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 20,
+        "name": "max_epoch: i32",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "37ba5ae51beb9cf78c23230027edbeb5dc23c864c1011fdc358f5c44f572f3bd"
+}

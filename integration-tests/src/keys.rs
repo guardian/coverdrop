@@ -14,9 +14,11 @@ use common::{
         },
         models::covernode_id::CoverNodeIdentity,
     },
+    backup::keys::{BackupIdKeyPair, BackupMsgKeyPair},
     crypto::keys::serde::set_key_permissions,
     protocol::keys::{
-        load_anchor_org_pks, load_covernode_id_key_pairs, load_covernode_msg_key_pairs,
+        load_anchor_org_pks, load_backup_id_key_pairs, load_backup_msg_key_pairs,
+        load_covernode_id_key_pairs, load_covernode_msg_key_pairs,
         load_covernode_provisioning_key_pairs, load_journalist_provisioning_key_pairs,
         load_org_key_pairs, AnchorOrganizationPublicKey, CoverNodeIdKeyPair,
         CoverNodeMessagingKeyPair, CoverNodeProvisioningKeyPair, JournalistIdKeyPair,
@@ -55,6 +57,8 @@ pub struct StackKeys {
     pub journalist_msg_key_pair: JournalistMessagingKeyPair,
     pub admin_key_pair: AdminKeyPair,
     pub user_key_pair: UserKeyPair,
+    pub backup_id_key_pair: BackupIdKeyPair,
+    pub backup_msg_key_pair: BackupMsgKeyPair,
 }
 
 impl StackKeys {
@@ -133,11 +137,20 @@ pub fn load_static_stack_keys(now: DateTime<Utc>) -> StackKeys {
         .into_latest_key()
         .expect("Get latest system status key");
 
+    let mut backup_id_key_pair = load_backup_id_key_pairs(&keys_path, &anchor_org_pks, now)
+        .expect("Load backup id key pair");
+
+    let mut backup_msg_key_pair =
+        load_backup_msg_key_pairs(&keys_path, &backup_id_key_pair.clone(), now)
+            .expect("Load backup messaging key pair");
+
     let org_key_pair = org_key_pairs.remove(0);
     let covernode_provisioning_key_pair = covernode_provisioning_key_pairs.remove(0);
     let covernode_id_key_pair = covernode_id_key_pairs.remove(0);
     let covernode_msg_key_pair = covernode_msg_key_pairs.remove(0);
     let journalist_provisioning_key_pair = journalist_provisioning_key_pairs.remove(0);
+    let backup_id_key_pair = backup_id_key_pair.remove(0);
+    let backup_msg_key_pair = backup_msg_key_pair.remove(0);
 
     let user_key_pair = load_user_key_pair(&keys_path);
 
@@ -152,6 +165,8 @@ pub fn load_static_stack_keys(now: DateTime<Utc>) -> StackKeys {
         journalist_msg_key_pair,
         admin_key_pair,
         user_key_pair,
+        backup_id_key_pair,
+        backup_msg_key_pair,
     }
 }
 

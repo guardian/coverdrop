@@ -10,15 +10,15 @@ use crate::crypto::keys::{
 
 use super::UntrustedIdentityPublicKeyFamily;
 
-/// Due to keys being refreshed we will occasionally have a situation where a journalist or piece of infrastrucutre
-/// (e.g. the CoverNode) has multiple identity keys, which have mulitple messaging keys. This structure deals with
+/// Due to keys being refreshed we will occasionally have a situation where a journalist or piece of infrastructure
+/// (e.g. the CoverNode) has multiple identity keys, which have multiple messaging keys. This structure deals with
 /// grouping messaging keys to their respective identity key. The identity key is a signed key, usually signed by
 /// the `Organization` key. The messaging keys are signed by the identity key. This allows us to have a chain of trust
 /// up to the organization level.
 ///
 /// The Family takes two `Role`s, `IR` which is the ID key `Role` and `MR` the messaging key's `Role`.
 ///
-/// This version of the strucuture is for verified keys.
+/// This version of the structure is for verified keys.
 #[derive(Clone, Debug)]
 pub struct IdentityPublicKeyFamily<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role> {
     pub id_pk: SignedPublicSigningKey<IdentityRole>,

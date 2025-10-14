@@ -367,6 +367,7 @@ async fn main() -> anyhow::Result<()> {
                     Ok(key_string) => println!("Key: {key_string}"),
                 }
             }
+
             JournalistVaultCommand::OpenVault {
                 vault_path,
                 password,
@@ -392,8 +393,49 @@ async fn main() -> anyhow::Result<()> {
                             .await?;
 
                         if !status.success() {
-                            anyhow::bail!("Failed to open vault");
+                            anyhow::bail!("Failed to open vault with error code: {}", status);
                         }
+                    }
+                }
+            }
+            JournalistVaultCommand::ExecuteVaultQuery {
+                vault_path,
+                password,
+                password_path,
+                sql_query,
+            } => {
+                let password = validate_password_from_args(password, password_path)?;
+
+                let key_string_result =
+                    Argon2SqlCipher::derive_database_key(&vault_path, &password).await;
+
+                match key_string_result {
+                    Err(e) => eprintln!("Error calculating key: {e:?}"),
+                    Ok(key_string) => {
+                        let pragma_arg = format!("PRAGMA key=\"x'{key_string}'\"");
+                        let exec_args = vec![
+                            vault_path.to_str().unwrap(),
+                            "-cmd",
+                            pragma_arg.as_str(),
+                            &sql_query,
+                        ];
+
+                        let output = process::Command::new("sqlcipher")
+                            .args(exec_args.clone())
+                            .output()
+                            .await?;
+
+                        let stdout = String::from_utf8_lossy(&output.stdout);
+
+                        let after_newline = stdout.split_once('\n').map(|x| x.1).unwrap_or("");
+
+                        if !output.status.success() {
+                            anyhow::bail!(
+                                "Failed to open vault with error code: {}",
+                                output.status
+                            );
+                        }
+                        println!("{}", after_newline);
                     }
                 }
             }

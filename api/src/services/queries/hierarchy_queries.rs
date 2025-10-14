@@ -3,10 +3,14 @@ use std::collections::{hash_map::Entry, HashMap};
 use chrono::{DateTime, Utc};
 use common::{
     api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
+    backup::keys::{
+        verify_backup_id_pk, verify_backup_msg_pk, BackupIdPublicKey, UntrustedBackupIdPublicKey,
+    },
     protocol::keys::{
         verify_covernode_id_pk, verify_covernode_messaging_pk, verify_covernode_provisioning_pk,
         verify_journalist_id_pk, verify_journalist_messaging_pk, verify_journalist_provisioning_pk,
-        verify_organization_pk, AnchorOrganizationPublicKey, CoverDropPublicKeyHierarchy,
+        verify_organization_pk, AnchorOrganizationPublicKey, BackupIdPublicKeyFamily,
+        BackupIdPublicKeyFamilyList, BackupMessagingPublicKey, CoverDropPublicKeyHierarchy,
         CoverNodeIdPublicKey, CoverNodeIdPublicKeyFamily, CoverNodeIdPublicKeyFamilyList,
         CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey,
         CoverNodeProvisioningPublicKeyFamily, CoverNodeProvisioningPublicKeyFamilyList,
@@ -14,10 +18,10 @@ use common::{
         JournalistMessagingPublicKey, JournalistProvisioningPublicKey,
         JournalistProvisioningPublicKeyFamily, JournalistProvisioningPublicKeyFamilyList,
         OrganizationPublicKey, OrganizationPublicKeyFamily, OrganizationPublicKeyFamilyList,
-        UntrustedCoverNodeIdPublicKey, UntrustedCoverNodeMessagingPublicKey,
-        UntrustedCoverNodeProvisioningPublicKey, UntrustedJournalistIdPublicKey,
-        UntrustedJournalistMessagingPublicKey, UntrustedJournalistProvisioningPublicKey,
-        UntrustedOrganizationPublicKey,
+        UntrustedBackupMessagingPublicKey, UntrustedCoverNodeIdPublicKey,
+        UntrustedCoverNodeMessagingPublicKey, UntrustedCoverNodeProvisioningPublicKey,
+        UntrustedJournalistIdPublicKey, UntrustedJournalistMessagingPublicKey,
+        UntrustedJournalistProvisioningPublicKey, UntrustedOrganizationPublicKey,
     },
 };
 use serde_json::Value;
@@ -59,6 +63,10 @@ impl HierarchyQueries {
                 journalist_id_pk_json AS "journalist_id_pk_json?: Value",
                 journalist_msg_pk_id AS "journalist_msg_pk_id?: i32",
                 journalist_msg_pk_json AS "journalist_msg_pk_json?: Value",
+                backup_id_pk_id AS "backup_id_pk_id?: i32",
+                backup_id_pk_json AS "backup_id_pk_json?: Value",
+                backup_msg_pk_id AS "backup_msg_pk_id?: i32",
+                backup_msg_pk_json AS "backup_msg_pk_json?: Value",
                 -- This may seem like a convoluted way to do it, but we want to make sure that the keys returned match the epoch.
                 -- If we made a second query, new keys could have been added and the epoch value changed.
                 -- As this query is a candidate for refactoring, I will leave that optimization for a future TODO.
@@ -101,7 +109,11 @@ impl HierarchyQueries {
                             NULL AS journalist_id_pk_id,
                             NULL AS journalist_id_pk_json,
                             NULL AS journalist_msg_pk_id,
-                            NULL AS journalist_msg_pk_json
+                            NULL AS journalist_msg_pk_json,
+                            NULL AS backup_id_pk_id,
+                            NULL AS backup_id_pk_json,
+                            NULL AS backup_msg_pk_id,
+                            NULL AS backup_msg_pk_json
                         FROM
                             organization_pks
                             LEFT JOIN covernode_provisioning_pks ON (
@@ -137,7 +149,11 @@ impl HierarchyQueries {
                             journalist_id_pks.id AS journalist_id_pk_id,
                             journalist_id_pks.pk_json AS journalist_id_pk_json,
                             journalist_msg_pks.id AS journalist_msg_pk_id,
-                            journalist_msg_pks.pk_json AS journalist_msg_pk_json
+                            journalist_msg_pks.pk_json AS journalist_msg_pk_json,
+                            backup_id_pks.id AS backup_id_pk_id,
+                            backup_id_pks.pk_json AS backup_id_pk_json,
+                            backup_msg_pks.id AS backup_msg_pk_id,
+                            backup_msg_pks.pk_json AS backup_msg_pk_json
                         FROM
                             organization_pks
                             LEFT JOIN journalist_provisioning_pks ON (
@@ -151,6 +167,14 @@ impl HierarchyQueries {
                             LEFT JOIN journalist_msg_pks ON (
                                 journalist_msg_pks.id_pk_id = journalist_id_pks.id
                                 AND journalist_msg_pks.not_valid_after > $1
+                            )
+                            LEFT JOIN backup_id_pks ON (
+                                backup_id_pks.org_pk_id = organization_pks.id
+                                AND backup_id_pks.not_valid_after > $1
+                            )
+                            LEFT JOIN backup_msg_pks ON (
+                                backup_msg_pks.backup_id_pk_id = backup_id_pks.id
+                                AND backup_msg_pks.not_valid_after > $1
                             )
                         WHERE (organization_pks.pk_json->>'not_valid_after')::TIMESTAMPTZ > $1
                     )
@@ -179,6 +203,9 @@ impl HierarchyQueries {
         let mut journalist_id_pks: ChildKeyMap<JournalistIdPublicKey> = HashMap::new();
         let mut journalist_msg_pks: ChildKeyMap<JournalistMessagingPublicKey> = HashMap::new();
         let mut journalist_ids: ChildKeyMap<JournalistIdentity> = HashMap::new();
+
+        let mut backup_id_pks: ChildKeyMap<BackupIdPublicKey> = HashMap::new();
+        let mut backup_msg_pks: ChildKeyMap<BackupMessagingPublicKey> = HashMap::new();
 
         let mut epoch = 0;
 
@@ -360,6 +387,45 @@ impl HierarchyQueries {
                     }
                 }
             }
+
+            if let Some(backup_id_pk_id) = row.backup_id_pk_id {
+                if let Some(backup_id_pk_json) = row.backup_id_pk_json {
+                    if let Entry::Vacant(e) = backup_id_pks.entry(backup_id_pk_id) {
+                        let backup_id_pk = serde_json::from_value::<UntrustedBackupIdPublicKey>(
+                            backup_id_pk_json,
+                        )?;
+
+                        if let Some(verifying_key) = org_pks.get(&row.org_pk_id) {
+                            if let Ok(backup_id_pk) =
+                                verify_backup_id_pk(&backup_id_pk, verifying_key, now)
+                            {
+                                e.insert((row.org_pk_id, backup_id_pk));
+                            }
+                        }
+                    }
+
+                    if let Some(backup_msg_pk_id) = row.backup_msg_pk_id {
+                        if let Some(backup_msg_pk_json) = row.backup_msg_pk_json {
+                            if let Entry::Vacant(e) = backup_msg_pks.entry(backup_msg_pk_id) {
+                                let backup_msg_pk =
+                                    serde_json::from_value::<UntrustedBackupMessagingPublicKey>(
+                                        backup_msg_pk_json,
+                                    )?;
+
+                                if let Some((_, verifying_key)) =
+                                    &backup_id_pks.get(&backup_id_pk_id)
+                                {
+                                    if let Ok(backup_msg_pk) =
+                                        verify_backup_msg_pk(&backup_msg_pk, verifying_key, now)
+                                    {
+                                        e.insert((backup_id_pk_id, backup_msg_pk));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // Now we've got our keys and their IDs mapped out we can convert them to a tree
@@ -370,6 +436,7 @@ impl HierarchyQueries {
             let mut covernode_keys = CoverNodeProvisioningPublicKeyFamilyList::empty();
             let mut journalist_provisioning_pk_family_list =
                 JournalistProvisioningPublicKeyFamilyList::empty();
+            let mut backup_id_pk_family_list = BackupIdPublicKeyFamilyList::empty();
 
             // Construct CoverNode key hierarchy
             for (covernode_provisioning_db_id, (parent_org_db_id, covernode_provisioning_pk)) in
@@ -483,10 +550,31 @@ impl HierarchyQueries {
                 }
             }
 
+            // Construct backup key hierarchy
+
+            for (backup_id_pk_db_id, (org_pk_id, backup_id_pk)) in &backup_id_pks {
+                // We gotta get the db id of the backup id pk, and for each of those, we need a new family entry
+                if org_db_id == *org_pk_id {
+                    let mut backup_msg_keys: Vec<BackupMessagingPublicKey> = vec![];
+
+                    // The messaging key ID is not used for building the hierarchy, it is solely for deduplication
+                    // So for rebuilding the tree we just need the .values()
+                    for (parent_backup_id_db_id, backup_msg_pk) in backup_msg_pks.values() {
+                        if backup_id_pk_db_id == parent_backup_id_db_id {
+                            backup_msg_keys.push(backup_msg_pk.clone());
+                        }
+                    }
+                    let entry = BackupIdPublicKeyFamily::new(backup_id_pk.clone(), backup_msg_keys);
+
+                    backup_id_pk_family_list.insert(entry);
+                }
+            }
+
             let org_pk_family = OrganizationPublicKeyFamily::new(
                 org_pk,
                 covernode_keys,
                 journalist_provisioning_pk_family_list,
+                Some(backup_id_pk_family_list),
             );
 
             org_hierarchy.insert(org_pk_family);

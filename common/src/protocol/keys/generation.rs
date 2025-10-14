@@ -144,6 +144,17 @@ pub mod test {
 
     use chrono::{DateTime, Utc};
 
+    use super::{
+        generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
+        generate_covernode_provisioning_key_pair, generate_journalist_id_key_pair,
+        generate_journalist_messaging_key_pair, generate_journalist_provisioning_key_pair,
+        generate_organization_key_pair,
+    };
+    use crate::backup::keys::{
+        generate_backup_id_key_pair, generate_backup_msg_key_pair, BackupIdKeyPair,
+        BackupMsgKeyPair,
+    };
+    use crate::protocol::keys::{BackupIdPublicKeyFamilyList, IdentityPublicKeyFamily};
     use crate::{
         api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
         crypto::keys::encryption::UnsignedEncryptionKeyPair,
@@ -165,13 +176,6 @@ pub mod test {
         },
     };
 
-    use super::{
-        generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
-        generate_covernode_provisioning_key_pair, generate_journalist_id_key_pair,
-        generate_journalist_messaging_key_pair, generate_journalist_provisioning_key_pair,
-        generate_organization_key_pair,
-    };
-
     pub struct ProtocolKeys {
         pub org_pk: OrganizationPublicKey,
         pub org_key_pair: OrganizationKeyPair,
@@ -189,6 +193,8 @@ pub mod test {
         pub journalist_id_key_pair: JournalistIdKeyPair,
         pub journalist_msg_pk: JournalistMessagingPublicKey,
         pub journalist_msg_key_pair: JournalistMessagingKeyPair,
+        pub backup_id_key_pair: BackupIdKeyPair,
+        pub backup_msg_key_pair: BackupMsgKeyPair,
         pub hierarchy: CoverDropPublicKeyHierarchy,
     }
 
@@ -211,6 +217,8 @@ pub mod test {
             journalist_id_key_pair: JournalistIdKeyPair,
             journalist_msg_pk: JournalistMessagingPublicKey,
             journalist_msg_key_pair: JournalistMessagingKeyPair,
+            backup_id_key_pair: BackupIdKeyPair,
+            backup_msg_key_pair: BackupMsgKeyPair,
             hierarchy: CoverDropPublicKeyHierarchy,
         ) -> Self {
             Self {
@@ -230,6 +238,8 @@ pub mod test {
                 journalist_id_key_pair,
                 journalist_msg_pk,
                 journalist_msg_key_pair,
+                backup_id_key_pair,
+                backup_msg_key_pair,
                 hierarchy,
             }
         }
@@ -257,9 +267,12 @@ pub mod test {
             generate_journalist_provisioning_key_pair(&org_key_pair, now);
         let journalist_id_key_pair =
             generate_journalist_id_key_pair(&journalist_provisioning_key_pair, now);
-
         let journalist_msg_key_pair =
             generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+
+        // Backups
+        let backup_id_key_pair = generate_backup_id_key_pair(&org_key_pair, now);
+        let backup_msg_key_pair = generate_backup_msg_key_pair(&backup_id_key_pair, now);
 
         let hierarchy = CoverDropPublicKeyHierarchy::new(vec![OrganizationPublicKeyFamily::new(
             org_key_pair.public_key().clone(),
@@ -296,6 +309,12 @@ pub mod test {
                     )]),
                 ),
             ]),
+            Some(BackupIdPublicKeyFamilyList::new(vec![
+                IdentityPublicKeyFamily::new(
+                    backup_id_key_pair.public_key().clone(),
+                    vec![backup_msg_key_pair.public_key().clone()],
+                ),
+            ])),
         )]);
 
         ProtocolKeys::new(
@@ -315,7 +334,18 @@ pub mod test {
             journalist_id_key_pair,
             journalist_msg_key_pair.public_key().clone(),
             journalist_msg_key_pair,
+            backup_id_key_pair,
+            backup_msg_key_pair,
             hierarchy,
         )
+    }
+
+    #[test]
+    // This is useful to run to see the output of key generation for debugging
+    fn test_key_generation() {
+        let now = Utc::now();
+        let keys = generate_protocol_keys(now);
+        print!("{:#?}", keys.hierarchy);
+        assert!(keys.backup_id_key_pair.public_key().not_valid_after > now);
     }
 }

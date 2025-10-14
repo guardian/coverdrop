@@ -6,12 +6,27 @@ use crate::{
     aws::ssm::{
         client::SsmClient, parameters::ANCHOR_ORG_PK_SSM_PARAMETER, prefix::ParameterPrefix,
     },
+    backup::{
+        keys::{
+            BackupIdKeyPair, BackupMsgKeyPair, UntrustedBackupIdKeyPair, UntrustedBackupMsgKeyPair,
+        },
+        roles::BackupId,
+    },
     crypto::keys::{
         role::Role,
         serde::StorableKeyMaterial,
-        signing::traits::{self, PublicSigningKey},
+        signing::{
+            traits::{self, PublicSigningKey},
+            SignedPublicSigningKey,
+        },
     },
-    protocol::roles::{AnchorOrganization, CoverNodeId, CoverNodeProvisioning, Organization},
+    protocol::{
+        keys::{JournalistIdKeyPair, UntrustedJournalistIdKeyPair},
+        roles::{
+            AnchorOrganization, CoverNodeId, CoverNodeProvisioning, JournalistProvisioning,
+            Organization,
+        },
+    },
     Error,
 };
 
@@ -243,4 +258,56 @@ pub fn load_journalist_provisioning_key_pairs_with_parent_org_pks(
             .collect::<Vec<_>>();
 
     Ok(journalist_provisioning_key_pairs_with_parents)
+}
+
+pub fn load_journalist_id_key_pairs(
+    keys_path: impl AsRef<Path>,
+    journalist_provisioning_pk: &SignedPublicSigningKey<JournalistProvisioning>,
+    now: DateTime<Utc>,
+) -> anyhow::Result<Vec<JournalistIdKeyPair>> {
+    let journalist_id_key_pairs = UntrustedJournalistIdKeyPair::load_from_directory(&keys_path)?
+        .iter()
+        .flat_map(|key_pair| key_pair.to_trusted(journalist_provisioning_pk, now))
+        .collect::<Vec<_>>();
+
+    Ok(journalist_id_key_pairs)
+}
+
+// Backup Keys
+
+pub fn load_backup_id_key_pairs<T>(
+    keys_path: impl AsRef<Path>,
+    anchor_org_pks: &[T],
+    now: DateTime<Utc>,
+) -> anyhow::Result<Vec<BackupIdKeyPair>>
+where
+    T: traits::PublicSigningKey<AnchorOrganization>,
+{
+    let backup_id_key_pairs = UntrustedBackupIdKeyPair::load_from_directory(&keys_path)?
+        .iter()
+        .flat_map(|key_pair| {
+            anchor_org_pks
+                .iter()
+                .flat_map(|org_pk| key_pair.to_trusted(org_pk, now))
+        })
+        .collect::<Vec<_>>();
+
+    Ok(backup_id_key_pairs)
+}
+
+pub fn load_backup_msg_key_pairs(
+    keys_path: impl AsRef<Path>,
+    backup_id_pks: &[impl traits::PublicSigningKey<BackupId>],
+    now: DateTime<Utc>,
+) -> anyhow::Result<Vec<BackupMsgKeyPair>> {
+    let backup_msg_key_pairs = UntrustedBackupMsgKeyPair::load_from_directory(&keys_path)?
+        .iter()
+        .flat_map(|key_pair| {
+            backup_id_pks
+                .iter()
+                .flat_map(|backup_id_pk| key_pair.to_trusted(backup_id_pk, now))
+        })
+        .collect::<Vec<_>>();
+
+    Ok(backup_msg_key_pairs)
 }

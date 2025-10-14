@@ -6,22 +6,25 @@ mod loading;
 mod sign;
 mod verification;
 
-use crate::crypto::keys::{
-    encryption::{
-        PublicEncryptionKey, SignedEncryptionKeyPair, SignedPublicEncryptionKey,
-        UnsignedEncryptionKeyPair,
-    },
-    signing::{
-        PublicSigningKey, SignedPublicSigningKey, SignedSigningKeyPair, UnsignedSigningKeyPair,
-    },
-    untrusted::{
+use crate::{
+    backup::roles::{BackupId, BackupMsg},
+    crypto::keys::{
         encryption::{
-            UntrustedPublicEncryptionKey, UntrustedSignedEncryptionKeyPair,
-            UntrustedSignedPublicEncryptionKey, UntrustedUnsignedEncryptionKeyPair,
+            PublicEncryptionKey, SignedEncryptionKeyPair, SignedPublicEncryptionKey,
+            UnsignedEncryptionKeyPair,
         },
         signing::{
-            UntrustedPublicSigningKey, UntrustedSignedPublicSigningKey,
-            UntrustedSignedSigningKeyPair, UntrustedUnsignedSigningKeyPair,
+            PublicSigningKey, SignedPublicSigningKey, SignedSigningKeyPair, UnsignedSigningKeyPair,
+        },
+        untrusted::{
+            encryption::{
+                UntrustedPublicEncryptionKey, UntrustedSignedEncryptionKeyPair,
+                UntrustedSignedPublicEncryptionKey, UntrustedUnsignedEncryptionKeyPair,
+            },
+            signing::{
+                UntrustedPublicSigningKey, UntrustedSignedPublicSigningKey,
+                UntrustedSignedSigningKeyPair, UntrustedUnsignedSigningKeyPair,
+            },
         },
     },
 };
@@ -99,6 +102,12 @@ pub type UntrustedJournalistMessagingPublicKey =
 pub type UntrustedJournalistMessagingKeyPair =
     UntrustedSignedEncryptionKeyPair<JournalistMessaging>;
 
+pub type UntrustedBackupIdPublicKey = UntrustedSignedPublicSigningKey<BackupId>;
+pub type UntrustedBackupIdKeyPair = UntrustedSignedSigningKeyPair<BackupId>;
+
+pub type UntrustedBackupMessagingPublicKey = UntrustedSignedPublicEncryptionKey<BackupMsg>;
+pub type UntrustedBackupMessagingKeyPair = UntrustedSignedEncryptionKeyPair<BackupMsg>;
+
 // The user public keys are unsigned so can never truly be verified
 // but having an untrusted version makes them follow the same patterns
 // as all of our other keys where {de,}serialized keys are considered
@@ -173,6 +182,14 @@ pub type UnregisteredJournalistIdKeyPair = UnsignedSigningKeyPair<UnregisteredJo
 
 pub type UserPublicKey = PublicEncryptionKey<User>;
 pub type UserKeyPair = UnsignedEncryptionKeyPair<User>;
+
+// Backup keys
+
+pub type BackupIdPublicKey = SignedPublicSigningKey<BackupId>;
+pub type BackupIdKeyPair = SignedSigningKeyPair<BackupId>;
+
+pub type BackupMessagingPublicKey = SignedPublicEncryptionKey<BackupMsg>;
+pub type BackupMessagingKeyPair = SignedEncryptionKeyPair<BackupMsg>;
 
 // Mailbox has only a public key because it is only used to represent a reply key from either a
 // user or a journalist and has also been verified before being put in the mailbox.

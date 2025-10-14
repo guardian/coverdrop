@@ -20,5 +20,8 @@ common = { path = "../common", features = ["test-utils"] }
 covernode-database.path = "../covernode/covernode-database"
 journalist-vault.path = "../journalist-vault"
 
+[features]
+integration-tests = []
+
 [dev-dependencies]
 tempfile = "3.3.0"
