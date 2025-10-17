@@ -1155,6 +1155,12 @@ impl JournalistVault {
 
         tx.commit().await?;
 
+        let mut conn = self.pool.acquire().await?;
+        sqlx::query!("VACUUM")
+            .execute(&mut *conn)
+            .await
+            .context("vacuuming")?;
+
         Ok(())
     }
 
