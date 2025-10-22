@@ -1,4 +1,3 @@
-use admin::delete_journalist_form;
 use admin::generate_admin_key_pair;
 use admin::generate_constant_files;
 use admin::generate_covernode_database;
@@ -14,6 +13,10 @@ use admin::update_journalist;
 use admin::update_system_status;
 use admin::upload_keys_to_api;
 use admin::{
+    backup_complete_restore, backup_initiate_restore_finalize, backup_initiate_restore_prepare,
+    backup_initiate_restore_submit, delete_journalist_form,
+};
+use admin::{
     generate_covernode_identity_key_pair, generate_covernode_messaging_key_pair,
     generate_organization_key_pair,
 };
@@ -28,10 +31,12 @@ use common::crypto::keys::public_key::PublicKey;
 use common::crypto::keys::serde::StorableKeyMaterial;
 use common::crypto::pbkdf::DEFAULT_PASSPHRASE_WORDS;
 use common::generators::PasswordGenerator;
+use common::protocol::backup::WrappedSecretShare;
 use common::protocol::keys::load_anchor_org_pks;
 use common::protocol::keys::load_backup_id_key_pairs;
 use common::protocol::keys::load_latest_org_key_pair;
 use common::time;
+use common::time::now;
 use common::tracing::init_tracing;
 use journalist_vault::JournalistVault;
 use journalist_vault::PASSWORD_EXTENSION;
@@ -351,6 +356,136 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
+        Commands::BackupInitiateRestorePrepare {
+            keys_path,
+            journalist_id,
+            bundle_path,
+        } => {
+            let prepare_bundle_file =
+                backup_initiate_restore_prepare(keys_path, journalist_id, &bundle_path, now())
+                    .await?;
+
+            print_step("Step 1/4", "Prepare bundle created (AIR-GAPPED MACHINE)");
+            println!("Bundle file: {}", prepare_bundle_file.display());
+
+            print_next_steps(&[
+                "Transfer the bundle file to an ONLINE machine",
+                "On the ONLINE machine, run:",
+                &format!(
+                    "\n     admin backup-initiate-restore-submit \\\n\
+                           --bundle-path {} \\\n\
+                           --api-url <API_URL> \\\n\
+                           --output-path <OUTPUT_DIR>",
+                    prepare_bundle_file.display()
+                ),
+            ]);
+
+            Ok(())
+        }
+        Commands::BackupInitiateRestoreSubmit {
+            bundle_path,
+            api_url,
+            output_path,
+        } => {
+            let response_bundle_file =
+                backup_initiate_restore_submit(&bundle_path, api_url, &output_path).await?;
+
+            print_step(
+                "Step 2/4",
+                "Response bundle retrieved from API (ONLINE MACHINE)",
+            );
+            println!("Response file: {}", response_bundle_file.display());
+
+            print_next_steps(&[
+                "Transfer the response bundle file to the AIR-GAPPED machine",
+                "On the AIR-GAPPED machine, run:",
+                &format!(
+                    "\n     admin backup-initiate-restore-finalize \\\n\
+                           --bundle-response-path {} \\\n\
+                           --keys-path <KEYS_DIR> \\\n\
+                           --output-path <OUTPUT_DIR>",
+                    response_bundle_file.display()
+                ),
+            ]);
+
+            Ok(())
+        }
+        Commands::BackupInitiateRestoreFinalize {
+            bundle_response_path,
+            keys_path,
+            output_path,
+        } => {
+            let (in_progress_bundle_file, encrypted_share_files) =
+                backup_initiate_restore_finalize(
+                    &bundle_response_path,
+                    keys_path,
+                    &output_path,
+                    now(),
+                )
+                .await?;
+
+            print_step(
+                "Step 3/4",
+                "Backup decrypted and shares created (AIR-GAPPED MACHINE)",
+            );
+            println!("In-progress bundle: {}", in_progress_bundle_file.display());
+            println!("Encrypted shares created: {}", encrypted_share_files.len());
+            for (i, share_file) in encrypted_share_files.iter().enumerate() {
+                println!("   Share {}: {}", i + 1, share_file.display());
+            }
+
+            print_next_steps(&[
+                "Distribute the encrypted shares to the trusted recovery contacts. \
+                 It is safe to send them via Signal.",
+                "Each recovery contact should decrypt their share in Sentinel and \
+                 return the recovered share (if any)",
+                &format!(
+                    "Once you have collected enough shares (k shares), complete the restore:\n\n\
+                           admin backup-complete-restore \\\n\
+                           --in-progress-bundle-path {} \\\n\
+                           --restore-to-vault-path <VAULT_PATH> \\\n\
+                           --keys-path <KEYS_DIR> \\\n\
+                           --shares <SHARE_1> <SHARE_2> ...",
+                    in_progress_bundle_file.display()
+                ),
+            ]);
+
+            Ok(())
+        }
+        Commands::BackupCompleteRestore {
+            in_progress_bundle_path,
+            restore_to_vault_path,
+            keys_path,
+            shares,
+        } => {
+            let wrapped_shares = shares
+                .into_iter()
+                .map(|s| WrappedSecretShare::from_base64_string(&s))
+                .collect::<Result<Vec<WrappedSecretShare>, _>>()?;
+
+            let restored_vault_path = backup_complete_restore(
+                &in_progress_bundle_path,
+                &restore_to_vault_path,
+                &keys_path,
+                wrapped_shares,
+                now(),
+            )
+            .await?;
+
+            print_step("Step 4/4", "Backup restore complete!");
+            println!("Restored vault file: {}", restored_vault_path.display());
+
+            print_next_steps(&[
+                "Verify the restored vault can be opened with the correct password",
+                "Check that all expected data is present in the vault",
+                &format!(
+                    "Securely delete the intermediate bundle and share files:\n       - {}",
+                    in_progress_bundle_path.display()
+                ),
+            ]);
+
+            Ok(())
+        }
     };
 
     if let Err(error) = result {
@@ -359,4 +494,18 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+/// Print a step completion message
+fn print_step(step: &str, description: &str) {
+    println!("\n{step} complete: {description}");
+}
+
+/// Print a list of next steps
+fn print_next_steps(steps: &[&str]) {
+    println!("\nNEXT STEPS:");
+    for (i, step) in steps.iter().enumerate() {
+        println!("  {}. {}", i + 1, step);
+    }
+    println!();
 }

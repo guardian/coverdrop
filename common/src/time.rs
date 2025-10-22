@@ -67,3 +67,8 @@ pub fn pretty_print_duration(duration: chrono::Duration) -> String {
 
     format!("{days} days {hours} hours {mins} mins")
 }
+
+/// Returns a timestamp formatted for use in filenames, e.g. "20251007T133742"
+pub fn format_timestamp_for_filename(time: DateTime<Utc>) -> String {
+    time.format("%Y%m%d-%H%M%S").to_string()
+}

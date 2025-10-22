@@ -329,4 +329,72 @@ pub enum Commands {
         #[clap(long)]
         keys_path: Option<PathBuf>,
     },
+    /// Prepares a backup init bundle that can be subsequently submitted using the
+    /// `backup-initiate-restore-submit` step which will contact the API to retrieve
+    /// the backup data for the specified journalist and the latest key hierarchy.
+    /// This command is to be run on the air-gapped administrator machine.
+    BackupInitiateRestorePrepare {
+        /// Path to the directory containing the backup admin key pair
+        #[clap(long)]
+        keys_path: PathBuf,
+        /// The ID of the journalist you wish to restore the backup for
+        #[clap(long)]
+        journalist_id: JournalistIdentity,
+        /// Path to the directory where the bundle file for the subsequent restore submit step will
+        /// be saved.
+        #[clap(long)]
+        bundle_path: PathBuf,
+    },
+    /// Submits the backup init bundle created using the `backup-initiate-restore-prepare` command
+    /// to the API to retrieve the backup data and key hierarchy. The output is a bundle
+    /// response that can be used in the subsequent `backup-initiate-restore-finalize` step.
+    /// This command is to be run on any online machine.
+    BackupInitiateRestoreSubmit {
+        /// The path to the bundle file created using the `backup-initiate-restore-prepare` command
+        #[clap(long)]
+        bundle_path: PathBuf,
+        /// The address of the CoverDrop API server
+        #[clap(long)]
+        api_url: Url,
+        /// The path where the bundle response file for the subsequent restore finalize step will
+        /// be saved.
+        #[clap(long)]
+        output_path: PathBuf,
+    },
+    /// Finalizes the backup restore process using the bundle response created
+    /// using the `backup-initiate-restore-submit` command. This creates an intermediate
+    /// backup file and encrypted recovery shares that can be used in the subsequent
+    /// `backup-complete-restore` step.
+    /// This command is to be run on the air-gapped administrator machine.
+    BackupInitiateRestoreFinalize {
+        /// The path to the bundle response file created using the
+        /// `backup-initiate-restore-submit` command
+        #[clap(long)]
+        bundle_response_path: PathBuf,
+        /// Path to the directory containing the backup admin key pair
+        #[clap(long)]
+        keys_path: PathBuf,
+        /// The path where the intermediate backup file and encrypted shares for the subsequent
+        /// complete restore step will be saved.
+        #[clap(long)]
+        output_path: PathBuf,
+    },
+    /// Completes the restore of a journalist vault using the intermediate backup file created
+    /// using the `backup-initiate-restore` command and the encrypted recovery shares collected
+    /// from the trusted contacts.
+    /// This command is to be run on the air-gapped administrator machine.
+    BackupCompleteRestore {
+        /// The path to the intermediate backup file that was created using the
+        /// `backup-initiate-restore` command
+        #[clap(long)]
+        in_progress_bundle_path: PathBuf,
+        /// The path to the journalist vault you wish to restore the backup to
+        #[clap(long)]
+        restore_to_vault_path: PathBuf,
+        /// Path to the directory containing the backup admin key pair
+        #[clap(long)]
+        keys_path: PathBuf,
+        /// The encrypted recovery shares collected from the trusted contacts
+        shares: Vec<String>,
+    },
 }

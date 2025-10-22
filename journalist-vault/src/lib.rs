@@ -12,7 +12,7 @@ pub mod provisioning_key_queries;
 mod test_vault_clean_up;
 mod user_queries;
 mod vault_message;
-mod vault_setup_bundle;
+pub mod vault_setup_bundle;
 
 use anyhow::Context;
 use key_rows::{
@@ -109,7 +109,7 @@ pub struct User {
 
 #[derive(Clone)]
 pub struct JournalistVault {
-    pool: SqlitePool,
+    pub pool: SqlitePool,
 }
 
 impl JournalistVault {

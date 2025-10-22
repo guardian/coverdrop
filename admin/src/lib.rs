@@ -1,3 +1,4 @@
+mod backups;
 mod ceremony;
 mod delete_journalist_form;
 mod generate_constants_files;
@@ -10,6 +11,10 @@ mod reseed_journalist_vault_id_key_pair;
 mod update_journalist;
 mod update_system_status;
 
+pub use backups::{
+    backup_complete_restore, backup_initiate_restore_finalize, backup_initiate_restore_prepare,
+    backup_initiate_restore_submit,
+};
 pub use ceremony::{
     anchor_public_key_bundle, api_has_anchor_org_pk, public_key_forms_bundle,
     read_bundle_from_disk, run_setup_ceremony, upload_keys_to_api,

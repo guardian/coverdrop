@@ -78,6 +78,8 @@ get_key 'keypair_json' 'vault_setup_bundle' 'journalist_id'
 
 cargo run --features "integration-tests" --quiet --bin admin -- generate-journalist-messaging-keys-for-integration-test --keys-path "$KEYS_PATH"
 
+cargo run --quiet --bin admin -- generate-journalist-messaging-keys-for-integration-test --keys-path "$KEYS_PATH"
+
 rm "$KEYS_PATH/static_test_journalist.vault"
 
 popd

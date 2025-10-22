@@ -48,8 +48,8 @@ use super::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJourn
 
 #[derive(Clone)]
 pub struct ApiClient {
-    client: reqwest::Client,
-    base_url: Url,
+    pub client: reqwest::Client,
+    pub base_url: Url,
 }
 
 impl ApiClient {

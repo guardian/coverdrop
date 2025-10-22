@@ -35,6 +35,7 @@ dependencies = [
  "covernode-database",
  "itertools 0.10.5",
  "journalist-vault",
+ "log",
  "rand 0.8.5",
  "regex",
  "reqwest",

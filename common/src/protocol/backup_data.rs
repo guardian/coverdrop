@@ -9,6 +9,8 @@ use crate::padded_byte_vector::SteppingPaddedByteVector;
 use crate::protocol::roles::JournalistId;
 use crate::Error;
 use anyhow::Context;
+use base64::prelude::BASE64_STANDARD_NO_PAD;
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Decode;
@@ -59,8 +61,44 @@ impl Encryptable for EncryptedSecretShare {
     }
 }
 
+impl EncryptedSecretShare {
+    pub fn from_base64_string(s: &str) -> anyhow::Result<Self> {
+        let bytes = BASE64_STANDARD_NO_PAD.decode(s).with_context(|| {
+            format!(
+                "Failed to decode EncryptedSecretShare from base64 string: {}",
+                s
+            )
+        })?;
+        Ok(AnonymousBox::<SecretSharingShare>::from_vec_unchecked(
+            bytes,
+        ))
+    }
+
+    pub fn to_base64_string(&self) -> String {
+        BASE64_STANDARD_NO_PAD.encode(self.as_bytes())
+    }
+}
+
 /// An encrypted secret share additionally encrypted under the backup admin encryption key.
 pub type BackupEncryptedSecretShare = AnonymousBox<EncryptedSecretShare>;
+
+impl BackupEncryptedSecretShare {
+    pub fn from_base64_string(s: &str) -> anyhow::Result<Self> {
+        let bytes = BASE64_STANDARD_NO_PAD.decode(s).with_context(|| {
+            format!(
+                "Failed to decode BackupEncryptedSecretShare from base64 string: {}",
+                s
+            )
+        })?;
+        Ok(AnonymousBox::<EncryptedSecretShare>::from_vec_unchecked(
+            bytes,
+        ))
+    }
+
+    pub fn to_base64_string(&self) -> String {
+        BASE64_STANDARD_NO_PAD.encode(self.as_bytes())
+    }
+}
 
 /// The data structure that is backed up by a journalist and can be used to recover their vault.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -70,6 +108,7 @@ pub struct BackupData {
     pub backup_encrypted_padded_vault: BackupEncryptedPaddedVault,
     pub wrapped_encrypted_shares: Vec<BackupEncryptedSecretShare>,
     pub created_at: DateTime<Utc>,
+    pub recovery_contacts: Vec<JournalistIdentity>,
 }
 
 impl BackupData {
@@ -221,6 +260,21 @@ mod tests {
     }
 
     #[test]
+    fn encrypted_secret_share_base64_round_trip() -> anyhow::Result<()> {
+        let original_share = BackupEncryptedSecretShare::from_vec_unchecked(vec![1, 2, 3, 4, 5]);
+        let base64_string = original_share.to_base64_string();
+        let decoded_share = BackupEncryptedSecretShare::from_base64_string(&base64_string)?;
+        assert_eq!(original_share, decoded_share);
+
+        let original_share = EncryptedSecretShare::from_vec_unchecked(vec![1, 2, 3, 4, 5]);
+        let base64_string = original_share.to_base64_string();
+        let decoded_share = EncryptedSecretShare::from_base64_string(&base64_string)?;
+        assert_eq!(original_share, decoded_share);
+
+        Ok(())
+    }
+
+    #[test]
     fn signed_backup_data_round_trip() -> anyhow::Result<()> {
         let now = now();
         let backup_data = _create_sample_backup_data()?;
@@ -265,6 +319,7 @@ mod tests {
 
     fn _create_sample_backup_data() -> Result<BackupData, Error> {
         let journalist_identity = JournalistIdentity::new("journalist_123");
+        let recovery_journalist_identity = JournalistIdentity::new("journalist_456");
         let mut rng = rand::thread_rng();
         let mut vault_data = vec![0u8; 500 * 1024]; // 500 KiB of data
         rng.fill_bytes(&mut vault_data);
@@ -280,6 +335,7 @@ mod tests {
             backup_encrypted_padded_vault,
             wrapped_encrypted_shares: vec![backup_encrypted_share_1, backup_encrypted_share_2],
             created_at: now(),
+            recovery_contacts: vec![recovery_journalist_identity?],
         };
         Ok(backup_data)
     }

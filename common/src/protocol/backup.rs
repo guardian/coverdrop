@@ -78,7 +78,7 @@ pub fn sentinel_create_backup(
     }
     let encrypted_shares: Vec<EncryptedSecretShare> = shares
         .into_iter()
-        .zip(recovery_contacts)
+        .zip(recovery_contacts.clone())
         .map(|(share, contact)| {
             let key = contact.latest_messaging_key.to_public_encryption_key();
             AnonymousBox::encrypt(&key, share).context("Failed to encrypt share")
@@ -102,6 +102,7 @@ pub fn sentinel_create_backup(
         backup_encrypted_padded_vault,
         wrapped_encrypted_shares,
         created_at: now,
+        recovery_contacts: recovery_contacts.into_iter().map(|c| c.identity).collect(),
     };
     let backup_data_with_signature = backup_data
         .to_backup_data_with_signature(&journalist_identity_key)
@@ -136,7 +137,7 @@ pub fn coverup_initiate_restore_step(
     journalist_identity: JournalistIdentity,
     signed_backup_data: BackupDataWithSignature,
     journalist_identity_public_key: &SignedPublicSigningKey<JournalistId>,
-    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupMsg>,
+    backup_admin_encryption_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
     now: DateTime<Utc>,
 ) -> anyhow::Result<BackupRestorationInProgress> {
     // Retrieve and verify the backup data
@@ -155,11 +156,13 @@ pub fn coverup_initiate_restore_step(
     let unwrapped_encrypted_shares: Vec<EncryptedSecretShare> = backup_data
         .wrapped_encrypted_shares
         .iter()
-        .map(|wrapped_share| {
-            AnonymousBox::decrypt(backup_admin_encryption_key_pair, wrapped_share)
-                .map_err(|e| anyhow::anyhow!("Failed to unwrap encrypted share: {}", e))
+        .filter_map(|wrapped_share| {
+            try_decrypt_wrapped_encrypted_share(
+                wrapped_share.clone(),
+                backup_admin_encryption_key_pairs,
+            )
         })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect();
 
     if unwrapped_encrypted_shares.is_empty() {
         return Err(anyhow::anyhow!(
@@ -175,14 +178,27 @@ pub fn coverup_initiate_restore_step(
     Ok(backup_state)
 }
 
+fn try_decrypt_wrapped_encrypted_share(
+    wrapped_encrypted_shares: BackupEncryptedSecretShare,
+    backup_msg_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
+) -> Option<EncryptedSecretShare> {
+    for key_pair in backup_msg_key_pairs.iter() {
+        if let Ok(encrypted_share) = AnonymousBox::decrypt(key_pair, &wrapped_encrypted_shares) {
+            return Some(encrypted_share);
+        }
+    }
+
+    None // None of the provided keys could decrypt the share
+}
+
 /// A secret share that is encrypted under the backup admin's encryption key.
-type WrappedSecretShare = AnonymousBox<SecretSharingShare>;
+pub type WrappedSecretShare = AnonymousBox<SecretSharingShare>;
 
 /// Runs on a recovery contact's device to attempt to decrypt any of the provided
 /// `encrypted_share_candidates` using their own messaging key pairs. If successful, the decrypted
 /// share is then wrapped under the backup admin's encryption key for transport back to them.
 /// If none of the provided keys can decrypt any of the shares, `Ok(None)` is returned.
-pub fn sentinel_restore_try_unwrap_share_step(
+pub fn sentinel_restore_try_unwrap_and_wrap_share_step(
     encrypted_share_candidates: Vec<EncryptedSecretShare>,
     recovery_contact_messaging_key_pairs: Vec<SignedEncryptionKeyPair<JournalistMessaging>>,
     backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
@@ -199,8 +215,7 @@ pub fn sentinel_restore_try_unwrap_share_step(
         }
     }
 
-    // None of the provided keys could decrypt any of the shares
-    Ok(None)
+    Ok(None) // None of the provided keys could decrypt any of the shares
 }
 
 /// Runs on the backup admin's device to complete the restoration of a Sentinel backup. It
@@ -211,10 +226,10 @@ pub fn sentinel_restore_try_unwrap_share_step(
 /// The integrating application should have previously stored the `BackupRestorationInProgress`
 /// state on disk after calling `coverup_initiate_restore_step`, and should provide it here.
 /// If successful, the encrypted vault is returned and can be persisted on disk.
-pub fn sentinel_finish_restore_step(
+pub fn coverup_finish_restore_step(
     backup_state: BackupRestorationInProgress,
     wrapped_shares: Vec<WrappedSecretShare>,
-    backup_admin_encryption_key_pair: &SignedEncryptionKeyPair<BackupMsg>,
+    backup_admin_encryption_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
 ) -> anyhow::Result<Vec<u8>> {
     if wrapped_shares.is_empty() {
         return Err(anyhow::anyhow!("No wrapped shares provided"));
@@ -223,11 +238,10 @@ pub fn sentinel_finish_restore_step(
     // Unwrap the shares using the backup admin's encryption key pair
     let unwrapped_shares: Vec<SecretSharingShare> = wrapped_shares
         .iter()
-        .map(|wrapped_share| {
-            AnonymousBox::decrypt(backup_admin_encryption_key_pair, wrapped_share)
-                .map_err(|e| anyhow::anyhow!("Failed to unwrap share: {}", e))
+        .filter_map(|wrapped_share| {
+            try_decrypt_wrapped_share(wrapped_share.clone(), backup_admin_encryption_key_pairs)
         })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect();
 
     if unwrapped_shares.is_empty() {
         return Err(anyhow::anyhow!("No unwrapped shares available"));
@@ -258,6 +272,19 @@ pub fn sentinel_finish_restore_step(
         .map_err(|e| anyhow::anyhow!("Failed to unpad decrypted vault: {}", e))?;
 
     Ok(encrypted_vault)
+}
+
+fn try_decrypt_wrapped_share(
+    wrapped_encrypted_shares: WrappedSecretShare,
+    backup_msg_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
+) -> Option<SecretSharingShare> {
+    for key_pair in backup_msg_key_pairs.iter() {
+        if let Ok(encrypted_share) = AnonymousBox::decrypt(key_pair, &wrapped_encrypted_shares) {
+            return Some(encrypted_share);
+        }
+    }
+
+    None // None of the provided keys could decrypt the share
 }
 
 #[cfg(test)]
@@ -354,13 +381,13 @@ mod tests {
             journalist_identity.clone(),
             signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair.clone()],
             now(),
         )
         .expect("Failed to initiate restore");
 
         // Step 3: Recovery contact unwraps share
-        let wrapped_share = sentinel_restore_try_unwrap_share_step(
+        let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
             backup_state.encrypted_shares.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
@@ -369,10 +396,10 @@ mod tests {
         .expect("No share could be unwrapped");
 
         // Step 4: Complete restore
-        let restored_vault = sentinel_finish_restore_step(
+        let restored_vault = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair],
         )
         .expect("Failed to finish restore");
 
@@ -426,7 +453,7 @@ mod tests {
             journalist_identity,
             signed_backup_data,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair.clone()],
             now(),
         );
 
@@ -471,7 +498,7 @@ mod tests {
             journalist_identity,
             signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
-            &different_backup_admin_pair, // Different key!
+            &vec![different_backup_admin_pair], // Different key!
             now(),
         );
 
@@ -532,7 +559,7 @@ mod tests {
             journalist_identity,
             tampered_backup_data_with_signature,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair],
             now(),
         );
 
@@ -590,13 +617,13 @@ mod tests {
             journalist_identity,
             signed_backup_data,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair.clone()],
             now(),
         )
         .expect("Failed to initiate restore");
 
         // Recovery contact unwraps share
-        let wrapped_share = sentinel_restore_try_unwrap_share_step(
+        let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
             backup_state.encrypted_shares.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
@@ -605,10 +632,10 @@ mod tests {
         .expect("No share could be unwrapped");
 
         // Complete restore - should fail during vault decryption
-        let result = sentinel_finish_restore_step(
+        let result = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair],
         );
 
         assert!(
@@ -650,13 +677,13 @@ mod tests {
             journalist_identity,
             verified_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair.clone()],
             now(),
         )
         .expect("Failed to initiate restore");
 
         // Recovery contact unwraps share
-        let wrapped_share = sentinel_restore_try_unwrap_share_step(
+        let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
             backup_state.encrypted_shares.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
@@ -670,10 +697,10 @@ mod tests {
         let wrapped_share = AnonymousBox::from_vec_unchecked(wrapped_share_bytes.clone());
 
         // Complete restore - should fail during share unwrapping
-        let result = sentinel_finish_restore_step(
+        let result = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair],
         );
 
         assert!(
@@ -718,7 +745,7 @@ mod tests {
             different_identity, // Different identity!
             signed_backup_data.to_unverified()?,
             &journalist_signing_pair.public_key(),
-            &backup_admin_encryption_pair,
+            &vec![backup_admin_encryption_pair],
             now(),
         );
 

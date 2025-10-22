@@ -1,8 +1,8 @@
-use std::time::Duration;
-
-use common::protocol::backup::coverup_initiate_restore_step;
-use common::protocol::backup::sentinel_finish_restore_step;
-use common::protocol::backup::sentinel_restore_try_unwrap_share_step;
+use common::crypto::keys::serde::StorableKeyMaterial;
+use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
+use common::protocol::backup::{
+    sentinel_restore_try_unwrap_and_wrap_share_step, WrappedSecretShare,
+};
 use common::{
     api::forms::{
         GetBackupDataForm, PostBackupDataForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
@@ -22,6 +22,8 @@ use integration_tests::{
     api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
 };
 use journalist_vault::JournalistVault;
+use std::fs;
+use std::time::Duration;
 
 #[tokio::test]
 /// This test covers the creation and retrieval of a backup for a journalist's vault.
@@ -36,18 +38,21 @@ async fn backup_scenario() {
         .build()
         .await;
 
+    // temporary directory to store the recovery state
+    let backup_recovery_dir = stack.temp_dir_path().join("backup_recovery");
+    fs::create_dir_all(&backup_recovery_dir).expect("Create backup recovery dir");
+
     // Create a backup keypair for the sentinel to use to encrypt the backup and connect to the journalist vault
     let org_keypair = stack.keys().org_key_pair.clone();
 
     // Create and upload two sets of backup keys to ensure we can retrieve the latest one later
     let backup_signing_key = create_test_backup_id_key_pair(&stack);
-
     let backup_signing_key_2 = create_test_backup_id_key_pair(&stack);
 
     // This helper creates multiple backup message keys and uploads them to the API
     // This is to help test that we can retrieve the latest key later and also supports multiple messages keys per backup id key
     // It returns the last two keys created so we can use them later
-    async fn upload_backup_keys(
+    async fn upload_and_save_backup_keys(
         stack: &CoverDropStack,
         backup_signing_key: &SignedSigningKeyPair<BackupId>,
         org_keypair: &SignedSigningKeyPair<common::protocol::roles::Organization>,
@@ -55,6 +60,12 @@ async fn backup_scenario() {
         SignedEncryptionKeyPair<BackupMsg>,
         SignedEncryptionKeyPair<BackupMsg>,
     ) {
+        // Write backup keypair to disk for use by the CLI tool
+        backup_signing_key
+            .to_untrusted()
+            .save_to_disk(stack.keys_path())
+            .unwrap();
+
         // Upload the backup signing key
         let post_backup_signing_pk = PostBackupIdKeyForm::new(
             backup_signing_key.public_key().to_untrusted(),
@@ -90,16 +101,19 @@ async fn backup_scenario() {
                 .await
                 .expect("Upload backup encryption key");
 
+            // Also save to disk for use by the CLI tool
+            key.to_untrusted().save_to_disk(stack.keys_path()).unwrap();
+
             // Sleep a bit to ensure the keys have different timestamps
             tokio::time::sleep(Duration::from_millis(1000)).await;
         }
         (backup_encryption_key_1, backup_encryption_key_2)
     }
 
-    let (_, _) = upload_backup_keys(&stack, &backup_signing_key, &org_keypair).await;
+    let (_, _) = upload_and_save_backup_keys(&stack, &backup_signing_key, &org_keypair).await;
 
     let (_, backup_encryption_key_2b) =
-        upload_backup_keys(&stack, &backup_signing_key_2, &org_keypair).await;
+        upload_and_save_backup_keys(&stack, &backup_signing_key_2, &org_keypair).await;
 
     // Create the journalist vault to back up
     let journalist_vault = stack.load_static_journalist_vault().await;
@@ -138,7 +152,7 @@ async fn backup_scenario() {
     );
     let backup_encryption_key_from_api = fresh_public_keys.latest_backup_msg_pk().unwrap();
 
-    // Make sure we are getting the most recently uploaded backup key key
+    // Make sure we are getting the most recently uploaded backup key
     assert_eq!(
         backup_encryption_key_from_api,
         *backup_encryption_key_2b.public_key()
@@ -234,24 +248,27 @@ async fn backup_scenario() {
             .to_backup_data_with_signature(&journalist_signing_pair)
             .unwrap(),
         journalist_signing_pair.public_key(),
-        &backup_encryption_key_2b,
+        std::slice::from_ref(&backup_encryption_key_2b),
         stack.now(),
     )
     .expect("Failed to initiate restore");
 
     // Recovery contact unwraps share
-    let wrapped_share = sentinel_restore_try_unwrap_share_step(
+    let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
         backup_state.encrypted_shares.clone(),
-        vec![recovery_contact_messaging_pair],
+        vec![recovery_contact_messaging_pair.clone()],
         backup_encryption_key_2b.public_key().clone(),
     )
     .expect("Failed to unwrap share")
     .expect("No share could be unwrapped");
 
     // Complete restore
-    let restored_vault =
-        sentinel_finish_restore_step(backup_state, vec![wrapped_share], &backup_encryption_key_2b)
-            .expect("Failed to finish restore");
+    let restored_vault = coverup_finish_restore_step(
+        backup_state,
+        vec![wrapped_share.clone()],
+        &[backup_encryption_key_2b.clone()],
+    )
+    .expect("Failed to finish restore");
 
     // Verify the round-trip worked
     assert_eq!(journalist_vault_bytes.clone(), restored_vault);
@@ -259,6 +276,80 @@ async fn backup_scenario() {
     // Replace the vault file with the restored vault to verify it can be opened
     stack
         .save_static_journalist_vault_bytes(restored_vault)
+        .await;
+
+    let restored_vault = stack.load_static_journalist_vault().await;
+
+    assert_eq!(
+        restored_vault.journalist_id().await.unwrap(),
+        journalist_identity
+    );
+
+    //
+    // Also check the CLI tools can also retrieve the stored backup correctly
+    //
+
+    // Step 1: Prepare the backup restore bundle (offline/air-gapped)
+    let prepare_bundle_path = admin::backup_initiate_restore_prepare(
+        stack.keys_path().to_path_buf(),
+        journalist_identity.clone(),
+        &backup_recovery_dir,
+        stack.now(),
+    )
+    .await
+    .expect("Admin CLI initiate restore prepare");
+
+    // Step 2: Submit the bundle to the API (online)
+    let response_bundle_path = admin::backup_initiate_restore_submit(
+        &prepare_bundle_path,
+        stack.api_client_uncached().base_url.clone(),
+        &backup_recovery_dir,
+    )
+    .await
+    .expect("Admin CLI initiate restore submit");
+
+    // Step 3: Finalize the restore process (offline/air-gapped)
+    let (backup_output_path, wrapped_shares_paths) = admin::backup_initiate_restore_finalize(
+        &response_bundle_path,
+        stack.keys_path().to_path_buf(),
+        &backup_recovery_dir,
+        stack.now(),
+    )
+    .await
+    .expect("Admin CLI initiate restore finalize");
+
+    // Load the wrapped shares from disk
+    let encrypted_shares = wrapped_shares_paths
+        .iter()
+        .map(|path| fs::read_to_string(path).expect("Read wrapped share file from disk"))
+        .filter_map(|share_base64| WrappedSecretShare::from_base64_string(&share_base64).ok())
+        .collect::<Vec<WrappedSecretShare>>();
+
+    // Hand over to recovery contact to unwrap and rewrap the share
+    let rewrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
+        encrypted_shares,
+        vec![recovery_contact_messaging_pair],
+        backup_encryption_key_2b.public_key().clone(),
+    )
+    .expect("Failed to unwrap share")
+    .expect("No share could be unwrapped");
+
+    let restored_vault_via_cli_path = admin::backup_complete_restore(
+        &backup_output_path,
+        &backup_recovery_dir,
+        stack.keys_path(),
+        vec![rewrapped_share],
+        stack.now(),
+    )
+    .await
+    .expect("Admin CLI complete restore");
+
+    let restored_vault_via_cli_bytes =
+        fs::read(restored_vault_via_cli_path).expect("Load restored journalist vault via cli");
+
+    // Replace the vault file with the restored vault to verify it can be opened
+    stack
+        .save_static_journalist_vault_bytes(restored_vault_via_cli_bytes)
         .await;
 
     let restored_vault = stack.load_static_journalist_vault().await;
