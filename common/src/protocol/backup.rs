@@ -9,7 +9,7 @@ use crate::crypto::{
 use crate::padded_byte_vector::SteppingPaddedByteVector;
 use crate::protocol::backup_data::{
     BackupData, BackupDataWithSignature, BackupEncryptedPaddedVault, BackupEncryptedSecretShare,
-    EncryptedSecretShare, VerifiedBackupData,
+    BackupEncryptedSecretShareWithRecipient, EncryptedSecretShare, VerifiedBackupData,
 };
 use crate::protocol::roles::{JournalistId, JournalistMessaging};
 use anyhow::Context;
@@ -85,14 +85,20 @@ pub fn sentinel_create_backup(
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    // Encrypt each share under the backup admin encryption key
-    let wrapped_encrypted_shares: Vec<BackupEncryptedSecretShare> = encrypted_shares
+    // Encrypt each share under the backup admin encryption key and zip with recipient identity
+    let wrapped_encrypted_shares: Vec<BackupEncryptedSecretShareWithRecipient> = encrypted_shares
         .into_iter()
-        .map(|encrypted_share| {
+        .zip(recovery_contacts.clone())
+        .map(|(encrypted_share, contact)| {
             let key = backup_admin_encryption_key
                 .clone()
                 .to_public_encryption_key();
-            AnonymousBox::encrypt(&key, encrypted_share).context("Failed to wrap encrypted share")
+            let wrapped = AnonymousBox::encrypt(&key, encrypted_share)
+                .context("Failed to wrap encrypted share")?;
+            Ok::<BackupEncryptedSecretShareWithRecipient, anyhow::Error>((
+                contact.identity.clone(),
+                wrapped,
+            ))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -114,14 +120,17 @@ pub fn sentinel_create_backup(
     Ok(verified_backup_data)
 }
 
+/// An encrypted secret share with the identity of the journalist it is encrypted for.
+pub type EncryptedSecretShareWithRecipient = (JournalistIdentity, EncryptedSecretShare);
+
 /// The initial state during the recovery process after the backup admin has retrieved the
 /// backup data and has unwrapped the encrypted shares.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BackupRestorationInProgress {
-    journalist_identity: JournalistIdentity,
+    pub journalist_identity: JournalistIdentity,
     #[serde(with = "BackupEncryptedPaddedVault")]
     backup_encrypted_padded_vault: BackupEncryptedPaddedVault,
-    pub encrypted_shares: Vec<EncryptedSecretShare>,
+    pub encrypted_shares: Vec<EncryptedSecretShareWithRecipient>,
 }
 
 /// Runs on the backup admin's device to initiate the restoration of a Sentinel backup. It
@@ -152,15 +161,16 @@ pub fn coverup_initiate_restore_step(
         ));
     }
 
-    // Remove the outer layer of encryption from the shares
-    let unwrapped_encrypted_shares: Vec<EncryptedSecretShare> = backup_data
+    // Remove the outer layer of encryption from the shares, preserving recipient identities
+    let unwrapped_encrypted_shares: Vec<EncryptedSecretShareWithRecipient> = backup_data
         .wrapped_encrypted_shares
         .iter()
-        .filter_map(|wrapped_share| {
+        .filter_map(|(recipient, wrapped_share)| {
             try_decrypt_wrapped_encrypted_share(
                 wrapped_share.clone(),
                 backup_admin_encryption_key_pairs,
             )
+            .map(|unwrapped| (recipient.clone(), unwrapped))
         })
         .collect();
 
@@ -199,13 +209,13 @@ pub type WrappedSecretShare = AnonymousBox<SecretSharingShare>;
 /// share is then wrapped under the backup admin's encryption key for transport back to them.
 /// If none of the provided keys can decrypt any of the shares, `Ok(None)` is returned.
 pub fn sentinel_restore_try_unwrap_and_wrap_share_step(
-    encrypted_share_candidates: Vec<EncryptedSecretShare>,
+    encrypted_share_candidates: Vec<EncryptedSecretShareWithRecipient>,
     recovery_contact_messaging_key_pairs: Vec<SignedEncryptionKeyPair<JournalistMessaging>>,
     backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
 ) -> anyhow::Result<Option<WrappedSecretShare>> {
     let admin_key = backup_admin_encryption_key.to_public_encryption_key();
     for key_pair in recovery_contact_messaging_key_pairs.iter() {
-        for encrypted_share in encrypted_share_candidates.iter() {
+        for (_recipient, encrypted_share) in encrypted_share_candidates.iter() {
             if let Ok(share) = AnonymousBox::decrypt(key_pair, encrypted_share) {
                 // Encrypt under the backup admin's key for transport back to them
                 let wrapped_share = AnonymousBox::encrypt(&admin_key, share)
@@ -439,10 +449,13 @@ mod tests {
         // Tamper with the wrapped encrypted secret shares; for this first deserialize
         // the backup data, modify it, and then serialize it back
         let mut backup_data = signed_backup_data.backup_data()?;
-        let first_share_bytes = &mut backup_data.wrapped_encrypted_shares[0].as_bytes().to_vec();
+        let (recipient, first_share) = &backup_data.wrapped_encrypted_shares[0];
+        let first_share_bytes = &mut first_share.as_bytes().to_vec();
         first_share_bytes[0] ^= 0x01; // Flip a bit to simulate tampering
-        backup_data.wrapped_encrypted_shares[0] =
-            AnonymousBox::from_vec_unchecked(first_share_bytes.clone());
+        backup_data.wrapped_encrypted_shares[0] = (
+            recipient.clone(),
+            AnonymousBox::from_vec_unchecked(first_share_bytes.clone()),
+        );
 
         // Re-pack and re-sign the tampered data
         let signed_backup_data =

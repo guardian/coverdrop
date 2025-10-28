@@ -79,6 +79,9 @@ impl EncryptedSecretShare {
     }
 }
 
+/// An encrypted secret share and the identity of the journalist it is encrypted for.
+pub type EncryptedSecretShareWithRecipient = (JournalistIdentity, EncryptedSecretShare);
+
 /// An encrypted secret share additionally encrypted under the backup admin encryption key.
 pub type BackupEncryptedSecretShare = AnonymousBox<EncryptedSecretShare>;
 
@@ -100,13 +103,17 @@ impl BackupEncryptedSecretShare {
     }
 }
 
+/// A backup encrypted secret share along with the identity of the journalist the inner encrypted
+/// secret share is encrypted for.
+pub type BackupEncryptedSecretShareWithRecipient = (JournalistIdentity, BackupEncryptedSecretShare);
+
 /// The data structure that is backed up by a journalist and can be used to recover their vault.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct BackupData {
     pub journalist_identity: JournalistIdentity,
     #[serde(with = "BackupEncryptedPaddedVault")]
     pub backup_encrypted_padded_vault: BackupEncryptedPaddedVault,
-    pub wrapped_encrypted_shares: Vec<BackupEncryptedSecretShare>,
+    pub wrapped_encrypted_shares: Vec<BackupEncryptedSecretShareWithRecipient>,
     pub created_at: DateTime<Utc>,
     pub recovery_contacts: Vec<JournalistIdentity>,
 }
@@ -318,8 +325,9 @@ mod tests {
     }
 
     fn _create_sample_backup_data() -> Result<BackupData, Error> {
-        let journalist_identity = JournalistIdentity::new("journalist_123");
-        let recovery_journalist_identity = JournalistIdentity::new("journalist_456");
+        let journalist_identity = JournalistIdentity::new("journalist_123")?;
+        let recovery_journalist_identity = JournalistIdentity::new("journalist_456")?;
+        let recovery_journalist_identity_2 = JournalistIdentity::new("journalist_789")?;
         let mut rng = rand::thread_rng();
         let mut vault_data = vec![0u8; 500 * 1024]; // 500 KiB of data
         rng.fill_bytes(&mut vault_data);
@@ -331,11 +339,17 @@ mod tests {
         let backup_encrypted_share_2: BackupEncryptedSecretShare =
             AnonymousBox::from_vec_unchecked(vec![4, 5, 6]);
         let backup_data = BackupData {
-            journalist_identity: journalist_identity?,
+            journalist_identity,
             backup_encrypted_padded_vault,
-            wrapped_encrypted_shares: vec![backup_encrypted_share_1, backup_encrypted_share_2],
+            wrapped_encrypted_shares: vec![
+                (
+                    recovery_journalist_identity.clone(),
+                    backup_encrypted_share_1,
+                ),
+                (recovery_journalist_identity_2, backup_encrypted_share_2),
+            ],
             created_at: now(),
-            recovery_contacts: vec![recovery_journalist_identity?],
+            recovery_contacts: vec![recovery_journalist_identity],
         };
         Ok(backup_data)
     }

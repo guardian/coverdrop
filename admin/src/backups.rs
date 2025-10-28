@@ -181,18 +181,19 @@ pub async fn backup_initiate_restore_finalize(
 
     // Save the encrypted secret shares to disk
     let mut encrypted_shares_files = Vec::new();
-    for (i, share) in restoration_in_progress
+    for (i, (recipient_id, encrypted_share)) in restoration_in_progress
         .encrypted_shares
         .into_iter()
         .enumerate()
     {
         let share_file = output_path.join(format!(
-            "restore-{}-{}-share-{}.recovery-share",
+            "restore-{}-{}-share-{}-{}.recovery-share",
             response_bundle.journalist_id,
             format_timestamp_for_filename(now),
-            i + 1
+            i + 1,
+            recipient_id
         ));
-        tokio::fs::write(&share_file, share.to_base64_string())
+        fs::write(&share_file, encrypted_share.to_base64_string())
             .await
             .with_context(|| "Failed to write wrapped secret share")?;
         info!("Wrote wrapped secret share to disk: {:?}", share_file);

@@ -1,8 +1,8 @@
+use common::api::models::journalist_id::JournalistIdentity;
 use common::crypto::keys::serde::StorableKeyMaterial;
+use common::protocol::backup::sentinel_restore_try_unwrap_and_wrap_share_step;
 use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
-use common::protocol::backup::{
-    sentinel_restore_try_unwrap_and_wrap_share_step, WrappedSecretShare,
-};
+use common::protocol::backup_data::EncryptedSecretShare;
 use common::{
     api::forms::{
         GetBackupDataForm, PostBackupDataForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
@@ -22,8 +22,8 @@ use integration_tests::{
     api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
 };
 use journalist_vault::JournalistVault;
-use std::fs;
 use std::time::Duration;
+use std::{fs, slice};
 
 #[tokio::test]
 /// This test covers the creation and retrieval of a backup for a journalist's vault.
@@ -248,7 +248,7 @@ async fn backup_scenario() {
             .to_backup_data_with_signature(&journalist_signing_pair)
             .unwrap(),
         journalist_signing_pair.public_key(),
-        std::slice::from_ref(&backup_encryption_key_2b),
+        slice::from_ref(&backup_encryption_key_2b),
         stack.now(),
     )
     .expect("Failed to initiate restore");
@@ -318,12 +318,27 @@ async fn backup_scenario() {
     .await
     .expect("Admin CLI initiate restore finalize");
 
-    // Load the wrapped shares from disk
+    // Load the wrapped shares from disk and extract recipient identity from filename
     let encrypted_shares = wrapped_shares_paths
         .iter()
-        .map(|path| fs::read_to_string(path).expect("Read wrapped share file from disk"))
-        .filter_map(|share_base64| WrappedSecretShare::from_base64_string(&share_base64).ok())
-        .collect::<Vec<WrappedSecretShare>>();
+        .filter_map(|path| {
+            let share_base64 = fs::read_to_string(path).expect("Read wrapped share file from disk");
+            let encrypted_share = EncryptedSecretShare::from_base64_string(&share_base64).ok()?;
+
+            // Extract journalist ID from filename (format: restore-{timestamp}-share-{num}-{recipient-id}.recovery-share)
+            let filename = path.file_name()?.to_str()?;
+
+            // Split from right to extract recipient-id before .recovery-share extension
+            let journalist_id_str = filename
+                .strip_suffix(".recovery-share")?
+                .rsplitn(2, '-')
+                .next()?;
+
+            let journalist_id = JournalistIdentity::new(journalist_id_str).ok()?;
+
+            Some((journalist_id, encrypted_share))
+        })
+        .collect::<Vec<_>>();
 
     // Hand over to recovery contact to unwrap and rewrap the share
     let rewrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
