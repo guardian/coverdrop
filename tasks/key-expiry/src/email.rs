@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use chrono::{DateTime, Utc};
 use common::{
     api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
     aws::ssm::{client::SsmClient, parameters::NOTIFICATION_EMAIL_SENDER, prefix::ParameterPrefix},
@@ -26,13 +25,17 @@ pub async fn source_email(
     Ok(email)
 }
 
-fn add_text_for_should_have_rotated_key(
-    text: &mut String,
-    title: &str,
-    expiry_time: DateTime<Utc>,
-) {
+fn add_text_for_should_have_rotated_key<R, PK>(text: &mut String, title: &str, pk: &PK)
+where
+    R: Role,
+    PK: SignedKey<R>,
+{
+    let rotation_time = pk.rotation_notification_time();
+    let expiry_time = pk.not_valid_after();
     text.push_str(title);
-    text.push_str(" | Should have rotated, expiring at ");
+    text.push_str(" | Should have rotated at ");
+    text.push_str(&rotation_time.format("%Y-%m-%d %H:%M").to_string());
+    text.push_str(", expiring at ");
     text.push_str(&expiry_time.format("%Y-%m-%d %H:%M").to_string());
     text.push('\n');
 }
@@ -53,9 +56,7 @@ where
         ExpiryState::Nominal => {
             // No concern about expiry - leave it out the email
         }
-        ExpiryState::ShouldHaveRotated(pk) => {
-            add_text_for_should_have_rotated_key(text, title, pk.not_valid_after())
-        }
+        ExpiryState::ShouldHaveRotated(pk) => add_text_for_should_have_rotated_key(text, title, pk),
         ExpiryState::Expired => add_text_for_expired_key(text, title),
     }
 }
@@ -63,7 +64,7 @@ where
 fn add_text_for_expiring_pks_with_identities<Identity, R, PK>(
     text: &mut String,
     title: &str,
-    expiries: &HashMap<&Identity, ExpiryState<&PK>>,
+    expiries: HashMap<&Identity, ExpiryState<&PK>>,
 ) where
     Identity: AsRef<String>,
     R: Role,
@@ -73,12 +74,13 @@ fn add_text_for_expiring_pks_with_identities<Identity, R, PK>(
         return;
     }
 
+    text.push('\n');
     text.push_str(title);
     text.push('\n');
     for _ in 0..title.len() {
         text.push('-')
     }
-    text.push_str("\n\n");
+    text.push('\n');
 
     for (id, expiry_state_pk) in expiries {
         match expiry_state_pk {
@@ -86,7 +88,7 @@ fn add_text_for_expiring_pks_with_identities<Identity, R, PK>(
                 // No concern about expiry - leave it out the email
             }
             ExpiryState::ShouldHaveRotated(pk) => {
-                add_text_for_should_have_rotated_key(text, id.as_ref(), pk.not_valid_after())
+                add_text_for_should_have_rotated_key(text, id.as_ref(), pk)
             }
             ExpiryState::Expired => {
                 add_text_for_expired_key(text, id.as_ref());
@@ -100,13 +102,13 @@ pub fn create_email_body(
     expiring_org_pk: ExpiryState<&OrganizationPublicKey>,
     expiring_covernode_provisioning_pk: ExpiryState<&CoverNodeProvisioningPublicKey>,
     expiring_journalist_provisioning_pk: ExpiryState<&JournalistProvisioningPublicKey>,
-    expiring_covernode_id_pks: &HashMap<&CoverNodeIdentity, ExpiryState<&CoverNodeIdPublicKey>>,
-    expiring_covernode_msg_pks: &HashMap<
+    expiring_covernode_id_pks: HashMap<&CoverNodeIdentity, ExpiryState<&CoverNodeIdPublicKey>>,
+    expiring_covernode_msg_pks: HashMap<
         &CoverNodeIdentity,
         ExpiryState<&CoverNodeMessagingPublicKey>,
     >,
-    expiring_journalist_id_pks: &HashMap<&JournalistIdentity, ExpiryState<&JournalistIdPublicKey>>,
-    expiring_journalist_msg_pks: &HashMap<
+    expiring_journalist_id_pks: HashMap<&JournalistIdentity, ExpiryState<&JournalistIdPublicKey>>,
+    expiring_journalist_msg_pks: HashMap<
         &JournalistIdentity,
         ExpiryState<&JournalistMessagingPublicKey>,
     >,

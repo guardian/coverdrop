@@ -1,6 +1,5 @@
 use std::{collections::HashMap, hash::Hash};
 
-use chrono::Days;
 use common::crypto::keys::{role::Role, signed::SignedKey};
 
 use crate::expiry_state::ExpiryState;
@@ -8,7 +7,6 @@ use crate::expiry_state::ExpiryState;
 pub fn check_pks_with_identifiers<'a, Identifier, R, SignedPublicKey>(
     all_ids: &'a [&Identifier],
     keys: impl Iterator<Item = (&'a Identifier, &'a SignedPublicKey)>,
-    notification_cadence: &[Days],
 ) -> HashMap<&'a Identifier, ExpiryState<&'a SignedPublicKey>>
 where
     Identifier: AsRef<String> + Eq + Hash,
@@ -20,16 +18,14 @@ where
     for (id, pk) in keys {
         let hex_pk = hex::encode(&pk.as_bytes()[0..4]);
 
-        if let Some(expiry_day) = notification_cadence
-            .iter()
-            .find(|&&day| pk.is_not_valid_after(common::time::now() + day))
-        {
+        let notification_time = pk.rotation_notification_time();
+        if common::time::now() >= notification_time {
             tracing::warn!(
-                "⏰ The {} key {} for {} will expire within {:?}",
+                "⏰ The {} key {} for {} should have rotated at {:?}",
                 R::display(),
                 hex_pk,
                 id.as_ref(),
-                expiry_day
+                notification_time
             );
 
             expiry_states.insert(id, ExpiryState::ShouldHaveRotated(pk));
@@ -54,10 +50,7 @@ where
     expiry_states
 }
 
-pub fn check_pk<'a, R, SignedPublicKey>(
-    pk: Option<&'a SignedPublicKey>,
-    notification_cadence: &[Days],
-) -> ExpiryState<&'a SignedPublicKey>
+pub fn check_pk<R, SignedPublicKey>(pk: Option<&SignedPublicKey>) -> ExpiryState<&SignedPublicKey>
 where
     R: Role + 'static,
     SignedPublicKey: SignedKey<R>,
@@ -65,15 +58,13 @@ where
     if let Some(pk) = pk {
         let hex_pk = hex::encode(&pk.as_bytes()[0..4]);
 
-        if let Some(expiry_day) = notification_cadence
-            .iter()
-            .find(|&&day| pk.is_not_valid_after(common::time::now() + day))
-        {
+        let notification_time = pk.rotation_notification_time();
+        if common::time::now() >= notification_time {
             tracing::warn!(
-                "⏰ The {} key {} will expire within {:?}",
+                "⏰ The {} key {} should have rotated at {:?}",
                 R::display(),
                 hex_pk,
-                expiry_day
+                notification_time
             );
 
             ExpiryState::ShouldHaveRotated(pk)

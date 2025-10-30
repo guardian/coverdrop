@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 
 use super::{
     encryption::{SignedEncryptionKeyPair, SignedPublicEncryptionKey},
@@ -14,6 +14,15 @@ pub trait SignedKey<R: Role> {
     /// Check if a public key is expired
     fn is_not_valid_after(&self, time: DateTime<Utc>) -> bool {
         self.not_valid_after() < time
+    }
+
+    /// Return the timestamp after which we notify admins that the key needs rotating
+    fn rotation_notification_time(&self) -> DateTime<Utc> {
+        // In general we want to notify when half the key's valid duration has elapsed.
+        // We're not using *_ROTATE_AFTER_SECONDS constants here because journalist keys are rotated every day
+        // and 24 hours before expiry is too short notice!
+        // TODO rewrite once we're keeping track of key creation times.
+        self.not_valid_after() - Duration::seconds(R::valid_duration_seconds().unwrap_or(0) / 2)
     }
 
     fn as_bytes(&self) -> &[u8];
@@ -69,4 +78,40 @@ where
     fn as_bytes(&self) -> &[u8] {
         self.as_ref().as_bytes()
     }
+}
+
+#[test]
+fn test_rotation_notification_time() {
+    use crate::protocol::roles::Organization;
+
+    use crate::{
+        crypto::keys::signing::UnsignedSigningKeyPair,
+        protocol::constants::ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+    };
+
+    use crate::protocol::keys::generate_covernode_provisioning_key_pair;
+
+    let now: DateTime<Utc> = "2025-01-01T00:00:00Z".parse().unwrap();
+    let org_key_expires = now + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS);
+    let org_key =
+        UnsignedSigningKeyPair::<Organization>::generate().to_self_signed_key_pair(org_key_expires);
+
+    let expected_notification_time: DateTime<Utc> = "2025-07-02T00:00:00Z".parse().unwrap();
+    assert!(org_key.rotation_notification_time() == expected_notification_time);
+
+    // A provisioning key is created one month before the org key expires.
+    let now: DateTime<Utc> = "2025-12-01T00:00:00Z".parse().unwrap();
+    let provisioning_key = generate_covernode_provisioning_key_pair(&org_key, now);
+    assert_eq!(
+        provisioning_key.not_valid_after(),
+        org_key.not_valid_after()
+    );
+
+    // Provisioning key notification time should be 12 weeks (provisioning key valid_duration / 2)
+    // before both keys expire (and before the provisioning key is created).
+    let expected_notification_time: DateTime<Utc> = "2025-10-08T00:00:00Z".parse().unwrap();
+    assert_eq!(
+        provisioning_key.rotation_notification_time(),
+        expected_notification_time
+    );
 }

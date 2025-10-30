@@ -14,6 +14,9 @@ pub const WEEK_IN_SECONDS: i64 = 7 * DAY_IN_SECONDS;
 /// access to a physical machine where the secret organization key is stored
 pub const ORGANIZATION_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
 
+/// The amount of time between key rotations for the organization key
+pub const ORGANIZATION_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
+
 /// The time in seconds the journalist provisioning key is valid for.
 /// The expiry time is quite long because provisioning a new key requires
 /// access to a physical machine where the secret organization key is stored
