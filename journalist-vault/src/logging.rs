@@ -141,6 +141,7 @@ pub async fn select_log_entries_by_session_range(
 }
 
 /// Delete all logging sessions and their associated log entries that are older than 2 weeks
+/// and retain only the most recent 15k DEBUG and the most recent 5k TRACE (i.e. roughly 4MB in total)
 pub async fn delete_old_logs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
@@ -184,6 +185,36 @@ pub async fn delete_old_logs(
         WHERE timestamp < ?1
         "#,
         two_weeks_ago
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    // by analysing some vaults, 5k logs equate to roughly 1MB in vault size
+    // TRACE and DEBUG logs are quite noisy and only really useful if very recent (in case of freeze/crash)
+    // so delete all but the most recent 15k DEBUG and the most recent 5k TRACE (i.e. roughly 4MB in total)
+    sqlx::query!(
+        r#"
+        DELETE FROM log_entries WHERE ROWID IN (
+            SELECT ROWID
+            FROM log_entries
+            WHERE level = 'DEBUG'
+            ORDER BY timestamp DESC
+            LIMIT -1 OFFSET 15000
+        )
+        "#
+    )
+    .execute(&mut *conn)
+    .await?;
+    sqlx::query!(
+        r#"
+        DELETE FROM log_entries WHERE ROWID IN (
+            SELECT ROWID
+            FROM log_entries
+            WHERE level = 'TRACE'
+            ORDER BY timestamp DESC
+            LIMIT -1 OFFSET 5000
+        )
+        "#
     )
     .execute(&mut *conn)
     .await?;

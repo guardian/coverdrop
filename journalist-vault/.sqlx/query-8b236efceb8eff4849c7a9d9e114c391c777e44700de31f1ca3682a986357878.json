@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM log_entries WHERE ROWID IN (\n            SELECT ROWID\n            FROM log_entries\n            WHERE level = 'DEBUG'\n            ORDER BY timestamp DESC\n            LIMIT -1 OFFSET 15000\n        )\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "8b236efceb8eff4849c7a9d9e114c391c777e44700de31f1ca3682a986357878"
+}
