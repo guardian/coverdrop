@@ -26,6 +26,18 @@ repos:
         stages:
           - pre-commit
 
+      - id: Format and lint CDK
+        name: Format and lint CDK
+        description: Formats and lints CDK code before committing.
+        language: system
+        entry: bash -c 'cd cdk && npx lint-staged'
+        pass_filenames: false
+        require_serial: true
+        files: ^cdk/
+        verbose: true
+        stages:
+          - pre-commit
+
       - id: cargo-fmt
         name: Cargo fmt
         description: Format files with cargo fmt.
