@@ -143,7 +143,7 @@ pub struct BackupRestorationInProgress {
 /// attempt to decrypt them using their messaging keys (see
 /// `sentinel_restore_try_unwrap_share_step`).
 pub fn coverup_initiate_restore_step(
-    journalist_identity: JournalistIdentity,
+    expected_identity: JournalistIdentity,
     signed_backup_data: BackupDataWithSignature,
     journalist_identity_public_key: &SignedPublicSigningKey<JournalistId>,
     backup_admin_encryption_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
@@ -155,7 +155,7 @@ pub fn coverup_initiate_restore_step(
         .context("Failed to verify backup data signature")?;
     let backup_data = verified_backup_data.backup_data()?;
 
-    if backup_data.journalist_identity != journalist_identity {
+    if backup_data.journalist_identity != expected_identity {
         return Err(anyhow::anyhow!(
             "The backup's journalist identity does not match the provided identity"
         ));

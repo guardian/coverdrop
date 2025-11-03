@@ -151,11 +151,24 @@ pub async fn backup_initiate_restore_finalize(
         )
         .context("Failed to verify journalist identity key from backup data")?;
 
+    // Check that the signing key matches the journalist identity associated with this key in the
+    // public key hierarchy.
+    let expected_journalist_identity = response_bundle.journalist_id.clone();
+    let (journalist_identity_from_key, _) = hierarchy
+        .keys
+        .find_journalist_id_pk_from_raw_ed25519_pk(&journalist_id_key.clone().key)
+        .context("Failed to find signing key in hierarchy")?;
+    if *journalist_identity_from_key != expected_journalist_identity {
+        return Err(anyhow::anyhow!(
+            "Journalist identity from signing key does not match expected identity"
+        ));
+    }
+
     // Load the journalist's backup message key pairs and decrypt the backup data into the
     // in-progress bundle format
     let backup_msg_key_pairs = load_backup_msg_key_pairs(&keys_path, &backup_id_key_pairs, now)?;
     let restoration_in_progress = coverup_initiate_restore_step(
-        response_bundle.journalist_id.clone(),
+        expected_journalist_identity,
         response_bundle.signed_backup_data.clone(),
         &journalist_id_key,
         &backup_msg_key_pairs,

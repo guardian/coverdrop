@@ -158,6 +158,38 @@ async fn backup_scenario() {
         *backup_encryption_key_2b.public_key()
     );
 
+    // Create backup data with a wrong identity (this should fail)
+    let wrong_identity = JournalistIdentity::new("non_existent_journalist").unwrap();
+    let verified_backup_data_wrong_identity = sentinel_create_backup(
+        journalist_vault_bytes.clone(),
+        wrong_identity,
+        journalist_signing_pair.clone(),
+        backup_encryption_key_from_api.clone(),
+        vec![recovery_contact.clone()],
+        1, // k=1
+        stack.now(),
+    )
+    .expect("Failed to create backup");
+    assert!(!verified_backup_data_wrong_identity
+        .backup_data_bytes
+        .0
+        .is_empty());
+
+    // Uploading this should be rejected by the API
+    let wrong_backup_form = PostBackupDataForm::new(
+        verified_backup_data_wrong_identity.to_unverified().unwrap(),
+        &journalist_signing_pair,
+        stack.now(),
+    )
+    .expect("Create PostBackupDataForm");
+
+    let result = stack
+        .api_client_uncached()
+        .post_backup_data(wrong_backup_form)
+        .await;
+    assert!(result.is_err());
+
+    // Create the correct backup data
     let verified_backup_data = sentinel_create_backup(
         journalist_vault_bytes.clone(),
         journalist_identity.clone(),
@@ -168,7 +200,6 @@ async fn backup_scenario() {
         stack.now(),
     )
     .expect("Failed to create backup");
-
     assert!(!verified_backup_data.backup_data_bytes.0.is_empty());
 
     // Upload the signed backup data to the API
