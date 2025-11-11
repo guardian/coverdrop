@@ -136,6 +136,30 @@ impl OrganizationPublicKeyFamilyList {
         })
     }
 
+    pub fn covernode_id_pk_iter_for_provisioning_pk<'a>(
+        &'a self,
+        covernode_provisioning_pk: &'a CoverNodeProvisioningPublicKey,
+    ) -> impl Iterator<Item = &'a CoverNodeIdPublicKey> {
+        self.0.iter().flat_map(move |org_pk_family| {
+            org_pk_family
+                .covernodes
+                .iter()
+                .flat_map(move |covernode_provisioning_pk_family| {
+                    if covernode_provisioning_pk_family.provisioning_pk
+                        == *covernode_provisioning_pk
+                    {
+                        let id_pks = covernode_provisioning_pk_family
+                            .covernode_iter()
+                            .map(|(_id, id_pk_family)| &id_pk_family.id_pk);
+                        Some(id_pks)
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+        })
+    }
+
     pub fn latest_covernode_id_pk(
         &self,
         covernode_id: &CoverNodeIdentity,
@@ -189,6 +213,29 @@ impl OrganizationPublicKeyFamilyList {
                                 .map(move |msg_pk| (covernode_id, msg_pk))
                         },
                     )
+                })
+        })
+    }
+
+    pub fn covernode_msg_pk_iter_for_id_pk<'a>(
+        &'a self,
+        covernode_id_pk: &'a CoverNodeIdPublicKey,
+    ) -> impl Iterator<Item = &'a CoverNodeMessagingPublicKey> {
+        self.0.iter().flat_map(move |org_pk_family| {
+            org_pk_family
+                .covernodes
+                .iter()
+                .flat_map(move |covernode_provisioning_pk_family| {
+                    covernode_provisioning_pk_family
+                        .covernode_iter()
+                        .filter_map(move |(_covernode_id, covernode_id_family)| {
+                            if covernode_id_family.id_pk == *covernode_id_pk {
+                                Some(covernode_id_family.msg_pks.iter())
+                            } else {
+                                None
+                            }
+                        })
+                        .flatten()
                 })
         })
     }
@@ -302,6 +349,30 @@ impl OrganizationPublicKeyFamilyList {
         })
     }
 
+    pub fn journalist_id_pk_iter_for_provisioning_pk<'a>(
+        &'a self,
+        journalist_provisioning_pk: &'a JournalistProvisioningPublicKey,
+    ) -> impl Iterator<Item = &'a JournalistIdPublicKey> {
+        self.0.iter().flat_map(move |org_pk_family| {
+            org_pk_family
+                .journalists
+                .iter()
+                .flat_map(move |journalist_provisioning_key_family| {
+                    if journalist_provisioning_key_family.provisioning_pk
+                        == *journalist_provisioning_pk
+                    {
+                        let id_pks = journalist_provisioning_key_family
+                            .journalist_iter()
+                            .map(|(_id, id_pk_family)| &id_pk_family.id_pk);
+                        Some(id_pks)
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+        })
+    }
+
     pub fn journalist_msg_pk_iter(
         &self,
     ) -> impl Iterator<Item = (&JournalistIdentity, &JournalistMessagingPublicKey)> {
@@ -315,6 +386,25 @@ impl OrganizationPublicKeyFamilyList {
                         .iter()
                         .map(move |msg_pk| (journalist_id, msg_pk))
                 })
+        })
+    }
+
+    pub fn journalist_msg_pk_iter_for_id_pk<'a>(
+        &'a self,
+        journalist_id_pk: &'a JournalistIdPublicKey,
+    ) -> impl Iterator<Item = &'a JournalistMessagingPublicKey> {
+        self.0.iter().flat_map(move |org_pk_family| {
+            org_pk_family
+                .journalists
+                .journalist_pk_family_iter()
+                .flat_map(move |(_journalist_identity, journalist_id_pk_family)| {
+                    if journalist_id_pk_family.id_pk == *journalist_id_pk {
+                        Some(journalist_id_pk_family.msg_pks.iter())
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
         })
     }
 

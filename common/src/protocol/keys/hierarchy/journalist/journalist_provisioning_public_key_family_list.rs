@@ -55,6 +55,10 @@ impl JournalistProvisioningPublicKeyFamilyList {
         UntrustedJournalistPublicKeyHierarchy(journalist_pk_families)
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &JournalistProvisioningPublicKeyFamily> {
+        self.0.iter()
+    }
+
     pub fn journalist_provisioning_pk_iter(
         &self,
     ) -> impl Iterator<Item = &JournalistProvisioningPublicKey> {

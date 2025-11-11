@@ -281,7 +281,7 @@ pub async fn post_covernode_id_key(
         .key_hierarchy(&anchor_org_pks.get().await, time::now())
         .await?;
 
-    let verifying_provisioning_pk = keys
+    let form_signing_provisioning_pk = keys
         .find_covernode_provisioning_pk_from_raw_ed25519_pk(form.signing_pk())
         .ok_or(AppError::SigningKeyNotFound)?;
 
@@ -289,19 +289,29 @@ pub async fn post_covernode_id_key(
         covernode_id,
         covernode_id_pk,
     } = form
-        .to_verified_form_data(verifying_provisioning_pk, time::now())
+        .to_verified_form_data(form_signing_provisioning_pk, time::now())
         .map_err(|e| {
             tracing::error!("Failed to verify form {}", e);
             AppError::SignatureVerificationFailed
         })?;
 
-    let new_id_pk =
-        verify_covernode_id_pk(&covernode_id_pk, verifying_provisioning_pk, time::now()).map_err(
-            |e| {
-                tracing::error!("Failed to verify covernode id key {}", e);
-                AppError::SignatureVerificationFailed
-            },
-        )?;
+    let (new_id_pk, key_signing_provisioning_pk) = keys
+        .covernode_provisioning_pk_iter()
+        .find_map(|covernode_provisioning_pk| {
+            match verify_covernode_id_pk(&covernode_id_pk, covernode_provisioning_pk, time::now()) {
+                Ok(id_pk) => Some((id_pk, covernode_provisioning_pk)),
+                Err(_) => None,
+            }
+        })
+        .ok_or_else(|| {
+            tracing::error!("Failed to verify covernode id key");
+            AppError::SignatureVerificationFailed
+        })?;
+
+    // It should be a rare edge case that the covernode provisioning key rotated between the time that the id key was created and published.
+    if key_signing_provisioning_pk != form_signing_provisioning_pk {
+        tracing::error!("Covernode id key was not signed by the expected provisioning key");
+    }
 
     let latest_pk_added_at = db
         .covernode_key_queries
@@ -318,7 +328,7 @@ pub async fn post_covernode_id_key(
         .insert_covernode_id_pk(
             &covernode_id,
             &new_id_pk,
-            verifying_provisioning_pk,
+            key_signing_provisioning_pk,
             time::now(),
         )
         .await?;
@@ -336,22 +346,34 @@ pub async fn post_covernode_msg_key(
         .key_hierarchy(&anchor_org_pks.get().await, time::now())
         .await?;
 
-    let (covernode_id, verifying_id_pk) = keys
+    let (covernode_id, form_signing_id_pk) = keys
         .find_covernode_id_pk_from_raw_ed25519_pk(form.signing_pk())
         .ok_or(AppError::SigningKeyNotFound)?;
 
     let covernode_msg_pk = form
-        .to_verified_form_data(verifying_id_pk, time::now())
+        .to_verified_form_data(form_signing_id_pk, time::now())
         .map_err(|e| {
             tracing::error!("Failed to verify form {}", e);
             AppError::SignatureVerificationFailed
         })?;
 
-    let new_msg_pk = verify_covernode_messaging_pk(&covernode_msg_pk, verifying_id_pk, time::now())
-        .map_err(|e| {
-            tracing::error!("Failed to verify covernode msg key {}", e);
+    let (new_msg_pk, key_signing_id_pk) = keys
+        .covernode_id_pk_iter_for_identity(covernode_id)
+        .find_map(|covernode_id_pk| {
+            match verify_covernode_messaging_pk(&covernode_msg_pk, covernode_id_pk, time::now()) {
+                Ok(msg_pk) => Some((msg_pk, covernode_id_pk)),
+                Err(_) => None,
+            }
+        })
+        .ok_or_else(|| {
+            tracing::error!("Failed to verify covernode msg key");
             AppError::SignatureVerificationFailed
         })?;
+
+    // It should be a rare edge case that covernode id key rotated between the time that the msg key was created and published.
+    if key_signing_id_pk != form_signing_id_pk {
+        tracing::error!("Covernode msg key was not signed by the expected id key");
+    }
 
     let latest_pk_added_at = db
         .covernode_key_queries
@@ -365,7 +387,7 @@ pub async fn post_covernode_msg_key(
 
     let epoch = db
         .covernode_key_queries
-        .insert_covernode_msg_pk(covernode_id, &new_msg_pk, verifying_id_pk, time::now())
+        .insert_covernode_msg_pk(covernode_id, &new_msg_pk, key_signing_id_pk, time::now())
         .await?;
 
     Ok(Json(epoch))
@@ -489,7 +511,7 @@ pub async fn post_journalist_id_key(
         .key_hierarchy(&anchor_org_pks.get().await, time::now())
         .await?;
 
-    let verifying_provisioning_pk = keys
+    let form_signing_provisioning_pk = keys
         .find_journalist_provisioning_pk_from_raw_ed25519_pk(form.signing_pk())
         .ok_or(AppError::SigningKeyNotFound)?;
 
@@ -498,18 +520,33 @@ pub async fn post_journalist_id_key(
         journalist_id_pk,
         from_queue,
     } = form
-        .to_verified_form_data(verifying_provisioning_pk, time::now())
+        .to_verified_form_data(form_signing_provisioning_pk, time::now())
         .map_err(|e| {
             tracing::error!("Failed to verify form {}", e);
             AppError::SignatureVerificationFailed
         })?;
 
-    let new_id_pk =
-        verify_journalist_id_pk(&journalist_id_pk, verifying_provisioning_pk, time::now())
-            .map_err(|e| {
-                tracing::error!("Failed to verify journalist id key {}", e);
-                AppError::SignatureVerificationFailed
-            })?;
+    let (new_id_pk, key_signing_provisioning_pk) = keys
+        .journalist_provisioning_pk_iter()
+        .find_map(|journalist_provisioning_pk| {
+            match verify_journalist_id_pk(
+                &journalist_id_pk,
+                journalist_provisioning_pk,
+                time::now(),
+            ) {
+                Ok(id_pk) => Some((id_pk, journalist_provisioning_pk)),
+                Err(_) => None,
+            }
+        })
+        .ok_or_else(|| {
+            tracing::error!("Failed to verify journalist id key");
+            AppError::SignatureVerificationFailed
+        })?;
+
+    // It should be a rare edge case that journalist provisioning key rotated between the time that the id key was created and published.
+    if key_signing_provisioning_pk != form_signing_provisioning_pk {
+        tracing::error!("Journalist id key was not signed by the expected provisioning key");
+    }
 
     let latest_pk_added_at = db
         .journalist_queries
@@ -527,7 +564,7 @@ pub async fn post_journalist_id_key(
             &journalist_id,
             &new_id_pk,
             from_queue,
-            verifying_provisioning_pk,
+            key_signing_provisioning_pk,
             time::now(),
         )
         .await?;
@@ -570,24 +607,35 @@ pub async fn post_journalist_msg_key(
         .key_hierarchy(&anchor_org_pks.get().await, time::now())
         .await?;
 
-    let (journalist_id, journalist_id_pk) = keys
+    let (journalist_id, form_signing_id_pk) = keys
         .find_journalist_id_pk_from_raw_ed25519_pk(form.signing_pk())
         .ok_or(AppError::SigningKeyNotFound)?;
 
     // Check the form is valid
     let new_msg_pk = form
-        .to_verified_form_data(journalist_id_pk, time::now())
+        .to_verified_form_data(form_signing_id_pk, time::now())
         .map_err(|e| {
             tracing::error!("Failed to verify form {}", e);
             AppError::SignatureVerificationFailed
         })?;
 
-    // Check the key is valid
-    let new_msg_pk = verify_journalist_messaging_pk(&new_msg_pk, journalist_id_pk, time::now())
-        .map_err(|e| {
-            tracing::error!("Failed to verify journalist msg key {}", e);
+    let (new_msg_pk, key_signing_id_pk) = keys
+        .journalist_id_pk_iter_for_identity(journalist_id)
+        .find_map(|journalist_id_pk| {
+            match verify_journalist_messaging_pk(&new_msg_pk, journalist_id_pk, time::now()) {
+                Ok(msg_pk) => Some((msg_pk, journalist_id_pk)),
+                Err(_) => None,
+            }
+        })
+        .ok_or_else(|| {
+            tracing::error!("Failed to verify journalist msg key");
             AppError::SignatureVerificationFailed
         })?;
+
+    // It should be a rare edge case that journalist id key rotated between the time that the msg key was created and published.
+    if key_signing_id_pk != form_signing_id_pk {
+        tracing::error!("Journalist msg key was not signed by the expected id key");
+    }
 
     let latest_pk_added_at = db
         .journalist_queries
@@ -601,7 +649,7 @@ pub async fn post_journalist_msg_key(
 
     let epoch = db
         .journalist_queries
-        .insert_journalist_msg_pk(journalist_id, new_msg_pk, journalist_id_pk, time::now())
+        .insert_journalist_msg_pk(journalist_id, new_msg_pk, key_signing_id_pk, time::now())
         .await?;
 
     Ok(Json(epoch))

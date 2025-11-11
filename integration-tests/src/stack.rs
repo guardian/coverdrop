@@ -89,6 +89,8 @@ pub struct CoverDropStack {
     covernode_task_api_client: Option<TaskApiClient<service::CoverNode>>,
 
     kinesis_client: KinesisClient,
+
+    covernode_id: CoverNodeIdentity,
 }
 
 pub struct CoverDropStackBuilder {
@@ -452,7 +454,7 @@ impl CoverDropStackBuilder {
             tempdir_in(std::env::current_dir().unwrap()).expect("Create temporary keys directory");
 
         let covernode = start_covernode(
-            covernode_id,
+            covernode_id.clone(),
             &self.network,
             &covernode_key_dir,
             &checkpoints_dir,
@@ -542,6 +544,7 @@ impl CoverDropStackBuilder {
             covernode_task_api_client,
             _api_task_api_client: api_task_api_client,
             kinesis_client,
+            covernode_id,
         };
 
         // Move the infrastructure's time to be appropriate for the keys
@@ -655,6 +658,10 @@ impl CoverDropStack {
 
     pub fn covernode_database(&self) -> &Database {
         &self.covernode_database
+    }
+
+    pub fn covernode_id(&self) -> &CoverNodeIdentity {
+        &self.covernode_id
     }
 
     pub async fn scale_kinesis(&self) {

@@ -1,9 +1,16 @@
 use std::time::Duration;
 
 use common::{
-    protocol::constants::{
-        COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
-        ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+    api::forms::PostCoverNodeProvisioningPublicKeyForm,
+    protocol::{
+        constants::{
+            COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
+            ORGANIZATION_KEY_VALID_DURATION_SECONDS, WEEK_IN_SECONDS,
+        },
+        keys::{
+            generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
+            generate_covernode_provisioning_key_pair,
+        },
     },
     task::RunnerMode,
 };
@@ -129,7 +136,7 @@ async fn covernode_key_rotations() {
     assert!(public_keys.covernode_provisioning_pk.is_some());
     assert!(public_keys.journalist_provisioning_pk.is_some());
 
-    // 2. Org pk still there, provisioing keys gone
+    // 2. Org pk still there, provisioning keys gone
     stack
         .time_travel(
             stack.now()
@@ -167,4 +174,182 @@ async fn covernode_key_rotations() {
     assert!(public_keys.anchor_org_pks.is_empty());
     assert!(public_keys.covernode_provisioning_pk.is_none());
     assert!(public_keys.journalist_provisioning_pk.is_none());
+}
+
+/// This test simulates a very rare scenario where the covernode creates a candidate id key but fails to publish it before a
+/// successful provisioning key rotation takes place. The API should accept the candidate id key signed by the old provisioning key.
+#[tokio::test]
+async fn concurrent_covernode_id_and_provisioning_key_rotations() {
+    let mut stack = CoverDropStack::builder()
+        .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
+        .build()
+        .await;
+
+    let anchor_org_pks = stack.keys().anchor_org_pks();
+
+    // Trigger the initial tasks
+    trigger_all_init_tasks_covernode(stack.covernode_task_api_client()).await;
+
+    // Assert initial keys created
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_provisioning_pk_iter().count(), 1);
+    assert_eq!(keys.covernode_id_pk_iter().count(), 1);
+
+    // time travel to avoid provisioning key being rejected by api
+    stack
+        .time_travel(stack.now() + Duration::from_secs(WEEK_IN_SECONDS as u64 * 12))
+        .await;
+
+    // Create a new covernode id key signed with the current covernode provisioning key
+    let covernode_provisioning_key_pair_1 = &stack.keys().covernode_provisioning_key_pair;
+    let new_covernode_id_key_pair =
+        generate_covernode_id_key_pair(covernode_provisioning_key_pair_1, stack.now());
+
+    // Rotate covernode provisioning key
+    let covernode_provisioning_key_pair_2 =
+        generate_covernode_provisioning_key_pair(&stack.keys().org_key_pair, stack.now());
+    let covernode_provisioning_pk_form = PostCoverNodeProvisioningPublicKeyForm::new(
+        covernode_provisioning_key_pair_2.to_untrusted().public_key,
+        &stack.keys().org_key_pair,
+        stack.now(),
+    )
+    .expect("creating provisioning pk form should succeed");
+    stack
+        .api_client_cached()
+        .post_covernode_provisioning_pk(covernode_provisioning_pk_form)
+        .await
+        .expect("posted new provisioning key");
+
+    // Assert new provisioning key included in API response
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_provisioning_pk_iter().count(), 2);
+    assert_eq!(keys.covernode_id_pk_iter().count(), 0); // (original id key expired)
+
+    // Post the new id key signed with the old provisioning key to the API
+    stack
+        .api_client_uncached()
+        .post_covernode_id_pk(
+            stack.covernode_id(),
+            &new_covernode_id_key_pair.public_key().clone(),
+            &covernode_provisioning_key_pair_2, // the new provisioning key, not the key which signed the id key!
+            stack.now(),
+        )
+        .await
+        .expect("posting id key should succeed");
+
+    // Assert the new id key is included in API response
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_provisioning_pk_iter().count(), 2);
+    assert_eq!(keys.covernode_id_pk_iter().count(), 1);
+
+    // Assert that the new id key is in the hierarchy under the first provisioning key
+    let provisioning_key_1_id_pks = keys
+        .covernode_id_pk_iter_for_provisioning_pk(&covernode_provisioning_key_pair_1.public_key());
+    assert_eq!(
+        provisioning_key_1_id_pks
+            .max_by_key(|pk| pk.not_valid_after)
+            .unwrap(),
+        new_covernode_id_key_pair.public_key()
+    );
+    // and there are no id keys under provisioning key 2
+    let provisioning_key_2_id_pks = keys
+        .covernode_id_pk_iter_for_provisioning_pk(&covernode_provisioning_key_pair_2.public_key());
+    assert_eq!(provisioning_key_2_id_pks.collect_vec().len(), 0);
+}
+
+/// This test simulates a scenario where the covernode creates a candidate msg key but fails to publish it before a
+/// successful identity key rotation. The API should accept the candidate msg key signed by the old identity key.
+#[tokio::test]
+async fn concurrent_covernode_msg_and_id_key_rotations() {
+    let mut stack = CoverDropStack::builder()
+        .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
+        .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
+        .build()
+        .await;
+
+    let anchor_org_pks = stack.keys().anchor_org_pks();
+
+    // Trigger the initial tasks
+    trigger_all_init_tasks_covernode(stack.covernode_task_api_client()).await;
+
+    // Assert initial keys created
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_id_pk_iter().count(), 1);
+    assert_eq!(keys.covernode_msg_pk_iter().count(), 1);
+
+    stack
+        .time_travel(stack.now() + Duration::from_nanos(1))
+        .await;
+
+    // Create a new covernode msg key signed with the current covernode id key
+    let covernode_id_key_pair_1 = &stack.keys().covernode_id_key_pair;
+    let new_covernode_msg_key_pair =
+        generate_covernode_messaging_key_pair(covernode_id_key_pair_1, stack.now());
+
+    // Rotate covernode id key
+    let covernode_id_key_pair_2 =
+        generate_covernode_id_key_pair(&stack.keys().covernode_provisioning_key_pair, stack.now());
+    stack
+        .api_client_cached()
+        .post_covernode_id_pk(
+            &stack.covernode_id(),
+            &covernode_id_key_pair_2.public_key().clone(),
+            &stack.keys().covernode_provisioning_key_pair,
+            stack.now(),
+        )
+        .await
+        .expect("posted new id key");
+
+    // Assert new id key included in API response
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_id_pk_iter().count(), 2);
+    assert_eq!(keys.covernode_msg_pk_iter().count(), 1);
+
+    // Post the new msg key signed with the old id key to the API
+    stack
+        .api_client_uncached()
+        .post_covernode_msg_pk(
+            &new_covernode_msg_key_pair.public_key().clone(),
+            &covernode_id_key_pair_2, // the new id key, not the key which signed the msg key!
+            stack.now(),
+        )
+        .await
+        .expect("posting msg key should succeed");
+
+    // Assert the new msg key is included in API response
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_id_pk_iter().count(), 2);
+    assert_eq!(keys.covernode_msg_pk_iter().count(), 2);
+
+    // Assert that the new msg key is in the hierarchy under the first id key
+    let id_key_1_msg_pks =
+        keys.covernode_msg_pk_iter_for_id_pk(&covernode_id_key_pair_1.public_key());
+    assert_eq!(
+        id_key_1_msg_pks
+            .max_by_key(|pk| pk.not_valid_after)
+            .unwrap(),
+        new_covernode_msg_key_pair.public_key()
+    );
+    // and there are no msg keys under id key 2
+    let id_key_2_msg_pks =
+        keys.covernode_msg_pk_iter_for_id_pk(&covernode_id_key_pair_2.public_key());
+    assert_eq!(id_key_2_msg_pks.collect_vec().len(), 0);
 }
