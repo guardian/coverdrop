@@ -56,13 +56,16 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         + Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS);
     let journalist_id_key_pair = UnsignedSigningKeyPair::generate()
         .to_signed_key_pair(&journalist_provisioning_key_pair, id_key_not_valid_after);
+    let created_at = now;
+    let published_at = now;
     let id_key_epoch = Epoch(0);
     insert_registered_id_key_pair(
         &mut conn,
         db_provisioning_pk.id,
         &journalist_id_key_pair,
+        created_at,
+        published_at,
         id_key_epoch,
-        now,
     )
     .await
     .unwrap();

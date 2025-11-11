@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": " SELECT COUNT(*) AS \"count: i64\"\n            FROM (\n                SELECT added_at FROM journalist_msg_key_pairs\n                UNION ALL\n                SELECT created_at as added_at FROM journalist_id_key_pairs\n                UNION ALL\n                SELECT added_at FROM candidate_journalist_id_key_pair\n            )\n            WHERE (NOT EXISTS(SELECT 1 FROM backup_history)) OR added_at > (SELECT MAX(timestamp) FROM backup_history)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "count: i64",
+        "ordinal": 0,
+        "type_info": "Int"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d96e0e7272981e80fae43096c4269bdca6dea2702e7e2c091b51c376b4ea6255"
+}

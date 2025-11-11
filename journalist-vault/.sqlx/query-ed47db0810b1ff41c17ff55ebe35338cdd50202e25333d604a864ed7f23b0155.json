@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                MAX(published_at) AS \"published_at: DateTime<Utc>\"\n            FROM journalist_id_key_pairs\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "published_at: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "ed47db0810b1ff41c17ff55ebe35338cdd50202e25333d604a864ed7f23b0155"
+}

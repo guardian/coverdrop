@@ -7,6 +7,7 @@
 //! These data structures should never leave the `journalist-vault`
 //! crate since the ID is meaningless outside of the relational model.
 
+use chrono::{DateTime, Utc};
 use common::{
     api::forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
     epoch::Epoch,
@@ -64,12 +65,17 @@ pub type UntrustedJournalistProvisioningPublicKeyRow =
 
 pub struct CandidateKeyPairRow<T> {
     pub id: i64,
+    pub added_at: DateTime<Utc>,
     pub key_pair: T,
 }
 
 impl<T> CandidateKeyPairRow<T> {
-    pub(crate) fn new(id: i64, key_pair: T) -> Self {
-        Self { id, key_pair }
+    pub(crate) fn new(id: i64, added_at: DateTime<Utc>, key_pair: T) -> Self {
+        Self {
+            id,
+            added_at,
+            key_pair,
+        }
     }
 }
 
@@ -83,6 +89,7 @@ where
     {
         let mut state = serializer.serialize_struct("CandidateKeyPairRow", 2)?;
         state.serialize_field("id", &self.id)?;
+        state.serialize_field("added_at", &self.added_at)?;
         state.serialize_field("key_pair", &self.key_pair)?;
         state.end()
     }

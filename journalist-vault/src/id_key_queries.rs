@@ -52,13 +52,15 @@ pub(crate) async fn candidate_id_key_pair(
     .await?
     .map(move |row| {
         let id_key_pair_id = row.id;
+        let added_at = row.added_at;
 
         let id_key_pair = serde_json::from_str::<UntrustedUnregisteredJournalistIdKeyPair>(
             &row.id_key_pair_json,
         )?
         .to_trusted();
 
-        let key_pair_row = CandidateJournalistIdKeyPairRow::new(id_key_pair_id, id_key_pair);
+        let key_pair_row =
+            CandidateJournalistIdKeyPairRow::new(id_key_pair_id, added_at, id_key_pair);
 
         anyhow::Ok(key_pair_row)
     })
@@ -76,7 +78,7 @@ pub(crate) async fn published_id_key_pairs(
             SELECT
                 journalist_id_key_pairs.id            AS "id: i64",
                 journalist_id_key_pairs.key_pair_json AS "id_key_pair_json: String",
-                journalist_id_key_pairs.added_at      AS "added_at: DateTime<Utc>",
+                journalist_id_key_pairs.published_at  AS "published_at: DateTime<Utc>",
                 journalist_id_key_pairs.epoch         AS "epoch: Epoch",
                 journalist_provisioning_pks.pk_json   AS "provisioning_pk_json: String",
                 anchor_organization_pks.pk_json      AS "org_pk_json: String"
@@ -119,21 +121,23 @@ pub(crate) async fn insert_registered_id_key_pair(
     conn: &mut SqliteConnection,
     provisioning_pk_id: i64,
     id_key_pair: &JournalistIdKeyPair,
+    created_at: DateTime<Utc>,
+    published_at: DateTime<Utc>,
     epoch: Epoch,
-    now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
     let key_pair_json = serde_json::to_string(&id_key_pair.to_untrusted())?;
 
     sqlx::query!(
         r#"
             INSERT OR IGNORE INTO journalist_id_key_pairs
-                (provisioning_pk_id, key_pair_json, added_at, epoch)
+                (provisioning_pk_id, key_pair_json, published_at, created_at, epoch)
             VALUES
-                (?1, ?2, ?3, ?4)
+                (?1, ?2, ?3, ?4, ?5)
         "#,
         provisioning_pk_id,
         key_pair_json,
-        now,
+        published_at,
+        created_at,
         epoch,
     )
     .execute(conn)
@@ -165,8 +169,13 @@ pub(crate) async fn delete_candidate_id_key_pair(
         let candidate_key_pair =
             serde_json::from_str::<UntrustedUnregisteredJournalistIdKeyPair>(&row.key_pair_json)?
                 .to_trusted();
+        let added_at = row.added_at;
 
-        anyhow::Ok(CandidateKeyPairRow::new(row.id, candidate_key_pair))
+        anyhow::Ok(CandidateKeyPairRow::new(
+            row.id,
+            added_at,
+            candidate_key_pair,
+        ))
     })
     .transpose()?;
 
@@ -179,14 +188,14 @@ pub(crate) async fn last_published_id_key_pair_at(
     let row = sqlx::query!(
         r#"
             SELECT
-                MAX(added_at) AS "added_at: DateTime<Utc>"
+                MAX(published_at) AS "published_at: DateTime<Utc>"
             FROM journalist_id_key_pairs
         "#,
     )
     .fetch_one(conn)
     .await?;
 
-    Ok(row.added_at)
+    Ok(row.published_at)
 }
 
 pub(crate) async fn delete_expired_id_key_pairs(

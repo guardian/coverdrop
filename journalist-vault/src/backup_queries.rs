@@ -22,6 +22,10 @@ pub(crate) async fn record_successful_backup(
     Ok(())
 }
 
+/// Returns the number of messaging and ID keys created since the last successful backup. For the ID
+/// keys it considers both published and candidate keys based on the creation timestamp of the
+/// original candidate key pair, i.e. a promoted key is not considered new if its candidate version
+/// was created before the last backup.
 pub(crate) async fn get_count_of_keys_created_since_last_backup(
     conn: &mut SqliteConnection,
 ) -> anyhow::Result<i64> {
@@ -30,7 +34,9 @@ pub(crate) async fn get_count_of_keys_created_since_last_backup(
             FROM (
                 SELECT added_at FROM journalist_msg_key_pairs
                 UNION ALL
-                SELECT added_at FROM journalist_id_key_pairs
+                SELECT created_at as added_at FROM journalist_id_key_pairs
+                UNION ALL
+                SELECT added_at FROM candidate_journalist_id_key_pair
             )
             WHERE (NOT EXISTS(SELECT 1 FROM backup_history)) OR added_at > (SELECT MAX(timestamp) FROM backup_history)
         "#

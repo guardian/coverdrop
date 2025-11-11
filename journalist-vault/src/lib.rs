@@ -273,6 +273,7 @@ impl JournalistVault {
                 .await?
                 .map(|row| UntrustedCandidateJournalistIdKeyPairRow {
                     id: row.id,
+                    added_at: row.added_at,
                     key_pair: row.key_pair.to_untrusted(),
                 });
 
@@ -280,6 +281,7 @@ impl JournalistVault {
             .await?
             .map(|row| UntrustedCandidateJournalistMessagingKeyPairRow {
                 id: row.id,
+                added_at: row.added_at,
                 key_pair: row.key_pair.to_untrusted(),
             });
 
@@ -691,8 +693,9 @@ impl JournalistVault {
                     &mut conn,
                     vault_setup_bundle.provisioning_pk_id,
                     &vault_setup_bundle.key_pair,
-                    epoch,
                     now,
+                    now,
+                    epoch,
                 )
                 .await?;
             } else {
@@ -899,13 +902,15 @@ impl JournalistVault {
         let journalist_id = self.journalist_id().await?;
 
         tracing::debug!("Checking if candidate id key pair exists");
-        let candidate_id_key_pair = {
+        let (candidate_id_key_pair, candidate_key_pair_added_at) = {
             let mut conn = self.pool.acquire().await?;
 
             if let Some(candidate_id_key_pair_row) = candidate_id_key_pair(&mut conn).await? {
                 tracing::debug!("Found candidate id key pair");
 
                 let candidate_id_key_pair = candidate_id_key_pair_row.key_pair;
+                let candidate_key_pair_added_at = candidate_id_key_pair_row.added_at;
+
                 // Check if the candidate key was successfully published in a previous attempt
                 // to rotate the key
                 if let Some(signed_id_pk_with_epoch) = api_client
@@ -917,6 +922,7 @@ impl JournalistVault {
 
                     self.promote_candidate_id_key_pair_to_published(
                         candidate_id_key_pair,
+                        candidate_key_pair_added_at,
                         signed_id_pk_with_epoch,
                         now,
                     )
@@ -925,12 +931,18 @@ impl JournalistVault {
                     return Ok(Some(epoch));
                 }
 
-                candidate_id_key_pair
+                (candidate_id_key_pair, candidate_key_pair_added_at)
             } else {
                 tracing::debug!("Generating new candidate id key pair");
                 let candidate_id_key_pair = UnsignedSigningKeyPair::generate();
-                insert_candidate_id_key_pair(&mut conn, &candidate_id_key_pair, now).await?;
-                candidate_id_key_pair
+                let candidate_key_pair_added_at = now;
+                insert_candidate_id_key_pair(
+                    &mut conn,
+                    &candidate_id_key_pair,
+                    candidate_key_pair_added_at,
+                )
+                .await?;
+                (candidate_id_key_pair, candidate_key_pair_added_at)
             }
         };
 
@@ -994,6 +1006,7 @@ impl JournalistVault {
 
             self.promote_candidate_id_key_pair_to_published(
                 candidate_id_key_pair,
+                candidate_key_pair_added_at,
                 signed_id_pk_with_epoch,
                 now,
             )
@@ -1009,6 +1022,7 @@ impl JournalistVault {
     async fn promote_candidate_id_key_pair_to_published(
         &self,
         candidate_id_key_pair: UnregisteredJournalistIdKeyPair,
+        candidate_key_pair_created_at: DateTime<Utc>,
         signed_id_pk_with_epoch: UntrustedJournalistIdPublicKeyWithEpoch,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
@@ -1061,12 +1075,14 @@ impl JournalistVault {
                 id_key_pair.public_key_hex()
             );
 
+            let published_at = now;
             id_key_queries::insert_registered_id_key_pair(
                 &mut tx,
                 provisioning_pk_id,
                 &id_key_pair,
+                candidate_key_pair_created_at,
+                published_at,
                 epoch,
-                now,
             )
             .await?;
         } else {

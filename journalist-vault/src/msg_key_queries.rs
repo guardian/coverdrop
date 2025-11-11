@@ -59,8 +59,9 @@ pub(crate) async fn candidate_msg_key_pair(
                 .to_trusted(id_key_pair.public_key(), now)?;
 
         let id = row.id;
+        let added_at = row.added_at;
 
-        let key_pair_row = CandidateJournalistMessagingKeyPairRow::new(id, msg_key_pair);
+        let key_pair_row = CandidateJournalistMessagingKeyPairRow::new(id, added_at, msg_key_pair);
 
         anyhow::Ok(key_pair_row)
     })

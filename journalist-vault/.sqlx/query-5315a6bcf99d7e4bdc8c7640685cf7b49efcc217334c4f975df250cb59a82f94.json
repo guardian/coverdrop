@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO journalist_id_key_pairs\n                (provisioning_pk_id, key_pair_json, published_at, created_at, epoch)\n            VALUES\n                (?1, ?2, ?3, ?4, ?5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "5315a6bcf99d7e4bdc8c7640685cf7b49efcc217334c4f975df250cb59a82f94"
+}

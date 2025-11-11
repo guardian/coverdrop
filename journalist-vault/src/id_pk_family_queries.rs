@@ -23,7 +23,7 @@ pub(crate) async fn id_pk_families(
                 journalist_msg_key_pairs.added_at     AS "msg_key_pair_added_at: DateTime<Utc>",
                 journalist_id_key_pairs.id            AS "id_key_pair_id: i64",
                 journalist_id_key_pairs.key_pair_json  AS "id_key_pair_json: String",
-                journalist_id_key_pairs.added_at      AS "id_key_pair_added_at: DateTime<Utc>",
+                journalist_id_key_pairs.published_at   AS "id_key_pair_published_at: DateTime<Utc>",
                 journalist_provisioning_pks.id        AS "provisioning_pk_id: i64",
                 journalist_provisioning_pks.pk_json   AS "provisioning_pk_json: String",
                 anchor_organization_pks.id           AS "org_pk_id: i64",
