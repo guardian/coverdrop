@@ -123,7 +123,11 @@ private fun RecipientSelectionScreen(
     }
 
     ScreenContentWrapper {
-        Column(modifier = Modifier.fillMaxHeight(1f)) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom),
+        ) {
             CoverDropTopAppBar(onNavigationOptionPressed = { onBack() })
             BackPressHandler { onBack() }
 
