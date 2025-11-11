@@ -185,7 +185,7 @@ async fn backup_scenario() {
 
     let result = stack
         .api_client_uncached()
-        .post_backup_data(wrong_backup_form)
+        .create_backup(wrong_backup_form)
         .await;
     assert!(result.is_err());
 
@@ -212,15 +212,12 @@ async fn backup_scenario() {
 
     stack
         .api_client_uncached()
-        .post_backup_data(backup_form.clone())
+        .create_backup(backup_form.clone())
         .await
         .expect("Upload backup data");
 
     // Testing Duplicated Insert prevention - re-posting the backup should fail since we have a unique constraint on the data hash
-    let result = stack
-        .api_client_uncached()
-        .post_backup_data(backup_form)
-        .await;
+    let result = stack.api_client_uncached().create_backup(backup_form).await;
     assert!(result.is_err());
 
     // Testing using different signing key between form and backup data - this should fail
@@ -238,7 +235,7 @@ async fn backup_scenario() {
 
     let result = stack
         .api_client_uncached()
-        .post_backup_data(backup_form.clone())
+        .create_backup(backup_form.clone())
         .await;
     assert!(result.is_err());
 
@@ -251,8 +248,8 @@ async fn backup_scenario() {
 
     // Retrieve the backup data from the API
     let retrieved_signed_backup_data = stack
-        .api_client_uncached()
-        .get_backup_data(journalist_identity_get_backup_form)
+        .api_client_cached()
+        .retrieve_backup(journalist_identity_get_backup_form)
         .await
         .expect("Failed to retrieve backup data");
 

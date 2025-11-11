@@ -86,20 +86,20 @@ impl ApiClient {
         Ok(keys)
     }
 
-    pub async fn post_backup_data(&self, form: PostBackupDataForm) -> anyhow::Result<()> {
+    pub async fn create_backup(&self, form: PostBackupDataForm) -> anyhow::Result<()> {
         let mut url = self.base_url.clone();
         url.path_segments_mut()
             .unwrap()
             .push("v1")
             .push("backups")
-            .push("data");
+            .push("create");
 
         let resp = self.client.post(url).json(&form).send().await?;
 
         handle_response(resp).await
     }
 
-    pub async fn get_backup_data(
+    pub async fn retrieve_backup(
         &self,
         form: GetBackupDataForm,
     ) -> anyhow::Result<BackupDataWithSignature> {
@@ -108,9 +108,10 @@ impl ApiClient {
             .unwrap()
             .push("v1")
             .push("backups")
-            .push("data");
+            .push("retrieve");
 
-        let resp = self.client.get(url).json(&form).send().await?;
+        // NOTE: needs to be POST rather than GET so that Fastly doesn't strip the body of the request
+        let resp = self.client.post(url).json(&form).send().await?;
 
         let backup_data = handle_response_json(resp).await?;
 

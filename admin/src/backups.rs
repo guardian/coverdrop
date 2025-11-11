@@ -90,7 +90,7 @@ pub async fn backup_initiate_restore_submit(
 
     // Retrieve the backup data from the API
     let signed_backup_data = api_client
-        .get_backup_data(prepare_bundle.form)
+        .retrieve_backup(prepare_bundle.form)
         .await
         .with_context(|| {
             format!(

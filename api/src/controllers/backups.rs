@@ -13,7 +13,7 @@ use http::HeaderMap;
 
 pub const BACKUP_DATA_MAX_SIZE_BYTES: usize = 300 * 1024 * 1024;
 
-pub async fn get_backup_data(
+pub async fn retrieve_backup(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
     State(db): State<Database>,
     Json(body): Json<GetBackupDataForm>,
@@ -43,7 +43,7 @@ pub async fn get_backup_data(
     Ok((headers, Json(backup_data.to_unverified()?)))
 }
 
-pub async fn post_backup_data(
+pub async fn create_backup(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
     State(db): State<Database>,
     Json(body): Json<PostBackupDataForm>,
