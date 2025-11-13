@@ -1,16 +1,17 @@
 import {
-  MouseEvent,
-  useState,
-  useEffect,
   FormEvent,
-  useRef,
   Fragment,
+  MouseEvent,
+  useEffect,
+  useRef,
+  useState,
 } from "react";
 
 import {
   EuiButton,
   EuiFieldPassword,
   EuiFlexGroup,
+  EuiFlyout,
   EuiForm,
   EuiFormRow,
   EuiLink,
@@ -23,15 +24,13 @@ import {
 } from "@elastic/eui";
 import {
   getColocatedPassword,
-  unlockVault,
   getVaultState,
+  unlockVault,
 } from "../commands/vaults";
 import { VaultState } from "../model/bindings/VaultState";
 import { getProfiles } from "../commands/profiles";
 import { open } from "@tauri-apps/plugin-dialog";
-import { getLogs } from "../commands/admin";
-import { LogsPanel } from "../components/LogsPanel";
-import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
+import { Logs } from "../components/Logs.tsx";
 import { VersionInfo } from "../components/VersionInfo.tsx";
 
 type OpenVaultProps = {
@@ -48,14 +47,6 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
 
   // logs
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
-  const [logs, setLogs] = useState<SentinelLogEntry[]>([]);
-
-  const getLogsClicked = () => {
-    getLogs().then((logs) => {
-      setLogs(logs);
-      setIsFlyoutVisible(true);
-    });
-  };
 
   const passwordRef = useRef<HTMLInputElement | null>(null);
 
@@ -75,11 +66,9 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
   let flyout = null;
   if (isFlyoutVisible) {
     flyout = (
-      <LogsPanel
-        logs={logs}
-        setFlyoutVisible={setIsFlyoutVisible}
-        refreshClicked={getLogsClicked}
-      />
+      <EuiFlyout size="l" onClose={() => setIsFlyoutVisible(false)}>
+        <Logs />
+      </EuiFlyout>
     );
   }
   return (
@@ -217,7 +206,7 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
           right: 0,
           padding: "5px",
         }}
-        onClick={getLogsClicked}
+        onClick={() => setIsFlyoutVisible(true)}
       >
         View logs
       </EuiLink>

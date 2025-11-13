@@ -4,4 +4,5 @@ export type UntrustedOrganizationPublicKeyFamily = {
   org_pk: unknown;
   covernodes: unknown;
   journalists: unknown;
+  backup: unknown;
 };

@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            ROWID AS \"id: i64\",\n            timestamp AS \"timestamp: DateTime<Utc>\",\n            level AS \"level: String\",\n            target AS \"target: String\",\n            message AS \"message: String\",\n            session_id AS \"session_id: i64\"\n        FROM log_entries\n        WHERE timestamp < $1\n            AND (message LIKE $2 OR target LIKE $2)\n            AND CASE $3\n                WHEN 'TRACE' THEN TRUE\n                WHEN 'DEBUG' THEN level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')\n                WHEN 'INFO' THEN level IN ('INFO', 'WARN', 'ERROR')\n                WHEN 'WARN' THEN level IN ('WARN', 'ERROR')\n                WHEN 'ERROR' THEN level = 'ERROR'\n                ELSE FALSE\n        END\n        ORDER BY timestamp DESC\n        LIMIT $4 OFFSET $5\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "level: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "target: String",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "message: String",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "session_id: i64",
+        "ordinal": 5,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": [
+      true,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "613bc5d2c77daec8409d578d5336f081c5f94e8e1608245f0cee40774601fa0a"
+}

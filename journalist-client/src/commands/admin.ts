@@ -1,8 +1,9 @@
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
-import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
 import { TrustedOrganizationPublicKeyAndDigest } from "../model/bindings/TrustedOrganizationPublicKeyAndDigest";
 import { UntrustedKeysAndJournalistProfiles } from "../model/bindings/UntrustedKeysAndJournalistProfiles";
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
+import { LoggingSession } from "../model/bindings/LoggingSession.ts";
+import { LogEntry } from "../model/bindings/LogEntry.ts";
 
 export const updateJournalistStatus = (
   newStatus: JournalistStatus,
@@ -23,8 +24,18 @@ export const getPublicInfo =
     return invokeWithErrorMessage("get_public_info");
   };
 
-export const getLogs = (): Promise<SentinelLogEntry[]> => {
-  return invokeWithErrorMessage("get_logs");
+export const getLogs = (params: {
+  minLevel: string;
+  searchTerm: string;
+  before: Date;
+  limit: number;
+  offset: number;
+}): Promise<LogEntry[]> => {
+  return invokeWithErrorMessage("get_logs", params);
+};
+
+export const getLoggingSessionsTimeline = (): Promise<LoggingSession[]> => {
+  return invokeWithErrorMessage("get_logging_sessions_timeline");
 };
 
 export const getVaultKeys = (): Promise<string> => {

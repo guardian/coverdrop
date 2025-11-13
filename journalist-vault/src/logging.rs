@@ -1,35 +1,59 @@
-use std::str::FromStr;
-
 use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::SqliteConnection;
-use tracing::Level;
+use ts_rs::TS;
 
-#[derive(Debug, Clone)]
-pub struct Session {
-    _id: i64,
-    _session_started_at: DateTime<Utc>,
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+pub struct LoggingSession {
+    pub session_id: i64,
+    pub min_timestamp: DateTime<Utc>,
+    pub max_timestamp: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone)]
+impl LoggingSession {
+    pub fn new(
+        session_id: i64,
+        min_timestamp: DateTime<Utc>,
+        max_timestamp: DateTime<Utc>,
+    ) -> Self {
+        Self {
+            session_id,
+            min_timestamp,
+            max_timestamp,
+        }
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, TS)]
+#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct LogEntry {
+    pub id: Option<i64>,
     pub timestamp: DateTime<Utc>,
-    pub level: Level,
+    pub level: String,
     pub target: String,
     pub message: String,
+    pub session_id: Option<i64>,
 }
 
 impl LogEntry {
     pub fn new(
+        id: Option<i64>,
         timestamp: DateTime<Utc>,
-        level: Level,
+        level: String,
         target: impl Into<String>,
         message: String,
+        session_id: Option<i64>,
     ) -> Self {
         Self {
+            id,
             timestamp,
             level,
             target: target.into(),
             message,
+            session_id,
         }
     }
 
@@ -64,23 +88,6 @@ pub async fn insert_session(
     Ok(result)
 }
 
-pub async fn select_sessions(conn: &mut SqliteConnection) -> anyhow::Result<Vec<Session>> {
-    let sessions = sqlx::query_as!(
-        Session,
-        r#"
-        SELECT
-            id AS "_id: i64",
-            session_started_at AS "_session_started_at: DateTime<Utc>"
-        FROM sessions
-        ORDER BY session_started_at ASC
-        "#,
-    )
-    .fetch_all(conn)
-    .await?;
-
-    Ok(sessions)
-}
-
 pub async fn insert_log_entries(
     conn: &mut SqliteConnection,
     session_id: i64,
@@ -107,24 +114,74 @@ pub async fn insert_log_entries(
     Ok(())
 }
 
-pub async fn select_log_entries_by_session_range(
+pub async fn get_session_timeline(
     conn: &mut SqliteConnection,
-    start_session_id: i64,
-    end_session_id: i64,
-) -> anyhow::Result<Vec<LogEntry>> {
+) -> anyhow::Result<Vec<LoggingSession>> {
     let rows = sqlx::query!(
         r#"
         SELECT
+            session_id AS "session_id: i64",
+            MIN(timestamp) AS "min_timestamp: DateTime<Utc>",
+            MAX(timestamp) AS "max_timestamp: DateTime<Utc>"
+        FROM log_entries
+        GROUP BY session_id
+        ORDER BY session_id DESC
+        "#
+    )
+    .fetch_all(conn)
+    .await?;
+
+    let sessions = rows
+        .into_iter()
+        .map(|row| {
+            LoggingSession::new(
+                row.session_id.expect("missing session_id"),
+                row.min_timestamp,
+                row.max_timestamp,
+            )
+        })
+        .collect();
+
+    Ok(sessions)
+}
+
+pub async fn select_log_entries(
+    conn: &mut SqliteConnection,
+    min_level: String,
+    search_term: String,
+    before: DateTime<Utc>,
+    limit: i64,
+    offset: i64,
+) -> anyhow::Result<Vec<LogEntry>> {
+    let search_term_like_pattern = format!("%{search_term}%");
+    let rows = sqlx::query!(
+        r#"
+        SELECT
+            ROWID AS "id: i64",
             timestamp AS "timestamp: DateTime<Utc>",
             level AS "level: String",
             target AS "target: String",
-            message AS "message: String"
+            message AS "message: String",
+            session_id AS "session_id: i64"
         FROM log_entries
-        WHERE session_id >= ?1 AND session_id <= ?2
-        ORDER BY timestamp ASC
+        WHERE timestamp < $1
+            AND (message LIKE $2 OR target LIKE $2)
+            AND CASE $3
+                WHEN 'TRACE' THEN TRUE
+                WHEN 'DEBUG' THEN level IN ('DEBUG', 'INFO', 'WARN', 'ERROR')
+                WHEN 'INFO' THEN level IN ('INFO', 'WARN', 'ERROR')
+                WHEN 'WARN' THEN level IN ('WARN', 'ERROR')
+                WHEN 'ERROR' THEN level = 'ERROR'
+                ELSE FALSE
+        END
+        ORDER BY timestamp DESC
+        LIMIT $4 OFFSET $5
         "#,
-        start_session_id,
-        end_session_id
+        before,
+        search_term_like_pattern,
+        min_level,
+        limit,
+        offset
     )
     .fetch_all(conn)
     .await?;
@@ -132,8 +189,14 @@ pub async fn select_log_entries_by_session_range(
     let entries = rows
         .into_iter()
         .map(|row| {
-            let level = Level::from_str(&row.level).unwrap_or(Level::INFO);
-            LogEntry::new(row.timestamp, level, row.target, row.message)
+            LogEntry::new(
+                row.id,
+                row.timestamp,
+                row.level,
+                row.target,
+                row.message,
+                Some(row.session_id),
+            )
         })
         .collect();
 

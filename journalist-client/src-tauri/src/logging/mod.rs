@@ -3,6 +3,7 @@ use std::{fmt, sync::Arc};
 use chrono::{DateTime, Utc};
 use common::time;
 use in_memory::InMemoryLogBuffer;
+use journalist_vault::logging::LoggingSession;
 use journalist_vault::{logging::LogEntry, JournalistVault};
 use tokio::sync::{mpsc::UnboundedSender, RwLock};
 use tracing::{
@@ -72,22 +73,51 @@ impl LogReceiver {
         Ok(())
     }
 
-    /// Get all the log entries from this session
-    pub async fn get_entries(&self) -> anyhow::Result<Vec<LogEntry>> {
-        let (session_id, vault) = {
-            let inner = self.data.read().await;
+    pub async fn get_sessions_timeline(&self) -> anyhow::Result<Vec<LoggingSession>> {
+        let inner = self.data.read().await;
 
-            let target = &inner.target;
+        let target = &inner.target;
 
-            match target {
-                LogReceiverTarget::InMemory(in_memory_log_buffer) => {
-                    return Ok(in_memory_log_buffer.clone_entries());
-                }
-                LogReceiverTarget::Vault(vault_logger) => vault_logger.get_vault(),
+        let sessions = match target {
+            LogReceiverTarget::InMemory(_) => Vec::new(),
+            LogReceiverTarget::Vault(vault_logger) => {
+                vault_logger.get_vault().get_log_session_timeline().await?
             }
         };
 
-        vault.get_log_entries(session_id).await
+        Ok(sessions)
+    }
+
+    pub async fn get_entries(
+        &self,
+        min_level: String,
+        search_term: String,
+        before: DateTime<Utc>,
+        limit: i64,
+        offset: i64,
+    ) -> anyhow::Result<Vec<LogEntry>> {
+        let inner = self.data.read().await;
+
+        let target = &inner.target;
+
+        let entries = match target {
+            LogReceiverTarget::InMemory(in_memory_log_buffer) => in_memory_log_buffer
+                .clone_entries(
+                    min_level,
+                    search_term,
+                    before,
+                    limit as usize,
+                    offset as usize,
+                ),
+            LogReceiverTarget::Vault(vault_logger) => {
+                vault_logger
+                    .get_vault()
+                    .get_log_entries(min_level, search_term, before, limit, offset)
+                    .await?
+            }
+        };
+
+        Ok(entries)
     }
 }
 
@@ -121,7 +151,14 @@ impl<S: Subscriber> Layer<S> for JournalistClientLogLayer {
         event.record(&mut visitor);
 
         // Create log entry
-        let log_entry = LogEntry::new(time::now(), *metadata.level(), metadata.target(), message);
+        let log_entry = LogEntry::new(
+            None,
+            time::now(),
+            metadata.level().to_string(),
+            metadata.target(),
+            message,
+            None,
+        );
 
         if let Err(e) = self.log_receiver.tx.send(log_entry) {
             eprintln!("Failed to send log entry: {e}");

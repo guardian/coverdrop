@@ -1,20 +1,21 @@
-use common::{
-    api::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles,
-    client::JournalistStatus,
-    crypto::{human_readable_digest, keys::public_key::PublicKey as _},
-    time,
-};
-use snafu::{OptionExt as _, ResultExt as _};
-use tauri::State;
-
 use crate::{
     app_state::AppStateHandle,
     error::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, GenericSnafu, JsonSerializeSnafu,
         VaultLockedSnafu, VaultSnafu,
     },
-    model::{SentinelLogEntry, TrustedOrganizationPublicKeyAndDigest},
+    model::TrustedOrganizationPublicKeyAndDigest,
 };
+use chrono::{DateTime, Utc};
+use common::{
+    api::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles,
+    client::JournalistStatus,
+    crypto::{human_readable_digest, keys::public_key::PublicKey as _},
+    time,
+};
+use journalist_vault::logging::{LogEntry, LoggingSession};
+use snafu::{OptionExt as _, ResultExt as _};
+use tauri::State;
 
 #[tauri::command]
 pub async fn get_trust_anchor_digests(
@@ -100,13 +101,26 @@ pub async fn get_public_info(
 }
 
 #[tauri::command]
+pub async fn get_logging_sessions_timeline(
+    app: State<'_, AppStateHandle>,
+) -> Result<Vec<LoggingSession>, CommandError> {
+    app.logs.get_sessions_timeline().await.context(VaultSnafu {
+        failed_to: "get logging sessions",
+    })
+}
+
+#[tauri::command]
 pub async fn get_logs(
     app: State<'_, AppStateHandle>,
-) -> Result<Vec<SentinelLogEntry>, CommandError> {
+    min_level: String,
+    search_term: String,
+    before: DateTime<Utc>,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<LogEntry>, CommandError> {
     app.logs
-        .get_entries()
+        .get_entries(min_level, search_term, before, limit, offset)
         .await
-        .map(|v| v.iter().map(SentinelLogEntry::from_log_entry).collect())
         .context(VaultSnafu {
             failed_to: "get log entries",
         })

@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Capability for the main & log windows",
+  "windows": ["main", "logs"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -14,6 +14,7 @@
     "core:window:allow-unminimize",
     "core:window:allow-show",
     "core:window:allow-set-focus",
-    "core:window:allow-set-icon"
+    "core:window:allow-set-icon",
+    "core:webview:allow-create-webview-window"
   ]
 }

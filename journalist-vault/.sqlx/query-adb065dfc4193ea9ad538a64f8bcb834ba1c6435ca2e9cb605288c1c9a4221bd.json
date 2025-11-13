@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            session_id AS \"session_id: i64\",\n            MIN(timestamp) AS \"min_timestamp: DateTime<Utc>\",\n            MAX(timestamp) AS \"max_timestamp: DateTime<Utc>\"\n        FROM log_entries\n        GROUP BY session_id\n        ORDER BY session_id DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "session_id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "min_timestamp: DateTime<Utc>",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "max_timestamp: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "adb065dfc4193ea9ad538a64f8bcb834ba1c6435ca2e9cb605288c1c9a4221bd"
+}

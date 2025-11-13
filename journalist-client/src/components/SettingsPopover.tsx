@@ -1,25 +1,27 @@
 import { Fragment, useState } from "react";
 import {
+  EuiButton,
   EuiButtonIcon,
   EuiContextMenuItem,
   EuiContextMenuPanel,
+  EuiFlyout,
   EuiLink,
   EuiPopover,
   EuiSpacer,
 } from "@elastic/eui";
-import { getLogs, getPublicInfo, getVaultKeys } from "../commands/admin";
-import { LogsPanel } from "./LogsPanel";
+import { getPublicInfo, getVaultKeys } from "../commands/admin";
+import { Logs } from "./Logs.tsx";
 import { PublicInfoPanel } from "./PublicInfoPanel";
 import { BurstCoverMessageModal } from "./BurstMessageModal";
 import { VaultKeysPanel } from "./VaultKeysPanel";
 import { TrustedKeyDigestsModal } from "./TrustedKeyDigestsModal";
 import { AddTrustAnchorModal } from "./AddTrustAnchorModal";
-import { SentinelLogEntry } from "../model/bindings/SentinelLogEntry";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
 import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
 import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { VersionInfo } from "./VersionInfo.tsx";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 type FlyoverContent =
   | {
@@ -29,7 +31,6 @@ type FlyoverContent =
     }
   | {
       type: "logs";
-      logs: SentinelLogEntry[];
     }
   | {
       type: "public-info";
@@ -111,14 +112,11 @@ export const SettingsPopover = ({
   };
 
   const getLogsClicked = () => {
-    getLogs().then((logs) => {
-      setFlyoutContent({
-        type: "logs",
-        logs,
-      });
-      setIsFlyoutVisible(true);
-      setIsPopoverOpen(false);
+    setFlyoutContent({
+      type: "logs",
     });
+    setIsFlyoutVisible(true);
+    setIsPopoverOpen(false);
   };
 
   const addTrustAnchorClicked = () => {
@@ -141,16 +139,34 @@ export const SettingsPopover = ({
     setIsPopoverOpen(false);
   };
 
+  const openLogsInNewWindow = async () => {
+    setIsFlyoutVisible(false);
+    const label = "logs";
+    const maybeExistingWindow = await WebviewWindow.getByLabel(label);
+    if (maybeExistingWindow) {
+      await maybeExistingWindow.show();
+    } else {
+      const webview = new WebviewWindow(label, {
+        url: "logs.html",
+        title: "Logs (Sentinel)", // TODO get the app name plus 'Logs'
+      });
+      await webview.once("tauri://error", (e) => {
+        console.error("Error creating webview window:", e);
+      });
+    }
+  };
+
   let flyout = null;
 
   if (isFlyoutVisible) {
     if (flyoutContent?.type === "logs") {
       flyout = (
-        <LogsPanel
-          logs={flyoutContent.logs}
-          setFlyoutVisible={setIsFlyoutVisible}
-          refreshClicked={getLogsClicked}
-        />
+        <EuiFlyout size="l" onClose={() => setIsFlyoutVisible(false)}>
+          <EuiButton onClick={openLogsInNewWindow}>
+            Open in new window
+          </EuiButton>
+          <Logs />
+        </EuiFlyout>
       );
     }
 

@@ -1,10 +1,13 @@
+use chrono::{DateTime, Utc};
+use journalist_vault::logging::LogEntry;
+use std::cmp::min;
+use std::str::FromStr;
 use std::{
     collections::VecDeque,
     sync::{Arc, RwLock},
 };
-
-use journalist_vault::logging::LogEntry;
 use tokio::sync::{mpsc::UnboundedReceiver, oneshot};
+use tracing::Level;
 
 // To shut down the log buffer we send a message asking to shut down.
 // That message contains another sender which allows the async task to bundle
@@ -69,8 +72,41 @@ impl InMemoryLogBuffer {
         }
     }
 
-    pub fn clone_entries(&self) -> Vec<LogEntry> {
-        let entries = self.entries.read().unwrap_or_else(|e| e.into_inner());
-        entries.iter().cloned().collect()
+    pub fn clone_entries(
+        &self,
+        min_level: String,
+        search_term: String,
+        before: DateTime<Utc>,
+        limit: usize,
+        offset: usize,
+    ) -> Vec<LogEntry> {
+        let min_level = Level::from_str(min_level.as_str()).expect("Invalid log level");
+        let results = self
+            .entries
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .iter()
+            .rev() // Reverse to get the most recent entries first
+            .filter(|entry| {
+                min_level.ge(&Level::from_str(&entry.level).unwrap_or(Level::INFO))
+                    && entry.timestamp.lt(&before)
+                    && (search_term.is_empty()
+                        || entry
+                            .message
+                            .to_lowercase()
+                            .contains(search_term.to_lowercase().as_str())
+                        || entry
+                            .target
+                            .to_lowercase()
+                            .contains(search_term.to_lowercase().as_str()))
+            })
+            .cloned()
+            .collect::<Vec<LogEntry>>();
+        if results.len() > offset {
+            let end_index = min(offset + limit, results.len());
+            results[offset..end_index].to_vec()
+        } else {
+            Vec::new()
+        }
     }
 }

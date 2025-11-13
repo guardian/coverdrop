@@ -4,8 +4,8 @@ use app_state::AppStateHandle;
 use clap::Parser as _;
 use commands::{
     admin::{
-        force_rotate_id_pk, force_rotate_msg_pk, get_logs, get_public_info,
-        get_trust_anchor_digests, get_vault_keys,
+        force_rotate_id_pk, force_rotate_msg_pk, get_logging_sessions_timeline, get_logs,
+        get_public_info, get_trust_anchor_digests, get_vault_keys,
     },
     backup::{eject_backup_volume, get_backup_checks, perform_backup, should_require_backup},
     chats::{
@@ -159,6 +159,7 @@ pub fn run() {
             set_custom_expiry,
             update_user_status,
             update_user_alias_and_description,
+            get_logging_sessions_timeline,
             get_logs,
             burst_cover_messages,
             get_trust_anchor_digests,

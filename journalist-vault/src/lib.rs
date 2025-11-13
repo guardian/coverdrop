@@ -24,6 +24,8 @@ use key_rows::{
 use std::{path::Path, time::Duration as StdDuration};
 pub use vault_message::{J2UMessage, U2JMessage, VaultMessage};
 
+use crate::info_queries::journalist_id;
+use crate::logging::LoggingSession;
 use chrono::{DateTime, Duration, Utc};
 use common::{
     api::{
@@ -74,8 +76,6 @@ use msg_key_queries::{
 };
 use sqlx::Acquire;
 use sqlx::SqlitePool;
-
-use crate::info_queries::journalist_id;
 
 pub const VAULT_EXTENSION: &str = "vault";
 pub const PASSWORD_EXTENSION: &str = "password";
@@ -201,9 +201,21 @@ impl JournalistVault {
         Ok(())
     }
 
-    pub async fn get_log_entries(&self, session_id: i64) -> anyhow::Result<Vec<LogEntry>> {
+    pub async fn get_log_session_timeline(&self) -> anyhow::Result<Vec<LoggingSession>> {
         let mut conn = self.pool.acquire().await?;
-        logging::select_log_entries_by_session_range(&mut conn, session_id, session_id).await
+        logging::get_session_timeline(&mut conn).await
+    }
+
+    pub async fn get_log_entries(
+        &self,
+        min_level: String,
+        search_term: String,
+        before: DateTime<Utc>,
+        limit: i64,
+        offset: i64,
+    ) -> anyhow::Result<Vec<LogEntry>> {
+        let mut conn = self.pool.acquire().await?;
+        logging::select_log_entries(&mut conn, min_level, search_term, before, limit, offset).await
     }
 
     //

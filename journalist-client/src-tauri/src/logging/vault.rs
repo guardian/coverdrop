@@ -5,7 +5,6 @@ use journalist_vault::{logging::LogEntry, JournalistVault};
 use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle, time::interval};
 
 pub struct VaultLogger {
-    session_id: i64,
     _writer_task_handle: JoinHandle<()>,
     vault: JournalistVault,
 }
@@ -64,13 +63,12 @@ impl VaultLogger {
         });
 
         Ok(Self {
-            session_id,
             _writer_task_handle,
             vault,
         })
     }
 
-    pub fn get_vault(&self) -> (i64, JournalistVault) {
-        (self.session_id, self.vault.clone())
+    pub fn get_vault(&self) -> JournalistVault {
+        self.vault.clone()
     }
 }
