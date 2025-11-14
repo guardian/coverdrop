@@ -25,6 +25,13 @@ import { PerChatMenu } from "./PerChatMenu";
 import { Message } from "../model/bindings/Message";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
+import moment from "moment";
+import {
+  ExpiringMessageIcon,
+  ExpiringMessageUrgency,
+  NEAR_EXPIRY_DAYS,
+  URGENT_EXPIRY_HOURS,
+} from "./ExpiringMessageIcon";
 
 type Chat = {
   name: string;
@@ -38,6 +45,7 @@ type Chat = {
     message: string;
     messageType: Message["type"];
   };
+  expiringMessageUrgency?: ExpiringMessageUrgency;
 };
 
 export type ChatsSideBarProps = {
@@ -150,7 +158,7 @@ const chatsToSideNav = (
                   </EuiFlexItem>
                 </EuiFlexGroup>
                 <EuiSpacer size="s" />
-                <EuiFlexGroup alignItems="center">
+                <EuiFlexGroup gutterSize="s" alignItems="center">
                   <EuiFlexItem
                     style={{
                       height: size.base,
@@ -166,6 +174,14 @@ const chatsToSideNav = (
                       "You: "}
                     {lastMessage.message}
                   </EuiFlexItem>
+                  {chat.expiringMessageUrgency && (
+                    <EuiFlexItem grow={false}>
+                      <ExpiringMessageIcon
+                        expiringMessageUrgency={chat.expiringMessageUrgency}
+                        context="CHAT_SIDE_BAR"
+                      />
+                    </EuiFlexItem>
+                  )}
                   <EuiFlexItem grow={false}>
                     <PerChatMenu
                       isOpen={chat.replyKey === maybeContextMenuOpenForReplyKey}
@@ -252,6 +268,7 @@ export const ChatsSideBar = ({
     });
   }, [JSON.stringify(messageUserPks), JSON.stringify(userInfo)]);
 
+  const now = moment();
   const chats = Object.values(
     messages.reduce(
       (acc, message) => {
@@ -271,6 +288,31 @@ export const ChatsSideBar = ({
         const isLatestMessage =
           !maybeExistingInAcc ||
           maybeExistingInAcc.lastMessageTimestamp < messageTimestamp;
+
+        const expiry = moment(message.customExpiry ?? message.normalExpiry);
+        const timeUntilExpiry = moment.duration(expiry.diff(now));
+        const hasExpiringMessages = timeUntilExpiry.asDays() < NEAR_EXPIRY_DAYS;
+        const hasUrgentlyExpiringMessage =
+          timeUntilExpiry.asHours() < URGENT_EXPIRY_HOURS;
+        const currentMessageExpiringUrgency: ExpiringMessageUrgency =
+          hasUrgentlyExpiringMessage
+            ? "URGENT"
+            : hasExpiringMessages
+              ? "NEAR"
+              : undefined;
+        const chatExpiringUrgency = maybeExistingInAcc?.expiringMessageUrgency;
+        let expiringMessageUrgency: ExpiringMessageUrgency = undefined;
+        if (
+          currentMessageExpiringUrgency === "URGENT" ||
+          chatExpiringUrgency === "URGENT"
+        ) {
+          expiringMessageUrgency = "URGENT";
+        } else if (
+          currentMessageExpiringUrgency === "NEAR" ||
+          chatExpiringUrgency === "NEAR"
+        ) {
+          expiringMessageUrgency = "NEAR";
+        }
         return {
           ...acc,
           [message.userPk]: {
@@ -291,6 +333,7 @@ export const ChatsSideBar = ({
             lastMessage: isLatestMessage
               ? { message: message.message, messageType: message.type }
               : maybeExistingInAcc.lastMessage,
+            expiringMessageUrgency,
           },
         };
       },

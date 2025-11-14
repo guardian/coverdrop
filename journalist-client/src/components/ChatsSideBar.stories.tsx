@@ -7,6 +7,7 @@ import { useUserStore } from "../state/users";
 import { User } from "../model/bindings/User";
 import { ReactNode } from "react";
 import { sizes } from "../styles/sizes";
+import moment from "moment";
 
 type NarrowWidthWrapperProps = {
   children: ReactNode;
@@ -33,15 +34,19 @@ const userPk1 =
 const userPk2 =
   "b11b6e6f19fcf2d88103baf44d9ed097dae3f8c372825d85b74b95c1a90c6aaa";
 
-const date = new Date("2025-08-01 15:00:00").toISOString();
+const messageReceiptDate = new Date("2025-08-01 15:00:00").toISOString();
+// note expiry dates are based on 'now' because ChatSideBar's internals compare with 'now' but don't display the dates.
+const normalExpiry = moment().add(14, "days").toISOString();
+const nearExpiry = moment().add(2, "days").toISOString();
+const urgentExpiry = moment().add(12, "hours").toISOString();
 
 const u2jMessage = {
   type: "userToJournalistMessage",
   id: BigInt(10),
   userPk: userPk1,
   message: "Hey there fella",
-  receivedAt: date,
-  normalExpiry: date,
+  receivedAt: messageReceiptDate,
+  normalExpiry: normalExpiry,
   customExpiry: null,
   read: true,
 } satisfies Message;
@@ -67,11 +72,17 @@ const users = [
   },
 ] satisfies User[];
 
-const mockU2JMessage = (id: number, userPk: string, message: string) => ({
+const mockU2JMessage = (
+  id: number,
+  userPk: string,
+  message: string,
+  messageExpiry: string = normalExpiry,
+) => ({
   ...u2jMessage,
   id: BigInt(id),
   userPk,
   message,
+  normalExpiry: messageExpiry,
 });
 
 const messages = [
@@ -167,6 +178,42 @@ export const NoMessages: Story = {
 
       userStore.setUsers(users);
       messageStore.setMessages([]);
+
+      return (
+        <NarrowWidthWrapper>
+          <Story />
+        </NarrowWidthWrapper>
+      );
+    },
+  ],
+};
+
+export const MessagesExpiringSoon: Story = {
+  args: {
+    ...commonArgs,
+    currentUserReplyKey: userPk1,
+    journalistStatus: "VISIBLE",
+  },
+  decorators: [
+    (Story) => {
+      const messageStore = useMessageStore();
+      const userStore = useUserStore();
+
+      userStore.setUsers(users);
+      messageStore.setMessages([
+        mockU2JMessage(
+          1,
+          userPk1,
+          "Hi, I'm a very important source.",
+          nearExpiry,
+        ),
+        mockU2JMessage(
+          2,
+          userPk2,
+          "Have you got anything interesting to say?",
+          urgentExpiry,
+        ),
+      ]);
 
       return (
         <NarrowWidthWrapper>
