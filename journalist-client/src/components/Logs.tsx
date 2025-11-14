@@ -111,8 +111,9 @@ export const Logs = () => {
       .finally(() => setIsLoading(false));
   };
 
-  const refresh = () => setBefore(new Date());
-  useEffect(refresh, [logLevel, debouncedSearchTerm]);
+  useEffect(() => {
+    loadLogs(false);
+  }, [logLevel, debouncedSearchTerm]);
   useEffect(() => {
     loadLogs(false);
   }, [before]);
@@ -181,7 +182,7 @@ export const Logs = () => {
               <EuiButtonIcon
                 iconType="refresh"
                 aria-label="Refresh Logs"
-                onClick={refresh}
+                onClick={() => setBefore(new Date())}
               ></EuiButtonIcon>
               <EuiFlexGroup dir="row" alignItems="center" gutterSize="xs">
                 Before:
