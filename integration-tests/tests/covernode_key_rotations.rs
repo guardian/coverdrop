@@ -4,6 +4,7 @@ use common::{
     api::forms::PostCoverNodeProvisioningPublicKeyForm,
     protocol::{
         constants::{
+            COVERNODE_ID_KEY_VALID_DURATION_SECONDS,
             COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
             ORGANIZATION_KEY_VALID_DURATION_SECONDS, WEEK_IN_SECONDS,
         },
@@ -352,4 +353,85 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
     let id_key_2_msg_pks =
         keys.covernode_msg_pk_iter_for_id_pk(&covernode_id_key_pair_2.public_key());
     assert_eq!(id_key_2_msg_pks.collect_vec().len(), 0);
+}
+
+/// This test simulates a scenario where the covernode creates a new identity key near the end of the parent provisioning key's expiry.
+/// This should lead to a truncated identity key lifetime, but not trigger a id key rotation.
+/// Similarly, a new messaging key is created near the end of the identity key's expiry,
+/// leading to a truncated messaging key lifetime, but not triggering a msg key rotation
+#[tokio::test]
+async fn late_covernode_msg_and_id_key_rotations() {
+    let mut stack = CoverDropStack::builder()
+        .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
+        .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
+        .build()
+        .await;
+
+    let anchor_org_pks = stack.keys().anchor_org_pks();
+
+    // Trigger the initial tasks
+    trigger_all_init_tasks_covernode(stack.covernode_task_api_client()).await;
+
+    // Assert initial keys created
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+    assert_eq!(keys.covernode_id_pk_iter().count(), 1);
+    assert_eq!(keys.covernode_msg_pk_iter().count(), 1);
+
+    async fn id_keys_expiry_match_provisioning(stack: &CoverDropStack) -> bool {
+        let keys = get_and_verify_public_keys(
+            stack.api_client_uncached(),
+            &stack.keys().anchor_org_pks(),
+            stack.now(),
+        )
+        .await
+        .keys;
+
+        keys.latest_covernode_id_pk(stack.covernode_id())
+            .unwrap()
+            .not_valid_after
+            == keys
+                .latest_covernode_provisioning_pk()
+                .unwrap()
+                .not_valid_after
+    }
+    // Step time forward to near the expiry of the provisioning key
+    // This will get us into a state where the most recent id key will have a truncated lifetime
+    while !id_keys_expiry_match_provisioning(&stack).await {
+        stack
+            .time_travel(
+                stack.now()
+                    + Duration::from_secs(
+                        (COVERNODE_ID_KEY_VALID_DURATION_SECONDS - DAY_IN_SECONDS)
+                            .try_into()
+                            .unwrap(),
+                    ),
+            )
+            .await;
+
+        trigger_key_rotation_covernode(stack.covernode_task_api_client()).await;
+    }
+
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+
+    let latest_id_key = keys.latest_covernode_id_pk(stack.covernode_id()).unwrap();
+
+    // Now we are in a state where the most recent id key will have a truncated lifetime
+    // Trigger creation of a new id and msg key, this should not cause a rotation since we are within the allowed window
+    trigger_key_rotation_covernode(stack.covernode_task_api_client()).await;
+
+    let keys =
+        get_and_verify_public_keys(stack.api_client_uncached(), &anchor_org_pks, stack.now())
+            .await
+            .keys;
+
+    let new_latest_id_key = keys.latest_covernode_id_pk(stack.covernode_id()).unwrap();
+
+    // Assert no new id key created
+    assert_eq!(latest_id_key, new_latest_id_key);
 }

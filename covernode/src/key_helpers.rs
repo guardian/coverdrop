@@ -29,6 +29,7 @@ pub async fn get_and_verify_covernode_id_key_pairs(
                             CoverNodeIdKeyPairWithEpoch::new(
                                 signed_encrypted_key_pair,
                                 key_pair.epoch,
+                                key_pair.created_at,
                             )
                         })
                 })
@@ -59,6 +60,7 @@ pub async fn get_and_verify_covernode_msg_key_pairs(
                         CoverNodeMessagingKeyPairWithEpoch::new(
                             signed_encrypted_key_pair,
                             key_pair.epoch,
+                            key_pair.created_at,
                         )
                     })
             })

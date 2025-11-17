@@ -382,7 +382,8 @@ impl Database {
             r#"
                 SELECT
                     key_pair_json AS "key_pair_json: String",
-                    epoch AS "epoch: Epoch"
+                    epoch AS "epoch: Epoch",
+                    created_at AS "created_at: DateTime<Utc>"
                 FROM covernode_id_key_pairs
                 WHERE epoch IS NOT NULL
             "#,
@@ -396,9 +397,11 @@ impl Database {
                 let id_key_pair =
                     serde_json::from_str::<UntrustedCoverNodeIdKeyPair>(&row.key_pair_json)?;
 
-                let res = row
-                    .epoch
-                    .map(|epoch| UntrustedCoverNodeIdKeyPairWithEpoch::new(id_key_pair, epoch));
+                let created_at = row.created_at;
+
+                let res = row.epoch.map(|epoch| {
+                    UntrustedCoverNodeIdKeyPairWithEpoch::new(id_key_pair, epoch, created_at)
+                });
 
                 anyhow::Ok(res)
             })
@@ -417,7 +420,8 @@ impl Database {
             r#"
                 SELECT
                     key_pair_json AS "key_pair_json: String",
-                    epoch AS "epoch: Epoch"
+                    epoch AS "epoch: Epoch",
+                    created_at AS "created_at: DateTime<Utc>"
                 FROM covernode_msg_key_pairs
                 WHERE epoch IS NOT NULL
             "#,
@@ -431,9 +435,11 @@ impl Database {
                 let msg_key =
                     serde_json::from_str::<UntrustedCoverNodeMessagingKeyPair>(&row.key_pair_json)?;
 
-                let res = row
-                    .epoch
-                    .map(|epoch| UntrustedCoverNodeMessagingKeyPairWithEpoch::new(msg_key, epoch));
+                let created_at = row.created_at;
+
+                let res = row.epoch.map(|epoch| {
+                    UntrustedCoverNodeMessagingKeyPairWithEpoch::new(msg_key, epoch, created_at)
+                });
 
                 anyhow::Ok(res)
             })

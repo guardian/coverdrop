@@ -30,6 +30,7 @@ where
 {
     pub key_pair: T,
     pub epoch: Epoch,
+    pub created_at: DateTime<Utc>,
     marker: PhantomData<R>,
 }
 
@@ -37,10 +38,11 @@ impl<R, T> UntrustedKeyPairWithEpoch<R, T>
 where
     R: Role,
 {
-    pub fn new(key_pair: T, epoch: Epoch) -> Self {
+    pub fn new(key_pair: T, epoch: Epoch, created_at: DateTime<Utc>) -> Self {
         Self {
             key_pair,
             epoch,
+            created_at,
             marker: PhantomData,
         }
     }
@@ -62,6 +64,7 @@ where
 {
     pub key_pair: T,
     pub epoch: Epoch,
+    pub created_at: DateTime<Utc>,
     marker: PhantomData<R>,
 }
 
@@ -70,10 +73,11 @@ where
     R: Role,
     T: SignedKey<R>,
 {
-    pub fn new(key_pair: T, epoch: Epoch) -> Self {
+    pub fn new(key_pair: T, epoch: Epoch, created_at: DateTime<Utc>) -> Self {
         Self {
             key_pair,
             epoch,
+            created_at,
             marker: PhantomData,
         }
     }

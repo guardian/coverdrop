@@ -219,6 +219,7 @@ impl InnerKeyState {
         &mut self,
         id_key_pair: CoverNodeIdKeyPair,
         epoch: Epoch,
+        key_created_at: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         self.db
             .update_candidate_id_key_pair_add_epoch(&id_key_pair, epoch)
@@ -230,7 +231,11 @@ impl InnerKeyState {
 
         self.covernode_id_key_pairs
             .published
-            .push(CoverNodeIdKeyPairWithEpoch::new(id_key_pair, epoch));
+            .push(CoverNodeIdKeyPairWithEpoch::new(
+                id_key_pair,
+                epoch,
+                key_created_at,
+            ));
 
         self.covernode_id_key_pairs.candidate = None;
 
@@ -254,7 +259,7 @@ impl InnerKeyState {
 
         self.covernode_id_key_pairs
             .published
-            .push(CoverNodeIdKeyPairWithEpoch::new(id_key_pair, epoch));
+            .push(CoverNodeIdKeyPairWithEpoch::new(id_key_pair, epoch, now));
 
         Ok(())
     }
@@ -263,6 +268,7 @@ impl InnerKeyState {
         &mut self,
         msg_key_pair: CoverNodeMessagingKeyPair,
         epoch: Epoch,
+        key_created_at: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         self.db
             .update_candidate_msg_key_pair_add_epoch(&msg_key_pair.to_untrusted(), epoch)
@@ -273,7 +279,11 @@ impl InnerKeyState {
 
         self.covernode_msg_key_pairs
             .published
-            .push(CoverNodeMessagingKeyPairWithEpoch::new(msg_key_pair, epoch));
+            .push(CoverNodeMessagingKeyPairWithEpoch::new(
+                msg_key_pair,
+                epoch,
+                key_created_at,
+            ));
 
         self.covernode_msg_key_pairs
             .published

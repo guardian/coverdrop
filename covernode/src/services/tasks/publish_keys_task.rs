@@ -3,13 +3,12 @@ use chrono::{DateTime, Duration, Utc};
 use common::{
     api::{api_client::ApiClient, forms::PostCoverNodeMessagingPublicKeyForm},
     crypto::keys::{public_key::PublicKey, signing::SignedSigningKeyPair},
-    epoch::Epoch,
     identity_api::{
         client::IdentityApiClient, forms::post_rotate_covernode_id::RotateCoverNodeIdPublicKeyForm,
     },
     protocol::keys::{
         CoverDropPublicKeyHierarchy, CoverNodeIdKeyPair, CoverNodeIdKeyPairWithEpoch,
-        CoverNodeMessagingKeyPair, LatestKey,
+        CoverNodeMessagingKeyPairWithEpoch, LatestKey,
     },
     task::Task,
     time,
@@ -112,9 +111,13 @@ impl Task for PublishedKeysTask {
         if has_published_keys {
             let mut key_state = self.key_state.write().await;
 
-            if let Some((new_id_key_pair, epoch)) = new_id_key_pair_and_epoch {
+            if let Some(new_id_key_pair_with_epoch) = new_id_key_pair_and_epoch {
                 let update_id_key_pair_epoch_attempt = key_state
-                    .add_epoch_to_covernode_id_key_pair(new_id_key_pair, epoch)
+                    .add_epoch_to_covernode_id_key_pair(
+                        new_id_key_pair_with_epoch.key_pair,
+                        new_id_key_pair_with_epoch.epoch,
+                        new_id_key_pair_with_epoch.created_at,
+                    )
                     .await;
 
                 if let Err(e) = update_id_key_pair_epoch_attempt {
@@ -122,9 +125,13 @@ impl Task for PublishedKeysTask {
                 }
             }
 
-            if let Some((new_msg_key_pair, epoch)) = new_msg_key_pair_and_epoch {
+            if let Some(new_msg_key_pair_with_epoch) = new_msg_key_pair_and_epoch {
                 let update_msg_key_pair_epoch_attempt = key_state
-                    .add_epoch_to_covernode_msg_key_pair(new_msg_key_pair, epoch)
+                    .add_epoch_to_covernode_msg_key_pair(
+                        new_msg_key_pair_with_epoch.key_pair,
+                        new_msg_key_pair_with_epoch.epoch,
+                        new_msg_key_pair_with_epoch.created_at,
+                    )
                     .await;
 
                 if let Err(e) = update_msg_key_pair_epoch_attempt {
@@ -166,7 +173,7 @@ impl PublishedKeysTask {
         keys: &CoverDropPublicKeyHierarchy,
         latest_id_key_pair: &CoverNodeIdKeyPair,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<(CoverNodeIdKeyPair, Epoch)> {
+    ) -> anyhow::Result<CoverNodeIdKeyPairWithEpoch> {
         let UntrustedCandidateCoverNodeIdKeyPairWithCreatedAt {
             key_pair: candidate_id_key_pair,
             created_at: candidate_created_at,
@@ -224,7 +231,11 @@ impl PublishedKeysTask {
             &new_id_key_pair.public_key_hex()[..8]
         );
 
-        Ok((new_id_key_pair, signed_id_pk_with_epoch.epoch))
+        Ok(CoverNodeIdKeyPairWithEpoch::new(
+            new_id_key_pair,
+            signed_id_pk_with_epoch.epoch,
+            candidate_created_at,
+        ))
     }
 
     async fn process_msg_key_pair(
@@ -233,7 +244,7 @@ impl PublishedKeysTask {
         id_key_pairs: &[CoverNodeIdKeyPairWithEpoch],
         latest_id_key_pair: &CoverNodeIdKeyPairWithEpoch,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<(CoverNodeMessagingKeyPair, Epoch)> {
+    ) -> anyhow::Result<CoverNodeMessagingKeyPairWithEpoch> {
         let UntrustedCandidateCoverNodeMessagingKeyPairWithCreatedAt {
             key_pair: candidate_msg_key_pair,
             created_at: candidate_created_at,
@@ -268,7 +279,11 @@ impl PublishedKeysTask {
             )?;
 
             let new_epoch = self.api_client.post_covernode_msg_pk_form(form).await?;
-            Ok((signed_msg_key_pair, new_epoch))
+            Ok(CoverNodeMessagingKeyPairWithEpoch::new(
+                signed_msg_key_pair,
+                new_epoch,
+                candidate_created_at,
+            ))
         } else {
             // This is bad. Somehow we've managed to generate a key that cannot be validated with any
             // of our own identity keys.
