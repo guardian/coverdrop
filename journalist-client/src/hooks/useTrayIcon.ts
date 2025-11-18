@@ -9,11 +9,13 @@ import { useUserStore } from "../state/users.ts";
 interface UseTrayIconProps {
   maybeOpenVaultId: string | undefined;
   isImportantStuffInProgress: boolean;
+  isHung: boolean;
 }
 
 export const useTrayIcon = ({
   maybeOpenVaultId,
   isImportantStuffInProgress,
+  isHung,
 }: UseTrayIconProps) => {
   const [maybeTrayPromise, setMaybeTrayPromise] = useState<Promise<TrayIcon>>();
 
@@ -98,6 +100,13 @@ export const useTrayIcon = ({
         ctx.fill();
       }
 
+      if (isHung) {
+        ctx.font = `${width}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("⚠️", width / 2, height / 2);
+      }
+
       const afterImageData = ctx.getImageData(0, 0, width, height);
 
       if (maybeOpenVaultId) {
@@ -156,5 +165,6 @@ export const useTrayIcon = ({
     maybeOpenVaultId,
     hasUnreadMessages,
     isImportantStuffInProgress,
+    isHung,
   ]);
 };

@@ -1,15 +1,20 @@
 import { EuiProgress, EuiSpacer } from "@elastic/eui";
 import { useEffect, useState } from "react";
 import { useBackendEventListener } from "../hooks/useBackendEventListener.tsx";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface BackgroundTaskTrackerWithLoadingBarIfApplicableProps {
   isImportantStuffInProgress: boolean;
   setIsImportantStuffInProgress: (value: boolean) => void;
+  maybeHungAt: Date | null;
+  setMaybeHungAt: (value: Date | null) => void;
 }
 
 export const BackgroundTaskTrackerWithLoadingBarIfApplicable = ({
   isImportantStuffInProgress,
   setIsImportantStuffInProgress,
+  maybeHungAt,
+  setMaybeHungAt,
 }: BackgroundTaskTrackerWithLoadingBarIfApplicableProps) => {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const expandDetail = () => setIsDetailOpen(true);
@@ -25,6 +30,24 @@ export const BackgroundTaskTrackerWithLoadingBarIfApplicable = ({
       data: useBackendEventListener("dead_drops_remaining"),
     },
   ];
+
+  useEffect(() => {
+    console.log("background task updated", backgroundTasks);
+    if (maybeHungAt) {
+      // recover from hung state when background tasks change
+      setMaybeHungAt(null);
+    }
+    const timeout = setTimeout(async () => {
+      setMaybeHungAt(new Date());
+      await getCurrentWindow().unminimize();
+      await getCurrentWindow().show();
+    }, 60_000); // 1 minute timeout to consider the app "hung" (e.g. dead drops should run every 15s)
+
+    // clears the timeout if backgroundTasks change before the timeout completes
+    // background tasks can fail (e.g. network), but should still update the frontend,
+    // we're looking to catch the actual background tasks no longer running
+    return () => clearTimeout(timeout);
+  }, [JSON.stringify(backgroundTasks)]); // stringify to check for actual changes, rather than reference changes from re-renders
 
   const hasActiveBackgroundTasks = backgroundTasks.some(
     ({ data }) => data.remainingCount !== 0,

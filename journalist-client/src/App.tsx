@@ -2,6 +2,10 @@ import { ReactElement, useEffect, useState } from "react";
 
 import {
   EuiGlobalToastList,
+  EuiModal,
+  EuiModalBody,
+  EuiModalHeader,
+  EuiModalHeaderTitle,
   EuiPageTemplate,
   EuiPageTemplateProps,
   useEuiTheme,
@@ -62,7 +66,14 @@ const App = ({
 
   const [isImportantStuffInProgress, setIsImportantStuffInProgress] =
     useState(false);
-  useTrayIcon({ maybeOpenVaultId: vaultState?.id, isImportantStuffInProgress });
+
+  const [maybeHungAt, setMaybeHungAt] = useState<Date | null>(null);
+
+  useTrayIcon({
+    maybeOpenVaultId: vaultState?.id,
+    isImportantStuffInProgress,
+    isHung: !!maybeHungAt,
+  });
 
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,
@@ -214,6 +225,27 @@ const App = ({
           grow={grow}
           offset={offset}
         >
+          {maybeHungAt && (
+            <EuiModal onClose={() => {}}>
+              <EuiModalHeader>
+                <EuiModalHeaderTitle>
+                  Sentinel has stopped receiving/sending messages
+                </EuiModalHeaderTitle>
+              </EuiModalHeader>
+              <EuiModalBody>
+                <p>
+                  <em>This was detected {maybeHungAt.toString()}</em>
+                </p>
+                <p>
+                  Please contact digital investigations team ASAP, to help us
+                  track down the root cause.
+                </p>
+                Ideally leave Sentinel running at this screen, but if needs be
+                you can restart Sentinel to try to resolve the issue (please
+                take a screenshot first).
+              </EuiModalBody>
+            </EuiModal>
+          )}
           <EuiPageTemplate.Sidebar
             style={{
               position: "sticky",
@@ -227,6 +259,8 @@ const App = ({
             <BackgroundTaskTrackerWithLoadingBarIfApplicable
               isImportantStuffInProgress={isImportantStuffInProgress}
               setIsImportantStuffInProgress={setIsImportantStuffInProgress}
+              maybeHungAt={maybeHungAt}
+              setMaybeHungAt={setMaybeHungAt}
             />
             <ChatsSideBar
               journalistId={vaultState.id}

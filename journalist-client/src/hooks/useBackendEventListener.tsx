@@ -6,6 +6,7 @@ export const useBackendEventListener = (eventName: EventType) => {
   const [data, setData] = useState<{
     remainingCount: number | null;
     startingCount: number;
+    lastReceivedAt?: Date;
   }>({ remainingCount: 0, startingCount: 0 });
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export const useBackendEventListener = (eventName: EventType) => {
             event.payload === 0
               ? 0
               : Math.max(event.payload ?? 0, prev.startingCount),
+          lastReceivedAt: new Date(),
         };
       });
     });
