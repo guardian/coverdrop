@@ -62,7 +62,7 @@ const App = ({
 
   const [isImportantStuffInProgress, setIsImportantStuffInProgress] =
     useState(false);
-  useTrayIcon({ isVaultOpen: !!vaultState, isImportantStuffInProgress });
+  useTrayIcon({ maybeOpenVaultId: vaultState?.id, isImportantStuffInProgress });
 
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
     null,

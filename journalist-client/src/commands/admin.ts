@@ -47,3 +47,7 @@ export const getTrustAnchorDigests = (): Promise<
 > => {
   return invokeWithErrorMessage("get_trust_anchor_digests");
 };
+
+export const launchNewSentinelInstance = (): Promise<void> => {
+  return invokeWithErrorMessage("launch_new_instance");
+};

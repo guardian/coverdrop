@@ -4,6 +4,7 @@ use crate::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, GenericSnafu, JsonSerializeSnafu,
         VaultLockedSnafu, VaultSnafu,
     },
+    launch_tauri_instance,
     model::TrustedOrganizationPublicKeyAndDigest,
 };
 use chrono::{DateTime, Utc};
@@ -178,6 +179,15 @@ pub async fn update_journalist_status(
         .context(AnyhowSnafu {
             failed_to: "send patch request to API",
         })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn launch_new_instance() -> Result<(), CommandError> {
+    launch_tauri_instance()
+        .wait()
+        .expect("waiting on new instance");
 
     Ok(())
 }

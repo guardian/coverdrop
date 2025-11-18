@@ -1,5 +1,3 @@
-use std::{fs::File, path::Path, str::FromStr};
-
 use app_state::AppStateHandle;
 use clap::Parser as _;
 use commands::{
@@ -20,12 +18,15 @@ use logging::JournalistClientLogLayer;
 use model::Profiles;
 use notifications::start_notification_service;
 use reqwest::Url;
+use std::process::{Child, Command};
+use std::{fs::File, path::Path, str::FromStr};
 use tauri::{App, Manager as _};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
 
 use cli::Cli;
 
+use crate::commands::admin::launch_new_instance;
 use crate::commands::{
     admin::update_journalist_status,
     backup::{get_backup_contacts, set_backup_contacts},
@@ -94,6 +95,14 @@ fn handle_profiles(profiles_path: impl AsRef<Path>) -> anyhow::Result<Profiles> 
     Ok(profiles)
 }
 
+pub fn launch_tauri_instance() -> Child {
+    let current_executable_path = std::env::current_exe().expect("get path to current executable");
+
+    Command::new(current_executable_path)
+        .spawn()
+        .expect("failed to launch another Sentinel instance")
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let cli = Cli::parse();
@@ -132,6 +141,17 @@ pub fn run() {
             app.manage(app_state);
             app.manage(profiles);
 
+            let main_window = app
+                .get_webview_window("main")
+                .expect("Could not get main window during setup");
+
+            main_window
+                .show()
+                .expect("Could not show main window during setup");
+            main_window
+                .set_focus()
+                .expect("Could not focus main window during setup");
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
@@ -164,7 +184,8 @@ pub fn run() {
             burst_cover_messages,
             get_trust_anchor_digests,
             get_vault_keys,
-            add_trust_anchor
+            add_trust_anchor,
+            launch_new_instance
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

@@ -9,7 +9,11 @@ import {
   EuiPopover,
   EuiSpacer,
 } from "@elastic/eui";
-import { getPublicInfo, getVaultKeys } from "../commands/admin";
+import {
+  getPublicInfo,
+  getVaultKeys,
+  launchNewSentinelInstance,
+} from "../commands/admin";
 import { Logs } from "./Logs.tsx";
 import { PublicInfoPanel } from "./PublicInfoPanel";
 import { BurstCoverMessageModal } from "./BurstMessageModal";
@@ -339,6 +343,15 @@ export const SettingsPopover = ({
               Add trust anchor
             </EuiContextMenuItem>
           )}
+          <EuiContextMenuItem
+            icon="popout"
+            onClick={async () => {
+              setIsPopoverOpen(false);
+              await launchNewSentinelInstance();
+            }}
+          >
+            Open another Sentinel instance
+          </EuiContextMenuItem>
           <EuiContextMenuItem size="s">
             <EuiSpacer size="s" />
             <VersionInfo />

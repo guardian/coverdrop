@@ -7,12 +7,12 @@ import { Image } from "@tauri-apps/api/image";
 import { useUserStore } from "../state/users.ts";
 
 interface UseTrayIconProps {
-  isVaultOpen: boolean;
+  maybeOpenVaultId: string | undefined;
   isImportantStuffInProgress: boolean;
 }
 
 export const useTrayIcon = ({
-  isVaultOpen,
+  maybeOpenVaultId,
   isImportantStuffInProgress,
 }: UseTrayIconProps) => {
   const [maybeTrayPromise, setMaybeTrayPromise] = useState<Promise<TrayIcon>>();
@@ -100,7 +100,9 @@ export const useTrayIcon = ({
 
       const afterImageData = ctx.getImageData(0, 0, width, height);
 
-      if (!isVaultOpen) {
+      if (maybeOpenVaultId) {
+        await tray.setTooltip(`${await getName()} (${maybeOpenVaultId})`);
+      } else {
         // desaturate the image to greyscale when the vault is closed
         const pixels = afterImageData.data;
         for (let i = 0; i < pixels.length; i += 4) {
@@ -151,7 +153,7 @@ export const useTrayIcon = ({
     };
   }, [
     maybeTrayPromise,
-    isVaultOpen,
+    maybeOpenVaultId,
     hasUnreadMessages,
     isImportantStuffInProgress,
   ]);
