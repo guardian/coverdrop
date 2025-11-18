@@ -12,7 +12,7 @@ set -eu
 
 npm run storybook:build
 
-PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.54.2-jammy
+PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.56.1-jammy
 
 docker run \
     --rm \

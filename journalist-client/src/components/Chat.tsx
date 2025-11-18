@@ -94,7 +94,7 @@ export const Chat = ({
         m.userPk === userReplyKey &&
         !m.read,
     );
-    const is_marked_as_unread = userStore.users.find(
+    const is_marked_as_unread = userStore.users?.find?.(
       (user) => user.userPk === userReplyKey,
     )?.markedAsUnread;
 
