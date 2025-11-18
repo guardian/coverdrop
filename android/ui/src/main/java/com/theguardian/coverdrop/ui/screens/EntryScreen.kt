@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.theguardian.coverdrop.core.api.models.SystemStatus
@@ -92,19 +92,19 @@ private fun EntryScreenTopBar() {
 @Composable
 private fun EntryScreenWaiting() {
     ScreenContentWrapper {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        EntryScreenTopBar()
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            EntryScreenTopBar()
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = rememberScreenInsets().bottom),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = rememberScreenInsets().bottom),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+            }
         }
-    }
     }
 }
 

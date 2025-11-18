@@ -40,7 +40,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -151,9 +151,10 @@ private fun NewMessageScreen(
         )
     }
     ScreenContentWrapper {
-        Column(modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             CoverDropTopAppBar(
                 onNavigationOptionPressed = onTryToExit,

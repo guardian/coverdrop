@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.theguardian.coverdrop.ui.R
@@ -86,83 +86,83 @@ fun MessageSentScreen(
     }
     ScreenContentWrapper {
 
-    Column(
-        modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
-    ) {
-
-        CoverDropTopAppBar(
-            onNavigationOptionPressed = onTryToExit,
-            navigationOption = TopBarNavigationOption.Exit,
-        )
-
         Column(
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(Padding.L)
-                .weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
-            Text(
-                text = context.getString(R.string.screen_message_sent_header_main),
-                style = MaterialTheme.typography.h2,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = Padding.M),
-            )
-            Text(
-                text = stringResource(R.string.screen_message_sent_header_sub),
-                style = MaterialTheme.typography.body1,
-                modifier = Modifier.padding(top = Padding.M),
-            )
 
-            Divider(
-                color = MaterialTheme.colors.onBackground,
-                thickness = 1.dp,
-                modifier = Modifier
-                    .padding(Padding.L)
-                    .alpha(0.2f)
+            CoverDropTopAppBar(
+                onNavigationOptionPressed = onTryToExit,
+                navigationOption = TopBarNavigationOption.Exit,
             )
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(1f),
-                horizontalAlignment = Alignment.Start
+                    .verticalScroll(rememberScrollState())
+                    .padding(Padding.L)
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = context.getString(R.string.screen_message_sent_header2_main),
-                    style = MaterialTheme.typography.h3,
+                    text = context.getString(R.string.screen_message_sent_header_main),
+                    style = MaterialTheme.typography.h2,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = Padding.M),
                 )
                 Text(
-                    text = context.getString(R.string.screen_message_sent_content_main),
+                    text = stringResource(R.string.screen_message_sent_header_sub),
                     style = MaterialTheme.typography.body1,
-                    modifier = Modifier.padding(top = Padding.M, bottom = Padding.XL),
+                    modifier = Modifier.padding(top = Padding.M),
                 )
-                TwoLineButton(
-                    firstLine = stringResource(R.string.screen_message_sent_help_button_what_to_expect_as_a_reply),
-                    secondLine = stringResource(R.string.screen_message_sent_help_button_read_more),
+
+                Divider(
+                    color = MaterialTheme.colors.onBackground,
+                    thickness = 1.dp,
+                    modifier = Modifier
+                        .padding(Padding.L)
+                        .alpha(0.2f)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(1f),
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    navController.navigate(CoverDropDestinations.HELP_REPLY_EXPECTATIONS)
+                    Text(
+                        text = context.getString(R.string.screen_message_sent_header2_main),
+                        style = MaterialTheme.typography.h3,
+                    )
+                    Text(
+                        text = context.getString(R.string.screen_message_sent_content_main),
+                        style = MaterialTheme.typography.body1,
+                        modifier = Modifier.padding(top = Padding.M, bottom = Padding.XL),
+                    )
+                    TwoLineButton(
+                        firstLine = stringResource(R.string.screen_message_sent_help_button_what_to_expect_as_a_reply),
+                        secondLine = stringResource(R.string.screen_message_sent_help_button_read_more),
+                    ) {
+                        navController.navigate(CoverDropDestinations.HELP_REPLY_EXPECTATIONS)
+                    }
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier
-                .padding(Padding.L)
-        ) {
-            PrimaryButton(
-                text = stringResource(R.string.screen_message_sent_button_go_to_inbox),
-                onClick = { navController.navigate(CoverDropDestinations.INBOX_ROUTE) },
-                modifier = Modifier.fillMaxWidth(1f),
-            )
-            SecondaryButton(
-                text = stringResource(R.string.screen_message_sent_button_logout),
-                onClick = onTryToExit,
-                modifier = Modifier.fillMaxWidth(1f),
-            )
+            Column(
+                modifier = Modifier
+                    .padding(Padding.L)
+            ) {
+                PrimaryButton(
+                    text = stringResource(R.string.screen_message_sent_button_go_to_inbox),
+                    onClick = { navController.navigate(CoverDropDestinations.INBOX_ROUTE) },
+                    modifier = Modifier.fillMaxWidth(1f),
+                )
+                SecondaryButton(
+                    text = stringResource(R.string.screen_message_sent_button_logout),
+                    onClick = onTryToExit,
+                    modifier = Modifier.fillMaxWidth(1f),
+                )
+            }
         }
-    }
     }
 }
 

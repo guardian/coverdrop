@@ -33,9 +33,10 @@ import java.util.EnumSet
 @Composable
 internal fun IntegrityViolationScreen(violations: EnumSet<IntegrityViolation>) {
     ScreenContentWrapper {
-        Column(modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             val context = LocalContext.current
             CoverDropTopAppBar(

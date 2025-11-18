@@ -88,9 +88,10 @@ fun HowThisWorksScreen(
     val context = LocalContext.current
 
     ScreenContentWrapper {
-        Column(modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             CoverDropTopAppBar(
                 onNavigationOptionPressed = { navController.navigateUp() }

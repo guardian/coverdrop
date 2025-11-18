@@ -23,7 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.theguardian.coverdrop.core.models.JournalistInfo
@@ -159,9 +159,10 @@ private fun MainContent(
     now: Instant = Instant.now(),
 ) {
     ScreenContentWrapper {
-        Column(modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             CoverDropTopAppBar(
                 navigationOption = TopBarNavigationOption.Exit,
@@ -181,15 +182,15 @@ private fun MainContent(
                     }
                 }
 
-            is InboxUiState.ShowMessages -> {
-                Column(
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .weight(1f)
-                ) {
-                    ThreadsList(screenState, messageExpiryDuration, navController, now)
+                is InboxUiState.ShowMessages -> {
+                    Column(
+                        modifier = Modifier
+                            .verticalScroll(rememberScrollState())
+                            .weight(1f)
+                    ) {
+                        ThreadsList(screenState, messageExpiryDuration, navController, now)
+                    }
                 }
-            }
 
                 is InboxUiState.Exit -> {
                     navController.popBackStack(CoverDropDestinations.ENTRY_ROUTE, inclusive = false)

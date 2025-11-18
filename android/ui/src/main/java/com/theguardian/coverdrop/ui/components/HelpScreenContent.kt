@@ -25,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.theguardian.coverdrop.core.ui.models.UiPassphraseWord
 import com.theguardian.coverdrop.ui.R
-import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 import com.theguardian.coverdrop.ui.theme.CoverDropPreviewSurface
 import com.theguardian.coverdrop.ui.theme.NeutralMiddle
 import com.theguardian.coverdrop.ui.theme.Padding
@@ -33,6 +32,7 @@ import com.theguardian.coverdrop.ui.theme.RoundedCornerShape
 import com.theguardian.coverdrop.ui.theme.SurfaceBorder
 import com.theguardian.coverdrop.ui.theme.TextWhiteMuted
 import com.theguardian.coverdrop.ui.utils.parseHighlightedTextIntoAnnotated
+import com.theguardian.coverdrop.ui.utils.rememberScreenInsets
 
 internal enum class HeadlineLevel {
     H1, H2, H3
@@ -199,9 +199,10 @@ internal fun HelpScreenContent(
     modifier: Modifier = Modifier,
     onClickMapping: Map<String, () -> Unit> = emptyMap(),
 ) {
-    Column(modifier
-        .verticalScroll(rememberScrollState())
-        .padding(bottom = rememberScreenInsets().bottom)
+    Column(
+        modifier
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = rememberScreenInsets().bottom)
     ) {
         Column(modifier = modifier.padding(16.dp)) {
             ComponentsColumn(components, onClickMapping)

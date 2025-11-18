@@ -5,7 +5,6 @@ import com.theguardian.coverdrop.core.models.JournalistInfo
 import com.theguardian.coverdrop.core.models.JournalistVisibility
 import com.theguardian.coverdrop.core.models.Message
 import com.theguardian.coverdrop.core.models.MessageThread
-import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.ui.R
 import java.time.Duration
 import java.time.Instant

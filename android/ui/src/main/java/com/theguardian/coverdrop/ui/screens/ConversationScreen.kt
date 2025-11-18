@@ -41,7 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.theguardian.coverdrop.core.models.JournalistInfo
 import com.theguardian.coverdrop.core.models.Message
@@ -93,23 +93,24 @@ private fun ConversationScreen(
 ) {
     val messages = thread?.messages ?: emptyList()
     ScreenContentWrapper {
-        Column(modifier = Modifier
-            .fillMaxHeight(1f)
-            .padding(bottom = rememberScreenInsets().bottom)
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(1f)
+                .padding(bottom = rememberScreenInsets().bottom)
         ) {
             CoverDropTopAppBar(
                 onNavigationOptionPressed = navigateBack,
             )
 
-        val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .verticalScroll(scrollState)
-                .fillMaxWidth(1f)
-                .weight(1f)
-        ) {
-            ConversationMainContent(messages, thread, now)
-        }
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .verticalScroll(scrollState)
+                    .fillMaxWidth(1f)
+                    .weight(1f)
+            ) {
+                ConversationMainContent(messages, thread, now)
+            }
 
             LaunchedEffect(messages) {
                 scrollState.animateScrollTo(scrollState.maxValue)

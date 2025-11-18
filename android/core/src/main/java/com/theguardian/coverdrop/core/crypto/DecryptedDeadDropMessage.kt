@@ -1,8 +1,6 @@
 package com.theguardian.coverdrop.core.crypto
 
 import com.theguardian.coverdrop.core.api.models.JournalistIdentity
-import com.theguardian.coverdrop.core.crypto.DecryptedDeadDropMessage.Handover
-import com.theguardian.coverdrop.core.crypto.DecryptedDeadDropMessage.Text
 import com.theguardian.coverdrop.core.generated.FLAG_J2U_MESSAGE_TYPE_HANDOVER
 import com.theguardian.coverdrop.core.generated.FLAG_J2U_MESSAGE_TYPE_MESSAGE
 import com.theguardian.coverdrop.core.generated.MAX_JOURNALIST_IDENTITY_LEN

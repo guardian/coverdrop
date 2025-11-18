@@ -2,7 +2,6 @@ package com.theguardian.coverdrop.core.utils
 
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.Subject
-import com.google.common.truth.Subject.Factory
 import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertAbout
 import com.theguardian.coverdrop.core.persistence.StoredMessage

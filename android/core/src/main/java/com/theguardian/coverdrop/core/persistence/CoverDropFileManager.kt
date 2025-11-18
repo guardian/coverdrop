@@ -9,7 +9,6 @@ import com.theguardian.coverdrop.core.utils.splitAt
 import java.io.File
 import java.io.FileNotFoundException
 import java.security.MessageDigest
-import java.time.Instant
 
 private const val FILE_MANAGER_COVERDROP_DIR = "coverdrop"
 private const val FILE_MANAGER_CHECKSUM_DIGEST = "SHA-256"

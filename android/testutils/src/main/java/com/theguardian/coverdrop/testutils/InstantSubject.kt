@@ -2,7 +2,6 @@ package com.theguardian.coverdrop.testutils
 
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.Subject
-import com.google.common.truth.Subject.Factory
 import com.google.common.truth.Truth.assertAbout
 import java.time.Duration
 import java.time.Instant

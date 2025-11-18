@@ -92,7 +92,8 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
             val integrityViolationsState = integrityViolationMutableStateFlow.collectAsState(
                 initial = EnumSet.noneOf(IntegrityViolation::class.java)
             )
-            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars =
+                false
             MainActivityContent(integrityViolationsState.value)
         }
     }

@@ -12,11 +12,9 @@ import com.theguardian.coverdrop.core.persistence.CoverDropNamespace
 import com.theguardian.coverdrop.core.persistence.MailboxContent
 import com.theguardian.coverdrop.core.utils.DefaultClock
 import com.theguardian.coverdrop.core.utils.expectThrows
-import com.theguardian.coverdrop.testutils.TestClock
 import org.junit.Assume.assumeNoException
 import org.junit.Before
 import org.junit.Test
-import java.time.Instant
 
 internal class EncryptedStorageWithPasswordTest : EncryptedStorageTest() {
     val context: Context = InstrumentationRegistry.getInstrumentation().targetContext

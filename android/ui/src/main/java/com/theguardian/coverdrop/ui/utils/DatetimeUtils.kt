@@ -1,8 +1,6 @@
 package com.theguardian.coverdrop.ui.utils
 
 import android.text.format.DateUtils
-import com.theguardian.coverdrop.core.utils.DefaultClock
-import com.theguardian.coverdrop.core.utils.IClock
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Date

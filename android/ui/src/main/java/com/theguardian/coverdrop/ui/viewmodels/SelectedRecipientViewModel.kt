@@ -5,7 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.theguardian.coverdrop.core.ICoverDropPublicDataRepository
 import com.theguardian.coverdrop.core.models.JournalistInfo
-import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.*
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.EmptySelectionWithChoice
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.Initializing
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.SingleRecipientForced
+import com.theguardian.coverdrop.ui.viewmodels.SelectedRecipientState.SingleRecipientWithChoice
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

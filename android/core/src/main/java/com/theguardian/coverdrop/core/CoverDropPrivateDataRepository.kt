@@ -9,7 +9,12 @@ import com.theguardian.coverdrop.core.crypto.EncryptionKeyPair
 import com.theguardian.coverdrop.core.crypto.Passphrase
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueHint
 import com.theguardian.coverdrop.core.encryptedstorage.IEncryptedStorageSession
-import com.theguardian.coverdrop.core.models.*
+import com.theguardian.coverdrop.core.models.JournalistId
+import com.theguardian.coverdrop.core.models.JournalistInfo
+import com.theguardian.coverdrop.core.models.JournalistVisibility
+import com.theguardian.coverdrop.core.models.Message
+import com.theguardian.coverdrop.core.models.MessageThread
+import com.theguardian.coverdrop.core.models.PaddedCompressedString
 import com.theguardian.coverdrop.core.persistence.MailboxContent
 import com.theguardian.coverdrop.core.persistence.StoredMessage
 import com.theguardian.coverdrop.core.persistence.StoredMessageThread

@@ -14,7 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.theguardian.coverdrop.core.models.DebugContext
@@ -42,16 +42,16 @@ fun AboutRoute(navController: NavHostController) {
 @Composable
 private fun AboutScreen(navController: NavHostController, debugContext: DebugContext?) {
     ScreenContentWrapper {
-    Column(modifier = Modifier.fillMaxHeight(1f)) {
-        CoverDropTopAppBar(
-            onNavigationOptionPressed = { navController.navigateUp() }
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = rememberScreenInsets().bottom)
-        ) {
+        Column(modifier = Modifier.fillMaxHeight(1f)) {
+            CoverDropTopAppBar(
+                onNavigationOptionPressed = { navController.navigateUp() }
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = rememberScreenInsets().bottom)
+            ) {
                 Column(
                     modifier = Modifier
                         .padding(Padding.L)

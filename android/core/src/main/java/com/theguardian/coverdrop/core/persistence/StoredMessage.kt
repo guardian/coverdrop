@@ -27,8 +27,7 @@ internal enum class StoredMessageType(val flag: Byte) {
 /**
  * A single message as stored within [MailboxContent].
  */
-@Suppress("DataClassPrivateConstructor")
-internal data class StoredMessage private constructor(
+internal data class StoredMessage(
     val timestamp: Instant,
     val payload: String,
     val type: StoredMessageType,
@@ -59,7 +58,6 @@ internal data class StoredMessage private constructor(
     }
 
     companion object {
-        @Suppress("UsePropertyAccessSyntax")
         internal fun deserialize(bytes: ByteArray): StoredMessage {
             val buffer = ByteBuffer.wrap(bytes)
 

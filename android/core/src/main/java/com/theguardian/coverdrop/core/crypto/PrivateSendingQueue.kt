@@ -1,5 +1,6 @@
 package com.theguardian.coverdrop.core.crypto
 
+import com.theguardian.coverdrop.core.crypto.PrivateSendingQueue.Companion.fromBytes
 import com.theguardian.coverdrop.core.generated.USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN
 import com.theguardian.coverdrop.core.utils.getByteArray
 import com.theguardian.coverdrop.core.utils.nextByteArray

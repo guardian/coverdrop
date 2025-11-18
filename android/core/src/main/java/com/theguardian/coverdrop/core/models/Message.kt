@@ -6,7 +6,6 @@ import com.theguardian.coverdrop.core.generated.MESSAGE_VALID_FOR_DURATION_IN_SE
 import com.theguardian.coverdrop.core.persistence.StoredMessage
 import com.theguardian.coverdrop.core.persistence.StoredMessageType
 import com.theguardian.coverdrop.core.utils.DefaultClock
-import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
