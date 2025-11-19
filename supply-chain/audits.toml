@@ -97,6 +97,12 @@ who = "Mario Savarese <mario.savarese@guardian.co.uk>"
 criteria = "safe-to-deploy"
 version = "4.4.9"
 
+[[audits.crypto_secretbox]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.1"
+notes = "Simple, no unsafe code."
+
 [[audits.curve25519-dalek]]
 who = "Sam Cutler <sam.cutler@theguardian.com>"
 criteria = "safe-to-deploy"
@@ -453,6 +459,12 @@ criteria = "safe-to-deploy"
 delta = "0.101.7 -> 0.102.4"
 notes = "looks good"
 
+[[audits.salsa20]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.10.2"
+notes = "Simple, no unsafe code."
+
 [[audits.serde_with]]
 who = "Sam Cutler <sam.cutler@theguardian.com>"
 criteria = "safe-to-deploy"
@@ -485,6 +497,12 @@ delta = "2.0.0 -> 3.1.1"
 who = "Marjan Kalanaki <marjan.kalanaki@guardian.co.uk>"
 criteria = "safe-to-run"
 delta = "2.0.0 -> 3.1.1"
+
+[[audits.shamirsecretsharing]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.7"
+notes = "Simple, no unsafe code. Appears well-structured and focused."
 
 [[audits.sketches-ddsketch]]
 who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"

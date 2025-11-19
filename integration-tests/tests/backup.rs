@@ -291,10 +291,12 @@ async fn backup_scenario() {
     .expect("No share could be unwrapped");
 
     // Complete restore
+    let k = 1;
     let restored_vault = coverup_finish_restore_step(
         backup_state,
         vec![wrapped_share.clone()],
         &[backup_encryption_key_2b.clone()],
+        k,
     )
     .expect("Failed to finish restore");
 

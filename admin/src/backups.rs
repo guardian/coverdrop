@@ -232,8 +232,9 @@ pub async fn backup_complete_restore(
     let backup_id_key_pairs = load_backup_id_key_pairs(keys_path, &org_pks, now)?;
     let backup_msg_key_pairs = load_backup_msg_key_pairs(keys_path, &backup_id_key_pairs, now)?;
 
+    let k = 1;
     let restored_encrypted_vault =
-        coverup_finish_restore_step(in_progress_bundle, shares, &backup_msg_key_pairs)
+        coverup_finish_restore_step(in_progress_bundle, shares, &backup_msg_key_pairs, k)
             .with_context(|| "Failed to complete restore step")?;
 
     // Save the restored encrypted vault to disk

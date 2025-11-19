@@ -3,8 +3,8 @@ use crate::backup::roles::BackupMsg;
 use crate::crypto::keys::encryption::{SignedEncryptionKeyPair, SignedPublicEncryptionKey};
 use crate::crypto::keys::signing::{SignedPublicSigningKey, SignedSigningKeyPair};
 use crate::crypto::{
-    AnonymousBox, SecretBox, SecretSharingScheme, SecretSharingSecret, SecretSharingShare,
-    SingleShareSecretSharing,
+    AnonymousBox, GeneralSecretSharing, SecretBox, SecretSharingScheme, SecretSharingSecret,
+    SecretSharingShare, ShareCount, SingleShareSecretSharing,
 };
 use crate::padded_byte_vector::SteppingPaddedByteVector;
 use crate::protocol::backup_data::{
@@ -31,7 +31,7 @@ pub struct RecoveryContact {
 /// the backup admin's encryption key. The resulting backup data is signed using the journalist's
 /// identity key and returned.
 ///
-/// `k` must be 1 for now, meaning that any single recovery contact can help restore the backup.
+/// `k` must be at least 1.
 /// `n` is determined by the number of provided recovery contacts, and must be at least `k`.
 pub fn sentinel_create_backup(
     encrypted_vault: Vec<u8>,
@@ -39,16 +39,26 @@ pub fn sentinel_create_backup(
     journalist_identity_key: SignedSigningKeyPair<JournalistId>,
     backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
     recovery_contacts: Vec<RecoveryContact>,
-    k: usize,
+    k: ShareCount,
     now: DateTime<Utc>,
 ) -> anyhow::Result<VerifiedBackupData> {
     let n = recovery_contacts.len();
 
-    if k != 1 {
+    // Cast `n` to ShareCount
+    let n = ShareCount::try_from(n).map_err(|e| {
+        anyhow::anyhow!(
+            "Number of recovery contacts (n={}) exceeds maximum allowed: {}",
+            n,
+            e
+        )
+    })?;
+
+    if k < 1 {
         return Err(anyhow::anyhow!(
-            "The backup protocol only supports k=1, but got k={k}"
+            "The backup protocol requires k >= 1, but got k={k}"
         ));
     }
+
     if n < k {
         return Err(anyhow::anyhow!(
             "Cannot create backup with {n} recovery contacts, at least {k} are required"
@@ -65,8 +75,13 @@ pub fn sentinel_create_backup(
         SecretBox::encrypt(sk.as_bytes().into(), padded_encrypted_vault)
             .map_err(|e| anyhow::anyhow!("Failed to encrypt padded vault: {}", e))?;
 
-    // Split the ephemeral key into `k` shares
-    let shares = SingleShareSecretSharing::split(sk, n)?;
+    // Split the ephemeral key into shares based on k
+    let shares = if k == 1 {
+        SingleShareSecretSharing::split(sk, k, n)?
+    } else {
+        // k > 1: use GeneralSecretSharing
+        GeneralSecretSharing::split(sk, k, n)?
+    };
 
     // Encrypt each share under a recovery contact's messaging key; for this, zip them together
     if shares.len() != recovery_contacts.len() {
@@ -240,9 +255,16 @@ pub fn coverup_finish_restore_step(
     backup_state: BackupRestorationInProgress,
     wrapped_shares: Vec<WrappedSecretShare>,
     backup_admin_encryption_key_pairs: &[SignedEncryptionKeyPair<BackupMsg>],
+    k: ShareCount,
 ) -> anyhow::Result<Vec<u8>> {
     if wrapped_shares.is_empty() {
         return Err(anyhow::anyhow!("No wrapped shares provided"));
+    }
+
+    if k < 1 {
+        return Err(anyhow::anyhow!(
+            "The backup protocol requires k >= 1, but got k={k}"
+        ));
     }
 
     // Unwrap the shares using the backup admin's encryption key pair
@@ -253,21 +275,23 @@ pub fn coverup_finish_restore_step(
         })
         .collect();
 
-    if unwrapped_shares.is_empty() {
-        return Err(anyhow::anyhow!("No unwrapped shares available"));
+    if unwrapped_shares.len() < k as usize {
+        return Err(anyhow::anyhow!(
+            "Not enough unwrapped shares available: got {}, need {}",
+            unwrapped_shares.len(),
+            k
+        ));
     }
 
-    // For now, we only support k=1, so we need exactly one share to reconstruct the key
-    let unwrapped_shares: [SecretSharingShare; 1] = unwrapped_shares
-        .into_iter()
-        .take(1)
-        .collect::<Vec<_>>()
-        .try_into()
-        .map_err(|_| anyhow::anyhow!("Failed to collect exactly one unwrapped share"))?;
-
-    // Combine the shares to reconstruct the ephemeral symmetric key
-    let sk = SingleShareSecretSharing::combine(unwrapped_shares)
-        .map_err(|e| anyhow::anyhow!("Failed to combine shares: {}", e))?;
+    // Combine the shares to reconstruct the ephemeral symmetric key based on k
+    let sk = if k == 1 {
+        SingleShareSecretSharing::combine(unwrapped_shares, k)
+            .map_err(|e| anyhow::anyhow!("Failed to combine shares: {}", e))?
+    } else {
+        // k > 1: use GeneralSecretSharing
+        GeneralSecretSharing::combine(unwrapped_shares, k)
+            .map_err(|e| anyhow::anyhow!("Failed to combine shares: {}", e))?
+    };
 
     // Decrypt the padded vault using the reconstructed key
     let padded_encrypted_vault = SecretBox::decrypt(
@@ -410,6 +434,7 @@ mod tests {
             backup_state,
             vec![wrapped_share],
             &vec![backup_admin_encryption_pair],
+            1, // k=1
         )
         .expect("Failed to finish restore");
 
@@ -649,6 +674,7 @@ mod tests {
             backup_state,
             vec![wrapped_share],
             &vec![backup_admin_encryption_pair],
+            1, // k=1
         );
 
         assert!(
@@ -714,6 +740,7 @@ mod tests {
             backup_state,
             vec![wrapped_share],
             &vec![backup_admin_encryption_pair],
+            1, // k=1
         );
 
         assert!(
@@ -770,6 +797,212 @@ mod tests {
             .unwrap_err()
             .to_string()
             .contains("journalist identity does not match"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_round_trip_backup_and_restore_k2() -> anyhow::Result<()> {
+        // Create test data
+        let (journalist_identity, journalist_signing_pair, _) =
+            create_test_journalist("journalist1".to_string())?;
+        let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
+
+        // Create three recovery contacts (n=3)
+        let (rc1_identity, _, rc1_messaging_pair) =
+            create_test_journalist("recovery_contact1".to_string())?;
+        let (rc2_identity, _, rc2_messaging_pair) =
+            create_test_journalist("recovery_contact2".to_string())?;
+        let (rc3_identity, _, rc3_messaging_pair) =
+            create_test_journalist("recovery_contact3".to_string())?;
+
+        let encrypted_vault = create_test_vault_data();
+
+        // Create recovery contacts
+        let recovery_contact1 = RecoveryContact {
+            identity: rc1_identity,
+            latest_messaging_key: rc1_messaging_pair.public_key().clone(),
+        };
+        let recovery_contact2 = RecoveryContact {
+            identity: rc2_identity,
+            latest_messaging_key: rc2_messaging_pair.public_key().clone(),
+        };
+        let recovery_contact3 = RecoveryContact {
+            identity: rc3_identity,
+            latest_messaging_key: rc3_messaging_pair.public_key().clone(),
+        };
+
+        // Step 1: Create backup with k=2, n=3
+        let signed_backup_data = sentinel_create_backup(
+            encrypted_vault.clone(),
+            journalist_identity.clone(),
+            journalist_signing_pair.clone(),
+            backup_admin_encryption_pair.public_key().clone(),
+            vec![recovery_contact1, recovery_contact2, recovery_contact3],
+            2, // k=2
+            now(),
+        )
+        .expect("Failed to create backup");
+
+        // Step 2: Initiate restore
+        let backup_state = coverup_initiate_restore_step(
+            journalist_identity.clone(),
+            signed_backup_data.to_unverified()?,
+            &journalist_signing_pair.public_key(),
+            &vec![backup_admin_encryption_pair.clone()],
+            now(),
+        )
+        .expect("Failed to initiate restore");
+
+        // Step 3: Two recovery contacts unwrap their shares (need k=2 shares)
+        let wrapped_share1 = sentinel_restore_try_unwrap_and_wrap_share_step(
+            backup_state.encrypted_shares.clone(),
+            vec![rc1_messaging_pair],
+            backup_admin_encryption_pair.public_key().clone(),
+        )
+        .expect("Failed to unwrap share 1")
+        .expect("No share 1 could be unwrapped");
+
+        let wrapped_share2 = sentinel_restore_try_unwrap_and_wrap_share_step(
+            backup_state.encrypted_shares.clone(),
+            vec![rc2_messaging_pair],
+            backup_admin_encryption_pair.public_key().clone(),
+        )
+        .expect("Failed to unwrap share 2")
+        .expect("No share 2 could be unwrapped");
+
+        // Step 4: Complete restore with 2 shares (k=2)
+        let restored_vault = coverup_finish_restore_step(
+            backup_state,
+            vec![wrapped_share1, wrapped_share2],
+            &vec![backup_admin_encryption_pair],
+            2, // k=2
+        )
+        .expect("Failed to finish restore");
+
+        // Verify the round-trip worked
+        assert_eq!(encrypted_vault, restored_vault);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_k2_requires_two_shares() -> anyhow::Result<()> {
+        // Create test data
+        let (journalist_identity, journalist_signing_pair, _) =
+            create_test_journalist("journalist1".to_string())?;
+        let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
+
+        // Create three recovery contacts (n=3)
+        let (rc1_identity, _, rc1_messaging_pair) =
+            create_test_journalist("recovery_contact1".to_string())?;
+        let (rc2_identity, _, rc2_messaging_pair) =
+            create_test_journalist("recovery_contact2".to_string())?;
+        let (rc3_identity, _, rc3_messaging_pair) =
+            create_test_journalist("recovery_contact3".to_string())?;
+
+        let encrypted_vault = create_test_vault_data();
+
+        // Create recovery contacts
+        let recovery_contact1 = RecoveryContact {
+            identity: rc1_identity,
+            latest_messaging_key: rc1_messaging_pair.public_key().clone(),
+        };
+        let recovery_contact2 = RecoveryContact {
+            identity: rc2_identity,
+            latest_messaging_key: rc2_messaging_pair.public_key().clone(),
+        };
+        let recovery_contact3 = RecoveryContact {
+            identity: rc3_identity,
+            latest_messaging_key: rc3_messaging_pair.public_key().clone(),
+        };
+
+        // Step 1: Create backup with k=2, n=3
+        let signed_backup_data = sentinel_create_backup(
+            encrypted_vault.clone(),
+            journalist_identity.clone(),
+            journalist_signing_pair.clone(),
+            backup_admin_encryption_pair.public_key().clone(),
+            vec![recovery_contact1, recovery_contact2, recovery_contact3],
+            2, // k=2
+            now(),
+        )
+        .expect("Failed to create backup");
+
+        // Step 2: Initiate restore
+        let backup_state = coverup_initiate_restore_step(
+            journalist_identity.clone(),
+            signed_backup_data.to_unverified()?,
+            &journalist_signing_pair.public_key(),
+            &vec![backup_admin_encryption_pair.clone()],
+            now(),
+        )
+        .expect("Failed to initiate restore");
+
+        // Step 3: Only one recovery contact unwraps their share
+        let wrapped_share1 = sentinel_restore_try_unwrap_and_wrap_share_step(
+            backup_state.encrypted_shares.clone(),
+            vec![rc1_messaging_pair],
+            backup_admin_encryption_pair.public_key().clone(),
+        )
+        .expect("Failed to unwrap share 1")
+        .expect("No share 1 could be unwrapped");
+
+        // Step 4: Try to complete restore with only 1 share - should fail
+        let result = coverup_finish_restore_step(
+            backup_state,
+            vec![wrapped_share1],
+            &vec![backup_admin_encryption_pair],
+            2, // k=2
+        );
+
+        assert!(
+            result.is_err(),
+            "Restore should fail with only 1 share when k=2"
+        );
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Not enough unwrapped shares"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_n_exceeds_max_share_count() -> anyhow::Result<()> {
+        // Create test data
+        let (journalist_identity, journalist_signing_pair, _) =
+            create_test_journalist("journalist1".to_string())?;
+        let backup_admin_encryption_pair = create_test_backup_admin_encryption_key_pair();
+        let encrypted_vault = create_test_vault_data();
+
+        // Create 256 recovery contacts (n=256 exceeds u8::MAX which is 255)
+        let mut recovery_contacts = Vec::new();
+        for i in 0..256 {
+            let (identity, _, messaging_pair) =
+                create_test_journalist(format!("recovery_contact{}", i))?;
+            recovery_contacts.push(RecoveryContact {
+                identity,
+                latest_messaging_key: messaging_pair.public_key().clone(),
+            });
+        }
+
+        // Attempt to create backup with n=256 - should fail during ShareCount conversion
+        let result = sentinel_create_backup(
+            encrypted_vault,
+            journalist_identity,
+            journalist_signing_pair,
+            backup_admin_encryption_pair.public_key().clone(),
+            recovery_contacts,
+            1, // k=1
+            now(),
+        );
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Number of recovery contacts (n=256) exceeds maximum allowed"));
 
         Ok(())
     }

@@ -43,6 +43,7 @@ serde_cbor.workspace = true
 serde_json.workspace = true
 serde_with.workspace = true
 sha2.workspace = true
+shamirsecretsharing = "0.1.7"
 sodiumoxide.workspace = true
 sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite"] }
 tracing = { workspace = true }

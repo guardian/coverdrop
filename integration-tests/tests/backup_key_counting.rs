@@ -1,29 +1,4 @@
-use common::api::models::journalist_id::JournalistIdentity;
-use common::crypto::keys::serde::StorableKeyMaterial;
-use common::protocol::backup::sentinel_restore_try_unwrap_and_wrap_share_step;
-use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
-use common::protocol::backup_data::EncryptedSecretShare;
-use common::{
-    api::forms::{
-        GetBackupDataForm, PostBackupDataForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
-    },
-    backup::{
-        keys::{generate_backup_id_key_pair, generate_backup_msg_key_pair},
-        roles::{BackupId, BackupMsg},
-    },
-    crypto::keys::{encryption::SignedEncryptionKeyPair, signing::SignedSigningKeyPair},
-    protocol::{
-        backup::{sentinel_create_backup, RecoveryContact},
-        roles::JournalistMessaging,
-    },
-};
-use integration_tests::api_wrappers::get_and_verify_public_keys;
-use integration_tests::{
-    api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
-};
-use journalist_vault::JournalistVault;
-use std::time::Duration;
-use std::{fs, slice};
+use integration_tests::CoverDropStack;
 
 #[tokio::test]
 /// This test verifies the key counting logic for backups in the journalist vault.
