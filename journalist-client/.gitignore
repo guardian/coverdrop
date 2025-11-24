@@ -27,3 +27,6 @@ dist-ssr
 storybook-static
 playwright-output
 playwright-report
+
+# ignore generated TypeScript types
+src-tauri/bindings/

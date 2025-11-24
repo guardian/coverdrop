@@ -32,4 +32,7 @@ export const sizes = {
   trustedKeyDigestModal: {
     width: widths.genericModalWidth,
   },
+  restoreBackupSecretShareModal: {
+    width: "80vh",
+  },
 } as const satisfies Sizes;

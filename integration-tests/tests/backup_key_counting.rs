@@ -25,7 +25,7 @@ async fn backup_keys_counting() {
 
     // Simulate creating a backup by recording the current time as the last backup time
     journalist_vault
-        .record_successful_backup(stack.now(), "/some/path/to/backup.vault")
+        .record_manual_backup(stack.now(), "/some/path/to/backup.vault")
         .await
         .expect("Record backup timestamp");
 
@@ -66,7 +66,7 @@ async fn backup_keys_counting() {
 
     // Simulate another backup
     journalist_vault
-        .record_successful_backup(stack.now(), "/some/path/to/backup2.vault")
+        .record_manual_backup(stack.now(), "/some/path/to/backup2.vault")
         .await
         .expect("Record backup timestamp");
 

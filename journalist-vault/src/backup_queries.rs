@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use common::api::models::journalist_id::JournalistIdentity;
 use sqlx::SqliteConnection;
 
-pub(crate) async fn record_successful_backup(
+pub(crate) async fn record_manual_backup(
     conn: &mut SqliteConnection,
     timestamp: DateTime<Utc>,
     path: &str,
@@ -10,11 +10,33 @@ pub(crate) async fn record_successful_backup(
     sqlx::query!(
         r#"
             INSERT INTO backup_history
-                (timestamp, path)
-            VALUES (?1, ?2)
+                (backup_type, timestamp, path)
+            VALUES ('MANUAL', ?1, ?2)
         "#,
         timestamp,
         path
+    )
+    .execute(conn)
+    .await?;
+
+    Ok(())
+}
+
+pub(crate) async fn record_automated_backup(
+    conn: &mut SqliteConnection,
+    timestamp: DateTime<Utc>,
+    recovery_contacts: Vec<JournalistIdentity>,
+) -> anyhow::Result<()> {
+    let recovery_contacts_json = serde_json::to_string(&recovery_contacts)?;
+
+    sqlx::query!(
+        r#"
+            INSERT INTO backup_history
+                (backup_type, timestamp, recovery_contacts)
+            VALUES ('AUTOMATED', ?1, ?2)
+        "#,
+        timestamp,
+        recovery_contacts_json
     )
     .execute(conn)
     .await?;

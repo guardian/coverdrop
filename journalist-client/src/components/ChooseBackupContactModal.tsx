@@ -11,10 +11,11 @@ import {
 } from "@elastic/eui";
 import { usePublicInfoStore } from "../state/publicInfo";
 import { useEffect, useState } from "react";
-import { getBackupContacts, setBackupContacts } from "../commands/vaults";
+import { getBackupContacts, setBackupContacts } from "../commands/backups";
 import { JournalistIdentity } from "../model/bindings/JournalistIdentity";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { SetBackupContactReminderToastBody } from "./SetBackupContactReminderToastBody";
+import { SECRET_SHARING_N_VALUE } from "../constants";
 
 type ChooseBackupContactModalProps = {
   isOpen: boolean;
@@ -43,11 +44,7 @@ export const ChooseBackupContactModal = ({
   const refreshIsSettingBackupContactRequired = () =>
     getBackupContacts().then((backupContacts: JournalistIdentity[]) => {
       setShouldRequireSettingBackupContact((prev) => {
-        console.log("refreshIsSettingBackupContactRequired", {
-          backupContacts,
-          prev,
-        });
-        const needToSetContact = backupContacts.length === 0;
+        const needToSetContact = backupContacts.length < SECRET_SHARING_N_VALUE;
         if (needToSetContact && !prev) {
           const toastId = `backup-contact-${Date.now()}`;
           addCustomToast({

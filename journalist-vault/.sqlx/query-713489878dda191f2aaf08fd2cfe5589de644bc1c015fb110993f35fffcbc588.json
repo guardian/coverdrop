@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO backup_history\n                (backup_type, timestamp, recovery_contacts)\n            VALUES ('AUTOMATED', ?1, ?2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "713489878dda191f2aaf08fd2cfe5589de644bc1c015fb110993f35fffcbc588"
+}

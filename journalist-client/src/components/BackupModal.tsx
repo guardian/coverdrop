@@ -16,7 +16,7 @@ import {
   getBackupChecks,
   getShouldRequireBackup,
   performBackup,
-} from "../commands/vaults.ts";
+} from "../commands/backups.ts";
 import { BackupChecks } from "../model/bindings/BackupChecks.ts";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { BackupReminderToastBody } from "./BackupReminderToastBody.tsx";

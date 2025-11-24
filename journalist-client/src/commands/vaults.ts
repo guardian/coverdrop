@@ -1,5 +1,3 @@
-import { BackupChecks } from "../model/bindings/BackupChecks.ts";
-import { JournalistIdentity } from "../model/bindings/JournalistIdentity.ts";
 import { OpenVaultOutcome } from "../model/bindings/OpenVaultOutcome";
 import { VaultState } from "../model/bindings/VaultState";
 import { useErrorStore } from "../state/errors";
@@ -55,30 +53,4 @@ export const getColocatedPassword = (path: string): Promise<string | null> => {
 
 export const addTrustAnchor = (path: string): Promise<string | null> => {
   return invokeWithErrorMessage("add_trust_anchor", { path });
-};
-
-export const getBackupChecks = (): Promise<BackupChecks> => {
-  return invokeWithErrorMessage("get_backup_checks");
-};
-
-export const getShouldRequireBackup = (): Promise<boolean> => {
-  return invokeWithErrorMessage("should_require_backup");
-};
-
-export const performBackup = (): Promise<void> => {
-  return invokeWithErrorMessage("perform_backup");
-};
-
-export const ejectBackupVolume = (): Promise<boolean> => {
-  return invokeWithErrorMessage("eject_backup_volume");
-};
-
-export const getBackupContacts = (): Promise<JournalistIdentity[]> => {
-  return invokeWithErrorMessage("get_backup_contacts");
-};
-
-export const setBackupContacts = (
-  contacts: JournalistIdentity[],
-): Promise<void> => {
-  return invokeWithErrorMessage("set_backup_contacts", { contacts });
 };

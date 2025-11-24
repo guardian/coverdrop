@@ -23,8 +23,8 @@ use crate::{
     model::VaultState,
     notifications::Notifications,
     tasks::{
-        CleanUpVault, PullDeadDrops, RefreshPublicInfo, RotateJournalistKeys,
-        SendJournalistMessages, SyncJournalistProvisioningPublicKeys,
+        AutomatedBackups, BackupManager, CleanUpVault, PullDeadDrops, RefreshPublicInfo,
+        RotateJournalistKeys, SendJournalistMessages, SyncJournalistProvisioningPublicKeys,
     },
 };
 
@@ -67,6 +67,7 @@ pub struct AppStateHandle {
     inner: RwLock<AppState>,
     pub logs: LogReceiver,
     no_background_tasks: bool,
+    pub backup_manager: BackupManager,
 }
 
 impl AppStateHandle {
@@ -83,6 +84,7 @@ impl AppStateHandle {
             notifications,
             logs: LogReceiver::default(),
             no_background_tasks,
+            backup_manager: BackupManager::new(),
         }
     }
 
@@ -134,20 +136,37 @@ impl AppStateHandle {
                     &self.public_info,
                     &self.app_handle,
                 );
-                let rotate_keys_task =
-                    RotateJournalistKeys::new(&self.app_handle, &api_client, &vault);
+                let rotate_keys_task = RotateJournalistKeys::new(
+                    &self.backup_manager,
+                    &self.app_handle,
+                    &api_client,
+                    &vault,
+                    &path,
+                    &self.public_info,
+                );
+                let automated_backups_task = AutomatedBackups::new(
+                    &self.backup_manager,
+                    &self.app_handle,
+                    &api_client,
+                    &vault,
+                    &path,
+                    &self.public_info,
+                );
                 let clean_up_vault_task = CleanUpVault::new(&vault);
 
                 async move {
-                    // Pulling public info *MUST* be the first task so that the pull dead drops
-                    // and rotate keys tasks have fresh keys.
+                    // Pulling public info *MUST* be the first task so that the pull_dead_drops_task
+                    // and rotate_keys_task have fresh keys.
                     runner.add_task(refresh_public_info_task).await;
-
                     runner.add_task(sync_public_keys_task).await;
                     runner.add_task(pull_dead_drops_task).await;
-                    runner.add_task(rotate_keys_task).await;
                     runner.add_task(send_journalist_messages_task).await;
+                    // Clean and vacuum vault before rotating keys (which might perform a backup) and backup task
                     runner.add_task(clean_up_vault_task).await;
+                    // The following two tasks may perform a backup which is probably the slowest of all of these operations.
+                    // Do them LAST so the user can see new messages while backups are running.
+                    runner.add_task(rotate_keys_task).await;
+                    runner.add_task(automated_backups_task).await;
 
                     runner.run().await;
                 }

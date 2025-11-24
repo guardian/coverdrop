@@ -283,8 +283,9 @@ async fn backup_scenario() {
     .expect("Failed to initiate restore");
 
     // Recovery contact unwraps share
+    let encrypted_share_for_contact = &backup_state.encrypted_shares[0].1;
     let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
-        backup_state.encrypted_shares.clone(),
+        encrypted_share_for_contact.clone(),
         vec![recovery_contact_messaging_pair.clone()],
         backup_encryption_key_2b.public_key().clone(),
     )
@@ -372,8 +373,9 @@ async fn backup_scenario() {
         .collect::<Vec<_>>();
 
     // Hand over to recovery contact to unwrap and rewrap the share
+    let encrypted_share_for_contact = &encrypted_shares[0].1;
     let rewrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
-        encrypted_shares,
+        encrypted_share_for_contact.clone(),
         vec![recovery_contact_messaging_pair],
         backup_encryption_key_2b.public_key().clone(),
     )

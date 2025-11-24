@@ -395,6 +395,7 @@ pub enum Commands {
         #[clap(long)]
         keys_path: PathBuf,
         /// The encrypted recovery shares collected from the trusted contacts
+        #[clap(long)]
         shares: Vec<String>,
     },
 }

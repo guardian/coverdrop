@@ -1196,14 +1196,29 @@ impl JournalistVault {
     // Backups
     //
 
-    pub async fn record_successful_backup(
+    pub async fn record_manual_backup(
         &self,
         timestamp: DateTime<Utc>,
         path: &str,
     ) -> anyhow::Result<()> {
         let mut conn = self.pool.acquire().await?;
 
-        backup_queries::record_successful_backup(&mut conn, timestamp, path).await
+        backup_queries::record_manual_backup(&mut conn, timestamp, path).await
+    }
+
+    pub async fn record_automated_backup(
+        &self,
+        timestamp: DateTime<Utc>,
+        recovery_contact_journalist_ids: Vec<JournalistIdentity>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::record_automated_backup(
+            &mut conn,
+            timestamp,
+            recovery_contact_journalist_ids,
+        )
+        .await
     }
 
     pub async fn get_count_of_keys_created_since_last_backup(&self) -> anyhow::Result<i64> {

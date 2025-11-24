@@ -26,6 +26,7 @@ import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { VersionInfo } from "./VersionInfo.tsx";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { UnwrapBackupSecretShareModal } from "./UnwrapBackupSecretShareModal";
 
 type FlyoverContent =
   | {
@@ -81,6 +82,11 @@ export const SettingsPopover = ({
 
   const [chooseBackupContactModalVisible, setChooseBackupContactModalVisible] =
     useState(false);
+
+  const [
+    restoreBackupSecretShareModalVisible,
+    setRestoreBackupSecretShareModalVisible,
+  ] = useState(false);
 
   const chooseBackupContactClicked = () => {
     setChooseBackupContactModalVisible(true);
@@ -158,6 +164,11 @@ export const SettingsPopover = ({
         console.error("Error creating webview window:", e);
       });
     }
+  };
+
+  const restoreBackupSecretShareClicked = () => {
+    setRestoreBackupSecretShareModalVisible(true);
+    setIsPopoverOpen(false);
   };
 
   let flyout = null;
@@ -238,6 +249,15 @@ export const SettingsPopover = ({
         setChooseBackupContactModalVisible(false);
       }}
       openModal={() => setChooseBackupContactModalVisible(true)}
+    />
+  );
+
+  const restoreBackupSecretShareModal = devMode && (
+    <UnwrapBackupSecretShareModal
+      isOpen={restoreBackupSecretShareModalVisible}
+      closeModal={() => {
+        setRestoreBackupSecretShareModalVisible(false);
+      }}
     />
   );
 
@@ -352,6 +372,15 @@ export const SettingsPopover = ({
           >
             Open another Sentinel instance
           </EuiContextMenuItem>
+
+          {devMode && (
+            <EuiContextMenuItem
+              icon="lockOpen"
+              onClick={restoreBackupSecretShareClicked}
+            >
+              Restore backup secret share
+            </EuiContextMenuItem>
+          )}
           <EuiContextMenuItem size="s">
             <EuiSpacer size="s" />
             <VersionInfo />
@@ -364,6 +393,7 @@ export const SettingsPopover = ({
       {addTrustAnchorModal}
       {forceRotateKeyModal}
       {chooseBackupContactModal}
+      {restoreBackupSecretShareModal}
     </Fragment>
   );
 };

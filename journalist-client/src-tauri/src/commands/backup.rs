@@ -1,7 +1,11 @@
 use crate::app_state::AppStateHandle;
-use crate::error::{CommandError, GenericSnafu, IoSnafu, VaultLockedSnafu, VaultSnafu};
+use crate::error::{
+    CommandError, GenericSnafu, IoSnafu, PublicInfoUnavailableSnafu, VaultLockedSnafu, VaultSnafu,
+};
 use crate::model::{BackupChecks, VaultState};
 use common::api::models::journalist_id::JournalistIdentity;
+use common::protocol::backup::sentinel_restore_try_unwrap_and_wrap_share_step;
+use common::protocol::backup_data::EncryptedSecretShare;
 use common::time;
 use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
@@ -112,10 +116,10 @@ pub async fn perform_backup(app: State<'_, AppStateHandle>) -> Result<(), Comman
     })?;
 
     vault
-        .record_successful_backup(now, backup_path)
+        .record_manual_backup(now, backup_path)
         .await
         .context(VaultSnafu {
-            failed_to: "track successful backup in DB",
+            failed_to: "record successful manual backup in DB",
         })?;
 
     Ok(())
@@ -159,4 +163,60 @@ pub async fn set_backup_contacts(
             failed_to: "set backup contacts",
         })?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn unwrap_backup_secret_share(
+    app: State<'_, AppStateHandle>,
+    encrypted_share: String,
+) -> Result<String, CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+
+    let encrypted_share = encrypted_share.trim();
+    let encrypted_share = EncryptedSecretShare::from_base64_string(encrypted_share)
+        .ok()
+        .context(GenericSnafu {
+            ctx: "Failed to decode encrypted share from base64 string",
+        })?;
+
+    let public_info = app.public_info().await;
+    let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
+
+    let backup_admin_encryption_key =
+        public_info
+            .keys
+            .latest_backup_msg_pk()
+            .context(GenericSnafu {
+                ctx: "No backup admin encryption key found",
+            })?;
+
+    let journalist_msg_key_pairs = vault
+        .msg_key_pairs_for_decryption(time::now())
+        .await
+        .context(VaultSnafu {
+            failed_to: "get message key pairs for decryption",
+        })?
+        .collect::<Vec<_>>();
+
+    tracing::debug!(
+        "Attempting to unwrap encrypted share with {} encryption keys",
+        journalist_msg_key_pairs.len()
+    );
+
+    let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
+        encrypted_share,
+        journalist_msg_key_pairs,
+        backup_admin_encryption_key,
+    )
+    .ok()
+    .context(GenericSnafu {
+        ctx: "Failed to unwrap share",
+    })?;
+
+    let wrapped_share = wrapped_share.context(GenericSnafu {
+        ctx: "No share could be unwrapped",
+    })?;
+    let wrapped_share_str = wrapped_share.to_base64_string();
+
+    Ok(wrapped_share_str)
 }

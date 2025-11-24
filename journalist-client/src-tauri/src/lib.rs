@@ -29,7 +29,7 @@ use cli::Cli;
 use crate::commands::admin::launch_new_instance;
 use crate::commands::{
     admin::update_journalist_status,
-    backup::{get_backup_contacts, set_backup_contacts},
+    backup::{get_backup_contacts, set_backup_contacts, unwrap_backup_secret_share},
 };
 
 mod app_state;
@@ -166,6 +166,7 @@ pub fn run() {
             eject_backup_volume,
             get_backup_contacts,
             set_backup_contacts,
+            unwrap_backup_secret_share,
             get_colocated_password,
             get_profiles,
             submit_message,

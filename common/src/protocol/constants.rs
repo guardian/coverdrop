@@ -302,3 +302,16 @@ pub const MESSAGE_VALID_FOR_DURATION_IN_SECONDS: i64 = 14 * DAY_IN_SECONDS;
 pub const MESSAGE_EXPIRY_WARNING_IN_SECONDS: i64 = 2 * DAY_IN_SECONDS;
 /// Maximum time the user can background the app before they are logged out
 pub const MAX_BACKGROUND_DURATION_IN_SECONDS: i64 = 5 * MINUTE_IN_SECONDS;
+
+//
+// Journalist vault backup constants
+//
+// Keep in line with journalist-client/src/constants.ts
+// It's not currently possible to export constants via ts-rs, so we re-declare them here.
+// See https://github.com/Aleph-Alpha/ts-rs/issues/441
+
+// The minimum number of shares required to reconstruct the backup secret. Must be <= N.
+pub const SECRET_SHARING_K_VALUE: usize = 1;
+
+// The total number of shares to create for the backup secret. Must be >= K.
+pub const SECRET_SHARING_N_VALUE: usize = 1;

@@ -29,6 +29,10 @@ export const BackgroundTaskTrackerWithLoadingBarIfApplicable = ({
       name: "Processing dead drops",
       data: useBackendEventListener("dead_drops_remaining"),
     },
+    {
+      name: "Performing vault backup",
+      data: useBackendEventListener("automated_backup"),
+    },
   ];
 
   useEffect(() => {

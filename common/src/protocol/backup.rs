@@ -224,19 +224,17 @@ pub type WrappedSecretShare = AnonymousBox<SecretSharingShare>;
 /// share is then wrapped under the backup admin's encryption key for transport back to them.
 /// If none of the provided keys can decrypt any of the shares, `Ok(None)` is returned.
 pub fn sentinel_restore_try_unwrap_and_wrap_share_step(
-    encrypted_share_candidates: Vec<EncryptedSecretShareWithRecipient>,
+    encrypted_share: EncryptedSecretShare,
     recovery_contact_messaging_key_pairs: Vec<SignedEncryptionKeyPair<JournalistMessaging>>,
     backup_admin_encryption_key: SignedPublicEncryptionKey<BackupMsg>,
 ) -> anyhow::Result<Option<WrappedSecretShare>> {
     let admin_key = backup_admin_encryption_key.to_public_encryption_key();
     for key_pair in recovery_contact_messaging_key_pairs.iter() {
-        for (_recipient, encrypted_share) in encrypted_share_candidates.iter() {
-            if let Ok(share) = AnonymousBox::decrypt(key_pair, encrypted_share) {
-                // Encrypt under the backup admin's key for transport back to them
-                let wrapped_share = AnonymousBox::encrypt(&admin_key, share)
-                    .map_err(|e| anyhow::anyhow!("Failed to wrap decrypted share: {}", e))?;
-                return Ok(Some(wrapped_share));
-            }
+        if let Ok(share) = AnonymousBox::decrypt(key_pair, &encrypted_share) {
+            // Encrypt under the backup admin's key for transport back to them
+            let wrapped_share = AnonymousBox::encrypt(&admin_key, share)
+                .map_err(|e| anyhow::anyhow!("Failed to wrap decrypted share: {}", e))?;
+            return Ok(Some(wrapped_share));
         }
     }
 
@@ -421,8 +419,10 @@ mod tests {
         .expect("Failed to initiate restore");
 
         // Step 3: Recovery contact unwraps share
+        let encrypted_share_for_contact = &backup_state.encrypted_shares[0].1;
+
         let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            encrypted_share_for_contact.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )
@@ -661,8 +661,9 @@ mod tests {
         .expect("Failed to initiate restore");
 
         // Recovery contact unwraps share
+        let encrypted_share_for_contact = &backup_state.encrypted_shares[0].1;
         let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            encrypted_share_for_contact.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )
@@ -722,8 +723,9 @@ mod tests {
         .expect("Failed to initiate restore");
 
         // Recovery contact unwraps share
+        let encrypted_share_for_contact = &backup_state.encrypted_shares[0].1;
         let wrapped_share = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            encrypted_share_for_contact.clone(),
             vec![recovery_contact_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )
@@ -855,16 +857,18 @@ mod tests {
         .expect("Failed to initiate restore");
 
         // Step 3: Two recovery contacts unwrap their shares (need k=2 shares)
+        let share_for_first_contact = backup_state.encrypted_shares[0].1.clone();
         let wrapped_share1 = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            share_for_first_contact,
             vec![rc1_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )
         .expect("Failed to unwrap share 1")
         .expect("No share 1 could be unwrapped");
 
+        let share_for_second_contact = backup_state.encrypted_shares[1].1.clone();
         let wrapped_share2 = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            share_for_second_contact,
             vec![rc2_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )
@@ -940,8 +944,9 @@ mod tests {
         .expect("Failed to initiate restore");
 
         // Step 3: Only one recovery contact unwraps their share
+        let share_for_backup_contact = backup_state.encrypted_shares[0].1.clone();
         let wrapped_share1 = sentinel_restore_try_unwrap_and_wrap_share_step(
-            backup_state.encrypted_shares.clone(),
+            share_for_backup_contact,
             vec![rc1_messaging_pair],
             backup_admin_encryption_pair.public_key().clone(),
         )

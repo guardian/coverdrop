@@ -91,6 +91,7 @@ impl Task for PullDeadDrops {
                 return Ok(());
             };
 
+            // TODO should we return early if verified dead drops < total dead drops?
             let dead_drops =
                 verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, time::now());
 
