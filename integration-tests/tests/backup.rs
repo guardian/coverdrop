@@ -26,6 +26,7 @@ use std::time::Duration;
 use std::{fs, slice};
 
 #[tokio::test]
+#[ignore] // TODO rewrite and unignore once s3 backup storage is in place
 /// This test covers the creation and retrieval of a backup for a journalist's vault.
 /// This does not cover the actual restoration of a backup but this will be added later.
 async fn backup_scenario() {
