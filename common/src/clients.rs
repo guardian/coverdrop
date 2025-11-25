@@ -2,6 +2,7 @@
 
 use reqwest::{Client, Response};
 use serde::de::DeserializeOwned;
+use std::time::Duration;
 
 use crate::Error;
 
@@ -13,6 +14,7 @@ pub fn new_reqwest_client() -> Client {
     // https://github.com/hyperium/hyper/issues/2136#issuecomment-589345238
     Client::builder()
         .pool_max_idle_per_host(0)
+        .timeout(Duration::from_secs(45)) // there's no default timeout
         .build()
         .expect("Build reqwest client")
 }
