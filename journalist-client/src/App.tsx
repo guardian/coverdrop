@@ -226,7 +226,13 @@ const App = ({
           offset={offset}
         >
           {maybeHungAt && (
-            <EuiModal onClose={() => {}}>
+            <EuiModal
+              onClose={() =>
+                alert(
+                  "You cannot dismiss this message, please contact the digital investigations team.",
+                )
+              }
+            >
               <EuiModalHeader>
                 <EuiModalHeaderTitle>
                   Sentinel has stopped receiving/sending messages
