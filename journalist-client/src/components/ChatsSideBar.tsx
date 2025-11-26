@@ -13,6 +13,7 @@ import {
   EuiBadge,
   EuiIcon,
   EuiSkeletonRectangle,
+  EuiFieldSearch,
 } from "@elastic/eui";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
@@ -34,7 +35,8 @@ import {
 } from "./ExpiringMessageIcon";
 
 type Chat = {
-  name: string;
+  alias: string | null;
+  displayName: string;
   description: string | null;
   replyKey: string;
   lastMessageTimestamp: string;
@@ -85,9 +87,10 @@ const chatsToSideNav = (
     ? chats.map((chat) => {
         const lastMessageEpoch = new Date(chat.lastMessageTimestamp).getTime();
         const lastMessage = chat.lastMessage;
+        const name = chat.alias || chat.displayName;
         return {
           id: htmlIdGenerator(id)(),
-          name: chat.name,
+          name,
           isSelected: chat.replyKey === currentUserReplyKey,
           style: {
             marginTop: "0px", // remove default margin on euiSideNavItem
@@ -120,7 +123,7 @@ const chatsToSideNav = (
                     style={{ fontWeight: font.weight.bold }}
                     title={chat.description}
                   >
-                    {chat.name}
+                    {name}
                   </EuiFlexItem>
                   {chat.hasMessagesWithCustomExpiry && (
                     <EuiIcon
@@ -235,6 +238,7 @@ export const ChatsSideBar = ({
   addCustomToast,
   removeCustomToast,
 }: ChatsSideBarProps) => {
+  const [searchText, setSearchText] = useState("");
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
 
   // Dev mode is for experimental features that aren't ready to be rolled out to everyone.
@@ -277,7 +281,6 @@ export const ChatsSideBar = ({
           return acc;
         }
         const thisUserInfo = userInfo[message.userPk];
-        const chatName = thisUserInfo.alias || thisUserInfo.displayName;
         const maybeExistingInAcc = acc[message.userPk];
         const messageTimestamp =
           message.type === "userToJournalistMessage"
@@ -316,7 +319,8 @@ export const ChatsSideBar = ({
         return {
           ...acc,
           [message.userPk]: {
-            name: chatName,
+            alias: thisUserInfo.alias,
+            displayName: thisUserInfo.displayName,
             description: thisUserInfo.description,
             replyKey: message.userPk,
             lastMessageTimestamp: isLatestMessage
@@ -339,7 +343,15 @@ export const ChatsSideBar = ({
       },
       {} as Record<string, Chat>,
     ),
-  ).sort((a, b) => (a.lastMessageTimestamp > b.lastMessageTimestamp ? -1 : 1));
+  )
+    .sort((a, b) => (a.lastMessageTimestamp > b.lastMessageTimestamp ? -1 : 1))
+    .filter(
+      (chat) =>
+        !searchText ||
+        chat.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        chat.alias?.toLowerCase().includes(searchText.toLowerCase()) ||
+        chat.displayName.toLowerCase().includes(searchText.toLowerCase()),
+    );
 
   const inboxChats = chats.filter((c) => c.userStatus == "ACTIVE");
   const mutedChats = chats.filter((c) => c.userStatus == "MUTED");
@@ -500,6 +512,19 @@ export const ChatsSideBar = ({
           </EuiFlexItem>
         )}
       </EuiFlexGroup>
+      <EuiSpacer size="s" />
+      <EuiFieldSearch
+        placeholder="Search names, nicknames & descriptions"
+        value={searchText}
+        onChange={(event) => {
+          setSearchText(event.target.value);
+        }}
+        isClearable={true}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck="false"
+        aria-label="Search chats"
+      />
       <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>
       <EuiSpacer size="m" />
