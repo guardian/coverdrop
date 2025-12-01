@@ -483,7 +483,7 @@ pub async fn get_journalist_id_pk_rotation_forms(
 ) -> Result<(HeaderMap, Json<Vec<JournalistIdAndPublicKeyRotationForm>>), AppError> {
     let result = db
         .journalist_queries
-        .select_journalist_id_pk_rotation_forms()
+        .select_journalist_id_pk_rotation_forms(time::now())
         .await
         .map_err(|e| {
             tracing::error!("Failed to select journalist ID pk rotation froms: {:?}", e);

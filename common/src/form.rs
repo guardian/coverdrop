@@ -25,7 +25,7 @@ use crate::{
     protocol::constants::HOUR_IN_SECONDS,
 };
 
-const DEFAULT_FORM_TTL_SECONDS: i64 = HOUR_IN_SECONDS;
+pub const DEFAULT_FORM_TTL_SECONDS: i64 = HOUR_IN_SECONDS;
 
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone)]

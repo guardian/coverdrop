@@ -5,6 +5,7 @@ use common::{
         forms::{PostJournalistIdPublicKeyForm, PostJournalistProvisioningPublicKeyForm},
         models::journalist_id::JournalistIdentity,
     },
+    form::DEFAULT_FORM_TTL_SECONDS,
     protocol::{
         constants::WEEK_IN_SECONDS,
         keys::{
@@ -20,6 +21,66 @@ use integration_tests::{
 };
 use itertools::Itertools;
 use journalist_vault::JournalistVault;
+
+/// This test asserts that expired journalist id key rotation forms are not returned by the API.
+#[tokio::test]
+async fn id_key_rotation_form_expires() {
+    let mut stack = CoverDropStack::builder()
+        // triggered identity api task runner so that journalist id key rotation task is only run when manually triggered
+        .with_identity_api_task_runner_mode(common::task::RunnerMode::ManuallyTriggered)
+        .build()
+        .await;
+
+    generate_test_journalist(
+        stack.api_client_uncached(),
+        stack.keys_path(),
+        stack.temp_dir_path(),
+        stack.now(),
+    )
+    .await;
+
+    let vault_path = stack
+        .temp_dir_path()
+        .join("generated_test_journalist.vault");
+
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+        .await
+        .expect("Load journalist vault");
+
+    // post new id key form to API
+    vault
+        .generate_id_key_pair_and_rotate_pk(stack.api_client_uncached(), stack.now())
+        .await
+        .expect("rotate id key pair");
+
+    // the form should be present immediately after posting
+    let id_key_rotation_forms = stack
+        .api_client_uncached()
+        .get_journalist_id_pk_forms()
+        .await
+        .expect("fetched id key rotation forms from API");
+    assert_eq!(
+        id_key_rotation_forms.len(),
+        1,
+        "id key rotation form should be present"
+    );
+
+    // time travel past id key form expiry
+    stack
+        .time_travel(stack.now() + Duration::from_secs(DEFAULT_FORM_TTL_SECONDS as u64 + 10))
+        .await;
+
+    // the form should have expired and is no longer returned by the API
+    let id_key_rotation_forms = stack
+        .api_client_uncached()
+        .get_journalist_id_pk_forms()
+        .await
+        .expect("fetched id key rotation forms from API");
+    assert!(
+        id_key_rotation_forms.is_empty(),
+        "id key rotation form should have expired"
+    );
+}
 
 /// This test simulates a scenario where the journalist creates a candidate id key but fails to publish it before a
 /// successful provisioning key rotation. The API should accept the candidate id key signed by the old provisioning key.

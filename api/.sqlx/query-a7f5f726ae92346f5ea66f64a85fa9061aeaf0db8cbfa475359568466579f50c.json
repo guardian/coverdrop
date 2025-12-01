@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    journalist_id AS \"journalist_id: JournalistIdentity\",\n                    form_json     AS \"form_json: Value\"\n                FROM journalist_id_pk_rotation_queue\n                WHERE (form_json->>'not_valid_after')::TIMESTAMPTZ > $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "journalist_id: JournalistIdentity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "form_json: Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "a7f5f726ae92346f5ea66f64a85fa9061aeaf0db8cbfa475359568466579f50c"
+}

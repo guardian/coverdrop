@@ -42,8 +42,8 @@ impl CreateKeysTask {
                 key_pair_created_at + Duration::seconds(COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS);
 
             tracing::info!(
-                "Checking latest identity key expiry ({}) against now ({})",
-                latest_id_key_pair.key_pair.public_key().not_valid_after,
+                "Checking latest identity key rotation time ({}) against now ({})",
+                key_pair_rotate_at,
                 now
             );
 
@@ -74,14 +74,13 @@ impl CreateKeysTask {
         // We have at least one valid msg key pair, so we need to check if it is old
         // enough to require a rotation
         if let Some(latest_msg_key_pair_with_epoch) = published_msg_key_pairs.latest_key() {
-            let latest_msg_key_pair = &latest_msg_key_pair_with_epoch.key_pair;
             let key_pair_created_at = latest_msg_key_pair_with_epoch.created_at;
             let key_pair_rotate_at =
                 key_pair_created_at + Duration::seconds(COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS);
 
             tracing::info!(
-                "Checking latest messaging key expiry ({}) against now ({})",
-                latest_msg_key_pair.public_key().not_valid_after,
+                "Checking latest messaging key rotation time ({}) against now ({})",
+                key_pair_rotate_at,
                 now
             );
 
@@ -285,8 +284,8 @@ mod tests {
     /// | ---- org_key ------------------------------------------|
     /// | ---- provisioning_key -----------------|
     ///                            |-- id_key ---| <- Truncated expiry date but still recent enough to not require rotation
-    ///                                         ^ now() is target time we try and rotate the ID key  
-    ///                                                                
+    ///                                         ^ now() is target time we try and rotate the ID key
+    ///
     #[tokio::test]
     async fn id_key_has_truncated_expiry_but_age_less_than_rotation_period_no_rotation() {
         let covernode_provisioning_key_valid_duration_seconds: u64 =
@@ -377,8 +376,8 @@ mod tests {
     /// | ---- provisioning_key -----------------------------|
     ///                            |-- id_key ---------------| <-- truncated id key lifetime
     ///                                       |-- msg_key ---| <-- truncated msg key lifetime but still recent enough to not require rotation
-    ///                                                   ^ now() is target time we try and rotate the msg key  
-    ///                                                                
+    ///                                                   ^ now() is target time we try and rotate the msg key
+    ///
     #[tokio::test]
     async fn msg_key_near_expiry_but_still_less_that_rotation_period_no_rotation() {
         let covernode_provisioning_key_valid_duration_seconds: u64 =

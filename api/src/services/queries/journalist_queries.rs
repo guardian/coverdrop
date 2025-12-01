@@ -556,6 +556,7 @@ impl JournalistQueries {
 
     pub async fn select_journalist_id_pk_rotation_forms(
         &self,
+        now: DateTime<Utc>,
     ) -> anyhow::Result<Vec<JournalistIdAndPublicKeyRotationForm>> {
         let mut connection = self.pool.acquire().await?;
 
@@ -565,7 +566,9 @@ impl JournalistQueries {
                     journalist_id AS "journalist_id: JournalistIdentity",
                     form_json     AS "form_json: Value"
                 FROM journalist_id_pk_rotation_queue
-            "#
+                WHERE (form_json->>'not_valid_after')::TIMESTAMPTZ > $1
+            "#,
+            now
         )
         .fetch_all(&mut *connection)
         .await?;
