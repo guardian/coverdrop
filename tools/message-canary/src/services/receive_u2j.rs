@@ -40,7 +40,8 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
             .pull_journalist_dead_drops(ids_greater_than, None)
             .await?;
 
-        tracing::info!("pulled {} new dead drops", dead_drop_list.dead_drops.len());
+        let num_dead_drops = dead_drop_list.dead_drops.len();
+        tracing::info!("pulled {} new dead drops", num_dead_drops);
 
         let verified_dead_drops =
             verify_user_to_journalist_dead_drop_list(&keys, dead_drop_list, time::now());
@@ -52,11 +53,22 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
             .max_by_key(|d| d.id)
             .map(|d| d.id)
         else {
-            tracing::info!("No dead drops in dead drop list");
+            tracing::info!("No verified dead drops in dead drop list");
 
             throttle.wait().await;
             continue;
         };
+
+        // Not all dead drops are verified, log an error and skip
+        if verified_dead_drops.len() != num_dead_drops {
+            tracing::error!(
+                "only {} out of {} dead drops verified, skipping processing",
+                verified_dead_drops.len(),
+                num_dead_drops
+            );
+            throttle.wait().await;
+            continue;
+        }
 
         let covernode_msg_pks = keys
             .covernode_msg_pk_iter()
@@ -143,6 +155,7 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
             }
         }
 
+        tracing::info!("updating max dead drop id to {}", max_dead_drop_id);
         canary_state
             .db
             .insert_u2j_processed_dead_drop(&max_dead_drop_id, now)

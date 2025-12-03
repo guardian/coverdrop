@@ -16,10 +16,10 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
     let throttle_duration = Duration::from_secs(60);
     let mut throttle = Throttle::new(throttle_duration);
 
-    let mut max_dead_drop_id = canary_state.db.get_max_j2u_dead_drop_id().await?;
+    let max_dead_drop_id = canary_state.db.get_max_j2u_dead_drop_id().await?;
     tracing::info!("Initial max dead drop id {}", max_dead_drop_id);
 
-    tracing::info!("Polling j2u messages every 600 seconds",);
+    tracing::info!("Polling j2u messages every 60 seconds",);
 
     let users = canary_state.get_users().await;
 
@@ -45,6 +45,28 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
             verify_journalist_to_user_dead_drop_list(&keys, &dead_drop_list, now);
 
         tracing::info!("Found {} verified dead drops", verified_dead_drops.len());
+
+        let Some(max_dead_drop_id) = verified_dead_drops
+            .iter()
+            .max_by_key(|d| d.id)
+            .map(|d| d.id)
+        else {
+            tracing::info!("No verified dead drops in dead drop list");
+
+            throttle.wait().await;
+            continue;
+        };
+
+        // Not all dead drops are verified, log an error and skip
+        if verified_dead_drops.len() != dead_drop_list.dead_drops.len() {
+            tracing::error!(
+                "only {} out of {} dead drops verified, skipping processing",
+                verified_dead_drops.len(),
+                dead_drop_list.dead_drops.len()
+            );
+            throttle.wait().await;
+            continue;
+        }
 
         for user in users {
             for dead_drop in &verified_dead_drops {
@@ -90,9 +112,7 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
             }
         }
 
-        max_dead_drop_id = verified_dead_drops.iter().max_by_key(|&d| d.id).unwrap().id;
-
-        tracing::info!("updated max dead drop id to {}", max_dead_drop_id);
+        tracing::info!("updating max dead drop id to {}", max_dead_drop_id);
         canary_state
             .db
             .insert_j2u_processed_dead_drop(&max_dead_drop_id, now)
