@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{fs, marker::PhantomData};
 
 use chrono::{DateTime, Duration, Utc};
 use hex_buffer_serde::Hex;
@@ -176,5 +176,14 @@ where
 
     pub fn not_valid_after(&self) -> DateTime<Utc> {
         self.not_valid_after
+    }
+
+    // TODO the form type should be in the type system, then we won't need to pass in the file name
+    pub fn save_to_disk(&self, path: impl AsRef<std::path::Path>) -> anyhow::Result<()> {
+        let json = serde_json::to_string(self)?;
+
+        fs::write(&path, json)?;
+
+        Ok(())
     }
 }

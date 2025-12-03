@@ -23,6 +23,10 @@ use admin::{
 use clap::Parser;
 use cli::{Cli, Commands};
 use common::api::api_client::ApiClient;
+use common::api::forms::PostBackupIdKeyForm;
+use common::api::forms::PostBackupMsgKeyForm;
+use common::api::forms::BACKUP_MESSAGING_KEY_FORM_FILENAME;
+use common::api::forms::BACKUP_SIGNING_KEY_FORM_FILENAME;
 use common::backup::keys::generate_backup_id_key_pair;
 use common::backup::keys::generate_backup_msg_key_pair;
 use common::clap::validate_password_from_args;
@@ -35,6 +39,7 @@ use common::protocol::backup::WrappedSecretShare;
 use common::protocol::keys::load_anchor_org_pks;
 use common::protocol::keys::load_backup_id_key_pairs;
 use common::protocol::keys::load_latest_org_key_pair;
+use common::protocol::keys::LatestKey;
 use common::time;
 use common::time::now;
 use common::tracing::init_tracing;
@@ -291,18 +296,81 @@ async fn main() -> anyhow::Result<()> {
             .await
         }
         Commands::GenerateBackupIdentityKeyPair { keys_path } => {
-            let org_pk = load_latest_org_key_pair(&keys_path, time::now())?;
-            let backup_id_key_pair = generate_backup_id_key_pair(&org_pk, time::now());
-            backup_id_key_pair.to_untrusted().save_to_disk(&keys_path)?;
+            let org_key_pair = load_latest_org_key_pair(&keys_path, time::now())?;
+            let backup_id_key_pair = generate_backup_id_key_pair(&org_key_pair, time::now());
+            let backup_id_key_pair_path =
+                backup_id_key_pair.to_untrusted().save_to_disk(&keys_path)?;
+
+            println!(
+                "Backup identity key pair saved to {:?}. Move this to a tamper-proof bag and check it in.",
+                backup_id_key_pair_path
+            );
+
+            // TODO the form type should be in the type system, then we won't need to pass the file name to save_to_disk
+            let form_path = keys_path.join(BACKUP_SIGNING_KEY_FORM_FILENAME);
+            PostBackupIdKeyForm::new(
+                backup_id_key_pair.public_key().to_untrusted(),
+                &org_key_pair,
+                time::now(),
+            )?
+            .save_to_disk(&form_path)?;
+
+            println!("Backup identity key form saved to {:?}.", form_path);
+            println!("Move this to an online machine and post it to the api with post-backup-identity-key-form WITHIN ONE HOUR!");
+
+            Ok(())
+        }
+        Commands::PostBackupIdentityKeyForm { api_url, form_path } => {
+            let api_client = ApiClient::new(api_url);
+
+            // TODO the form type should be in the type system, then we won't need to pass the file name to save_to_disk
+            let json =
+                fs::read_to_string(&form_path.join(BACKUP_SIGNING_KEY_FORM_FILENAME)).await?;
+            let form: PostBackupIdKeyForm = serde_json::from_str(&json)?;
+
+            api_client.post_backup_signing_pk(form).await?;
+
             Ok(())
         }
         Commands::GenerateBackupMessagingKeyPair { keys_path } => {
             let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
-            let backup_id_pks = load_backup_id_key_pairs(&keys_path, &anchor_org_pks, time::now())?;
-            backup_id_pks.iter().for_each(|backup_id_pk| {
-                let backup_msg_key_pair = generate_backup_msg_key_pair(backup_id_pk, time::now());
-                let _ = backup_msg_key_pair.to_untrusted().save_to_disk(&keys_path);
-            });
+            let backup_id_key_pairs =
+                load_backup_id_key_pairs(&keys_path, &anchor_org_pks, time::now())?;
+            let latest_backup_id_key_pair = backup_id_key_pairs.into_latest_key_required()?;
+
+            let backup_msg_key_pair =
+                generate_backup_msg_key_pair(&latest_backup_id_key_pair, time::now());
+            let backup_msg_key_pair_path = backup_msg_key_pair
+                .to_untrusted()
+                .save_to_disk(&keys_path)?;
+
+            println!(
+                "Backup messaging key pair saved to {:?}. Move this to a tamper-proof bag and check it in.",
+                backup_msg_key_pair_path
+            );
+
+            // TODO the form type should be in the type system, then we won't need to pass the file name to save_to_disk
+            let form_path = keys_path.join(BACKUP_MESSAGING_KEY_FORM_FILENAME);
+            PostBackupMsgKeyForm::new(
+                backup_msg_key_pair.public_key().to_untrusted(),
+                &latest_backup_id_key_pair,
+                time::now(),
+            )?
+            .save_to_disk(&form_path)?;
+
+            println!("Backup messaging key form saved to {:?}.", form_path);
+            println!("Move this to an online machine and post it to the api with post-backup-messaging-key-form WITHIN ONE HOUR!");
+
+            Ok(())
+        }
+        Commands::PostBackupMessagingKeyForm { api_url, form_path } => {
+            let api_client = ApiClient::new(api_url);
+
+            let json =
+                fs::read_to_string(&form_path.join(BACKUP_MESSAGING_KEY_FORM_FILENAME)).await?;
+            let form: common::api::forms::PostBackupMsgKeyForm = serde_json::from_str(&json)?;
+
+            api_client.post_backup_encryption_pk(form).await?;
 
             Ok(())
         }

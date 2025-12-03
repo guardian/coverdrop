@@ -283,15 +283,43 @@ pub enum Commands {
         #[clap(long)]
         do_not_upload_to_api: bool,
     },
+    /// Must be run offline.
+    /// Create a new key pair for signing journalist vault backup data and
+    /// a signed form to upload the public key to the API.
     #[clap(name = "generate-backup-identity-key-pair")]
     GenerateBackupIdentityKeyPair {
         #[clap(long)]
         keys_path: PathBuf,
     },
+    /// Run online.
+    /// Post the backup identity key form to the API.
+    #[clap(name = "post-backup-identity-key-form")]
+    PostBackupIdentityKeyForm {
+        /// The address of the CoverDrop API server
+        #[clap(long)]
+        api_url: Url,
+        /// The path to the directory containing the backup identity key pair form
+        #[clap(long)]
+        form_path: PathBuf,
+    },
+    /// Must be run offline.
+    /// Create a new key pair for encrypting journalist vault backup data and
+    /// a signed form to upload the public key to the API.
     #[clap(name = "generate-backup-messaging-key-pair")]
     GenerateBackupMessagingKeyPair {
         #[clap(long)]
         keys_path: PathBuf,
+    },
+    /// Run online.
+    /// Post the backup messaging key form to the API.
+    #[clap(name = "post-backup-messaging-key-form")]
+    PostBackupMessagingKeyForm {
+        /// The address of the CoverDrop API server
+        #[clap(long)]
+        api_url: Url,
+        /// The path to the directory containing the backup messaging key pair form
+        #[clap(long)]
+        form_path: PathBuf,
     },
     /// Update system status. API consumers will be able to get the system
     /// status information using the GET endpoint /v1/status
