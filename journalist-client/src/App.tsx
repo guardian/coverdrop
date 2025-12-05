@@ -34,6 +34,8 @@ import { sizes } from "./styles/sizes.ts";
 import { useTrayIcon } from "./hooks/useTrayIcon.ts";
 import { BackgroundTaskTrackerWithLoadingBarIfApplicable } from "./components/BackgroundTaskTrackerWithLoadingBarIfApplicable.tsx";
 import { usePublicInfoStore } from "./state/publicInfo.ts";
+import { listen } from "@tauri-apps/api/event";
+import { AlertPayload } from "./model/bindings/AlertPayload.ts";
 
 const App = ({
   panelled,
@@ -148,6 +150,21 @@ const App = ({
 
   const errorsState = useErrorStore();
 
+  // listen for generic alerts from the backend
+  useEffect(() => {
+    const listener = listen<AlertPayload>("notification", (event) => {
+      console.log("Event received from backend", event);
+      if (event.payload.level === "WARNING") {
+        errorsState.addWarning(event.payload.message);
+      } else if (event.payload.level === "ERROR") {
+        errorsState.addError(event.payload.message);
+      }
+    });
+    return () => {
+      listener.then((unlisten) => unlisten());
+    };
+  }, []);
+
   const [customToasts, setCustomToasts] = useState<Toast[]>([]);
   const addCustomToast = (toast: Toast) => {
     setCustomToasts((prev) => [toast, ...prev]);
@@ -157,8 +174,8 @@ const App = ({
 
   const errorToasts = errorsState.errors.map((e) => ({
     id: e.id,
-    title: "Error",
-    color: "danger" as const,
+    title: e.title,
+    color: e.color,
     iconType: "warning",
     text: <p>{e.message}</p>,
   }));

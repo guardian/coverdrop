@@ -1,10 +1,14 @@
 #![allow(unreachable_code)]
 #![allow(unused_variables)]
-use crate::{app_state::PublicInfo, model::BackendToFrontendEvent};
+use crate::{
+    app_state::PublicInfo,
+    model::{AlertLevel, BackendToFrontendEvent},
+};
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use common::{
     api::{api_client::ApiClient, forms::PostBackupDataForm},
+    backup::constants::BACKUP_DATA_MAX_SIZE_BYTES,
     protocol::{
         backup::{sentinel_create_backup, RecoveryContact},
         constants::{MINUTE_IN_SECONDS, SECRET_SHARING_K_VALUE, SECRET_SHARING_N_VALUE},
@@ -71,7 +75,27 @@ impl BackupManager {
         public_info: &PublicInfo,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
-        tracing::info!("Creating automated backup");
+        // Check the size of the vault.
+        let vault_metadata = fs::metadata(vault_path)?;
+        let vault_size_bytes = vault_metadata.len() as usize;
+        let vault_size_warning_threshold_percentage = 80;
+
+        // If it is greater than BACKUP_DATA_MAX_SIZE_BYTES, tell the user that the backup can't proceed.
+        if vault_size_bytes > BACKUP_DATA_MAX_SIZE_BYTES {
+            app_handle.emit_alert_event(
+                AlertLevel::Error,
+                "Automated backup failed: Vault size exceeds maximum backup size. Please contact the I&R team.",
+            )?;
+            return Ok(());
+        // If it is greater than BACKUP_DATA_MAX_SIZE_BYTES * 80%, warn the user, but proceed with the backup.
+        } else if vault_size_bytes
+            > (BACKUP_DATA_MAX_SIZE_BYTES * vault_size_warning_threshold_percentage / 100)
+        {
+            app_handle.emit_alert_event(
+                AlertLevel::Warning,
+                "Vault size is approaching maximum backup size.",
+            )?;
+        }
 
         // TODO instead of / in addition to bailing, we should create a metric? Or show the user?
         let public_info = public_info.get().await;
@@ -127,6 +151,7 @@ impl BackupManager {
                 );
             }
 
+            tracing::info!("Attempting to create automated backup");
             let verified_backup_data = sentinel_create_backup(
                 encrypted_vault,
                 journalist_identity,

@@ -26,7 +26,7 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 
 use cli::Cli;
 
-use crate::commands::admin::launch_new_instance;
+use crate::commands::{admin::launch_new_instance, backup::get_backup_history};
 use crate::commands::{
     admin::update_journalist_status,
     backup::{get_backup_contacts, set_backup_contacts, unwrap_backup_secret_share},
@@ -165,6 +165,7 @@ pub fn run() {
             perform_backup,
             eject_backup_volume,
             get_backup_contacts,
+            get_backup_history,
             set_backup_contacts,
             unwrap_backup_secret_share,
             get_colocated_password,

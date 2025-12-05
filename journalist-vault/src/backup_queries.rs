@@ -1,6 +1,26 @@
 use chrono::{DateTime, Utc};
 use common::api::models::journalist_id::JournalistIdentity;
-use sqlx::SqliteConnection;
+use serde::Serialize;
+use sqlx::{Decode, SqliteConnection};
+use ts_rs::TS;
+
+#[derive(TS, Debug, Serialize, Clone, Decode)]
+#[ts(export, rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[sqlx(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum BackupType {
+    Manual,
+    Automated,
+}
+
+#[derive(Clone, Debug, TS, Serialize)]
+#[ts(export, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
+pub struct BackupHistoryEntry {
+    pub timestamp: DateTime<Utc>,
+    pub backup_type: BackupType,
+    pub recovery_contacts: Option<Vec<JournalistIdentity>>,
+}
 
 pub(crate) async fn record_manual_backup(
     conn: &mut SqliteConnection,
@@ -42,6 +62,39 @@ pub(crate) async fn record_automated_backup(
     .await?;
 
     Ok(())
+}
+
+pub(crate) async fn get_backup_history(
+    conn: &mut SqliteConnection,
+) -> anyhow::Result<Vec<BackupHistoryEntry>> {
+    let rows = sqlx::query!(
+        r#"
+            SELECT
+                timestamp AS "timestamp: DateTime<Utc>",
+                backup_type AS "backup_type: BackupType",
+                recovery_contacts AS "recovery_contacts: String"
+            FROM backup_history
+            ORDER BY timestamp DESC
+        "#
+    )
+    .fetch_all(conn)
+    .await?;
+
+    let backup_history = rows
+        .into_iter()
+        .map(|r| {
+            let recovery_contacts = r
+                .recovery_contacts
+                .map(|rc| serde_json::from_str::<Vec<JournalistIdentity>>(&rc).unwrap_or_default());
+            BackupHistoryEntry {
+                timestamp: r.timestamp,
+                backup_type: r.backup_type,
+                recovery_contacts,
+            }
+        })
+        .collect();
+
+    Ok(backup_history)
 }
 
 /// Returns the number of messaging and ID keys created since the last successful backup. For the ID
@@ -88,13 +141,15 @@ pub(crate) async fn set_backup_contacts(
     conn: &mut SqliteConnection,
     contacts: Vec<JournalistIdentity>,
 ) -> anyhow::Result<()> {
-    let mut query_builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> = sqlx::QueryBuilder::new(
-        "DELETE FROM backup_contacts; INSERT INTO backup_contacts (journalist_id) ",
-    );
+    let mut query_builder: sqlx::QueryBuilder<'_, sqlx::Sqlite> =
+        sqlx::QueryBuilder::new("DELETE FROM backup_contacts;");
 
-    query_builder.push_values(contacts.iter(), |mut b, contact| {
-        b.push_bind(contact);
-    });
+    if !contacts.is_empty() {
+        query_builder.push(" INSERT INTO backup_contacts (journalist_id) ");
+        query_builder.push_values(contacts.iter(), |mut b, contact| {
+            b.push_bind(contact);
+        });
+    }
 
     query_builder.build().execute(conn).await?;
 

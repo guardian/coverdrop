@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                timestamp AS \"timestamp: DateTime<Utc>\",\n                backup_type AS \"backup_type: BackupType\",\n                recovery_contacts AS \"recovery_contacts: String\"\n            FROM backup_history\n            ORDER BY timestamp DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "backup_type: BackupType",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "recovery_contacts: String",
+        "ordinal": 2,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "1f7bc5956d2655841cd25a18e36bffdc6bd176e6f648b082dc6d53a0802f3497"
+}

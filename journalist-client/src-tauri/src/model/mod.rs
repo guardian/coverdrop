@@ -6,7 +6,7 @@ mod trusted_org_pk_and_digest;
 mod user;
 mod vault_state;
 
-pub use backend_to_frontend_events::BackendToFrontendEvent;
+pub use backend_to_frontend_events::{AlertLevel, BackendToFrontendEvent};
 pub use backup::BackupChecks;
 pub use open_vault_outcome::OpenVaultOutcome;
 pub use profile::Profiles;

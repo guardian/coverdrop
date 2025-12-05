@@ -3,6 +3,8 @@ import { create } from "zustand";
 type Error = {
   id: string;
   message: string;
+  title: string;
+  color: "danger" | "warning";
 };
 
 type ErrorState = {
@@ -22,7 +24,7 @@ export const useErrorStore = create<ErrorState>((set) => ({
       const warning = {
         id: `warning-${state.nextErrorId}`,
         title: "Warning",
-        color: "warning",
+        color: "warning" as const,
         message,
       };
 
@@ -36,8 +38,9 @@ export const useErrorStore = create<ErrorState>((set) => ({
     set((state) => {
       const error = {
         id: `error-${state.nextErrorId}`,
-        color: "danger",
+        color: "danger" as const,
         message,
+        title: "Error",
       };
 
       return {

@@ -79,14 +79,12 @@ export const ChooseBackupContactModal = ({
   }, []);
 
   const submitHandler = async () => {
-    if (!selectedBackupContact) {
-      console.log("No backup contact selected");
-      return;
-    }
     console.log("Choose backup contact clicked");
-    await setBackupContacts([selectedBackupContact]);
+    await setBackupContacts(
+      selectedBackupContact ? [selectedBackupContact] : [],
+    );
 
-    setShouldRequireSettingBackupContact(false);
+    setShouldRequireSettingBackupContact(!selectedBackupContact);
     closeModal();
   };
 
@@ -161,12 +159,7 @@ export const ChooseBackupContactModal = ({
           )}
         </EuiModalBody>
         <EuiModalFooter>
-          <EuiButton
-            onClick={submitHandler}
-            isDisabled={!selectedBackupContact}
-          >
-            Submit
-          </EuiButton>
+          <EuiButton onClick={submitHandler}>Submit</EuiButton>
         </EuiModalFooter>
       </EuiModal>
     )

@@ -11,8 +11,6 @@ use common::protocol::backup_data::BackupDataWithSignature;
 use common::time;
 use http::HeaderMap;
 
-pub const BACKUP_DATA_MAX_SIZE_BYTES: usize = 300 * 1024 * 1024;
-
 pub async fn retrieve_backup(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
     State(db): State<Database>,

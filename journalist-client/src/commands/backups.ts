@@ -1,4 +1,5 @@
 import { BackupChecks } from "../model/bindings/BackupChecks";
+import { BackupHistoryEntry } from "../model/bindings/BackupHistoryEntry";
 import { JournalistIdentity } from "../model/bindings/JournalistIdentity";
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
 
@@ -20,6 +21,10 @@ export const ejectBackupVolume = (): Promise<boolean> => {
 
 export const getBackupContacts = (): Promise<JournalistIdentity[]> => {
   return invokeWithErrorMessage("get_backup_contacts");
+};
+
+export const getBackupHistory = (): Promise<BackupHistoryEntry[]> => {
+  return invokeWithErrorMessage("get_backup_history");
 };
 
 export const setBackupContacts = (

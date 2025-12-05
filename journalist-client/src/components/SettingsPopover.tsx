@@ -27,8 +27,11 @@ import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { VersionInfo } from "./VersionInfo.tsx";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { UnwrapBackupSecretShareModal } from "./UnwrapBackupSecretShareModal";
+import { BackupHistoryFlyout } from "./BackupHistory.tsx";
+import { getBackupHistory } from "../commands/backups.ts";
+import { BackupHistoryEntry } from "../model/bindings/BackupHistoryEntry.ts";
 
-type FlyoverContent =
+type FlyoutContent =
   | {
       type: "vault-keys";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +43,10 @@ type FlyoverContent =
   | {
       type: "public-info";
       json: string;
+    }
+  | {
+      type: "backup-history";
+      backupHistory: BackupHistoryEntry[];
     };
 
 interface SettingsPopoverProps {
@@ -64,7 +71,7 @@ export const SettingsPopover = ({
   openBackupModal,
 }: SettingsPopoverProps) => {
   const [isFlyoutVisible, setIsFlyoutVisible] = useState(false);
-  const [flyoutContent, setFlyoutContent] = useState<FlyoverContent | null>(
+  const [flyoutContent, setFlyoutContent] = useState<FlyoutContent | null>(
     null,
   );
   const [burstCoverMessagesModalVisible, setBurstCoverMessagesModalVisible] =
@@ -127,6 +134,17 @@ export const SettingsPopover = ({
     });
     setIsFlyoutVisible(true);
     setIsPopoverOpen(false);
+  };
+
+  const backupHistoryClicked = () => {
+    getBackupHistory().then((backupHistory) => {
+      setFlyoutContent({
+        type: "backup-history",
+        backupHistory,
+      });
+      setIsFlyoutVisible(true);
+      setIsPopoverOpen(false);
+    });
   };
 
   const addTrustAnchorClicked = () => {
@@ -201,6 +219,15 @@ export const SettingsPopover = ({
           json={flyoutContent.json}
           setFlyoutVisible={setIsFlyoutVisible}
           refreshClicked={getVaultKeysClicked}
+        />
+      );
+    }
+
+    if (flyoutContent?.type === "backup-history") {
+      flyout = (
+        <BackupHistoryFlyout
+          backupHistory={flyoutContent.backupHistory}
+          onClose={() => setIsFlyoutVisible(false)}
         />
       );
     }
@@ -310,6 +337,9 @@ export const SettingsPopover = ({
           )}
           <EuiContextMenuItem icon="save" onClick={backUpVaultClicked}>
             Back up vault
+          </EuiContextMenuItem>
+          <EuiContextMenuItem icon="index" onClick={backupHistoryClicked}>
+            Backup history
           </EuiContextMenuItem>
           {journalistStatus == "VISIBLE" && (
             <EuiContextMenuItem

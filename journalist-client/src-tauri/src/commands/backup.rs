@@ -7,6 +7,7 @@ use common::api::models::journalist_id::JournalistIdentity;
 use common::protocol::backup::sentinel_restore_try_unwrap_and_wrap_share_step;
 use common::protocol::backup_data::EncryptedSecretShare;
 use common::time;
+use journalist_vault::BackupHistoryEntry;
 use snafu::{OptionExt, ResultExt};
 use std::path::PathBuf;
 use std::{fs, process};
@@ -147,6 +148,16 @@ pub async fn get_backup_contacts(
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
     vault.get_backup_contacts().await.context(VaultSnafu {
         failed_to: "get backup contacts",
+    })
+}
+
+#[tauri::command]
+pub async fn get_backup_history(
+    app: State<'_, AppStateHandle>,
+) -> Result<Vec<BackupHistoryEntry>, CommandError> {
+    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
+    vault.get_backup_history().await.context(VaultSnafu {
+        failed_to: "get backup history",
     })
 }
 

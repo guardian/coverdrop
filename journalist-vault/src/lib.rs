@@ -26,6 +26,7 @@ pub use vault_message::{J2UMessage, U2JMessage, VaultMessage};
 
 use crate::info_queries::journalist_id;
 use crate::logging::LoggingSession;
+pub use backup_queries::BackupHistoryEntry;
 use chrono::{DateTime, Duration, Utc};
 use common::{
     api::{
@@ -1240,6 +1241,12 @@ impl JournalistVault {
         let mut conn = self.pool.acquire().await?;
 
         backup_queries::set_backup_contacts(&mut conn, contacts).await
+    }
+
+    pub async fn get_backup_history(&self) -> anyhow::Result<Vec<BackupHistoryEntry>> {
+        let mut conn = self.pool.acquire().await?;
+
+        backup_queries::get_backup_history(&mut conn).await
     }
 
     pub async fn remove_invalid_backup_contacts(

@@ -4,4 +4,5 @@ export type EventType =
   | "outbound_queue_length"
   | "dead_drops_remaining"
   | "journalist_keys_rotated"
-  | "automated_backup";
+  | "automated_backup"
+  | "alert";
