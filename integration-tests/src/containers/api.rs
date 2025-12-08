@@ -7,7 +7,7 @@ use crate::{
     panic_handler::register_container_panic_hook,
 };
 use chrono::{DateTime, Utc};
-use testcontainers::runners::AsyncRunner;
+use testcontainers::{core::Host, runners::AsyncRunner};
 use testcontainers::{ContainerAsync, RunnableImage};
 
 #[allow(clippy::too_many_arguments)]
@@ -20,6 +20,8 @@ pub async fn start_api(
     default_journalist_id: Option<String>,
     dead_drop_limit: Option<i64>,
     kinesis_ip: IpAddr,
+    minio_url: String,
+    minio_host: Host,
 ) -> ContainerAsync<Api> {
     let api_image = Api::default();
     let api_image_args = ApiArgs::new(
@@ -31,6 +33,8 @@ pub async fn start_api(
         dead_drop_limit,
         kinesis_ip,
         KINESIS_PORT,
+        minio_url,
+        minio_host.clone(),
     );
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
@@ -40,6 +44,10 @@ pub async fn start_api(
     let api = api_image
         .with_mount(keys_volume)
         .with_network(network)
+        // We want to be able to issue presigned urls from minio on the `localhost` domain,
+        // This means we need to able to call minio on the localhost domain from the s3 client in the api
+        // This is why we have setup a local hosts entry to map localhost to the minio IP address.
+        .with_host("localhost", minio_host)
         .start()
         .await
         .expect("Start container");

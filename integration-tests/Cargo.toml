@@ -31,7 +31,7 @@ uuid.workspace = true
 admin.path = "../admin"
 api.path = "../api"
 client.path = "../client"
-common = { path = "../common", features = ["test-utils"] }
+common = { path = "../common", features = ["test-utils", "integration-tests"] }
 covernode-database = { path = "../covernode/covernode-database", features = [
     "test-utils",
 ] }

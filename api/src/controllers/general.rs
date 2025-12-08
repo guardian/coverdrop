@@ -21,7 +21,7 @@ use common::{
 };
 use http::HeaderMap;
 
-fn get_env_or_error(var: &'static str) -> Result<String, AppError> {
+pub fn get_env_or_error(var: &'static str) -> Result<String, AppError> {
     env::var(var).map_err(|_| AppError::EnvVariableNotFound(var))
 }
 

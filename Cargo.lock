@@ -175,6 +175,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "aws-config",
+ "aws-sdk-s3",
  "axum",
  "axum-metrics",
  "base64 0.21.7",
@@ -1745,6 +1747,7 @@ dependencies = [
  "aws-config",
  "aws-sdk-cloudwatch",
  "aws-sdk-kinesis",
+ "aws-sdk-s3",
  "aws-sdk-ses",
  "aws-sdk-ssm",
  "axum",

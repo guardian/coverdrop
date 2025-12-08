@@ -7,4 +7,4 @@ The integration tests use the `testcontainers` library to orchestrate the starti
 On MacOS the path of the unix socket is not in the standard location, so to allow these tests to run correctly you need to change the setting in your Docker desktop setup.
 This is done by setting `Settings > Advanced > Allow the default Docker socket to be used` to true.
 
-You also need to pull the postgres and varnish images with `docker pull postgres:14.5 && docker pull varnish:6.0`.
+You also need to pull the postgres and varnish images with `docker pull postgres:14.5 && docker pull varnish:6.0 && docker pull minio/minio:RELEASE.2025-09-07T16-13-09Z`.

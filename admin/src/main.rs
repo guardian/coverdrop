@@ -13,8 +13,8 @@ use admin::update_journalist;
 use admin::update_system_status;
 use admin::upload_keys_to_api;
 use admin::{
-    backup_complete_restore, backup_initiate_restore_finalize, backup_initiate_restore_prepare,
-    backup_initiate_restore_submit, delete_journalist_form,
+    backup_complete_restore, backup_initiate_restore, backup_initiate_restore_finalize,
+    delete_journalist_form,
 };
 use admin::{
     generate_covernode_identity_key_pair, generate_covernode_messaging_key_pair,
@@ -27,6 +27,7 @@ use common::api::forms::PostBackupIdKeyForm;
 use common::api::forms::PostBackupMsgKeyForm;
 use common::api::forms::BACKUP_MESSAGING_KEY_FORM_FILENAME;
 use common::api::forms::BACKUP_SIGNING_KEY_FORM_FILENAME;
+use common::aws::s3::client::S3Client;
 use common::backup::keys::generate_backup_id_key_pair;
 use common::backup::keys::generate_backup_msg_key_pair;
 use common::clap::validate_password_from_args;
@@ -424,42 +425,21 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
-        Commands::BackupInitiateRestorePrepare {
-            keys_path,
-            journalist_id,
-            bundle_path,
-        } => {
-            let prepare_bundle_file =
-                backup_initiate_restore_prepare(keys_path, journalist_id, &bundle_path, now())
-                    .await?;
-
-            print_step("Step 1/4", "Prepare bundle created (AIR-GAPPED MACHINE)");
-            println!("Bundle file: {}", prepare_bundle_file.display());
-
-            print_next_steps(&[
-                "Transfer the bundle file to an ONLINE machine",
-                "On the ONLINE machine, run:",
-                &format!(
-                    "\n     admin backup-initiate-restore-submit \\\n\
-                           --bundle-path {} \\\n\
-                           --api-url <API_URL> \\\n\
-                           --output-path <OUTPUT_DIR>",
-                    prepare_bundle_file.display()
-                ),
-            ]);
-
-            Ok(())
-        }
-        Commands::BackupInitiateRestoreSubmit {
-            bundle_path,
+        Commands::BackupInitiateRestore {
             api_url,
             output_path,
+            aws_config,
+            s3_url,
+            stage,
+            journalist_id,
         } => {
+            let s3_client = S3Client::new(aws_config, s3_url).await;
             let response_bundle_file =
-                backup_initiate_restore_submit(&bundle_path, api_url, &output_path).await?;
+                backup_initiate_restore(api_url, &s3_client, &stage, &output_path, &journalist_id)
+                    .await?;
 
             print_step(
-                "Step 2/4",
+                "Step 1/3",
                 "Response bundle retrieved from API (ONLINE MACHINE)",
             );
             println!("Response file: {}", response_bundle_file.display());
@@ -493,7 +473,7 @@ async fn main() -> anyhow::Result<()> {
                 .await?;
 
             print_step(
-                "Step 3/4",
+                "Step 2/3",
                 "Backup decrypted and shares created (AIR-GAPPED MACHINE)",
             );
             println!("In-progress bundle: {}", in_progress_bundle_file.display());
@@ -540,7 +520,7 @@ async fn main() -> anyhow::Result<()> {
             )
             .await?;
 
-            print_step("Step 4/4", "Backup restore complete!");
+            print_step("Step 3/3", "Backup restore complete!");
             println!("Restored vault file: {}", restored_vault_path.display());
 
             print_next_steps(&[

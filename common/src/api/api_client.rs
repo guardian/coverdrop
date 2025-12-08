@@ -1,21 +1,18 @@
 use chrono::{DateTime, Utc};
 use reqwest::Url;
 
-use crate::api::forms::{
-    GetBackupDataForm, PatchJournalistStatusForm, PostBackupDataForm, PostBackupIdKeyForm,
-    PostBackupMsgKeyForm,
-};
+use crate::api::forms::{PatchJournalistStatusForm, PostBackupIdKeyForm, PostBackupMsgKeyForm};
 use crate::api::models::dead_drops::{
     UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
     UnverifiedUserToJournalistDeadDropsList,
 };
 
+use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
 use crate::client::JournalistStatus;
 use crate::crypto::keys::public_key::PublicKey;
 use crate::epoch::Epoch;
 use crate::healthcheck::HealthCheck;
 use crate::identity_api::models::UntrustedJournalistIdPublicKeyWithEpoch;
-use crate::protocol::backup_data::BackupDataWithSignature;
 use crate::protocol::keys::{
     CoverNodeIdKeyPair, CoverNodeIdPublicKey, CoverNodeMessagingPublicKey,
     CoverNodeProvisioningKeyPair, JournalistIdKeyPair, JournalistMessagingPublicKey,
@@ -86,36 +83,22 @@ impl ApiClient {
         Ok(keys)
     }
 
-    pub async fn create_backup(&self, form: PostBackupDataForm) -> anyhow::Result<()> {
-        let mut url = self.base_url.clone();
-        url.path_segments_mut()
-            .unwrap()
-            .push("v1")
-            .push("backups")
-            .push("create");
-
-        let resp = self.client.post(url).json(&form).send().await?;
-
-        handle_response(resp).await
-    }
-
-    pub async fn retrieve_backup(
+    pub async fn backup_retrieve_upload_url(
         &self,
-        form: GetBackupDataForm,
-    ) -> anyhow::Result<BackupDataWithSignature> {
+        form: RetrieveUploadUrlForm,
+    ) -> anyhow::Result<String> {
         let mut url = self.base_url.clone();
         url.path_segments_mut()
             .unwrap()
             .push("v1")
             .push("backups")
-            .push("retrieve");
+            .push("retrieve-upload-url");
 
-        // NOTE: needs to be POST rather than GET so that Fastly doesn't strip the body of the request
         let resp = self.client.post(url).json(&form).send().await?;
 
-        let backup_data = handle_response_json(resp).await?;
+        let upload_url = resp.text().await?;
 
-        Ok(backup_data)
+        Ok(upload_url)
     }
 
     pub async fn post_backup_signing_pk(&self, form: PostBackupIdKeyForm) -> anyhow::Result<()> {

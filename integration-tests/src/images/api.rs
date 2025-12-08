@@ -1,7 +1,10 @@
 use std::{collections::HashMap, env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{
+    core::{Host, WaitFor},
+    Image, ImageArgs,
+};
 
 use crate::{
     constants::{POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER},
@@ -19,6 +22,9 @@ pub struct ApiArgs {
     dead_drop_limit: Option<i64>,
     kinesis_ip: IpAddr,
     kinesis_port: u16,
+    minio_url: String,
+    #[allow(dead_code)]
+    minio_host: Host,
 }
 
 impl ApiArgs {
@@ -32,6 +38,8 @@ impl ApiArgs {
         dead_drop_limit: Option<i64>,
         kinesis_ip: IpAddr,
         kinesis_port: u16,
+        minio_url: String,
+        minio_host: Host,
     ) -> Self {
         Self {
             db_ip,
@@ -42,6 +50,8 @@ impl ApiArgs {
             dead_drop_limit,
             kinesis_ip,
             kinesis_port,
+            minio_url,
+            minio_host,
         }
     }
 }
@@ -75,10 +85,12 @@ impl ImageArgs for ApiArgs {
             self.kinesis_ip, self.kinesis_port
         );
 
+        let minio_flags = format!("--s3-endpoint-url={}", self.minio_url);
+
         let task_runner_mode = "--task-runner-mode=timer-and-manually-triggered";
         let command = format!("{set_time_arg} && ./api --stage=dev --keys-path=/var/keys {postgres_arg} \
             {delete_old_dead_drops_poll_seconds_arg} {default_journalist_id_arg} {u2j_dead_drop_limit_arg} \
-            {task_runner_mode} {kinesis_flags}");
+            {task_runner_mode} {kinesis_flags} {minio_flags}");
 
         println!("Starting API with: {command}");
 
@@ -95,6 +107,7 @@ impl Default for Api {
     fn default() -> Self {
         let mut env_vars = HashMap::new();
 
+        env_vars.insert("STAGE".into(), "dev".into());
         env_vars.insert("RUST_LOG".into(), "DEBUG".into());
         env_vars.insert("FAKETIME_TIMESTAMP_FILE".into(), "/faketime".into());
         env_vars.insert(

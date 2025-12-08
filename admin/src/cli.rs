@@ -6,6 +6,7 @@ use common::api::models::{
 };
 use common::aws::ssm::prefix::ParameterPrefix;
 use common::clap::AwsConfig;
+use common::clap::Stage;
 use common::client::JournalistStatus;
 use reqwest::Url;
 
@@ -357,30 +358,10 @@ pub enum Commands {
         #[clap(long)]
         keys_path: Option<PathBuf>,
     },
-    /// Prepares a backup init bundle that can be subsequently submitted using the
-    /// `backup-initiate-restore-submit` step which will contact the API to retrieve
-    /// the backup data for the specified journalist and the latest key hierarchy.
-    /// This command is to be run on the air-gapped administrator machine.
-    BackupInitiateRestorePrepare {
-        /// Path to the directory containing the backup admin key pair
-        #[clap(long)]
-        keys_path: PathBuf,
-        /// The ID of the journalist you wish to restore the backup for
-        #[clap(long)]
-        journalist_id: JournalistIdentity,
-        /// Path to the directory where the bundle file for the subsequent restore submit step will
-        /// be saved.
-        #[clap(long)]
-        bundle_path: PathBuf,
-    },
-    /// Submits the backup init bundle created using the `backup-initiate-restore-prepare` command
-    /// to the API to retrieve the backup data and key hierarchy. The output is a bundle
+    /// Retrieves backup data from S3 and key hierarchy from the API. The output is a bundle
     /// response that can be used in the subsequent `backup-initiate-restore-finalize` step.
     /// This command is to be run on any online machine.
-    BackupInitiateRestoreSubmit {
-        /// The path to the bundle file created using the `backup-initiate-restore-prepare` command
-        #[clap(long)]
-        bundle_path: PathBuf,
+    BackupInitiateRestore {
         /// The address of the CoverDrop API server
         #[clap(long)]
         api_url: Url,
@@ -388,6 +369,17 @@ pub enum Commands {
         /// be saved.
         #[clap(long)]
         output_path: PathBuf,
+        #[command(flatten)]
+        aws_config: AwsConfig,
+        /// The address of the s3 server
+        #[clap(long, default_value = "https://s3.eu-west-1.amazonaws.com")]
+        s3_url: Url,
+        /// The stage to get the backups from
+        #[clap(long)]
+        stage: Stage,
+        /// The journalist id we want to get the backup for
+        #[clap(long)]
+        journalist_id: JournalistIdentity,
     },
     /// Finalizes the backup restore process using the bundle response created
     /// using the `backup-initiate-restore-submit` command. This creates an intermediate

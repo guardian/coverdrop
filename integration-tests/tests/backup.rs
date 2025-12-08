@@ -1,12 +1,16 @@
 use common::api::models::journalist_id::JournalistIdentity;
+use common::backup::get_backup_data_s3::get_latest_journalist_backup_from_s3;
+use common::clap::Stage::Development;
 use common::crypto::keys::serde::StorableKeyMaterial;
-use common::protocol::backup::sentinel_restore_try_unwrap_and_wrap_share_step;
-use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
+use common::protocol::backup::{
+    coverup_finish_restore_step, coverup_initiate_restore_step, get_backup_bucket_name,
+};
+use common::protocol::backup::{
+    sentinel_put_backup_data_to_s3, sentinel_restore_try_unwrap_and_wrap_share_step,
+};
 use common::protocol::backup_data::EncryptedSecretShare;
 use common::{
-    api::forms::{
-        GetBackupDataForm, PostBackupDataForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
-    },
+    api::forms::{PostBackupIdKeyForm, PostBackupMsgKeyForm},
     backup::{
         keys::{generate_backup_id_key_pair, generate_backup_msg_key_pair},
         roles::{BackupId, BackupMsg},
@@ -26,9 +30,6 @@ use std::time::Duration;
 use std::{fs, slice};
 
 #[tokio::test]
-#[ignore] // TODO rewrite and unignore once s3 backup storage is in place
-/// This test covers the creation and retrieval of a backup for a journalist's vault.
-/// This does not cover the actual restoration of a backup but this will be added later.
 async fn backup_scenario() {
     pretty_env_logger::try_init().unwrap();
 
@@ -159,11 +160,10 @@ async fn backup_scenario() {
         *backup_encryption_key_2b.public_key()
     );
 
-    // Create backup data with a wrong identity (this should fail)
-    let wrong_identity = JournalistIdentity::new("non_existent_journalist").unwrap();
-    let verified_backup_data_wrong_identity = sentinel_create_backup(
+    // Create the backup data
+    let verified_backup_data = sentinel_create_backup(
         journalist_vault_bytes.clone(),
-        wrong_identity,
+        journalist_identity.clone(),
         journalist_signing_pair.clone(),
         backup_encryption_key_from_api.clone(),
         vec![recovery_contact.clone()],
@@ -171,88 +171,25 @@ async fn backup_scenario() {
         stack.now(),
     )
     .expect("Failed to create backup");
-    assert!(!verified_backup_data_wrong_identity
-        .backup_data_bytes
-        .0
-        .is_empty());
-
-    // Uploading this should be rejected by the API
-    let wrong_backup_form = PostBackupDataForm::new(
-        verified_backup_data_wrong_identity.to_unverified().unwrap(),
-        &journalist_signing_pair,
-        stack.now(),
-    )
-    .expect("Create PostBackupDataForm");
-
-    let result = stack
-        .api_client_uncached()
-        .create_backup(wrong_backup_form)
-        .await;
-    assert!(result.is_err());
-
-    // Create the correct backup data
-    let verified_backup_data = sentinel_create_backup(
-        journalist_vault_bytes.clone(),
-        journalist_identity.clone(),
-        journalist_signing_pair.clone(),
-        backup_encryption_key_from_api.clone(),
-        vec![recovery_contact],
-        1, // k=1
-        stack.now(),
-    )
-    .expect("Failed to create backup");
     assert!(!verified_backup_data.backup_data_bytes.0.is_empty());
 
-    // Upload the signed backup data to the API
-    let backup_form = PostBackupDataForm::new(
-        verified_backup_data.clone().to_unverified().unwrap(),
+    // Get a presigned upload url and submit a backup
+    sentinel_put_backup_data_to_s3(
+        stack.api_client_uncached(),
         &journalist_signing_pair,
+        verified_backup_data.clone(),
         stack.now(),
     )
-    .expect("Create PostBackupDataForm");
+    .await
+    .expect("Failed to post backup data to s3");
 
-    stack
-        .api_client_uncached()
-        .create_backup(backup_form.clone())
-        .await
-        .expect("Upload backup data");
+    // Retrieve the backup data from S3
+    let s3_client = stack.s3_client();
 
-    // Testing Duplicated Insert prevention - re-posting the backup should fail since we have a unique constraint on the data hash
-    let result = stack.api_client_uncached().create_backup(backup_form).await;
-    assert!(result.is_err());
-
-    // Testing using different signing key between form and backup data - this should fail
-    let incorrect_signing_key = recovery_contact_vault
-        .latest_id_key_pair(stack.now())
-        .await
-        .unwrap()
-        .unwrap();
-    let backup_form = PostBackupDataForm::new(
-        verified_backup_data.clone().to_unverified().unwrap(),
-        &incorrect_signing_key,
-        stack.now(),
-    )
-    .expect("Create PostBackupDataForm");
-
-    let result = stack
-        .api_client_uncached()
-        .create_backup(backup_form.clone())
-        .await;
-    assert!(result.is_err());
-
-    let journalist_identity_get_backup_form = GetBackupDataForm::new(
-        journalist_identity.clone(),
-        &backup_signing_key,
-        stack.now(),
-    )
-    .expect("Create GetBackupDataForm");
-
-    // Retrieve the backup data from the API
-    let retrieved_signed_backup_data = stack
-        .api_client_cached()
-        .retrieve_backup(journalist_identity_get_backup_form)
-        .await
-        .expect("Failed to retrieve backup data");
+    let retrieved_signed_backup_data =
+        get_latest_journalist_backup_from_s3(s3_client, &Development, &journalist_identity)
+            .await
+            .expect("Failed to get backups from s3");
 
     assert_eq!(
         verified_backup_data.to_unverified().unwrap(),
@@ -297,7 +234,7 @@ async fn backup_scenario() {
     let restored_vault = coverup_finish_restore_step(
         backup_state,
         vec![wrapped_share.clone()],
-        &[backup_encryption_key_2b.clone()],
+        std::slice::from_ref(&backup_encryption_key_2b),
         k,
     )
     .expect("Failed to finish restore");
@@ -321,26 +258,18 @@ async fn backup_scenario() {
     // Also check the CLI tools can also retrieve the stored backup correctly
     //
 
-    // Step 1: Prepare the backup restore bundle (offline/air-gapped)
-    let prepare_bundle_path = admin::backup_initiate_restore_prepare(
-        stack.keys_path().to_path_buf(),
-        journalist_identity.clone(),
-        &backup_recovery_dir,
-        stack.now(),
-    )
-    .await
-    .expect("Admin CLI initiate restore prepare");
-
-    // Step 2: Submit the bundle to the API (online)
-    let response_bundle_path = admin::backup_initiate_restore_submit(
-        &prepare_bundle_path,
+    // Step 1: Submit the bundle to the API (online)
+    let response_bundle_path = admin::backup_initiate_restore(
         stack.api_client_uncached().base_url.clone(),
+        stack.s3_client(),
+        &Development,
         &backup_recovery_dir,
+        &journalist_identity,
     )
     .await
     .expect("Admin CLI initiate restore submit");
 
-    // Step 3: Finalize the restore process (offline/air-gapped)
+    // Step 2: Finalize the restore process (offline/air-gapped)
     let (backup_output_path, wrapped_shares_paths) = admin::backup_initiate_restore_finalize(
         &response_bundle_path,
         stack.keys_path().to_path_buf(),
@@ -363,7 +292,7 @@ async fn backup_scenario() {
             // Split from right to extract recipient-id before .recovery-share extension
             let journalist_id_str = filename
                 .strip_suffix(".recovery-share")?
-                .rsplitn(2, '-')
+                .rsplit('-')
                 .next()?;
 
             let journalist_id = JournalistIdentity::new(journalist_id_str).ok()?;
@@ -405,6 +334,55 @@ async fn backup_scenario() {
     assert_eq!(
         restored_vault.journalist_id().await.unwrap(),
         journalist_identity
+    );
+
+    // Create backup data with a wrong identity (this should fail)
+    let wrong_identity = JournalistIdentity::new("non_existent_journalist").unwrap();
+    let verified_backup_data_wrong_identity = sentinel_create_backup(
+        journalist_vault_bytes.clone(),
+        wrong_identity,
+        journalist_signing_pair.clone(),
+        backup_encryption_key_from_api.clone(),
+        vec![recovery_contact.clone()],
+        1, // k=1
+        stack.now(),
+    )
+    .expect("Failed to create backup");
+    assert!(!verified_backup_data_wrong_identity
+        .backup_data_bytes
+        .0
+        .is_empty());
+
+    // Get a presigned upload url and submit a backup
+    sentinel_put_backup_data_to_s3(
+        stack.api_client_uncached(),
+        &journalist_signing_pair,
+        verified_backup_data_wrong_identity.clone(),
+        stack.now(),
+    )
+    .await
+    .expect("Failed to post backup data to s3");
+
+    let response_bundle_path = admin::backup_initiate_restore(
+        stack.api_client_uncached().base_url.clone(),
+        stack.s3_client(),
+        &Development,
+        &backup_recovery_dir,
+        &journalist_identity,
+    )
+    .await
+    .expect("initiate restore should succeed");
+
+    let backup_initiate_restore_finalize_result = admin::backup_initiate_restore_finalize(
+        &response_bundle_path,
+        stack.keys_path().to_path_buf(),
+        &backup_recovery_dir,
+        stack.now(),
+    )
+    .await;
+    assert!(
+        backup_initiate_restore_finalize_result.is_err(),
+        "Initiate restore should fail with wrong identity in backup data"
     );
 }
 

@@ -47,6 +47,8 @@ pub enum AppError {
     CommonError(#[from] common::Error),
     #[error("Form signing key not found")]
     SigningKeyNotFound,
+    #[error("Failed to make s3 presigned url")]
+    S3PresignedUrlError,
     #[error("No organization keys")]
     NoOrganizationKeys,
     #[error("Environment variable not found: {0}")]
@@ -57,6 +59,8 @@ pub enum AppError {
     KinesisStreamPut,
     #[error("backup data not found for journalist id: {0}")]
     BackupDataNotFound(JournalistIdentity),
+    #[error("Incorrect Stage found: {0}")]
+    IncorrectStageFound(String),
 }
 
 impl IntoResponse for AppError {
@@ -126,6 +130,14 @@ impl IntoResponse for AppError {
                 StatusCode::BAD_REQUEST,
                 "The provided journalist id does not match the signing key for journalist id"
                     .into(),
+            ),
+            Self::S3PresignedUrlError => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to make presigned upload url".into(),
+            ),
+            Self::IncorrectStageFound(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Incorrect Stage found on server".into(),
             ),
         };
 

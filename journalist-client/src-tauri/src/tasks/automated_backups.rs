@@ -7,10 +7,10 @@ use crate::{
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use common::{
-    api::{api_client::ApiClient, forms::PostBackupDataForm},
+    api::api_client::ApiClient,
     backup::constants::BACKUP_DATA_MAX_SIZE_BYTES,
     protocol::{
-        backup::{sentinel_create_backup, RecoveryContact},
+        backup::{sentinel_create_backup, sentinel_put_backup_data_to_s3, RecoveryContact},
         constants::{MINUTE_IN_SECONDS, SECRET_SHARING_K_VALUE, SECRET_SHARING_N_VALUE},
     },
     task::Task,
@@ -50,11 +50,6 @@ impl BackupManager {
         public_info: &PublicInfo,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
-        // NOTE temporarily disabling automated backups while we move from storing backups
-        // in rds to storing them in S3
-        tracing::info!("Automated backups are currently disabled, skipping backup");
-        return Ok(());
-
         // Try to acquire the lock
         if let Ok(_guard) = self.lock.try_lock() {
             self.perform_backup_inner(app_handle, api_client, vault, vault_path, public_info, now)
@@ -133,6 +128,9 @@ impl BackupManager {
                 // TODO show user a notification when we roll out automated backups.
                 app_handle.emit_automated_backup_completed_event()?;
                 // TODO raise the level of this error once the feature is no longer behind dev mode.
+                // TODO also, distinguish between these two cases
+                // 1. fewer than K contacts set
+                // 2. fewer than K contacts with valid messaging keys
                 tracing::info!(
                     "Fewer than {} recovery contacts found when trying to create backup.",
                     SECRET_SHARING_K_VALUE
@@ -162,14 +160,16 @@ impl BackupManager {
                 now,
             )?;
 
-            // Upload the signed backup data to the API
-            let backup_form = PostBackupDataForm::new(
-                verified_backup_data.clone().to_unverified().unwrap(),
-                &journalist_identity_key,
-                now,
-            )?;
+            let signed_backup_data = verified_backup_data.clone().to_unverified().unwrap();
 
-            api_client.create_backup(backup_form).await?;
+            // TODO inform the user after 5 failed attempts
+            sentinel_put_backup_data_to_s3(
+                api_client,
+                &journalist_identity_key,
+                verified_backup_data,
+                now,
+            )
+            .await?;
 
             // Record successful backup
             vault

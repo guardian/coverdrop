@@ -1,4 +1,3 @@
-mod backup_data_queries;
 mod backup_key_queries;
 mod covernode_key_queries;
 mod dead_drop_queries;
@@ -8,7 +7,6 @@ mod organization_key_queries;
 mod system_key_queries;
 mod system_queries;
 
-pub use backup_data_queries::BackupDataQueries;
 pub use backup_key_queries::BackupKeyQueries;
 pub use covernode_key_queries::CoverNodeKeyQueries;
 pub use dead_drop_queries::DeadDropQueries;

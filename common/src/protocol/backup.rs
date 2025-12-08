@@ -1,5 +1,10 @@
+use crate::api::api_client::ApiClient;
 use crate::api::models::journalist_id::JournalistIdentity;
+use crate::backup::constants::BACKUP_BUCKET_NAME_PREFIX;
+use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
 use crate::backup::roles::BackupMsg;
+use crate::clap::Stage;
+use crate::clients::new_reqwest_client;
 use crate::crypto::keys::encryption::{SignedEncryptionKeyPair, SignedPublicEncryptionKey};
 use crate::crypto::keys::signing::{SignedPublicSigningKey, SignedSigningKeyPair};
 use crate::crypto::{
@@ -16,6 +21,10 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+
+pub fn get_backup_bucket_name(stage: &Stage) -> String {
+    format!("{}{}", BACKUP_BUCKET_NAME_PREFIX, stage.as_clap_str())
+}
 
 /// A recovery contact for a Sentinel backup, consisting of their identity and latest messaging key.
 #[derive(Clone, Debug)]
@@ -133,6 +142,35 @@ pub fn sentinel_create_backup(
         .context("Failed to freshly-created verify backup data")?;
 
     Ok(verified_backup_data)
+}
+
+/// Runs on the journalist's device to request a presigned S3 upload URL from the API
+/// then upload verified backup data to S3.
+pub async fn sentinel_put_backup_data_to_s3(
+    api_client: &ApiClient,
+    journalist_signing_key_pair: &SignedSigningKeyPair<JournalistId>,
+    verified_backup_data: VerifiedBackupData,
+    now: DateTime<Utc>,
+) -> anyhow::Result<()> {
+    let backup_url_form = RetrieveUploadUrlForm::new(journalist_signing_key_pair, now)?;
+
+    let presigned_upload_url = api_client
+        .backup_retrieve_upload_url(backup_url_form)
+        .await?;
+
+    tracing::info!("Got presigned S3 URL from API");
+
+    // Upload the backup data to the presigned URL
+    // TODO consider passing in a reqwest client from the caller
+    let client = new_reqwest_client();
+    client
+        .put(presigned_upload_url)
+        .json(&verified_backup_data.to_unverified().unwrap())
+        .send()
+        .await
+        .context("PUT data to S3")?;
+
+    Ok(())
 }
 
 /// An encrypted secret share with the identity of the journalist it is encrypted for.

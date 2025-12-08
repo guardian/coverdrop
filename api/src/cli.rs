@@ -8,6 +8,7 @@ use common::{
 };
 
 use clap::{Args, Parser};
+use reqwest::Url;
 
 // 360 J2U dead drops is about 4MB.
 // This is the equivalent of 15 days of dead drops at 1 per hour.
@@ -76,4 +77,8 @@ pub struct Cli {
     /// via a web server.
     #[clap(long, default_value = "timer")]
     pub task_runner_mode: RunnerMode,
+
+    /// The S3 endpoint URL
+    #[clap(long, default_value = "https://s3.eu-west-1.amazonaws.com")]
+    pub s3_endpoint_url: Url,
 }

@@ -12,8 +12,7 @@ mod update_journalist;
 mod update_system_status;
 
 pub use backups::{
-    backup_complete_restore, backup_initiate_restore_finalize, backup_initiate_restore_prepare,
-    backup_initiate_restore_submit,
+    backup_complete_restore, backup_initiate_restore, backup_initiate_restore_finalize,
 };
 pub use ceremony::{
     anchor_public_key_bundle, api_has_anchor_org_pk, public_key_forms_bundle,

@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use client::commands::user::messages::send_user_to_journalist_cover_message;
 use common::api::models::covernode_id::CoverNodeIdentity;
+use common::aws::s3::client::S3Client;
+use common::clap::Stage::Development;
+use common::protocol::backup::get_backup_bucket_name;
 use common::service;
 use common::task::{RunnerMode, TaskApiClient, TASK_RUNNER_API_PORT};
 use itertools::Itertools;
@@ -15,6 +18,7 @@ use std::{
     thread::sleep,
     time::{Duration, Instant},
 };
+use testcontainers::core::Host::Addr;
 use testcontainers::core::{CmdWaitFor, ExecCommand};
 use testcontainers::ContainerAsync;
 use uuid::Uuid;
@@ -28,12 +32,16 @@ use common::{
 use reqwest::Url;
 
 use crate::api_wrappers::trigger_load_org_pk_api;
-use crate::constants::{U2J_APPENDER_PORT, VARNISH_PORT};
+use crate::constants::{MINIO_PORT, U2J_APPENDER_PORT, VARNISH_PORT};
+use crate::containers::minio::start_minio;
 use crate::containers::u2j_appender::start_u2j_appender;
 use crate::containers::varnish::start_varnish;
-use crate::images::{U2JAppender, Varnish};
+use crate::images::{Minio, U2JAppender, Varnish};
 use crate::keys::{ensure_key_permissions, open_covernode_database, CoverNodeKeyMode};
-use crate::secrets::{do_secrets_exist_in_container_logs, MAILBOX_PASSWORD};
+use crate::secrets::{
+    do_secrets_exist_in_container_logs, API_AWS_ACCESS_KEY_ID_SECRET,
+    API_AWS_SECRET_ACCESS_KEY_SECRET, MAILBOX_PASSWORD,
+};
 use crate::{
     constants::{API_PORT, IDENTITY_API_PORT, KINESIS_PORT},
     containers::{
@@ -61,6 +69,7 @@ pub struct CoverDropStack {
     api: ContainerAsync<Api>,
     identity_api: ContainerAsync<IdentityApi>,
     _varnish_cache: ContainerAsync<Varnish>,
+    _minio: ContainerAsync<Minio>,
 
     // Local state,
     temp_dir: TempDir,
@@ -89,6 +98,8 @@ pub struct CoverDropStack {
     covernode_task_api_client: Option<TaskApiClient<service::CoverNode>>,
 
     kinesis_client: KinesisClient,
+
+    s3_client: S3Client,
 
     covernode_id: CoverNodeIdentity,
 }
@@ -197,13 +208,45 @@ impl CoverDropStackBuilder {
 
         // We need to set some AWS credentials for this shell so that we
         // can modify the number of kinesis shards
-        std::env::set_var("AWS_ACCESS_KEY_ID", "XXXXXXXXXXXXXXXXXX");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "XXXXXXXXXXXXXXXXXX");
+        // And these need to be set to minio credentials in order to create a bucket below
+        std::env::set_var("AWS_ACCESS_KEY_ID", API_AWS_ACCESS_KEY_ID_SECRET);
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", API_AWS_SECRET_ACCESS_KEY_SECRET);
 
         let aws_config = AwsConfig {
             region: "eu-west-1".to_string(),
             profile: None,
         };
+
+        // minio
+        let minio = start_minio(&self.network).await;
+
+        let minio_port = minio
+            .get_host_port_ipv4(MINIO_PORT)
+            .await
+            .expect("Get minio port");
+
+        let minio_ip_address = minio
+            .get_bridge_ip_address()
+            .await
+            .expect("Get minio bridge ip address");
+
+        let minio_hostname = "localhost";
+
+        let minio_client_url = format!("http://{}:{}", minio_hostname, minio_port);
+
+        // This is fine when communicating from the tests to s3, but for inter-container communication we need the ip address
+        let s3_client = S3Client::new(
+            aws_config.clone(),
+            Url::parse(&minio_client_url).expect("Parse minio URL"),
+        )
+        .await;
+
+        // create a default bucket
+        let backup_bucket_name = get_backup_bucket_name(&Development);
+        s3_client
+            .create_bucket(&backup_bucket_name)
+            .await
+            .expect("Create default minio bucket");
 
         //
         // Fastly and messaging
@@ -276,6 +319,8 @@ impl CoverDropStackBuilder {
             self.default_journalist_id,
             self.dead_drop_limit,
             kinesis_ip,
+            minio_client_url,
+            Addr(minio_ip_address),
         )
         .await;
 
@@ -520,6 +565,7 @@ impl CoverDropStackBuilder {
 
         let mut stack = CoverDropStack {
             _kinesis: kinesis,
+            _minio: minio,
             postgres,
             _u2j_appender: u2j_appender,
             covernode,
@@ -544,6 +590,7 @@ impl CoverDropStackBuilder {
             covernode_task_api_client,
             _api_task_api_client: api_task_api_client,
             kinesis_client,
+            s3_client,
             covernode_id,
         };
 
@@ -618,6 +665,10 @@ impl CoverDropStack {
 
     pub fn identity_api_task_api_client(&self) -> &TaskApiClient<service::IdentityApi> {
         self.identity_api_task_api_client.as_ref().expect("The Identity API task API client is only available when the Identity APi task runner is triggerable")
+    }
+
+    pub fn s3_client(&self) -> &S3Client {
+        &self.s3_client
     }
 
     pub fn covernode_task_api_client(&self) -> &TaskApiClient<service::CoverNode> {

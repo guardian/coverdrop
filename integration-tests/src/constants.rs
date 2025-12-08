@@ -34,3 +34,6 @@ pub const COVERNODE_DB_PASSWORD: &str = "covernode-db-password-secret";
 
 // the password for the identity-api sqlite db
 pub const IDENTITY_API_DB_PASSWORD: &str = "identity-api-db-password-secret";
+
+// default minio port
+pub const MINIO_PORT: u16 = 9000;

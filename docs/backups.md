@@ -30,14 +30,14 @@ We describe the backup procedures with reference to the diagram below and the ty
 3. The secret key `sk` is then split into `n` shares using Shamir's secret sharing scheme with a threshold of `k` shares required for reconstruction. Each share is referred to as a `SecretSharingShare`. We might choose k=1 for a trivial secret sharing scheme.
 4. Each share is then encrypted for the chosen recovery contacts under their latest messaging public key. The resulting ciphertexts are referred to as `EncryptedSecretShare`.
 5. Each `EncryptedSecretShare` is encrypted once more under the backup public key (referred to as a backup "messaging key" in the hierarchy), resulting in a double-encrypted secret share. See: `BackupEncryptedSecretShare`.
-6. The journalist client then uploads the "backup encrypted padded vault" along with the double-encrypted secret shares to the API.
+6. The journalist client then uploads the "backup encrypted padded vault" along with the double-encrypted secret shares to S3.
 
 ![Diagram showing the backup process](./assets/backup_1.png)
 
 To recover a backup, the admin team and the recovery contacts need to cooperate as follows:
 
 1. The journalist contacts the CoverDrop admin team to initiate a recovery process. The admin team verifies the journalist's identity and authorizes the recovery process.
-2. The admin team retrieves the "backup encrypted padded vault" and the double-encrypted secret shares from the API.
+2. The admin team retrieves the "backup encrypted padded vault" and the double-encrypted secret shares from the S3 backup store.
 3. The admin team decrypts each double-encrypted secret share using the backup private key to obtain the `EncryptedSecretShare`s. This is done on a dedicated offline machine to protect the sensitive backup private key.
 4. The encrypted secret shares are output as Base64 strings and securely transmitted to the recovery contacts, e.g., using an ephemeral Signal chat.
 5. The recovery contacts recover their respective `EncryptedSecretShare` using trial decryption with their messaging private keys. The resulting `SecretSharingShare` is then re-encrypted under the admin team's messaging public key and sent back to the admin team.

@@ -1,16 +1,18 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::api::api_client::ApiClient;
-use common::api::forms::GetBackupDataForm;
 use common::api::models::journalist_id::JournalistIdentity;
 use common::api::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles;
+use common::aws::s3::client::S3Client;
+use common::backup::get_backup_data_s3::get_latest_journalist_backup_from_s3;
+use common::clap::Stage;
 use common::protocol::backup::{
     coverup_finish_restore_step, coverup_initiate_restore_step, BackupRestorationInProgress,
     WrappedSecretShare,
 };
 use common::protocol::backup_data::BackupDataWithSignature;
 use common::protocol::keys::{
-    load_anchor_org_pks, load_backup_id_key_pairs, load_backup_msg_key_pairs, LatestKey,
+    load_anchor_org_pks, load_backup_id_key_pairs, load_backup_msg_key_pairs,
 };
 use common::time;
 use common::time::now;
@@ -21,14 +23,6 @@ use std::path::{Path, PathBuf};
 use time::format_timestamp_for_filename;
 use tokio::fs;
 
-/// Bundle structure for the prepare step of backup restoration.
-/// See `backup_initiate_restore_prepare` function.
-#[derive(Serialize, Deserialize)]
-pub struct BackupInitiateRestorePrepareBundle {
-    pub journalist_id: JournalistIdentity,
-    pub form: GetBackupDataForm,
-}
-
 /// Bundle structure for the response step of backup restoration.
 /// See `backup_initiate_restore_submit` function.
 #[derive(Serialize, Deserialize)]
@@ -38,66 +32,21 @@ pub struct BackupInitiateRestoreResponseBundle {
     pub hierarchy: UntrustedKeysAndJournalistProfiles,
 }
 
-/// Step 1: Prepares a backup restore request bundle (offline, air-gapped).
-/// Creates a bundle containing the journalist ID and backup data request form.
-/// This bundle should be transferred to an online machine for submission.
-pub async fn backup_initiate_restore_prepare(
-    keys_path: PathBuf,
-    journalist_id: JournalistIdentity,
-    bundle_path: &Path,
-    now: DateTime<Utc>,
-) -> anyhow::Result<PathBuf> {
-    // Load keys to create the backup data request form
-    let org_pks = load_anchor_org_pks(&keys_path, now)?;
-    let backup_id_key_pairs = load_backup_id_key_pairs(&keys_path, &org_pks, now)?;
-    let form = GetBackupDataForm::new(
-        journalist_id.clone(),
-        &backup_id_key_pairs.clone().into_latest_key_required()?,
-        now,
-    )?;
-
-    // Create the prepare bundle
-    let prepare_bundle = BackupInitiateRestorePrepareBundle {
-        journalist_id: journalist_id.clone(),
-        form,
-    };
-
-    // Save the prepare bundle to disk
-    let output_file = bundle_path.join(format!(
-        "restore-{}-{}.prepare-bundle",
-        journalist_id,
-        format_timestamp_for_filename(now)
-    ));
-    fs::write(&output_file, serde_json::to_string(&prepare_bundle)?).await?;
-    info!("Wrote prepare bundle to disk: {:?}", output_file);
-
-    Ok(output_file)
-}
-
-/// Step 2: Submits the prepare bundle to the API (online).
-/// Retrieves the backup data and key hierarchy from the API.
+/// Step 1: Retrieves backup data from S3 and key hierarchy from the API (online).
 /// This step should be run on an online machine, and the response bundle
-/// should be transferred back to the air-gapped machine.
-pub async fn backup_initiate_restore_submit(
-    bundle_path: &Path,
+/// should be transferred to the air-gapped machine.
+pub async fn backup_initiate_restore(
     api_url: Url,
+    s3_client: &S3Client,
+    stage: &Stage,
     output_path: &Path,
+    journalist_id: &JournalistIdentity,
 ) -> anyhow::Result<PathBuf> {
-    // Load the prepare bundle
-    let prepare_bundle = load_bundle::<BackupInitiateRestorePrepareBundle>(bundle_path).await?;
-
     let api_client = ApiClient::new(api_url);
 
-    // Retrieve the backup data from the API
-    let signed_backup_data = api_client
-        .retrieve_backup(prepare_bundle.form)
+    let signed_backup_data = get_latest_journalist_backup_from_s3(s3_client, stage, journalist_id)
         .await
-        .with_context(|| {
-            format!(
-                "Failed to fetch backup data for journalist {:?}",
-                prepare_bundle.journalist_id
-            )
-        })?;
+        .with_context(|| "Failed to get backup data from s3")?;
 
     // Retrieve the key hierarchy from the API
     let hierarchy = api_client
@@ -107,7 +56,7 @@ pub async fn backup_initiate_restore_submit(
 
     // Create the response bundle
     let response_bundle = BackupInitiateRestoreResponseBundle {
-        journalist_id: prepare_bundle.journalist_id.clone(),
+        journalist_id: journalist_id.clone(),
         signed_backup_data,
         hierarchy,
     };
@@ -115,7 +64,7 @@ pub async fn backup_initiate_restore_submit(
     // Save the response bundle to disk
     let output_file = output_path.join(format!(
         "restore-{}-{}.response-bundle",
-        prepare_bundle.journalist_id,
+        journalist_id,
         format_timestamp_for_filename(now())
     ));
     fs::write(&output_file, serde_json::to_string(&response_bundle)?).await?;
@@ -124,7 +73,7 @@ pub async fn backup_initiate_restore_submit(
     Ok(output_file)
 }
 
-/// Step 3: Finalizes the restore process (offline, air-gapped).
+/// Step 2: Finalizes the restore process (offline, air-gapped).
 /// Verifies the backup data, decrypts it, and creates encrypted secret shares.
 /// Returns the path to the in-progress bundle file and a vector of encrypted secret
 /// shares that are to be shared with the recovery contacts.

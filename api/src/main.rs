@@ -1,7 +1,9 @@
 use api::anchor_org_pk_cache::AnchorOrganizationPublicKeyCache;
 use api::api_state::ApiState;
 use api::cli::Cli;
-use api::controllers::backups::{post_backup_encryption_pk, post_backup_signing_pk};
+use api::controllers::backups::{
+    post_backup_encryption_pk, post_backup_signing_pk, retrieve_upload_url,
+};
 use api::controllers::dead_drops::{
     get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
     get_user_recent_dead_drop_summary, post_journalist_dead_drops, post_user_dead_drops,
@@ -27,6 +29,7 @@ use axum::Router;
 use chrono::Duration;
 use clap::Parser;
 use common::aws::kinesis::client::KinesisClient;
+use common::aws::s3::client::S3Client;
 use common::metrics::{init_metrics, API_NAMESPACE};
 use common::task::TaskRunner;
 use common::tracing::init_tracing_with_reload_handle;
@@ -82,10 +85,12 @@ async fn main() -> anyhow::Result<()> {
 
     let kinesis_client = KinesisClient::new(
         &cli.kinesis_config,
-        &cli.aws_config,
+        &cli.aws_config.clone(),
         vec![cli.kinesis_config.journalist_stream.clone()],
     )
     .await;
+
+    let s3_client = S3Client::new(cli.aws_config, cli.s3_endpoint_url).await;
 
     //
     // Track the current trusted org pks in memory
@@ -125,6 +130,7 @@ async fn main() -> anyhow::Result<()> {
         anchor_org_pks,
         db,
         kinesis_client,
+        s3_client,
         cli.default_journalist_id,
         tracing_reload_handle,
         dead_drop_limits,
@@ -207,6 +213,7 @@ async fn main() -> anyhow::Result<()> {
             "/backups/encryption-public-key",
             post(post_backup_encryption_pk),
         )
+        .route("/backups/retrieve-upload-url", post(retrieve_upload_url))
         .with_state(api_state);
 
     let app = Router::new()

@@ -7,7 +7,6 @@ use sqlx::{
 
 #[derive(Clone)]
 pub struct Database {
-    pub backup_data_queries: BackupDataQueries,
     pub backup_key_queries: BackupKeyQueries,
     pub covernode_key_queries: CoverNodeKeyQueries,
     pub dead_drop_queries: DeadDropQueries,
@@ -31,7 +30,6 @@ impl Database {
         sqlx::migrate!().run(&pool).await?;
 
         Ok(Database {
-            backup_data_queries: BackupDataQueries::new(pool.clone()),
             backup_key_queries: BackupKeyQueries::new(pool.clone()),
             covernode_key_queries: CoverNodeKeyQueries::new(pool.clone()),
             dead_drop_queries: DeadDropQueries::new(pool.clone()),
