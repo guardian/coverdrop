@@ -7,7 +7,7 @@ use common::{
     },
     form::DEFAULT_FORM_TTL_SECONDS,
     protocol::{
-        constants::WEEK_IN_SECONDS,
+        constants::JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
         keys::{
             generate_journalist_id_key_pair, generate_journalist_messaging_key_pair,
             generate_journalist_provisioning_key_pair,
@@ -109,7 +109,10 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
 
     // time travel to avoid new provisioning key being rejected by api
     stack
-        .time_travel(stack.now() + Duration::from_secs(WEEK_IN_SECONDS as u64 * 12))
+        .time_travel(
+            stack.now()
+                + Duration::from_secs(JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS as u64),
+        )
         .await;
 
     // Create, but don't publish, a new journalist id key signed with the current journalist provisioning key

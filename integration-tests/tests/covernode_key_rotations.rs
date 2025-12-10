@@ -5,8 +5,8 @@ use common::{
     protocol::{
         constants::{
             COVERNODE_ID_KEY_VALID_DURATION_SECONDS,
-            COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS, DAY_IN_SECONDS,
-            ORGANIZATION_KEY_VALID_DURATION_SECONDS, WEEK_IN_SECONDS,
+            COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS, DAY_IN_SECONDS,
+            ORGANIZATION_KEY_VALID_DURATION_SECONDS,
         },
         keys::{
             generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
@@ -137,27 +137,7 @@ async fn covernode_key_rotations() {
     assert!(public_keys.covernode_provisioning_pk.is_some());
     assert!(public_keys.journalist_provisioning_pk.is_some());
 
-    // 2. Org pk still there, provisioning keys gone
-    stack
-        .time_travel(
-            stack.now()
-                + Duration::from_secs(COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS as u64),
-        )
-        .await;
-
-    trigger_expired_key_deletion_identity_api(stack.identity_api_task_api_client()).await;
-
-    let public_keys = stack
-        .identity_api_client()
-        .get_public_keys()
-        .await
-        .expect("Get public keys");
-
-    assert!(!public_keys.anchor_org_pks.is_empty());
-    assert!(public_keys.covernode_provisioning_pk.is_none());
-    assert!(public_keys.journalist_provisioning_pk.is_none());
-
-    // 3. All keys expired
+    // 2. All keys expired
     stack
         .time_travel(
             stack.now() + Duration::from_secs(ORGANIZATION_KEY_VALID_DURATION_SECONDS as u64),
@@ -201,7 +181,14 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
 
     // time travel to avoid provisioning key being rejected by api
     stack
-        .time_travel(stack.now() + Duration::from_secs(WEEK_IN_SECONDS as u64 * 12))
+        .time_travel(
+            stack.now()
+                + Duration::from_secs(
+                    COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS
+                        .try_into()
+                        .unwrap(),
+                ),
+        )
         .await;
 
     // Create a new covernode id key signed with the current covernode provisioning key

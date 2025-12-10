@@ -1,4 +1,4 @@
-// IMPORTANT: After changes to this file run `cargo run --bin admin generate-mobile-test-files`
+// IMPORTANT: After changes to this file run `cargo run --bin admin generate-mobile-constants-files`
 // to keep the mobile constants files in sync.
 // NOTE! Once `chrono` stabilizes `weeks`, `days`, etc. as `const fn`s then we can change these over to
 // be proper `Duration`s rather than as `i64` amounts of seconds
@@ -18,12 +18,10 @@ pub const ORGANIZATION_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
 pub const ORGANIZATION_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
 
 /// The time in seconds the journalist provisioning key is valid for.
-/// The expiry time is quite long because provisioning a new key requires
-/// access to a physical machine where the secret organization key is stored
-pub const JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 24 * WEEK_IN_SECONDS;
+pub const JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
 
-/// The amount of time between key rotations for the journalist identity key
-pub const JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 12 * WEEK_IN_SECONDS;
+/// The amount of time between key rotations for the journalist provisioning key
+pub const JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
 
 /// Valid for two months in case a journalist goes on sabbatical for a month
 pub const JOURNALIST_ID_KEY_VALID_DURATION_SECONDS: i64 = 8 * WEEK_IN_SECONDS;
@@ -40,10 +38,11 @@ pub const JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS: i64 = 2 * WEEK_IN_SECONDS;
 /// The amount of seconds between journalist messaging key rotations
 pub const JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS: i64 = DAY_IN_SECONDS;
 
-pub const COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 24 * WEEK_IN_SECONDS;
+/// The time in seconds the CoverNode provisioning key is valid for.
+pub const COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
 
 /// The amount of time between key rotations for the CoverNode provisioning key
-pub const COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 12 * WEEK_IN_SECONDS;
+pub const COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
 
 /// CoverNode id key validity duration
 pub const COVERNODE_ID_KEY_VALID_DURATION_SECONDS: i64 = 4 * WEEK_IN_SECONDS;

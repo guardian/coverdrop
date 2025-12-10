@@ -107,9 +107,9 @@ fn test_rotation_notification_time() {
         org_key.not_valid_after()
     );
 
-    // Provisioning key notification time should be 12 weeks (provisioning key valid_duration / 2)
+    // Provisioning key notification time should be 26 weeks (provisioning key valid_duration / 2)
     // before both keys expire (and before the provisioning key is created).
-    let expected_notification_time: DateTime<Utc> = "2025-10-08T00:00:00Z".parse().unwrap();
+    let expected_notification_time: DateTime<Utc> = "2025-07-02T00:00:00Z".parse().unwrap();
     assert_eq!(
         provisioning_key.rotation_notification_time(),
         expected_notification_time

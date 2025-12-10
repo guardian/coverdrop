@@ -5,10 +5,10 @@
 
 // swiftlint:disable identifier_name
 public enum Constants {
-    public static let journalistProvisioningKeyValidDurationSeconds = 14_515_200
+    public static let journalistProvisioningKeyValidDurationSeconds = 31_449_600
     public static let journalistIdKeyValidDurationSeconds = 4_838_400
     public static let journalistMsgKeyValidDurationSeconds = 1_209_600
-    public static let covernodeProvisioningKeyValidDurationSeconds = 14_515_200
+    public static let covernodeProvisioningKeyValidDurationSeconds = 31_449_600
     public static let covernodeIdKeyValidDurationSeconds = 2_419_200
     public static let covernodeMsgKeyValidDurationSeconds = 1_209_600
     public static let userToCovernodeEncryptedMessageLen = 773
