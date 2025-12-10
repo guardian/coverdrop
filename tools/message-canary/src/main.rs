@@ -1,4 +1,7 @@
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    time::Duration,
+};
 
 use axum::{routing::get, Router};
 use canary_state::CanaryState;
@@ -16,7 +19,7 @@ use services::{
     create_undelivered_message_metrics, receive_j2u, receive_u2j, rotate_journalist_keys, send_j2u,
     send_u2j, sync_journalist_provisioning_pks,
 };
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, time::sleep};
 
 mod canary_state;
 mod cli;
@@ -49,6 +52,39 @@ async fn main() -> anyhow::Result<()> {
         cli.num_users,
     )
     .await?;
+
+    //
+    // Web server
+    //
+
+    tracing::info!("Starting canary web server");
+    let mut web_server = tokio::task::spawn(async move {
+        let app = Router::new()
+            // General
+            .route("/healthcheck", get(get_healthcheck));
+        let app = Router::new().nest("/v1/", app);
+
+        let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
+
+        tracing::info!(
+            "Starting Message Canary API server on http://{:?}",
+            socket_addr
+        );
+        let listener = TcpListener::bind(&socket_addr).await?;
+
+        axum::serve(listener, app).await
+    });
+
+    // The canary can't be run by multiple processes simultaneously since it needs to connect to
+    // journalist vaults which are sqlcipher databases in journaling mode DELETE.
+    // After starting the web server so that healthcheck endpoint is available,
+    // wait for 10 minutes to allow Riffraff to remove the old instance and avoid multiple instances
+    // attempting to connect to the same vaults simultaneously.
+    tracing::info!(
+        "Waiting 10 minutes before starting canary tasks to allow old instance to shut down"
+    );
+    sleep(Duration::from_secs(600)).await;
+    tracing::info!("Starting canary tasks");
 
     //
     // Send
@@ -101,27 +137,6 @@ async fn main() -> anyhow::Result<()> {
         async move {
             create_undelivered_message_metrics(canary_state, cli.max_delivery_time_hours).await
         }
-    });
-
-    //
-    // Web server
-    //
-
-    let mut web_server = tokio::task::spawn(async move {
-        let app = Router::new()
-            // General
-            .route("/healthcheck", get(get_healthcheck));
-        let app = Router::new().nest("/v1/", app);
-
-        let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
-
-        tracing::info!(
-            "Starting Message Canary API server on http://{:?}",
-            socket_addr
-        );
-        let listener = TcpListener::bind(&socket_addr).await?;
-
-        axum::serve(listener, app).await
     });
 
     tokio::select! {
