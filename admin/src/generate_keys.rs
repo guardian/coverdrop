@@ -6,7 +6,8 @@ use common::{
         api_client::ApiClient,
         forms::{
             PostAdminPublicKeyForm, PostCoverNodeProvisioningPublicKeyForm,
-            PostJournalistProvisioningPublicKeyForm,
+            PostJournalistProvisioningPublicKeyForm, COVERNODE_PROVISIONING_KEY_FORM_FILENAME,
+            JOURNALIST_PROVISIONING_KEY_FORM_FILENAME,
         },
         models::covernode_id::CoverNodeIdentity,
     },
@@ -86,8 +87,6 @@ pub async fn generate_admin_key_pair(
 
 pub async fn generate_journalist_provisioning_key_pair(
     keys_path: impl AsRef<Path>,
-    api_client: ApiClient,
-    do_not_upload_to_api: bool,
     quiet: bool,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
@@ -96,16 +95,6 @@ pub async fn generate_journalist_provisioning_key_pair(
     let journalist_provisioning_key_pair =
         keys::generate_journalist_provisioning_key_pair(&org_key_pair, now);
 
-    if !do_not_upload_to_api {
-        let form = PostJournalistProvisioningPublicKeyForm::new(
-            journalist_provisioning_key_pair.public_key().to_untrusted(),
-            &org_key_pair,
-            now,
-        )?;
-
-        api_client.post_journalist_provisioning_pk(form).await?;
-    }
-
     journalist_provisioning_key_pair
         .to_untrusted()
         .save_to_disk(&keys_path)?;
@@ -113,8 +102,27 @@ pub async fn generate_journalist_provisioning_key_pair(
     if !quiet {
         println!(
             "🔐 Journalist provisioning key pair generated in {:?}",
-            fs::canonicalize(keys_path).unwrap()
+            fs::canonicalize(&keys_path).unwrap()
         );
+    }
+
+    // TODO the form type should be in the type system, then we won't need to pass the file name to save_to_disk
+    let form_path = keys_path
+        .as_ref()
+        .join(JOURNALIST_PROVISIONING_KEY_FORM_FILENAME);
+    PostJournalistProvisioningPublicKeyForm::new(
+        journalist_provisioning_key_pair.public_key().to_untrusted(),
+        &org_key_pair,
+        now,
+    )?
+    .save_to_disk(&form_path)?;
+
+    if !quiet {
+        println!(
+            "🔐 Journalist provisioning key form saved to {:?}.",
+            fs::canonicalize(&form_path).unwrap()
+        );
+        println!("Move this to an online machine and post it to the API using the 'post-journalist-provisioning-key-form' command WITHIN ONE HOUR!.");
     }
 
     Ok(())
@@ -122,8 +130,6 @@ pub async fn generate_journalist_provisioning_key_pair(
 
 pub async fn generate_covernode_provisioning_key_pair(
     keys_path: impl AsRef<Path>,
-    api_client: ApiClient,
-    do_not_upload_to_api: bool,
     quiet: bool,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
@@ -132,16 +138,6 @@ pub async fn generate_covernode_provisioning_key_pair(
     let covernode_provisioning_key_pair =
         keys::generate_covernode_provisioning_key_pair(&org_key_pair, now);
 
-    if !do_not_upload_to_api {
-        let form = PostCoverNodeProvisioningPublicKeyForm::new(
-            covernode_provisioning_key_pair.public_key().to_untrusted(),
-            &org_key_pair,
-            now,
-        )?;
-
-        api_client.post_covernode_provisioning_pk(form).await?;
-    }
-
     covernode_provisioning_key_pair
         .to_untrusted()
         .save_to_disk(&keys_path)?;
@@ -149,8 +145,27 @@ pub async fn generate_covernode_provisioning_key_pair(
     if !quiet {
         println!(
             "🔐 CoverNode provisioning key pair generated in {:?}",
-            fs::canonicalize(keys_path).unwrap()
+            fs::canonicalize(&keys_path).unwrap()
         );
+    }
+
+    // TODO the form type should be in the type system, then we won't need to pass the file name to save_to_disk
+    let form_path = keys_path
+        .as_ref()
+        .join(COVERNODE_PROVISIONING_KEY_FORM_FILENAME);
+    PostCoverNodeProvisioningPublicKeyForm::new(
+        covernode_provisioning_key_pair.public_key().to_untrusted(),
+        &org_key_pair,
+        now,
+    )?
+    .save_to_disk(&form_path)?;
+
+    if !quiet {
+        println!(
+            "🔐 CoverNode provisioning key form saved to {:?}.",
+            fs::canonicalize(&form_path).unwrap()
+        );
+        println!("Move this to an online machine and post it to the API using the 'post-covernode-provisioning-key-form' command WITHIN ONE HOUR!.");
     }
 
     Ok(())

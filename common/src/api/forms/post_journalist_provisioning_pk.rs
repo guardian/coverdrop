@@ -8,6 +8,9 @@ use crate::{
     },
 };
 
+pub const JOURNALIST_PROVISIONING_KEY_FORM_FILENAME: &str =
+    "journalist_provisioning_public_key_form.json";
+
 pub type PostJournalistProvisioningPublicKeyForm =
     Form<UntrustedJournalistProvisioningPublicKey, Organization>;
 

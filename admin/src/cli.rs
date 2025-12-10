@@ -69,19 +69,29 @@ pub enum Commands {
         #[clap(long)]
         keys_path: PathBuf,
     },
+    /// Run offline
+    /// Create a new journalist provisioning key pair and
+    /// a signed form to upload the public key to the API.
     GenerateJournalistProvisioningKeyPair {
         /// The directory you wish to create the key files in
         /// and the path to the directory containing the organization's
         /// public and secret keys
         #[clap(long)]
         keys_path: PathBuf,
+    },
+    /// Run online
+    /// Post the journalist provisioning key form to the API.
+    PostJournalistProvisioningKeyForm {
         /// The address of the CoverDrop API server
         #[clap(long)]
         api_url: Url,
-        /// Don't upload the key to the API, useful when generating keys for test purposes
+        /// The path to the directory containing the journalist provisioning key pair form
         #[clap(long)]
-        do_not_upload_to_api: bool,
+        form_path: PathBuf,
     },
+    /// Run offline
+    /// Create a new covernode provisioning key pair and
+    /// a signed form to upload the public key to the API.
     #[clap(name = "generate-covernode-provisioning-key-pair")]
     GenerateCoverNodeProvisioningKeyPair {
         /// The directory you wish to create the key files in
@@ -89,12 +99,17 @@ pub enum Commands {
         /// public and secret keys
         #[clap(long)]
         keys_path: PathBuf,
+    },
+    /// Run online
+    /// Post the covernode provisioning key form to the API.
+    #[clap(name = "post-covernode-provisioning-key-form")]
+    PostCoverNodeProvisioningKeyForm {
         /// The address of the CoverDrop API server
         #[clap(long)]
         api_url: Url,
-        /// Don't upload the key to the API, useful when generating keys for test purposes
+        /// The path to the directory containing the covernode provisioning key pair form
         #[clap(long)]
-        do_not_upload_to_api: bool,
+        form_path: PathBuf,
     },
     #[clap(name = "generate-covernode-identity-key-pair")]
     GenerateCoverNodeIdentityKeyPair {

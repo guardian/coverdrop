@@ -5,6 +5,8 @@ use admin::generate_covernode_provisioning_key_pair;
 use admin::generate_journalist;
 use admin::generate_journalist_provisioning_key_pair;
 use admin::generate_test_vectors;
+use admin::post_covernode_provisioning_key_pair;
+use admin::post_journalist_provisioning_key_pair;
 use admin::post_log_config_form;
 use admin::reseed_journalist_vault_id_key_pair;
 use admin::run_setup_ceremony;
@@ -95,35 +97,19 @@ async fn main() -> anyhow::Result<()> {
         Commands::GenerateOrganizationKeyPair { keys_path } => {
             generate_organization_key_pair(keys_path, false, time::now())
         }
-        Commands::GenerateJournalistProvisioningKeyPair {
-            keys_path,
-            api_url,
-            do_not_upload_to_api,
-        } => {
-            let api_client = ApiClient::new(api_url);
-            generate_journalist_provisioning_key_pair(
-                keys_path,
-                api_client,
-                do_not_upload_to_api,
-                false,
-                time::now(),
-            )
-            .await
+        Commands::GenerateJournalistProvisioningKeyPair { keys_path } => {
+            generate_journalist_provisioning_key_pair(keys_path, false, time::now()).await
         }
-        Commands::GenerateCoverNodeProvisioningKeyPair {
-            keys_path,
-            api_url,
-            do_not_upload_to_api,
-        } => {
+        Commands::PostJournalistProvisioningKeyForm { api_url, form_path } => {
             let api_client = ApiClient::new(api_url);
-            generate_covernode_provisioning_key_pair(
-                keys_path,
-                api_client,
-                do_not_upload_to_api,
-                false,
-                time::now(),
-            )
-            .await
+            post_journalist_provisioning_key_pair(form_path, api_client).await
+        }
+        Commands::GenerateCoverNodeProvisioningKeyPair { keys_path } => {
+            generate_covernode_provisioning_key_pair(keys_path, false, time::now()).await
+        }
+        Commands::PostCoverNodeProvisioningKeyForm { api_url, form_path } => {
+            let api_client = ApiClient::new(api_url);
+            post_covernode_provisioning_key_pair(form_path, api_client).await
         }
         Commands::GenerateCoverNodeIdentityKeyPair {
             covernode_id,
@@ -335,6 +321,10 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::GenerateBackupMessagingKeyPair { keys_path } => {
             let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
+            // return early if no anchor org pks found
+            if anchor_org_pks.is_empty() {
+                anyhow::bail!("No anchor organization public keys found in the keys path. Cannot generate backup messaging key pair.");
+            }
             let backup_id_key_pairs =
                 load_backup_id_key_pairs(&keys_path, &anchor_org_pks, time::now())?;
             let latest_backup_id_key_pair = backup_id_key_pairs.into_latest_key_required()?;

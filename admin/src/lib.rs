@@ -6,6 +6,7 @@ mod generate_covernode_database;
 mod generate_journalists;
 mod generate_keys;
 mod generate_test_vectors;
+mod post_keys;
 mod post_log_config_form;
 mod reseed_journalist_vault_id_key_pair;
 mod update_journalist;
@@ -29,6 +30,7 @@ pub use generate_keys::{
     generate_journalist_provisioning_key_pair, generate_organization_key_pair,
 };
 pub use generate_test_vectors::generate_test_vectors;
+pub use post_keys::{post_covernode_provisioning_key_pair, post_journalist_provisioning_key_pair};
 pub use post_log_config_form::post_log_config_form;
 pub use reseed_journalist_vault_id_key_pair::reseed_journalist_vault_id_key_pair;
 pub use update_journalist::update_journalist;

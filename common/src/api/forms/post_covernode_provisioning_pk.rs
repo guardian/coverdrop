@@ -8,6 +8,9 @@ use crate::{
     },
 };
 
+pub const COVERNODE_PROVISIONING_KEY_FORM_FILENAME: &str =
+    "covernode_provisioning_public_key_form.json";
+
 pub type PostCoverNodeProvisioningPublicKeyForm =
     Form<UntrustedCoverNodeProvisioningPublicKey, Organization>;
 
