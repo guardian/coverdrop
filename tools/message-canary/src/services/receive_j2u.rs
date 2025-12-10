@@ -13,28 +13,26 @@ use common::{
 use crate::canary_state::CanaryState;
 
 pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
+    let users = canary_state.get_users().await;
+
     let throttle_duration = Duration::from_secs(60);
     let mut throttle = Throttle::new(throttle_duration);
-
-    let max_dead_drop_id = canary_state.db.get_max_j2u_dead_drop_id().await?;
-    tracing::info!("Initial max dead drop id {}", max_dead_drop_id);
-
-    tracing::info!("Polling j2u messages every 60 seconds",);
-
-    let users = canary_state.get_users().await;
 
     loop {
         let now = time::now();
 
         let keys = canary_state.get_keys_and_profiles(now).await?.keys;
 
-        tracing::info!("pulling dead drops with id > {}", max_dead_drop_id);
+        let ids_greater_than = canary_state.db.get_max_j2u_dead_drop_id().await?;
+
+        tracing::info!("pulling dead drops with id > {}", ids_greater_than);
         let dead_drop_list = canary_state
             .api_client
-            .pull_user_dead_drops(max_dead_drop_id)
+            .pull_user_dead_drops(ids_greater_than)
             .await?;
 
-        tracing::info!("pulled {} new dead drops", dead_drop_list.dead_drops.len());
+        let num_dead_drops = dead_drop_list.dead_drops.len();
+        tracing::info!("pulled {} new dead drops", num_dead_drops);
 
         if dead_drop_list.dead_drops.is_empty() {
             throttle.wait().await;
@@ -58,11 +56,11 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
         };
 
         // Not all dead drops are verified, log an error and skip
-        if verified_dead_drops.len() != dead_drop_list.dead_drops.len() {
+        if verified_dead_drops.len() != num_dead_drops {
             tracing::error!(
                 "only {} out of {} dead drops verified, skipping processing",
                 verified_dead_drops.len(),
-                dead_drop_list.dead_drops.len()
+                num_dead_drops
             );
             throttle.wait().await;
             continue;
