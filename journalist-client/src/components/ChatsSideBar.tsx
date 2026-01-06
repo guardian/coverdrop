@@ -47,6 +47,7 @@ type Chat = {
     message: string;
     messageType: Message["type"];
   };
+  messagesMatchingSearchTerm: string[];
   expiringMessageUrgency?: ExpiringMessageUrgency;
 };
 
@@ -334,6 +335,14 @@ export const ChatsSideBar = ({
               !!message.customExpiry ||
               maybeExistingInAcc?.hasMessagesWithCustomExpiry,
             userStatus: thisUserInfo.status,
+            messagesMatchingSearchTerm: message.message
+              .toLowerCase()
+              .includes(searchText.toLowerCase())
+              ? [
+                  ...(maybeExistingInAcc?.messagesMatchingSearchTerm || []),
+                  message.message,
+                ]
+              : maybeExistingInAcc?.messagesMatchingSearchTerm || [],
             lastMessage: isLatestMessage
               ? { message: message.message, messageType: message.type }
               : maybeExistingInAcc.lastMessage,
@@ -350,7 +359,8 @@ export const ChatsSideBar = ({
         !searchText ||
         chat.description?.toLowerCase().includes(searchText.toLowerCase()) ||
         chat.alias?.toLowerCase().includes(searchText.toLowerCase()) ||
-        chat.displayName.toLowerCase().includes(searchText.toLowerCase()),
+        chat.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+        chat.messagesMatchingSearchTerm.length > 0,
     );
 
   const inboxChats = chats.filter((c) => c.userStatus == "ACTIVE");
@@ -514,7 +524,7 @@ export const ChatsSideBar = ({
       </EuiFlexGroup>
       <EuiSpacer size="s" />
       <EuiFieldSearch
-        placeholder="Search names, nicknames & descriptions"
+        placeholder="Search vault"
         value={searchText}
         onChange={(event) => {
           setSearchText(event.target.value);
@@ -523,7 +533,7 @@ export const ChatsSideBar = ({
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck="false"
-        aria-label="Search chats"
+        aria-label="Search vault"
       />
       <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>
