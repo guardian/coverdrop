@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use crate::Error;
 
-pub fn new_reqwest_client() -> Client {
+pub fn new_reqwest_client_with_timeout(timeout: Duration) -> Client {
     // We set the max number of allowed idle connections to 0 to avoid
     // a race condition where a connection is selected from the pool and
     // written to at the same time the server is closing it.
@@ -14,9 +14,15 @@ pub fn new_reqwest_client() -> Client {
     // https://github.com/hyperium/hyper/issues/2136#issuecomment-589345238
     Client::builder()
         .pool_max_idle_per_host(0)
-        .timeout(Duration::from_secs(45)) // there's no default timeout
+        // A reqwest client has no default timeout so it's important we set one.
+        .timeout(timeout)
         .build()
         .expect("Build reqwest client")
+}
+
+pub fn new_reqwest_client() -> Client {
+    let default_timeout = Duration::from_secs(45);
+    new_reqwest_client_with_timeout(default_timeout)
 }
 
 async fn handle_error<T>(resp: Response) -> anyhow::Result<T> {

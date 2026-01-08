@@ -4,7 +4,7 @@ use crate::backup::constants::BACKUP_BUCKET_NAME_PREFIX;
 use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
 use crate::backup::roles::BackupMsg;
 use crate::clap::Stage;
-use crate::clients::new_reqwest_client;
+use crate::clients::new_reqwest_client_with_timeout;
 use crate::crypto::keys::encryption::{SignedEncryptionKeyPair, SignedPublicEncryptionKey};
 use crate::crypto::keys::signing::{SignedPublicSigningKey, SignedSigningKeyPair};
 use crate::crypto::{
@@ -16,11 +16,13 @@ use crate::protocol::backup_data::{
     BackupData, BackupDataWithSignature, BackupEncryptedPaddedVault, BackupEncryptedSecretShare,
     BackupEncryptedSecretShareWithRecipient, EncryptedSecretShare, VerifiedBackupData,
 };
+use crate::protocol::constants::MINUTE_IN_SECONDS;
 use crate::protocol::roles::{JournalistId, JournalistMessaging};
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use std::time::Duration;
 
 pub fn get_backup_bucket_name(stage: &Stage) -> String {
     format!("{}{}", BACKUP_BUCKET_NAME_PREFIX, stage.as_clap_str())
@@ -162,7 +164,8 @@ pub async fn sentinel_put_backup_data_to_s3(
 
     // Upload the backup data to the presigned URL
     // TODO consider passing in a reqwest client from the caller
-    let client = new_reqwest_client();
+    // Override the default timeout to allow for large uploads
+    let client = new_reqwest_client_with_timeout(Duration::from_secs(3 * MINUTE_IN_SECONDS as u64));
     client
         .put(presigned_upload_url)
         .json(&verified_backup_data.to_unverified().unwrap())
