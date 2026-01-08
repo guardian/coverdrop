@@ -14,7 +14,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
@@ -72,8 +71,6 @@ fun MessageSentScreen(
     onDismissDialog: () -> Unit = {},
     onExit: () -> Unit = {},
 ) {
-    val context = LocalContext.current
-
     if (showExitConfirmationDialog) {
         CoverDropConfirmationDialog(
             headingText = stringResource(R.string.screen_message_sent_exit_dialog_title),
@@ -105,7 +102,7 @@ fun MessageSentScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = context.getString(R.string.screen_message_sent_header_main),
+                    text = stringResource(R.string.screen_message_sent_header_main),
                     style = MaterialTheme.typography.h2,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(top = Padding.M),
@@ -130,11 +127,11 @@ fun MessageSentScreen(
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = context.getString(R.string.screen_message_sent_header2_main),
+                        text = stringResource(R.string.screen_message_sent_header2_main),
                         style = MaterialTheme.typography.h3,
                     )
                     Text(
-                        text = context.getString(R.string.screen_message_sent_content_main),
+                        text = stringResource(R.string.screen_message_sent_content_main),
                         style = MaterialTheme.typography.body1,
                         modifier = Modifier.padding(top = Padding.M, bottom = Padding.XL),
                     )

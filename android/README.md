@@ -180,12 +180,12 @@ When updating dependencies, the [verification-metadata.xml](gradle/verification-
 This can be done manually, or by running the following command and inspecting the results using `git diff` before committing:
 
 ```
-./gradlew --write-verification-metadata pgp,sha256 $yourNewTaskHere
+./gradlew --write-verification-metadata pgp,sha256 prepareKotlinBuildScriptModel
 ```
 
 The automated command only adds new dependencies, but never removes unused ones.
 If you, e.g. change an underlying dependency, you must manually remove the entries that refer to the no longer used library.
-The Android Studio IDE's Gradle sync task is best approximated with `prepareKotlinBuildScriptModel`.
+The Android Studio IDE's Gradle sync task is best approximated with `prepareKotlinBuildScriptModel`, but you can replace it with any other Gradle target where needed.
 
 > [!NOTE]
 > Note that this covers both build, plugin, and product dependencies.

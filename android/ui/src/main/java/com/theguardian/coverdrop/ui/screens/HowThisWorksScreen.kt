@@ -85,7 +85,6 @@ fun HowThisWorksScreen(
         initialPageOffsetFraction = 0f,
         pageCount = { pagerItems.size }
     )
-    val context = LocalContext.current
 
     ScreenContentWrapper {
         Column(
@@ -128,7 +127,7 @@ fun HowThisWorksScreen(
                                     .align(Alignment.CenterHorizontally)
                                     .padding(bottom = Padding.M),
                                 painter = painterResource(id = item.imageId),
-                                contentDescription = context.getString(item.titleId),
+                                contentDescription = stringResource(item.titleId),
                                 contentScale = ContentScale.Fit,
                             )
 
@@ -146,7 +145,7 @@ fun HowThisWorksScreen(
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(bottom = Padding.L),
-                                text = context.getString(item.titleId),
+                                text = stringResource(item.titleId),
                                 style = MaterialTheme.typography.h2.copy(
                                     color = MaterialTheme.colors.primary,
                                     fontSize = 20.sp
@@ -158,7 +157,7 @@ fun HowThisWorksScreen(
                                 modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
                                     .padding(bottom = Padding.XL),
-                                text = context.getString(item.contentId),
+                                text = stringResource(item.contentId),
                                 textAlign = TextAlign.Center,
                             )
 

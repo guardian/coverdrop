@@ -417,7 +417,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::BackupInitiateRestore {
             api_url,
-            output_path,
+            output_dir,
             aws_config,
             s3_url,
             stage,
@@ -425,7 +425,7 @@ async fn main() -> anyhow::Result<()> {
         } => {
             let s3_client = S3Client::new(aws_config, s3_url).await;
             let response_bundle_file =
-                backup_initiate_restore(api_url, &s3_client, &stage, &output_path, &journalist_id)
+                backup_initiate_restore(api_url, &s3_client, &stage, &output_dir, &journalist_id)
                     .await?;
 
             print_step(
@@ -440,8 +440,8 @@ async fn main() -> anyhow::Result<()> {
                 &format!(
                     "\n     admin backup-initiate-restore-finalize \\\n\
                            --bundle-response-path {} \\\n\
-                           --keys-path <KEYS_DIR> \\\n\
-                           --output-path <OUTPUT_DIR>",
+                           --keys-dir <KEYS_DIR> \\\n\
+                           --output-dir <OUTPUT_DIR>",
                     response_bundle_file.display()
                 ),
             ]);
@@ -450,14 +450,14 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::BackupInitiateRestoreFinalize {
             bundle_response_path,
-            keys_path,
-            output_path,
+            keys_dir,
+            output_dir,
         } => {
             let (in_progress_bundle_file, encrypted_share_files) =
                 backup_initiate_restore_finalize(
                     &bundle_response_path,
-                    keys_path,
-                    &output_path,
+                    keys_dir,
+                    &output_dir,
                     now(),
                 )
                 .await?;
@@ -481,8 +481,8 @@ async fn main() -> anyhow::Result<()> {
                     "Once you have collected enough shares (k shares), complete the restore:\n\n\
                            admin backup-complete-restore \\\n\
                            --in-progress-bundle-path {} \\\n\
-                           --restore-to-vault-path <VAULT_PATH> \\\n\
-                           --keys-path <KEYS_DIR> \\\n\
+                           --restore-to-vault-dir <VAULT_DIR> \\\n\
+                           --keys-dir <KEYS_DIR> \\\n\
                            --shares <SHARE_1> <SHARE_2> ...",
                     in_progress_bundle_file.display()
                 ),
@@ -492,8 +492,8 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::BackupCompleteRestore {
             in_progress_bundle_path,
-            restore_to_vault_path,
-            keys_path,
+            restore_to_vault_dir,
+            keys_dir,
             shares,
         } => {
             let wrapped_shares = shares
@@ -503,8 +503,8 @@ async fn main() -> anyhow::Result<()> {
 
             let restored_vault_path = backup_complete_restore(
                 &in_progress_bundle_path,
-                &restore_to_vault_path,
-                &keys_path,
+                &restore_to_vault_dir,
+                &keys_dir,
                 wrapped_shares,
                 now(),
             )
@@ -517,7 +517,7 @@ async fn main() -> anyhow::Result<()> {
                 "Verify the restored vault can be opened with the correct password",
                 "Check that all expected data is present in the vault",
                 &format!(
-                    "Securely delete the intermediate bundle and share files:\n       - {}",
+                    "Securely delete the intermediate bundle containing the share:\n       - {}",
                     in_progress_bundle_path.display()
                 ),
             ]);

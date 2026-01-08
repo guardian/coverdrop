@@ -380,10 +380,10 @@ pub enum Commands {
         /// The address of the CoverDrop API server
         #[clap(long)]
         api_url: Url,
-        /// The path where the bundle response file for the subsequent restore finalize step will
-        /// be saved.
+        /// The directory where the bundle response file for the subsequent restore finalize step
+        /// will be saved.
         #[clap(long)]
-        output_path: PathBuf,
+        output_dir: PathBuf,
         #[command(flatten)]
         aws_config: AwsConfig,
         /// The address of the s3 server
@@ -406,13 +406,13 @@ pub enum Commands {
         /// `backup-initiate-restore-submit` command
         #[clap(long)]
         bundle_response_path: PathBuf,
-        /// Path to the directory containing the backup admin key pair
+        /// Directory containing the backup admin key pair and the public org keys
         #[clap(long)]
-        keys_path: PathBuf,
-        /// The path where the intermediate backup file and encrypted shares for the subsequent
+        keys_dir: PathBuf,
+        /// The directory where the intermediate backup file and encrypted shares for the subsequent
         /// complete restore step will be saved.
         #[clap(long)]
-        output_path: PathBuf,
+        output_dir: PathBuf,
     },
     /// Completes the restore of a journalist vault using the intermediate backup file created
     /// using the `backup-initiate-restore` command and the encrypted recovery shares collected
@@ -423,12 +423,12 @@ pub enum Commands {
         /// `backup-initiate-restore` command
         #[clap(long)]
         in_progress_bundle_path: PathBuf,
-        /// The path to the journalist vault you wish to restore the backup to
+        /// The directory where you wish to restore the journalist vault to
         #[clap(long)]
-        restore_to_vault_path: PathBuf,
-        /// Path to the directory containing the backup admin key pair
+        restore_to_vault_dir: PathBuf,
+        /// Directory containing the backup admin key pair and the public org keys
         #[clap(long)]
-        keys_path: PathBuf,
+        keys_dir: PathBuf,
         /// The encrypted recovery shares collected from the trusted contacts
         #[clap(long)]
         shares: Vec<String>,

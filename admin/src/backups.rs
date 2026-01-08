@@ -16,7 +16,7 @@ use common::protocol::keys::{
 };
 use common::time;
 use common::time::now;
-use log::info;
+use log::{debug, info};
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -39,14 +39,23 @@ pub async fn backup_initiate_restore(
     api_url: Url,
     s3_client: &S3Client,
     stage: &Stage,
-    output_path: &Path,
+    output_dir: &Path,
     journalist_id: &JournalistIdentity,
 ) -> anyhow::Result<PathBuf> {
     let api_client = ApiClient::new(api_url);
+    debug!(
+        "Initiating backup restore for journalist '{}'...",
+        journalist_id
+    );
 
     let signed_backup_data = get_latest_journalist_backup_from_s3(s3_client, stage, journalist_id)
         .await
-        .with_context(|| "Failed to get backup data from s3")?;
+        .with_context(|| {
+            format!(
+                "Failed to download backup data from S3 (stage={:?}) for journalist '{}'",
+                stage, journalist_id
+            )
+        })?;
 
     // Retrieve the key hierarchy from the API
     let hierarchy = api_client
@@ -62,7 +71,7 @@ pub async fn backup_initiate_restore(
     };
 
     // Save the response bundle to disk
-    let output_file = output_path.join(format!(
+    let output_file = output_dir.join(format!(
         "restore-{}-{}.response-bundle",
         journalist_id,
         format_timestamp_for_filename(now())
@@ -79,17 +88,41 @@ pub async fn backup_initiate_restore(
 /// shares that are to be shared with the recovery contacts.
 pub async fn backup_initiate_restore_finalize(
     bundle_response_path: &Path,
-    keys_path: PathBuf,
-    output_path: &Path,
+    keys_dir: PathBuf,
+    output_dir: &Path,
     now: DateTime<Utc>,
 ) -> anyhow::Result<(PathBuf, Vec<PathBuf>)> {
     // Load the response bundle
     let response_bundle =
         load_bundle::<BackupInitiateRestoreResponseBundle>(bundle_response_path).await?;
 
+    debug!(
+        "Restoring backup bundle {} for journalist '{}'...",
+        bundle_response_path.display(),
+        response_bundle.journalist_id
+    );
+
     // Load keys and verify the backup data
-    let org_pks = load_anchor_org_pks(&keys_path, now)?;
-    let backup_id_key_pairs = load_backup_id_key_pairs(&keys_path, &org_pks, now)?;
+    let org_pks = load_anchor_org_pks(&keys_dir, now)?;
+    if org_pks.is_empty() {
+        anyhow::bail!(
+            "No organization public keys found in '{}'. Cannot verify backup.",
+            keys_dir.display()
+        );
+    }
+    debug!("Found {} organization public key(s)", org_pks.len());
+
+    let backup_id_key_pairs = load_backup_id_key_pairs(&keys_dir, &org_pks, now)?;
+    if backup_id_key_pairs.is_empty() {
+        anyhow::bail!(
+            "No backup identity key pairs found in '{}'. Cannot decrypt backup.",
+            keys_dir.display()
+        );
+    }
+    debug!(
+        "Found {} backup identity key pair(s)",
+        backup_id_key_pairs.len()
+    );
 
     let hierarchy = response_bundle.hierarchy.into_trusted(&org_pks, now);
     let journalist_id_key = hierarchy
@@ -115,7 +148,18 @@ pub async fn backup_initiate_restore_finalize(
 
     // Load the journalist's backup message key pairs and decrypt the backup data into the
     // in-progress bundle format
-    let backup_msg_key_pairs = load_backup_msg_key_pairs(&keys_path, &backup_id_key_pairs, now)?;
+    let backup_msg_key_pairs = load_backup_msg_key_pairs(&keys_dir, &backup_id_key_pairs, now)?;
+    if backup_msg_key_pairs.is_empty() {
+        anyhow::bail!(
+            "No backup messaging key pairs found in '{}'. Cannot decrypt backup shares.",
+            keys_dir.display()
+        );
+    }
+    debug!(
+        "Found {} backup messaging key pair(s)",
+        backup_msg_key_pairs.len()
+    );
+
     let restoration_in_progress = coverup_initiate_restore_step(
         expected_journalist_identity,
         response_bundle.signed_backup_data.clone(),
@@ -126,7 +170,7 @@ pub async fn backup_initiate_restore_finalize(
     .with_context(|| "Failed to complete initiate restore step")?;
 
     // Save the in-progress bundle to disk
-    let output_file = output_path.join(format!(
+    let output_file = output_dir.join(format!(
         "restore-{}-{}.recovery-in-progress",
         response_bundle.journalist_id,
         format_timestamp_for_filename(now)
@@ -148,7 +192,7 @@ pub async fn backup_initiate_restore_finalize(
         .into_iter()
         .enumerate()
     {
-        let share_file = output_path.join(format!(
+        let share_file = output_dir.join(format!(
             "restore-{}-{}-share-{}-{}.recovery-share",
             response_bundle.journalist_id,
             format_timestamp_for_filename(now),
@@ -168,7 +212,7 @@ pub async fn backup_initiate_restore_finalize(
 pub async fn backup_complete_restore(
     in_progress_bundle_path: &Path,
     restore_vault_in_dir: &Path,
-    keys_path: &Path,
+    keys_dir: &Path,
     shares: Vec<WrappedSecretShare>,
     now: DateTime<Utc>,
 ) -> anyhow::Result<PathBuf> {
@@ -176,10 +220,47 @@ pub async fn backup_complete_restore(
     let in_progress_bundle =
         load_bundle::<BackupRestorationInProgress>(in_progress_bundle_path).await?;
 
+    debug!(
+        "Completing restore with bundle {} for journalist '{}'...",
+        in_progress_bundle_path.display(),
+        in_progress_bundle.journalist_identity
+    );
+
     // Load the journalist's backup message key pairs to decrypt the shares
-    let org_pks = load_anchor_org_pks(keys_path, now)?;
-    let backup_id_key_pairs = load_backup_id_key_pairs(keys_path, &org_pks, now)?;
-    let backup_msg_key_pairs = load_backup_msg_key_pairs(keys_path, &backup_id_key_pairs, now)?;
+    let org_pks = load_anchor_org_pks(keys_dir, now)?;
+    if org_pks.is_empty() {
+        anyhow::bail!(
+            "No organization public keys found in '{}'. Cannot verify backup.",
+            keys_dir.display()
+        );
+    }
+    debug!("Found {} organization public key(s)", org_pks.len());
+
+    let backup_id_key_pairs = load_backup_id_key_pairs(keys_dir, &org_pks, now)?;
+    if backup_id_key_pairs.is_empty() {
+        anyhow::bail!(
+            "No backup identity key pairs found in '{}'. Cannot decrypt backup.",
+            keys_dir.display()
+        );
+    }
+    debug!(
+        "Found {} backup identity key pair(s)",
+        backup_id_key_pairs.len()
+    );
+
+    let backup_msg_key_pairs = load_backup_msg_key_pairs(keys_dir, &backup_id_key_pairs, now)?;
+    if backup_msg_key_pairs.is_empty() {
+        anyhow::bail!(
+            "No backup messaging key pairs found in '{}'. Cannot decrypt backup shares.",
+            keys_dir.display()
+        );
+    }
+    debug!(
+        "Found {} backup messaging key pair(s)",
+        backup_msg_key_pairs.len()
+    );
+
+    debug!("Found {} recovery share(s)", shares.len());
 
     let k = 1;
     let restored_encrypted_vault =

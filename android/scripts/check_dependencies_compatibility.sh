@@ -8,7 +8,7 @@ mkdir -p "$WORK_DIR";
 # Checkout the repositories
 pushd $WORK_DIR;
 echo "[ ] Cloning main-app-repository...";
-git clone --quiet git@github.com:guardian/android-news-app.git;
+git clone --depth=1 git@github.com:guardian/android-news-app.git;
 popd;
 
 # Export the relevant lines from each libs.versions.toml file
