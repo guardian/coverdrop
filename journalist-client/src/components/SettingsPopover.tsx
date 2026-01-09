@@ -318,9 +318,6 @@ export const SettingsPopover = ({
           <EuiContextMenuItem icon="list" onClick={getLogsClicked}>
             View application logs
           </EuiContextMenuItem>
-          <EuiContextMenuItem icon="key" onClick={getVaultKeysClicked}>
-            View vault keys
-          </EuiContextMenuItem>
           <EuiContextMenuItem icon="inspect" onClick={getPublicInfoClicked}>
             View all public profiles and keys
           </EuiContextMenuItem>
@@ -364,6 +361,9 @@ export const SettingsPopover = ({
           )}
           <EuiContextMenuItem>
             <strong>Danger Zone</strong>
+          </EuiContextMenuItem>
+          <EuiContextMenuItem icon="key" onClick={getVaultKeysClicked}>
+            View vault keys
           </EuiContextMenuItem>
           {devMode && (
             <EuiContextMenuItem icon="sun" onClick={burstCoverMessagesClicked}>
