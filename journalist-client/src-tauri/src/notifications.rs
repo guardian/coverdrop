@@ -3,7 +3,7 @@ use tauri_plugin_notification::NotificationExt as _;
 use tokio::sync::mpsc::{channel, Sender};
 
 pub struct NotificationRequest {
-    title: String,
+    maybe_title: Option<String>,
     body: String,
 }
 
@@ -12,13 +12,13 @@ pub struct Notifications(Sender<NotificationRequest>);
 
 impl Notifications {
     pub async fn send_with_default_title(&self, body: impl Into<String>) {
-        self.send("CoverDrop", body).await
+        self.send(None, body).await
     }
 
     /// Request a notification, if it fails to send then we log an error.
     /// Should only be used for non-critical notifications.
-    pub async fn send(&self, title: impl Into<String>, body: impl Into<String>) {
-        if let Err(e) = self.try_send(title, body).await {
+    pub async fn send(&self, maybe_title: Option<String>, body: impl Into<String>) {
+        if let Err(e) = self.try_send(maybe_title, body).await {
             tracing::error!("Failed to send notification to task: {:?}", e);
         }
     }
@@ -29,12 +29,12 @@ impl Notifications {
     /// the OS is managed by a separate task.
     pub async fn try_send(
         &self,
-        title: impl Into<String>,
+        maybe_title: Option<String>,
         body: impl Into<String>,
     ) -> anyhow::Result<()> {
         self.0
             .send(NotificationRequest {
-                title: title.into(),
+                maybe_title,
                 body: body.into(),
             })
             .await?;
@@ -43,7 +43,7 @@ impl Notifications {
     }
 }
 
-pub fn start_notification_service(app_handle: &AppHandle) -> Notifications {
+pub fn start_notification_service(app_handle: &AppHandle, default_title: String) -> Notifications {
     let (tx, mut rx) = channel::<NotificationRequest>(100);
 
     tauri::async_runtime::spawn({
@@ -54,7 +54,7 @@ pub fn start_notification_service(app_handle: &AppHandle) -> Notifications {
                 if let Err(e) = app_handle
                     .notification()
                     .builder()
-                    .title(&req.title)
+                    .title(req.maybe_title.unwrap_or(default_title.clone()))
                     .body(&req.body)
                     .show()
                 {

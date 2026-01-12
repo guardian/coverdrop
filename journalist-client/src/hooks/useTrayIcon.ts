@@ -10,12 +10,14 @@ interface UseTrayIconProps {
   maybeOpenVaultId: string | undefined;
   isImportantStuffInProgress: boolean;
   isHung: boolean;
+  isSoftLocked: boolean | undefined;
 }
 
 export const useTrayIcon = ({
   maybeOpenVaultId,
   isImportantStuffInProgress,
   isHung,
+  isSoftLocked,
 }: UseTrayIconProps) => {
   const [maybeTrayPromise, setMaybeTrayPromise] = useState<Promise<TrayIcon>>();
 
@@ -100,6 +102,13 @@ export const useTrayIcon = ({
         ctx.fill();
       }
 
+      if (isSoftLocked) {
+        ctx.font = `${width}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("💤", width / 2, height / 2);
+      }
+
       if (isHung) {
         ctx.font = `${width}px serif`;
         ctx.textAlign = "center";
@@ -166,5 +175,6 @@ export const useTrayIcon = ({
     hasUnreadMessages,
     isImportantStuffInProgress,
     isHung,
+    isSoftLocked,
   ]);
 };

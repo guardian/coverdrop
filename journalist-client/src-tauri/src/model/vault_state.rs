@@ -10,4 +10,5 @@ use ts_rs::TS;
 pub struct VaultState {
     pub id: String,
     pub path: PathBuf,
+    pub is_soft_locked: bool,
 }

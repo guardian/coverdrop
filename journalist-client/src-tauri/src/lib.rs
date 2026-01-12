@@ -12,7 +12,10 @@ use commands::{
         update_user_status,
     },
     profiles::get_profiles,
-    vaults::{add_trust_anchor, get_colocated_password, get_vault_state, unlock_vault},
+    vaults::{
+        add_trust_anchor, get_colocated_password, get_vault_state, send_notification,
+        soft_lock_vault, unlock_soft_locked_vault, unlock_vault,
+    },
 };
 use logging::JournalistClientLogLayer;
 use model::Profiles;
@@ -114,7 +117,9 @@ pub fn run() {
         .setup(move |app| {
             let config_dir = app.path().app_data_dir()?;
 
-            let notifications = start_notification_service(app.app_handle());
+            let app_name = format!("{} (Secure Messaging)", &app.package_info().name);
+
+            let notifications = start_notification_service(app.app_handle(), app_name.clone());
             let app_state =
                 AppStateHandle::new(app.handle().clone(), notifications, cli.no_background_tasks);
 
@@ -187,7 +192,10 @@ pub fn run() {
             get_trust_anchor_digests,
             get_vault_keys,
             add_trust_anchor,
-            launch_new_instance
+            launch_new_instance,
+            send_notification,
+            soft_lock_vault,
+            unlock_soft_locked_vault
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

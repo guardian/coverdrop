@@ -1,8 +1,3 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-
 use common::{
     api::api_client::ApiClient,
     client::VerifiedKeysAndJournalistProfiles,
@@ -12,6 +7,10 @@ use common::{
 };
 use journalist_vault::JournalistVault;
 use reqwest::Url;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tauri::AppHandle;
 use tokio::{
     sync::{RwLock, RwLockReadGuard},
@@ -42,6 +41,7 @@ pub enum AppState {
         /// The users vault - unlocked
         vault: JournalistVault,
         api_client: ApiClient,
+        is_soft_locked: bool,
     },
 }
 
@@ -63,7 +63,7 @@ pub struct AppStateHandle {
     pub app_handle: AppHandle,
     pub name_generator: NameGenerator,
     public_info: PublicInfo,
-    notifications: Notifications,
+    pub notifications: Notifications,
     inner: RwLock<AppState>,
     pub logs: LogReceiver,
     no_background_tasks: bool,
@@ -182,6 +182,7 @@ impl AppStateHandle {
             _runner_join_handle: runner_join_handle,
             vault: vault.clone(),
             api_client: api_client.clone(),
+            is_soft_locked: false,
         };
 
         Ok((vault, api_client))
@@ -190,10 +191,17 @@ impl AppStateHandle {
     pub async fn vault_state(&self) -> anyhow::Result<Option<VaultState>> {
         let guard = self.inner.read().await;
 
-        if let AppState::LoggedIn { vault, path, .. } = &*guard {
+        if let AppState::LoggedIn {
+            vault,
+            path,
+            is_soft_locked,
+            ..
+        } = &*guard
+        {
             Ok(Some(VaultState {
                 id: vault.journalist_id().await?.to_string(),
                 path: path.clone(),
+                is_soft_locked: *is_soft_locked,
             }))
         } else {
             Ok(None)
@@ -207,6 +215,44 @@ impl AppStateHandle {
             AppState::LoggedOut => None,
             AppState::LoggedIn { vault, .. } => Some(vault.clone()),
         }
+    }
+
+    pub async fn soft_lock_vault(&self) -> anyhow::Result<Option<VaultState>> {
+        let mut guard = self.inner.write().await;
+
+        match &mut *guard {
+            AppState::LoggedIn { is_soft_locked, .. } => {
+                *is_soft_locked = true;
+            }
+            AppState::LoggedOut => anyhow::bail!("Not logged in"),
+        }
+
+        drop(guard);
+        self.vault_state().await
+    }
+
+    pub async fn unlock_soft_locked_vault(
+        &self,
+        password: &str,
+    ) -> anyhow::Result<Option<VaultState>> {
+        let mut guard = self.inner.write().await;
+
+        match &mut *guard {
+            AppState::LoggedIn {
+                path,
+                is_soft_locked,
+                vault,
+                ..
+            } => {
+                if vault.check_password(path, password).await {
+                    *is_soft_locked = false;
+                }
+            }
+            AppState::LoggedOut => anyhow::bail!("Not logged in"),
+        }
+
+        drop(guard);
+        self.vault_state().await
     }
 
     pub async fn api_client(&self) -> Option<ApiClient> {

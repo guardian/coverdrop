@@ -47,10 +47,27 @@ export const unlockVault = async (
   }
 };
 
+export const softLockVault = (): Promise<VaultState | null> => {
+  return invokeWithErrorMessage("soft_lock_vault");
+};
+
+export const unlockSoftLockedVault = (
+  password: string,
+): Promise<VaultState | null> => {
+  return invokeWithErrorMessage("unlock_soft_locked_vault", { password });
+};
+
 export const getColocatedPassword = (path: string): Promise<string | null> => {
   return invokeWithSilencedErrorMessage("get_colocated_password", { path });
 };
 
 export const addTrustAnchor = (path: string): Promise<string | null> => {
   return invokeWithErrorMessage("add_trust_anchor", { path });
+};
+
+export const sendDesktopNotification = (args: {
+  title?: string;
+  body: string;
+}): Promise<void> => {
+  return invokeWithErrorMessage("send_notification", args);
 };

@@ -30,6 +30,7 @@ import { getPublicInfo } from "./commands/admin.ts";
 import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 import { BackupModal } from "./components/BackupModal.tsx";
+import { IdleTimeoutMonitor } from "./components/IdleTimeoutMonitor.tsx";
 import { sizes } from "./styles/sizes.ts";
 import { useTrayIcon } from "./hooks/useTrayIcon.ts";
 import { BackgroundTaskTrackerWithLoadingBarIfApplicable } from "./components/BackgroundTaskTrackerWithLoadingBarIfApplicable.tsx";
@@ -75,6 +76,7 @@ const App = ({
     maybeOpenVaultId: vaultState?.id,
     isImportantStuffInProgress,
     isHung: !!maybeHungAt,
+    isSoftLocked: vaultState?.isSoftLocked,
   });
 
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
@@ -232,145 +234,149 @@ const App = ({
   }, [messageStore.messages.length]);
 
   return (
-    <div>
-      {vaultState === null ? (
-        <OpenVault setVaultState={setVaultState} />
-      ) : (
-        <EuiPageTemplate
-          panelled={panelled}
-          bottomBorder={bottomBorder}
-          grow={grow}
-          offset={offset}
-        >
-          {maybeHungAt && (
-            <EuiModal
-              onClose={() =>
-                alert(
-                  "You cannot dismiss this message, please contact the digital investigations team.",
-                )
-              }
-            >
-              <EuiModalHeader>
-                <EuiModalHeaderTitle>
-                  Sentinel has stopped receiving/sending messages
-                </EuiModalHeaderTitle>
-              </EuiModalHeader>
-              <EuiModalBody>
-                <p>
-                  <em>This was detected {maybeHungAt.toString()}</em>
-                </p>
-                <p>
-                  Please contact digital investigations team ASAP, to help us
-                  track down the root cause.
-                </p>
-                Ideally leave Sentinel running at this screen, but if needs be
-                you can restart Sentinel to try to resolve the issue (please
-                take a screenshot first).
-              </EuiModalBody>
-            </EuiModal>
-          )}
-          <EuiPageTemplate.Sidebar
-            style={{
-              position: "sticky",
-              top: "0",
-              height: sizes.chatsSideBar.height,
-              overflowY: "auto",
-              padding: size.s,
-            }}
-            minWidth={sizes.chatsSideBar.minWidth}
+    <IdleTimeoutMonitor vaultState={vaultState} setVaultState={setVaultState}>
+      <div>
+        {vaultState === null ? (
+          <OpenVault setVaultState={setVaultState} />
+        ) : (
+          <EuiPageTemplate
+            panelled={panelled}
+            bottomBorder={bottomBorder}
+            grow={grow}
+            offset={offset}
           >
-            <BackgroundTaskTrackerWithLoadingBarIfApplicable
-              isImportantStuffInProgress={isImportantStuffInProgress}
-              setIsImportantStuffInProgress={setIsImportantStuffInProgress}
-              maybeHungAt={maybeHungAt}
-              setMaybeHungAt={setMaybeHungAt}
+            {maybeHungAt && (
+              <EuiModal
+                onClose={() =>
+                  alert(
+                    "You cannot dismiss this message, please contact the digital investigations team.",
+                  )
+                }
+              >
+                <EuiModalHeader>
+                  <EuiModalHeaderTitle>
+                    Sentinel has stopped receiving/sending messages
+                  </EuiModalHeaderTitle>
+                </EuiModalHeader>
+                <EuiModalBody>
+                  <p>
+                    <em>This was detected {maybeHungAt.toString()}</em>
+                  </p>
+                  <p>
+                    Please contact digital investigations team ASAP, to help us
+                    track down the root cause.
+                  </p>
+                  Ideally leave Sentinel running at this screen, but if needs be
+                  you can restart Sentinel to try to resolve the issue (please
+                  take a screenshot first).
+                </EuiModalBody>
+              </EuiModal>
+            )}
+            <EuiPageTemplate.Sidebar
+              style={{
+                position: "sticky",
+                top: "0",
+                height: sizes.chatsSideBar.height,
+                overflowY: "auto",
+                padding: size.s,
+              }}
+              minWidth={sizes.chatsSideBar.minWidth}
+            >
+              <BackgroundTaskTrackerWithLoadingBarIfApplicable
+                isImportantStuffInProgress={isImportantStuffInProgress}
+                setIsImportantStuffInProgress={setIsImportantStuffInProgress}
+                maybeHungAt={maybeHungAt}
+                setMaybeHungAt={setMaybeHungAt}
+              />
+              <ChatsSideBar
+                journalistId={vaultState.id}
+                journalistStatus={journalistProfile?.status}
+                currentUserReplyKey={currentUserReplyKey}
+                setChat={setCurrentUserReplyKey}
+                markChatAsUnread={markChatAsUnread}
+                setMaybeEditModalForReplyKey={setMaybeEditModalForReplyKey}
+                setMaybeMuteModalForReplyKey={setMaybeMuteModalForReplyKey}
+                setMaybeCopyToClipboardModalForReplyKey={
+                  setMaybeCopyToClipboardModalForReplyKey
+                }
+                setMaybeJournalistStatusForModal={
+                  setMaybeJournalistStatusForModal
+                }
+                openBackupModal={() => setIsBackupModalOpen(true)}
+                addCustomToast={addCustomToast}
+                removeCustomToast={removeCustomToast}
+              />
+            </EuiPageTemplate.Sidebar>
+            {currentUserReplyKey ? (
+              <Chat
+                messages={messageStore.messages}
+                userReplyKey={currentUserReplyKey}
+                userAutogeneratedName={
+                  userInfo[currentUserReplyKey].displayName
+                }
+                currentUserStatus={userInfo[currentUserReplyKey].status}
+                userAlias={userInfo[currentUserReplyKey].alias}
+                userDescription={userInfo[currentUserReplyKey].description}
+                markAsUnread={() => markChatAsUnread(currentUserReplyKey)}
+                showEditModal={() =>
+                  setMaybeEditModalForReplyKey(currentUserReplyKey)
+                }
+                showMuteModal={() =>
+                  setMaybeMuteModalForReplyKey(currentUserReplyKey)
+                }
+                showCopyToClipboardModal={() =>
+                  setMaybeCopyToClipboardModalForReplyKey(currentUserReplyKey)
+                }
+              />
+            ) : null}
+
+            {journalistProfile && (
+              <ToggleJournalistStatusModal
+                journalistProfile={journalistProfile}
+                newStatus={maybeJournalistStatusForModal}
+                setJournalistStatus={setJournalistStatus}
+                closeModal={() => setMaybeJournalistStatusForModal(null)}
+              />
+            )}
+
+            <MuteToggleModal
+              maybeReplyKey={maybeMuteModalForReplyKey}
+              closeModal={() => setMaybeMuteModalForReplyKey(null)}
+              fetchUsersAndChats={fetchUsersAndChats}
             />
-            <ChatsSideBar
-              journalistId={vaultState.id}
-              journalistStatus={journalistProfile?.status}
-              currentUserReplyKey={currentUserReplyKey}
-              setChat={setCurrentUserReplyKey}
-              markChatAsUnread={markChatAsUnread}
-              setMaybeEditModalForReplyKey={setMaybeEditModalForReplyKey}
-              setMaybeMuteModalForReplyKey={setMaybeMuteModalForReplyKey}
-              setMaybeCopyToClipboardModalForReplyKey={
-                setMaybeCopyToClipboardModalForReplyKey
-              }
-              setMaybeJournalistStatusForModal={
-                setMaybeJournalistStatusForModal
-              }
-              openBackupModal={() => setIsBackupModalOpen(true)}
+
+            <EditUserModal
+              maybeReplyKey={maybeEditModalForReplyKey}
+              closeModal={() => setMaybeEditModalForReplyKey(null)}
+              fetchUsersAndChats={fetchUsersAndChats}
+            />
+
+            <CopyToClipboardModal
+              maybeReplyKey={maybeCopyToClipboardModalForReplyKey}
+              closeModal={() => setMaybeCopyToClipboardModalForReplyKey(null)}
+              vaultId={vaultState.id}
+            />
+
+            <BackupModal
+              isOpen={isBackupModalOpen}
+              vaultPath={vaultState.path}
+              setIsBackupModalOpen={setIsBackupModalOpen}
               addCustomToast={addCustomToast}
               removeCustomToast={removeCustomToast}
             />
-          </EuiPageTemplate.Sidebar>
-          {currentUserReplyKey ? (
-            <Chat
-              messages={messageStore.messages}
-              userReplyKey={currentUserReplyKey}
-              userAutogeneratedName={userInfo[currentUserReplyKey].displayName}
-              currentUserStatus={userInfo[currentUserReplyKey].status}
-              userAlias={userInfo[currentUserReplyKey].alias}
-              userDescription={userInfo[currentUserReplyKey].description}
-              markAsUnread={() => markChatAsUnread(currentUserReplyKey)}
-              showEditModal={() =>
-                setMaybeEditModalForReplyKey(currentUserReplyKey)
-              }
-              showMuteModal={() =>
-                setMaybeMuteModalForReplyKey(currentUserReplyKey)
-              }
-              showCopyToClipboardModal={() =>
-                setMaybeCopyToClipboardModalForReplyKey(currentUserReplyKey)
-              }
-            />
-          ) : null}
+          </EuiPageTemplate>
+        )}
 
-          {journalistProfile && (
-            <ToggleJournalistStatusModal
-              journalistProfile={journalistProfile}
-              newStatus={maybeJournalistStatusForModal}
-              setJournalistStatus={setJournalistStatus}
-              closeModal={() => setMaybeJournalistStatusForModal(null)}
-            />
-          )}
-
-          <MuteToggleModal
-            maybeReplyKey={maybeMuteModalForReplyKey}
-            closeModal={() => setMaybeMuteModalForReplyKey(null)}
-            fetchUsersAndChats={fetchUsersAndChats}
-          />
-
-          <EditUserModal
-            maybeReplyKey={maybeEditModalForReplyKey}
-            closeModal={() => setMaybeEditModalForReplyKey(null)}
-            fetchUsersAndChats={fetchUsersAndChats}
-          />
-
-          <CopyToClipboardModal
-            maybeReplyKey={maybeCopyToClipboardModalForReplyKey}
-            closeModal={() => setMaybeCopyToClipboardModalForReplyKey(null)}
-            vaultId={vaultState.id}
-          />
-
-          <BackupModal
-            isOpen={isBackupModalOpen}
-            vaultPath={vaultState.path}
-            setIsBackupModalOpen={setIsBackupModalOpen}
-            addCustomToast={addCustomToast}
-            removeCustomToast={removeCustomToast}
-          />
-        </EuiPageTemplate>
-      )}
-
-      <EuiGlobalToastList
-        toasts={toasts}
-        dismissToast={(t: Toast) => {
-          errorsState.removeError(t.id);
-          removeCustomToast(t.id);
-        }}
-        toastLifeTimeMs={60_000}
-      />
-    </div>
+        <EuiGlobalToastList
+          toasts={toasts}
+          dismissToast={(t: Toast) => {
+            errorsState.removeError(t.id);
+            removeCustomToast(t.id);
+          }}
+          toastLifeTimeMs={60_000}
+        />
+      </div>
+    </IdleTimeoutMonitor>
   );
 };
 

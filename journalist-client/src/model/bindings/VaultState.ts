@@ -3,4 +3,9 @@
 /**
  * Information about the open vault that the frontend cares about
  */
-export type VaultState = { type: "VaultState"; id: string; path: string };
+export type VaultState = {
+  type: "VaultState";
+  id: string;
+  path: string;
+  isSoftLocked: boolean;
+};

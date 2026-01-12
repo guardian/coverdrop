@@ -15,6 +15,7 @@ const vaultState = {
   type: "VaultState",
   id: "test",
   path: "fake/vault/to/path.vault",
+  isSoftLocked: false,
 } satisfies VaultState;
 
 const profiles = {

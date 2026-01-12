@@ -174,6 +174,13 @@ impl Argon2SqlCipher {
         );
     }
 
+    pub async fn check_can_open_database_assuming_migrated(
+        path: impl AsRef<Path>,
+        password: &str,
+    ) -> bool {
+        Self::open_argon2(&path, password).await.is_ok()
+    }
+
     pub async fn derive_database_key(
         path: impl AsRef<Path>,
         password: &str,

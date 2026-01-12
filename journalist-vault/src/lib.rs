@@ -170,6 +170,10 @@ impl JournalistVault {
         Ok(Self { pool })
     }
 
+    pub async fn check_password(&self, path: impl AsRef<Path>, password: &str) -> bool {
+        Argon2SqlCipher::check_can_open_database_assuming_migrated(path, password).await
+    }
+
     /// Changes the password of the vault.
     pub async fn change_password(&self, new_password: &str) -> anyhow::Result<()> {
         let mut conn = self.pool.acquire().await?;

@@ -88,6 +88,28 @@ pub async fn unlock_vault(
 }
 
 #[tauri::command]
+pub async fn soft_lock_vault(
+    app: State<'_, AppStateHandle>,
+) -> Result<Option<VaultState>, CommandError> {
+    app.inner().soft_lock_vault().await.context(VaultSnafu {
+        failed_to: "soft lock vault",
+    })
+}
+
+#[tauri::command]
+pub async fn unlock_soft_locked_vault(
+    app: State<'_, AppStateHandle>,
+    password: String,
+) -> Result<Option<VaultState>, CommandError> {
+    app.inner()
+        .unlock_soft_locked_vault(&password)
+        .await
+        .context(VaultSnafu {
+            failed_to: "unlock soft locked vault",
+        })
+}
+
+#[tauri::command]
 pub async fn get_colocated_password(path: &Path) -> Result<Option<String>, CommandError> {
     let password_path = path.with_extension("password");
 
@@ -133,5 +155,15 @@ pub async fn add_trust_anchor(
         failed_to: "add new anchor",
     })?;
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn send_notification(
+    app: State<'_, AppStateHandle>,
+    title: Option<String>,
+    body: String,
+) -> Result<(), CommandError> {
+    let _ = app.notifications.send(title, body).await;
     Ok(())
 }
