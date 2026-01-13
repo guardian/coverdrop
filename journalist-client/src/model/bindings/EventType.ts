@@ -5,4 +5,5 @@ export type EventType =
   | "dead_drops_remaining"
   | "journalist_keys_rotated"
   | "automated_backup"
+  | "manual_backup_required"
   | "alert";

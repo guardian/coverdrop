@@ -266,7 +266,7 @@ export const SettingsPopover = ({
     />
   );
 
-  const chooseBackupContactModal = devMode && (
+  const chooseBackupContactModal = (
     <ChooseBackupContactModal
       isOpen={chooseBackupContactModalVisible}
       journalistId={journalistId}
@@ -279,7 +279,7 @@ export const SettingsPopover = ({
     />
   );
 
-  const restoreBackupSecretShareModal = devMode && (
+  const restoreBackupSecretShareModal = (
     <UnwrapBackupSecretShareModal
       isOpen={restoreBackupSecretShareModalVisible}
       closeModal={() => {
@@ -324,16 +324,16 @@ export const SettingsPopover = ({
           <EuiContextMenuItem icon="index" onClick={trustedKeyDigestClicked}>
             View trust anchor digests
           </EuiContextMenuItem>
-          {devMode && (
+          {
             <EuiContextMenuItem
               icon="accessibility"
               onClick={chooseBackupContactClicked}
             >
               Choose backup contact
             </EuiContextMenuItem>
-          )}
+          }
           <EuiContextMenuItem icon="save" onClick={backUpVaultClicked}>
-            Back up vault
+            Perform USB vault back up
           </EuiContextMenuItem>
           <EuiContextMenuItem icon="index" onClick={backupHistoryClicked}>
             Backup history
@@ -403,14 +403,14 @@ export const SettingsPopover = ({
             Open another Sentinel instance
           </EuiContextMenuItem>
 
-          {devMode && (
+          {
             <EuiContextMenuItem
               icon="lockOpen"
               onClick={restoreBackupSecretShareClicked}
             >
               Restore backup secret share
             </EuiContextMenuItem>
-          )}
+          }
           <EuiContextMenuItem size="s">
             <EuiSpacer size="s" />
             <VersionInfo />

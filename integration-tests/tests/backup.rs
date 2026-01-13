@@ -2,9 +2,7 @@ use common::api::models::journalist_id::JournalistIdentity;
 use common::backup::get_backup_data_s3::get_latest_journalist_backup_from_s3;
 use common::clap::Stage::Development;
 use common::crypto::keys::serde::StorableKeyMaterial;
-use common::protocol::backup::{
-    coverup_finish_restore_step, coverup_initiate_restore_step, get_backup_bucket_name,
-};
+use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
 use common::protocol::backup::{
     sentinel_put_backup_data_to_s3, sentinel_restore_try_unwrap_and_wrap_share_step,
 };

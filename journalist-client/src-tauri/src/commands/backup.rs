@@ -16,19 +16,6 @@ use tauri::State;
 pub const BACKUP_VOLUME_PATH: &str = "/Volumes/SentinelBackup";
 
 #[tauri::command]
-pub async fn should_require_backup(app: State<'_, AppStateHandle>) -> Result<bool, CommandError> {
-    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
-
-    Ok(vault
-        .get_count_of_keys_created_since_last_backup()
-        .await
-        .context(VaultSnafu {
-            failed_to: "check whether a backup is required",
-        })?
-        > 0)
-}
-
-#[tauri::command]
 pub async fn get_backup_checks() -> Result<BackupChecks, CommandError> {
     tracing::debug!("get backup checks");
     let volume_info_output = process::Command::new("diskutil")

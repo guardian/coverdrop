@@ -7,10 +7,6 @@ export const getBackupChecks = (): Promise<BackupChecks> => {
   return invokeWithErrorMessage("get_backup_checks");
 };
 
-export const getShouldRequireBackup = (): Promise<boolean> => {
-  return invokeWithErrorMessage("should_require_backup");
-};
-
 export const performBackup = (): Promise<void> => {
   return invokeWithErrorMessage("perform_backup");
 };

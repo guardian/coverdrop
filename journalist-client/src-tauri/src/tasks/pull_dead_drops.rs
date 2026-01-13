@@ -92,6 +92,7 @@ impl Task for PullDeadDrops {
             };
 
             // TODO should we return early if verified dead drops < total dead drops?
+            // see https://github.com/guardian/coverdrop-internal/issues/3643
             let dead_drops =
                 verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, time::now());
 

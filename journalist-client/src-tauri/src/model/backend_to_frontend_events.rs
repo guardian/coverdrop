@@ -2,6 +2,8 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use ts_rs::TS;
 
+use crate::model::backup::BackupAttemptFailureReason;
+
 #[derive(TS)]
 #[ts(export, rename_all = "snake_case")]
 enum EventType {
@@ -9,6 +11,7 @@ enum EventType {
     DeadDropsRemaining,
     JournalistKeysRotated,
     AutomatedBackup,
+    ManualBackupRequired,
     // a generic alert / notification event
     Alert,
 }
@@ -20,6 +23,7 @@ impl EventType {
             EventType::DeadDropsRemaining => "dead_drops_remaining",
             EventType::JournalistKeysRotated => "journalist_keys_rotated",
             EventType::AutomatedBackup => "automated_backup",
+            EventType::ManualBackupRequired => "manual_backup_required",
             EventType::Alert => "notification",
         }
     }
@@ -30,6 +34,7 @@ impl EventType {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AlertLevel {
     Warning,
+    #[allow(dead_code)]
     Error,
 }
 
@@ -48,6 +53,10 @@ pub trait BackendToFrontendEvent {
     fn emit_journalist_keys_rotated_event(&self) -> anyhow::Result<()>;
     fn emit_automated_backup_started_event(&self) -> anyhow::Result<()>;
     fn emit_automated_backup_completed_event(&self) -> anyhow::Result<()>;
+    fn emit_manual_backup_required_event(
+        &self,
+        required: Option<BackupAttemptFailureReason>,
+    ) -> anyhow::Result<()>;
 
     fn emit_alert_event(&self, level: AlertLevel, message: &str) -> anyhow::Result<()>;
 }
@@ -80,6 +89,14 @@ impl BackendToFrontendEvent for AppHandle {
 
     fn emit_automated_backup_completed_event(&self) -> anyhow::Result<()> {
         self.emit(EventType::AutomatedBackup.as_str(), 0)?;
+        Ok(())
+    }
+
+    fn emit_manual_backup_required_event(
+        &self,
+        required: Option<BackupAttemptFailureReason>,
+    ) -> anyhow::Result<()> {
+        self.emit(EventType::ManualBackupRequired.as_str(), required)?;
         Ok(())
     }
 

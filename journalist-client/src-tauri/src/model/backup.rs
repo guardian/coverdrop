@@ -9,3 +9,14 @@ pub struct BackupChecks {
     pub is_encrypted: bool,
     pub maybe_existing_backups: Option<Vec<String>>,
 }
+
+#[derive(Clone, Serialize, Debug, PartialEq, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export)]
+pub enum BackupAttemptFailureReason {
+    VaultTooLarge,
+    InsufficientRecoveryContactsSelected,
+    InsufficientRecoveryContactsWithValidKeys,
+    S3,
+    Unknown,
+}

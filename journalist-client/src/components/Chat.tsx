@@ -17,7 +17,8 @@ import {
 } from "../commands/chats";
 import { useMessageStore } from "../state/messages";
 import { useDraftStore } from "../state/drafts";
-import { formatDateTime, MessageStatus } from "./MessageStatus";
+import { MessageStatus } from "./MessageStatus";
+import { formatDateTimeString } from "../helpers";
 import { UserStatus } from "../model/bindings/UserStatus";
 import { ChatHeader } from "./ChatHeader";
 import { palette } from "../styles/palette";
@@ -263,7 +264,7 @@ export const Chat = ({
                       <EuiButtonIcon
                         iconType={"clockCounter"}
                         color="primary"
-                        title={`Custom expiry (${formatDateTime(m.customExpiry)}).\nClick to clear/adjust custom expiry...`}
+                        title={`Custom expiry (${formatDateTimeString(m.customExpiry)}).\nClick to clear/adjust custom expiry...`}
                         aria-label={"Clear/adjust custom expiry"}
                         onClick={() => setMaybeMessageToSetCustomExpiryFor(m)}
                       />

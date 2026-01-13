@@ -5,7 +5,7 @@ use commands::{
         force_rotate_id_pk, force_rotate_msg_pk, get_logging_sessions_timeline, get_logs,
         get_public_info, get_trust_anchor_digests, get_vault_keys,
     },
-    backup::{eject_backup_volume, get_backup_checks, perform_backup, should_require_backup},
+    backup::{eject_backup_volume, get_backup_checks, perform_backup},
     chats::{
         burst_cover_messages, check_message_length, get_chats, get_users, mark_as_read,
         mark_as_unread, set_custom_expiry, submit_message, update_user_alias_and_description,
@@ -166,7 +166,6 @@ pub fn run() {
             get_chats,
             unlock_vault,
             get_backup_checks,
-            should_require_backup,
             perform_backup,
             eject_backup_volume,
             get_backup_contacts,

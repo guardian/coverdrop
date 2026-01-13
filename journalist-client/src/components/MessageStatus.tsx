@@ -1,20 +1,5 @@
 import { EuiFlexGroup, EuiFlexItem, EuiIcon } from "@elastic/eui";
-
-// If the message is from today, only show the time,
-// otherwise show the date and time
-export const formatDateTime = (dateTime: string) => {
-  const date = new Date(dateTime);
-  const today = new Date();
-  if (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  ) {
-    return date.toLocaleTimeString();
-  } else {
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  }
-};
+import { formatDateTimeString } from "../helpers";
 
 export const MessageStatus = (props: {
   isSent: boolean | null;
@@ -28,7 +13,7 @@ export const MessageStatus = (props: {
         <EuiIcon title="Pending" type="clock" size="m" />
       ) : null}
 
-      <EuiFlexItem>{formatDateTime(props.timestamp)}</EuiFlexItem>
+      <EuiFlexItem>{formatDateTimeString(props.timestamp)}</EuiFlexItem>
     </EuiFlexGroup>
   );
 };

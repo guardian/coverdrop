@@ -29,14 +29,15 @@ import { ToggleJournalistStatusModal } from "./components/ToggleJournalistStatus
 import { getPublicInfo } from "./commands/admin.ts";
 import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
-import { BackupModal } from "./components/BackupModal.tsx";
 import { IdleTimeoutMonitor } from "./components/IdleTimeoutMonitor.tsx";
+import { ManualBackupModal } from "./components/ManualBackupModal.tsx";
 import { sizes } from "./styles/sizes.ts";
 import { useTrayIcon } from "./hooks/useTrayIcon.ts";
 import { BackgroundTaskTrackerWithLoadingBarIfApplicable } from "./components/BackgroundTaskTrackerWithLoadingBarIfApplicable.tsx";
 import { usePublicInfoStore } from "./state/publicInfo.ts";
 import { listen } from "@tauri-apps/api/event";
 import { AlertPayload } from "./model/bindings/AlertPayload.ts";
+import { getBackupHistory } from "./commands/backups.ts";
 
 const App = ({
   panelled,
@@ -71,6 +72,11 @@ const App = ({
     useState(false);
 
   const [maybeHungAt, setMaybeHungAt] = useState<Date | null>(null);
+
+  // null = never backed up, undefined = not yet loaded
+  const [lastBackupTime, setLastBackupTime] = useState<Date | null | undefined>(
+    undefined,
+  );
 
   useTrayIcon({
     maybeOpenVaultId: vaultState?.id,
@@ -133,6 +139,28 @@ const App = ({
     }, 1000);
     return () => clearInterval(intervalId);
   }, [vaultState, journalistProfile]);
+
+  // poll for last backup time every minute
+  const pollLastBackupTime = async () => {
+    console.log("Fetching backup history to update last backup time");
+    getBackupHistory().then((history) => {
+      console.log("Fetched backup history:", history);
+      setLastBackupTime(
+        history.length > 0 ? new Date(history[0].timestamp) : null,
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (!vaultState) {
+      return;
+    }
+    pollLastBackupTime(); // initial fetch
+    const intervalId = setInterval(() => {
+      pollLastBackupTime();
+    }, 60_000);
+    return () => clearInterval(intervalId);
+  }, [vaultState]);
 
   const [maybeJournalistStatusForModal, setMaybeJournalistStatusForModal] =
     useState<JournalistStatus | null>(null);
@@ -292,6 +320,7 @@ const App = ({
                 journalistId={vaultState.id}
                 journalistStatus={journalistProfile?.status}
                 currentUserReplyKey={currentUserReplyKey}
+                lastBackupTime={lastBackupTime}
                 setChat={setCurrentUserReplyKey}
                 markChatAsUnread={markChatAsUnread}
                 setMaybeEditModalForReplyKey={setMaybeEditModalForReplyKey}
@@ -357,7 +386,7 @@ const App = ({
               vaultId={vaultState.id}
             />
 
-            <BackupModal
+            <ManualBackupModal
               isOpen={isBackupModalOpen}
               vaultPath={vaultState.path}
               setIsBackupModalOpen={setIsBackupModalOpen}

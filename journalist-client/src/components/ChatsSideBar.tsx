@@ -14,6 +14,7 @@ import {
   EuiIcon,
   EuiSkeletonRectangle,
   EuiFieldSearch,
+  EuiText,
 } from "@elastic/eui";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
@@ -33,6 +34,7 @@ import {
   NEAR_EXPIRY_DAYS,
   URGENT_EXPIRY_HOURS,
 } from "./ExpiringMessageIcon";
+import { formatDateTime } from "../helpers";
 
 type Chat = {
   alias: string | null;
@@ -55,6 +57,7 @@ export type ChatsSideBarProps = {
   journalistId: string;
   journalistStatus?: JournalistStatus;
   currentUserReplyKey: string | null;
+  lastBackupTime?: Date | null | undefined; // null = never backed up, undefined = not yet loaded
   setChat: (userReplyKey: string) => void;
   markChatAsUnread: (replyKey: string) => void;
   setMaybeEditModalForReplyKey: (maybeReplyKey: string | null) => void;
@@ -228,7 +231,8 @@ const chatsToSideNav = (
 export const ChatsSideBar = ({
   journalistId,
   journalistStatus,
-  currentUserReplyKey: currentUserReplyKey,
+  currentUserReplyKey,
+  lastBackupTime,
   setChat,
   markChatAsUnread,
   setMaybeEditModalForReplyKey,
@@ -539,6 +543,22 @@ export const ChatsSideBar = ({
       <EuiTabs size="s">{renderTabs()}</EuiTabs>
       <EuiSpacer size="m" />
       {selectedTabContent}
+      {/* most recent backup info */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          padding: "5px",
+        }}
+      >
+        {lastBackupTime !== undefined && (
+          <EuiText size="s" color="subdued">
+            Last backup:{" "}
+            {lastBackupTime ? formatDateTime(lastBackupTime) : "never"}
+          </EuiText>
+        )}
+      </div>
     </>
   );
 };

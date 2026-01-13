@@ -13,7 +13,7 @@ import {
 import { useMemo, useState } from "react";
 import { useUserStore } from "../state/users";
 import { useMessageStore } from "../state/messages";
-import { formatDateTime } from "./MessageStatus";
+import { formatDateTimeString } from "../helpers";
 import { sizes } from "../styles/sizes";
 
 interface CopyToClipboardModalProps {
@@ -61,7 +61,7 @@ export const CopyToClipboardModal = ({
         }
         const isUserToJournalistMessage =
           msg.type === "userToJournalistMessage";
-        const timestamp = formatDateTime(
+        const timestamp = formatDateTimeString(
           isUserToJournalistMessage ? msg.receivedAt : msg.sentAt,
         );
         const prefix = isUserToJournalistMessage ? "SOURCE" : "JOURNALIST";

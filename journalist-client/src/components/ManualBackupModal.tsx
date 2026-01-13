@@ -14,7 +14,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ejectBackupVolume,
   getBackupChecks,
-  getShouldRequireBackup,
   performBackup,
 } from "../commands/backups.ts";
 import { BackupChecks } from "../model/bindings/BackupChecks.ts";
@@ -22,6 +21,7 @@ import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { BackupReminderToastBody } from "./BackupReminderToastBody.tsx";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { listen } from "@tauri-apps/api/event";
+import { BackupAttemptFailureReason } from "../model/bindings/BackupAttemptFailureReason.ts";
 
 type BackupModalProps = {
   isOpen: boolean;
@@ -31,7 +31,7 @@ type BackupModalProps = {
   removeCustomToast: (toastId: string) => void;
 };
 
-export const BackupModal = ({
+export const ManualBackupModal = ({
   isOpen,
   vaultPath,
   addCustomToast,
@@ -45,7 +45,7 @@ export const BackupModal = ({
     const shouldReturn = await ask(
       "It's crucial to back up your vault frequently. If you really cannot back up now, you can choose to continue without backing up.",
       {
-        title: "Back up Required",
+        title: "Manual backup required",
         kind: "warning",
         okLabel: "Return",
         cancelLabel: "Continue WITHOUT backing up",
@@ -65,41 +65,40 @@ export const BackupModal = ({
     }
   }, [isBackupRequired]);
 
-  const refreshIsBackupRequired = () =>
-    getShouldRequireBackup().then((shouldRequireBackup) =>
-      setIsBackupRequired((prev) => {
-        if (shouldRequireBackup && !prev) {
-          const toastId = `backup-preferred-${Date.now()}`;
-          addCustomToast({
-            id: toastId,
-            title: "Back up Required",
-            color: "warning",
-            iconType: "warning",
-            onClose: async () => {
-              if (await confirmIgnoringBackupRequired()) {
-                removeCustomToast(toastId);
-              }
-            },
-            text: (
-              <BackupReminderToastBody
-                setIsBackupModalOpen={setIsBackupModalOpen}
-                remove={() => removeCustomToast(toastId)}
-              />
-            ),
-          });
-        }
-        return shouldRequireBackup;
-      }),
-    );
-
+  // Listen for event from backend indicating a manual backup is required
+  // and show the toast if it is.
   useEffect(() => {
-    refreshIsBackupRequired();
-    const unlistenFnPromise = listen(
-      "journalist_keys_rotated",
-      refreshIsBackupRequired,
+    const listener = listen<BackupAttemptFailureReason | null>(
+      "manual_backup_required",
+      (event) => {
+        setIsBackupRequired((prev) => {
+          if (event.payload !== null && !prev) {
+            const toastId = `backup-preferred-${Date.now()}`;
+            addCustomToast({
+              id: toastId,
+              title: "Manual backup required",
+              color: "warning",
+              iconType: "warning",
+              onClose: async () => {
+                if (await confirmIgnoringBackupRequired()) {
+                  removeCustomToast(toastId);
+                }
+              },
+              text: (
+                <BackupReminderToastBody
+                  automaticBackupFailureReason={event.payload}
+                  setIsBackupModalOpen={setIsBackupModalOpen}
+                  remove={() => removeCustomToast(toastId)}
+                />
+              ),
+            });
+          }
+          return event.payload !== null;
+        });
+      },
     );
     return () => {
-      unlistenFnPromise.then((unlisten) => unlisten());
+      listener.then((unlisten) => unlisten());
     };
   }, []);
 
@@ -148,15 +147,19 @@ export const BackupModal = ({
       }
     }
     setIsBackingUp(false);
-    await refreshIsBackupRequired();
+    setIsBackupRequired(false);
   }, []);
 
   return !isOpen ? null : (
     <EuiModal onClose={closeModal}>
       <EuiModalHeader>
-        <EuiModalHeaderTitle>Back up vault</EuiModalHeaderTitle>
+        <EuiModalHeaderTitle>Perform USB vault back up</EuiModalHeaderTitle>
       </EuiModalHeader>
       <EuiModalBody>
+        <b>Note:</b> Your vault is automatically backed up to the cloud whenever
+        keys are rotated. If automated backups fail, you must perform a manual
+        backup to a USB stick to ensure your data is safe.
+        <br />
         {isBackupRequired && (
           <EuiCallOut
             iconType="warning"

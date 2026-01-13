@@ -79,7 +79,6 @@ export const ChooseBackupContactModal = ({
   }, []);
 
   const submitHandler = async () => {
-    console.log("Choose backup contact clicked");
     await setBackupContacts(
       selectedBackupContact ? [selectedBackupContact] : [],
     );
@@ -101,7 +100,7 @@ export const ChooseBackupContactModal = ({
     (p) => p.id !== journalistId,
   );
 
-  const backupCandidateOptions = [{ value: "", text: "None" }].concat(
+  const backupCandidateOptions = [{ value: "", text: "" }].concat(
     backupContactCandidates
       .filter((candidate) => candidate.status === "VISIBLE")
       .sort((a, b) => (a.sort_name < b.sort_name ? -1 : 1))
@@ -159,7 +158,9 @@ export const ChooseBackupContactModal = ({
           )}
         </EuiModalBody>
         <EuiModalFooter>
-          <EuiButton onClick={submitHandler}>Submit</EuiButton>
+          <EuiButton onClick={submitHandler} disabled={!selectedBackupContact}>
+            Submit
+          </EuiButton>
         </EuiModalFooter>
       </EuiModal>
     )
