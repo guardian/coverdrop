@@ -24,6 +24,8 @@ import {
 import { VaultState } from "../model/bindings/VaultState.ts";
 import { IDLE_TIMEOUT, IDLE_WARNING_DURATION } from "../constants.ts";
 
+const ONE_DAY_IN_SECONDS = moment.duration(1, "day").asSeconds();
+
 const SECONDS_BEFORE_SOFTLOCK_TO_SHOW_WARNING =
   IDLE_WARNING_DURATION.asSeconds();
 
@@ -53,11 +55,15 @@ export const IdleTimeoutMonitor = ({
 
   useEffect(() => {
     const interval = setInterval(async () => {
+      const secondsSinceLastInteraction = moment().diff(
+        lastInteractionRef.current,
+        "seconds",
+      );
+
       if (vaultState && !vaultState.isSoftLocked) {
         setSecondsRemainingBeforeSoftLock((prevSecondsRemaining) => {
           const newSecondsRemaining =
-            IDLE_TIMEOUT.asSeconds() -
-            moment().diff(lastInteractionRef.current, "seconds");
+            IDLE_TIMEOUT.asSeconds() - secondsSinceLastInteraction;
 
           if (newSecondsRemaining < 0 && prevSecondsRemaining >= 0) {
             sendDesktopNotification({
@@ -74,6 +80,16 @@ export const IdleTimeoutMonitor = ({
           }
 
           return newSecondsRemaining;
+        });
+      } else if (
+        !vaultState &&
+        // only notify every 24 hours after last interaction
+        // (effectively daily if they're not logged in, but Sentinel running)
+        secondsSinceLastInteraction >= ONE_DAY_IN_SECONDS &&
+        secondsSinceLastInteraction % ONE_DAY_IN_SECONDS < 1
+      ) {
+        sendDesktopNotification({
+          body: `💡 It's recommended to be logged into your vault at all times for optimal security and functionality.`,
         });
       }
     }, 1000); // once per second
