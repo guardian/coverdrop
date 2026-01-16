@@ -106,6 +106,18 @@ internal fun VerifiedKeys.mostRecentMessagingKeyForJournalist(
     }
 }
 
+internal fun VerifiedKeys.journalistHasAtLeastOneValidMessagingKey(
+    id: JournalistId,
+    clock: IClock
+): Boolean {
+    try {
+        mostRecentMessagingKeyForJournalist(id, clock)
+        return true
+    } catch (_: IllegalStateException) {
+        return false
+    }
+}
+
 internal fun VerifiedKeys.mostRecentMessagingKeyForEachCoverNode(
     clock: IClock,
 ): Map<CoverNodeId, VerifiedSignedEncryptionKey> {

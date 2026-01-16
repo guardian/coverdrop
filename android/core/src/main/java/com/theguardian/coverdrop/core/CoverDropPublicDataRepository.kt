@@ -11,6 +11,7 @@ import com.theguardian.coverdrop.core.api.models.PublishedStatusEvent
 import com.theguardian.coverdrop.core.api.models.UserMessage
 import com.theguardian.coverdrop.core.api.models.VerifiedDeadDrops
 import com.theguardian.coverdrop.core.api.models.VerifiedKeys
+import com.theguardian.coverdrop.core.api.models.journalistHasAtLeastOneValidMessagingKey
 import com.theguardian.coverdrop.core.api.models.mostRecentMessagingKeyForEachCoverNode
 import com.theguardian.coverdrop.core.crypto.CoverDropPrivateSendingQueue
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueHint
@@ -29,9 +30,12 @@ import kotlinx.coroutines.withContext
 interface ICoverDropPublicDataRepository {
     /**
      * Returns the list of all recipients that are available including both desks and individual
-     * journalists. This list is not verified.
+     * journalists.
+     *
+     * By default, hidden profiles and those without a valid messaging key are excluded. Set
+     * [includeAll] to true to include all profiles.
      */
-    suspend fun getAllJournalists(includeHidden: Boolean = false): List<JournalistInfo>
+    suspend fun getAllJournalists(includeAll: Boolean = false): List<JournalistInfo>
 
     /**
      * Returns the default journalist info (if any)
@@ -143,14 +147,22 @@ internal class CoverDropPublicDataRepository internal constructor(
             publicStorage.initialize()
             apiResponseCache.downloadAllUpdates()
             privateSendingQueue.initialize(this@CoverDropPublicDataRepository)
+            getVerifiedKeys()
         }
     }
 
-    override suspend fun getAllJournalists(includeHidden: Boolean): List<JournalistInfo> {
+    override suspend fun getAllJournalists(includeAll: Boolean): List<JournalistInfo> {
+        val verifiedKeys = getVerifiedKeys()
         val journalistList = internalReadPublishedKeys()
             ?.journalistProfiles
             ?.map { entry -> entry.toJournalistInfo() }
-            ?.filter { includeHidden || it.visibility == JournalistVisibility.VISIBLE }
+            ?.filter { includeAll || it.visibility == JournalistVisibility.VISIBLE }
+            ?.filter {
+                includeAll || verifiedKeys.journalistHasAtLeastOneValidMessagingKey(
+                    id = it.id,
+                    clock = this.clock
+                )
+            }
 
         return journalistList ?: emptyList()
     }

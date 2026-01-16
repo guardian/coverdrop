@@ -105,7 +105,7 @@ class KeyVerifierTest {
     }
 
     @Test(expected = KeyVerificationException::class)
-    fun testVerifyTrustedRootKey_whenInvaliCertificate_thenThrows() {
+    fun testVerifyTrustedRootKey_whenInvalidCertificate_thenThrows() {
         val candidate = PublishedSignedSigningKey(
             key = TEST_ORG_PK,
             certificate = TEST_ORG_PK_CERTIFICATE.reversed(),
@@ -118,7 +118,7 @@ class KeyVerifierTest {
         )
     }
 
-    @Test(expected = KeyVerificationException::class)
+    @Test(expected = KeyMissingTrustAnchorException::class)
     fun testVerifyTrustedRootKey_whenEmptyTrustList_thenThrows() {
         val candidate = PublishedSignedSigningKey(
             key = TEST_ORG_PK,
@@ -132,7 +132,7 @@ class KeyVerifierTest {
         )
     }
 
-    @Test(expected = KeyVerificationException::class)
+    @Test(expected = KeyMissingTrustAnchorException::class)
     fun testVerifyTrustedRootKey_whenKeyNotInTrustList_thenThrows() {
         val candidate = PublishedSignedSigningKey(
             key = TEST_ORG_PK,
@@ -464,7 +464,7 @@ class KeyVerifierTest {
     }
 
     @Test
-    fun testVerifySigningKeyWithExpiryOrNull_whsIGNINGorrectCertificateAndNotExpired_thenVerifies() {
+    fun testVerifySigningKeyWithExpiryOrNull_whenSignatureCorrectCertificateAndNotExpired_thenVerifies() {
         val candidate = PublishedSignedSigningKey(
             key = TEST_SIGNING_KEY,
             certificate = TEST_SIGNING_CERTIFICATE,

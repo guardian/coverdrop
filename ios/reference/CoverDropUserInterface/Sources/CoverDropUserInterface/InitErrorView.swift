@@ -12,9 +12,9 @@ struct InitErrorView: View {
                 Spacer()
                 Text(
                     """
-                    The Secure Messaging feature is currently not available.
-                    Make sure you device has a working internet connection and \
-                    you are on the most recent version of the app.
+                    The Secure Messaging feature is currently not available. \
+                    Make sure your device has a working internet connection and \
+                    you are on the most recent version of the app. \
                     Please restart the app and try again later.
                     """
                 )

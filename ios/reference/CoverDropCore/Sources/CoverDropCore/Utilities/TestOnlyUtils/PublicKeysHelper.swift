@@ -18,14 +18,16 @@ public class PublicKeysHelper {
 
     private init() {
         config = .devConfig
-        testKeys = VerifiedPublicKeys(
+        // swiftlint:disable:next force_try
+        testKeys = try! VerifiedPublicKeys(
             // swiftlint:disable:next force_try
             publicKeysData: try! PublicKeysHelper.readLocalKeysFile(),
             // swiftlint:disable:next force_try
             trustedOrganizationPublicKeys: try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config),
             currentTime: DateFunction.currentTime()
         )
-        testKeysMultiple = VerifiedPublicKeys(
+        // swiftlint:disable:next force_try
+        testKeysMultiple = try! VerifiedPublicKeys(
             // swiftlint:disable:next force_try
             publicKeysData: try! PublicKeysHelper.readLocalMultipleMessagingKeysFile(),
             // swiftlint:disable:next force_try
@@ -38,7 +40,7 @@ public class PublicKeysHelper {
                                                 config: StaticConfig) throws -> VerifiedPublicKeys? {
         // swiftlint:disable:next force_try
         let trustedOrganizationSigningKeys = try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config)
-        let verifiedPublicKeysData = VerifiedPublicKeys(
+        let verifiedPublicKeysData = try VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedOrganizationSigningKeys,
             currentTime: DateFunction.currentTime()

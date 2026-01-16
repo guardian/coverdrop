@@ -290,7 +290,7 @@ class CoverDropPrivateDataRepository internal constructor(lib: ICoverDropLibInte
      * [JournalistInfo] cannot be found, the [MissingJournalistInfo] is used instead.
      */
     private suspend fun mapStoredThreadToThread(storedMessageThread: StoredMessageThread): MessageThread {
-        val journalistInfo = publicDataRepository.getAllJournalists(includeHidden = true)
+        val journalistInfo = publicDataRepository.getAllJournalists(includeAll = true)
             .find { info -> info.id == storedMessageThread.recipientId } ?: MissingJournalistInfo
 
         val privateSendingQueueHints =

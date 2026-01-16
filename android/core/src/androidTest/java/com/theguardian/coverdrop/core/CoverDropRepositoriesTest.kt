@@ -13,11 +13,13 @@ import com.theguardian.coverdrop.core.persistence.CoverDropNamespace
 import com.theguardian.coverdrop.core.persistence.PublicStorage
 import com.theguardian.coverdrop.core.ui.models.DraftMessage
 import com.theguardian.coverdrop.testutils.TestApiCallProvider
+import com.theguardian.coverdrop.testutils.TestClock
 import com.theguardian.coverdrop.testutils.TestScenario
 import com.theguardian.coverdrop.testutils.createCoverDropConfigurationForTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
+import java.time.Duration
 
 
 class CoverDropRepositoriesTest {
@@ -111,5 +113,22 @@ class CoverDropRepositoriesTest {
         val secondMessage = DraftMessage(text = "Oh actually...")
         privateDataRepository.replyToConversation(journalistId, secondMessage)
         assertSendingQueueRealMessageCount(publicDataRepository, privateDataRepository, 1)
+    }
+
+    @Test
+    fun testPublicDataRepository_whenMessagingKeysExpired_thenJournalistsHidden(): Unit = runBlocking {
+        publicDataRepository.initialize()
+
+        // all journalists are visible initially
+        assertThat(publicDataRepository.getAllJournalists()).isNotEmpty()
+
+        // move the clock forward by 31 days this will
+        // - expire all messaging keys
+        // - but not the root key
+        val testClock = config.clock as TestClock
+        testClock.advance(Duration.ofDays(31))
+
+        // now no journalists should be visible
+        assertThat(publicDataRepository.getAllJournalists()).isEmpty()
     }
 }

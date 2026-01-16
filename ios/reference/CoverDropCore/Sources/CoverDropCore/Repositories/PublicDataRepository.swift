@@ -105,7 +105,7 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
             throw PublicDataRepositoryError.failedToLoadPublicKeys
         }
 
-        let verifiedPublicKeysData = VerifiedPublicKeys(
+        let verifiedPublicKeysData = try VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedRootKeys,
             currentTime: currentTime
@@ -216,7 +216,7 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
             envType: config.envType,
             now: DateFunction.currentTime()
         )
-        let keyDigests = orgKeys?.map { getHumanReadableDigest(key: $0.key) }
+        let keyDigests = orgKeys?.map { getHumanReadableDigest(key: $0.key) }.sorted()
         let maybeKeyDigestsString = keyDigests?.joinTo(separator: "; ", prefix: "[", suffix: "]")
 
         let lastUpdatePublicKeys = try? await PublicKeyRepository(

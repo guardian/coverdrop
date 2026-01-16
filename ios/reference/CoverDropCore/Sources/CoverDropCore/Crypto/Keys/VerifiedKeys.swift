@@ -5,6 +5,7 @@ enum VerificationError: Error {
     case couldNotGetKeyFromUnverified
     case noJournalistKeysPresent
     case couldNotVerifyOrganizationKey
+    case missingTrustAnchor
 }
 
 /// This contains a verified set of public keys, journalist profiles, and the default journalistId
@@ -26,9 +27,9 @@ public struct VerifiedPublicKeys {
         publicKeysData: PublicKeysData,
         trustedOrganizationPublicKeys: [TrustedOrganizationPublicKey],
         currentTime: Date
-    ) {
-        let verifiedHierarchies: [VerifiedPublicKeysHierarchy] = publicKeysData.keys.compactMap { keyHierarchy in
-            VerifiedPublicKeysHierarchy(
+    ) throws {
+        let verifiedHierarchies: [VerifiedPublicKeysHierarchy] = try publicKeysData.keys.compactMap { keyHierarchy in
+           try VerifiedPublicKeysHierarchy(
                 keyHierarchy: keyHierarchy,
                 trustedOrganizationPublicKeys: trustedOrganizationPublicKeys,
                 currentTime: currentTime
@@ -197,7 +198,7 @@ public struct VerifiedPublicKeysHierarchy {
     ///   - currentTime: currentTime: the current time the app is running in
     /// - Returns: Returns a VerifiedPublicKeysHierarchy if successfully verified, or fails if it could not verify.
     init?(keyHierarchy: KeyHierarchy, trustedOrganizationPublicKeys: [TrustedOrganizationPublicKey],
-          currentTime: Date) {
+          currentTime: Date)  throws {
         let unverifiedOrganizationPublicKey = SelfSignedPublicSigningKey<Organization>(
             key: Sign.KeyPair.PublicKey(keyHierarchy.organizationPublicKey.key.bytes),
             certificate: Signature<Organization>.fromBytes(
@@ -207,13 +208,20 @@ public struct VerifiedPublicKeysHierarchy {
             now: currentTime
         )
 
-        guard let orgPublicKey = unverifiedOrganizationPublicKey,
-              let trustedOrganizationPublicKey: TrustedOrganizationPublicKey = VerifiedPublicKeysHierarchy
+        // If the public key does not verify itself, e.g. it expired, we can ignore this key hierarchy
+        guard let orgPublicKey = unverifiedOrganizationPublicKey else {
+            return nil
+        }
+
+        // It is important that we do not continue if we are failing to trust the root key of a hierarchy
+        // as this might cause us to process dead-drops without being able to decrypt them.
+        guard let trustedOrganizationPublicKey: TrustedOrganizationPublicKey = VerifiedPublicKeysHierarchy
               .verifyOrganizationPublicKey(
                   orgPk: orgPublicKey,
                   trustedOrgPks: trustedOrganizationPublicKeys
-              ) else {
-            return nil
+              )
+        else {
+            throw VerificationError.missingTrustAnchor
         }
 
         do {

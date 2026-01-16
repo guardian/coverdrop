@@ -263,6 +263,7 @@ class CoverDropLib(
         val trustedKeys = internal.getConfig().trustedOrgPks
         val hashedTrustedKeys = trustedKeys
             .map { getHumanReadableDigest(internal.getLibSodium(), it) }
+            .sortedBy { it }
             .joinTo(StringBuilder(), separator = "; ", prefix = "[", postfix = "]")
             .toString()
 

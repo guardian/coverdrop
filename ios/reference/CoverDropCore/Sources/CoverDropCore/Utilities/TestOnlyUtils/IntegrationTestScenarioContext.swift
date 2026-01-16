@@ -54,7 +54,7 @@ public class IntegrationTestScenarioContext {
         let publicKeysData = try loadKeys(step: step)
         let now = try readGeneratedAtFile()
         let trustedOrganizationKeys = try readTrustedOrganizationKeys(now: now)
-        return VerifiedPublicKeys(
+        return try VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedOrganizationKeys,
             currentTime: DateFunction.currentTime()

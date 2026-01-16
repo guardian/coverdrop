@@ -31,6 +31,15 @@ internal class KeyExpirationException(
     cause: Exception? = null,
 ) : KeyVerificationException(message, cause)
 
+/**
+ * Indicates that the downloaded public keys contained at least one key hierarchy for which the
+ * organisation key could not be verified against the list of trusted organisation keys.
+ */
+internal class KeyMissingTrustAnchorException(
+    message: String? = null,
+    cause: Exception? = null,
+) : KeyVerificationException(message, cause)
+
 
 /**
  * The methods of the [KeyVerifier] take [PublishedKeysAndProfiles] and its members and return verified keys.
@@ -209,18 +218,18 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
 
         for (trustedOrgPk in trustedOrgPks) {
             if (trustedOrgPk == candidatePk) {
-                val verifiedKey = verifySigningKeyWithExpiryOrNull(
+                // We found a trust anchor that matches this candidate key: there is no other anchor
+                // to verify against, so failing this signature check is fatal
+                val verifiedKey = verifySigningKeyWithExpiryOrThrow(
                     candidate = orgPk,
                     parent = trustedOrgPk,
                     now = now
                 )
-                if (verifiedKey != null) {
-                    return TrustedRootSigningKey(pk = trustedOrgPk)
-                }
+                return TrustedRootSigningKey(pk = verifiedKey.pk)
             }
         }
 
-        throw KeyVerificationException("failed to verify root key")
+        throw KeyMissingTrustAnchorException("organisation key is not trusted")
     }
 
     /**

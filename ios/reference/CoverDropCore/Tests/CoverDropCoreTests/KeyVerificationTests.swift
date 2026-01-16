@@ -3,6 +3,7 @@ import Sodium
 import XCTest
 
 // swiftlint:disable identifier_name
+// swiftlint:disable line_length
 final class KeyVerificationTests: XCTestCase {
     func testSuccessfullVerification() throws {
         let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
@@ -196,6 +197,33 @@ final class KeyVerificationTests: XCTestCase {
             trustedOrgPks: trustedOrgPks
         ))
     }
+
+    func testVerifiedKeys_whenTestDataAllCorrect_thenVerifies() throws {
+        let config: StaticConfig = .devConfig
+        let publicKeysData = try PublicKeysHelper.readLocalKeysFile()
+        let trustedOrganizationPublicKeys = try PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config)
+        let currentTime = DateFunction.currentTime()
+
+        _ = try VerifiedPublicKeys.init(
+            publicKeysData: publicKeysData,
+            trustedOrganizationPublicKeys: trustedOrganizationPublicKeys,
+            currentTime: currentTime
+        )
+    }
+
+    func testVerifiedKeys_whenEmptyTrustAnchor_thenThrows() throws {
+        let publicKeysData = try PublicKeysHelper.readLocalKeysFile()
+        let trustedOrganizationPublicKeys: [TrustedOrganizationPublicKey] = []
+        let currentTime = DateFunction.currentTime()
+
+        XCTAssertThrowsError(
+            try VerifiedPublicKeys.init(
+                publicKeysData: publicKeysData,
+                trustedOrganizationPublicKeys: trustedOrganizationPublicKeys,
+                currentTime: currentTime
+            )) { error in XCTAssertEqual(error as! VerificationError, VerificationError.missingTrustAnchor) }
+    }
 }
 
+// swiftlint:enable line_length
 // swiftlint:enable identifier_name

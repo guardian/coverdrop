@@ -21,7 +21,7 @@
     <string name="screen_entry_button_get_started">Get started</string>
     <string name="screen_entry_button_check_your_inbox">Check your message vault</string>
     <string name="screen_entry_link_about">About Secure Messaging</string>
-    <string name="screen_entry_coverdrop_not_available">The Secure Messaging feature is currently not available. Please try again later. Below we show technical information that might be helpful.</string>
+    <string name="screen_entry_coverdrop_not_available">The Secure Messaging feature is currently not available. Make sure your device has a working internet connection and you are on the most recent version of the app. Please restart the app and try again later.</string>
 
     <!--Integrity violations screen-->
     <string name="screen_violations_header">Secure Messaging is not available. We believe that this device might not be secure.</string>
