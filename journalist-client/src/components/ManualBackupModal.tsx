@@ -48,7 +48,7 @@ export const ManualBackupModal = ({
         title: "Manual backup required",
         kind: "warning",
         okLabel: "Return",
-        cancelLabel: "Continue WITHOUT backing up",
+        cancelLabel: "Continue without backing up",
       },
     );
     if (!shouldReturn) {
@@ -127,7 +127,7 @@ export const ManualBackupModal = ({
     await performBackup();
     setIsBackupModalOpen(false);
     const shouldEjectBackupVolume = await ask(
-      "Back up complete! Would you like to 'eject' the backup volume now, so you can then remove it.",
+      "Backup complete. Would you like to 'eject' the backup volume now, so you can then unplug it?",
       {
         title: "Back up complete",
         kind: "info",
@@ -138,11 +138,11 @@ export const ManualBackupModal = ({
     if (shouldEjectBackupVolume) {
       if (await ejectBackupVolume()) {
         alert(
-          "Successfully ejected the backup volume. You can now safely remove the backup usb stick from your machine.",
+          "Successfully ejected the backup volume. You can now safely remove the backup usb stick from your computer.",
         );
       } else {
         alert(
-          "Failed to eject the backup volume. Perhaps it has already been ejected, otherwise you'll need to do this manually.",
+          "Failed to eject the backup volume. Perhaps it has already been ejected? If not, you'll need to do so manually.",
         );
       }
     }
@@ -156,15 +156,16 @@ export const ManualBackupModal = ({
         <EuiModalHeaderTitle>Perform USB vault back up</EuiModalHeaderTitle>
       </EuiModalHeader>
       <EuiModalBody>
-        <b>Note:</b> Your vault is automatically backed up to the cloud whenever
-        keys are rotated. If automated backups fail, you must perform a manual
-        backup to a USB stick to ensure your data is safe.
+        <b>Note:</b> Your vault is automatically and securely backed up to the
+        cloud whenever important cryptographic keys are replenished. If
+        automated backups fail, to ensure your data is safe you must perform a
+        manual backup to a specially prepared SentinelBackup USB stick.
         <br />
         {isBackupRequired && (
           <EuiCallOut
             iconType="warning"
             color="danger"
-            title="IMPORTANT: you MUST back up your vault before you can continue to use Sentinel."
+            title="Important: please back up your vault before continuing to use Sentinel"
           />
         )}
         <br />
@@ -196,7 +197,7 @@ export const ManualBackupModal = ({
                 />
                 {backupChecks.isEncrypted
                   ? "SentinelBackup volume is encrypted"
-                  : "SentinelBackup volume is not encrypted. Please contact the I&R team."}
+                  : "SentinelBackup volume is not encrypted. Please contact the development team."}
               </EuiFlexGroup>
             )}
             {backupChecks.maybeExistingBackups &&
