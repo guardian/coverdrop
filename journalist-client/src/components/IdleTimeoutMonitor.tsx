@@ -67,7 +67,7 @@ export const IdleTimeoutMonitor = ({
 
           if (newSecondsRemaining < 0 && prevSecondsRemaining >= 0) {
             sendDesktopNotification({
-              body: `🔐 Your vault has been soft locked after ${IDLE_TIMEOUT.asMinutes().toFixed()} minutes of inactivity.`,
+              body: `🔐 Sentinel has been passphrase-protected after ${IDLE_TIMEOUT.asMinutes().toFixed()} minutes of inactivity.`,
             });
             softLockVault().then(setVaultState);
           } else if (
@@ -75,7 +75,7 @@ export const IdleTimeoutMonitor = ({
             prevSecondsRemaining >= SECONDS_BEFORE_SOFTLOCK_TO_SHOW_WARNING
           ) {
             sendDesktopNotification({
-              body: `⚠️ Your vault will be soft locked in ${IDLE_WARNING_DURATION.asMinutes().toFixed()} minutes, due to inactivity.`,
+              body: `⚠️ Sentinel will be passphrase-protected in ${IDLE_WARNING_DURATION.asMinutes().toFixed()} minutes, due to inactivity.`,
             });
           }
 
@@ -110,7 +110,7 @@ export const IdleTimeoutMonitor = ({
     setIsCheckingPassword(true);
     unlockSoftLockedVault(password).then((vaultState) => {
       if (vaultState?.isSoftLocked) {
-        // vault still soft locked, password must be wrong
+        // vault still soft locked, passphrase must be wrong
         setIsPasswordWrong(true);
       } else if (vaultState) {
         resetIdleTimeout();
@@ -132,16 +132,20 @@ export const IdleTimeoutMonitor = ({
           }}
         >
           <EuiTitle>
-            <span>
-              This vault is &apos;soft locked&apos; due to inactivity!
-            </span>
+            <span>Please re-enter your vault passphrase</span>
           </EuiTitle>
+          <EuiSpacer size="s" />
+          <EuiText color="subdued">
+            Sentinel is still checking for messages but following a period of
+            inactivity you must re-enter your passphrase to view them.
+          </EuiText>
           <EuiSpacer size="m" />
           <EuiText>
             Vault Path: <code>{vaultState.path}</code>
           </EuiText>
           <EuiSpacer size="m" />
           <EuiFieldPassword
+            autoFocus
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -149,7 +153,7 @@ export const IdleTimeoutMonitor = ({
             }}
             onKeyUp={(e) => e.key === "Enter" && verifyPassword()}
             type="dual"
-            placeholder="Enter your password"
+            placeholder="Enter your passphrase"
             style={{ textAlign: "center" }}
             autoCapitalize="none"
             autoCorrect="off"
@@ -170,7 +174,7 @@ export const IdleTimeoutMonitor = ({
             onClick={verifyPassword}
             isLoading={isCheckingPassword}
           >
-            Verify Password
+            Verify passphrase
           </EuiButton>
         </div>
       </EuiOverlayMask>
