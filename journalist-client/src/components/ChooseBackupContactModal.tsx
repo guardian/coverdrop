@@ -114,7 +114,7 @@ export const ChooseBackupContactModal = ({
     isOpen && (
       <EuiModal onClose={closeModal}>
         <EuiModalHeader>
-          <EuiModalHeaderTitle>Choose Backup Contact</EuiModalHeaderTitle>
+          <EuiModalHeaderTitle>Choose a backup contact</EuiModalHeaderTitle>
         </EuiModalHeader>
         <EuiModalBody>
           {shouldRequireSettingBackupContact && (
@@ -125,10 +125,18 @@ export const ChooseBackupContactModal = ({
                 iconType="help"
               >
                 <p>
-                  Please choose a trusted contact who can help you recover your
-                  vault if you lose access. This should be someone you trust
-                  implicitly, as they will have the ability to assist in
-                  recovering your data.
+                  Please choose a trusted contact to help you recover your
+                  secure message vault in the event of loss or failure.
+                </p>
+                <p>
+                  This person will be able to help convert a vault backup file
+                  into a live vault for you to use. You should choose someone
+                  who uses Sentinel frequently, and whom you trust to assist if
+                  you should need to access those backups.
+                </p>
+                <p>
+                  Your backup contacts are not able to independently view the
+                  content in your vault.
                 </p>
               </EuiCallOut>
             </EuiFormRow>
