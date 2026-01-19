@@ -284,12 +284,12 @@ async fn backup_scenario() {
             let share_base64 = fs::read_to_string(path).expect("Read wrapped share file from disk");
             let encrypted_share = EncryptedSecretShare::from_base64_string(&share_base64).ok()?;
 
-            // Extract journalist ID from filename (format: restore-{timestamp}-share-{num}-{recipient-id}.recovery-share)
+            // Extract journalist ID from filename (format: restore-{timestamp}-share-{num}-{recipient-id}.recovery-share.txt)
             let filename = path.file_name()?.to_str()?;
 
-            // Split from right to extract recipient-id before .recovery-share extension
+            // Split from right to extract recipient-id before .recovery-share.txt extension
             let journalist_id_str = filename
-                .strip_suffix(".recovery-share")?
+                .strip_suffix(".recovery-share.txt")?
                 .rsplit('-')
                 .next()?;
 

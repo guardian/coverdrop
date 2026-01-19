@@ -9,8 +9,11 @@ import {
   EuiModalFooter,
   EuiTextArea,
   EuiCodeBlock,
+  EuiFilePicker,
+  EuiFlexGroup,
+  EuiFlexItem,
 } from "@elastic/eui";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { unwrapBackupSecretShare } from "../commands/backups";
 import { sizes } from "../styles/sizes";
 
@@ -25,11 +28,47 @@ export const UnwrapBackupSecretShareModal = ({
 }: RestoreBackupSecretShareModalProps) => {
   const [wrappedShare, setWrappedShare] = useState<string>("");
   const [unwrappedShare, setUnwrappedShare] = useState<string>("");
+  const [fileError, setFileError] = useState<ReactNode>("");
 
   const closeModalHandler = () => {
     setWrappedShare("");
     setUnwrappedShare("");
+    setFileError("");
     closeModal();
+  };
+
+  const validateAndSetShareFromFile = async (file: File) => {
+    if (!file.name.endsWith(".recovery-share.txt")) {
+      setFileError(
+        <span>
+          Invalid file type. Please select a file ending with{" "}
+          <code>.recovery-share.txt</code>
+        </span>,
+      );
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      setWrappedShare(text.trim());
+      setFileError("");
+    } catch (error) {
+      setFileError("Failed to read file");
+      console.error("Error reading file:", error);
+    }
+  };
+
+  const handleFileSelection = async (files: FileList | null) => {
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    if (files.length > 1) {
+      setFileError("Please select only one file");
+      return;
+    }
+
+    await validateAndSetShareFromFile(files[0]);
   };
   const submitHandler = async () => {
     if (!wrappedShare) {
@@ -49,7 +88,7 @@ export const UnwrapBackupSecretShareModal = ({
       >
         <EuiModalHeader>
           <EuiModalHeaderTitle>
-            Unwrap a Backup Secret Share
+            Unwrap a backup secret share
           </EuiModalHeaderTitle>
         </EuiModalHeader>
         <EuiModalBody>
@@ -73,18 +112,47 @@ export const UnwrapBackupSecretShareModal = ({
                 </p>
                 <p>
                   Paste the encrypted backup secret share provided by the admin
-                  into the text area below and click &quot;Submit&quot;.
+                  into the text area below and click &quot;Submit&quot;, or use
+                  the file picker to load the <code>.recovery-share.txt</code>{" "}
+                  file the admin sent you.
                 </p>
               </EuiCallOut>
             </EuiFormRow>
           )}
           {!unwrappedShare && (
             <EuiFormRow label="Wrapped secret share" fullWidth={true}>
-              <EuiTextArea
-                placeholder="Paste wrapped backup secret share here"
-                onChange={(e) => setWrappedShare(e.target.value)}
-                fullWidth={true}
-              />
+              <EuiFlexGroup>
+                <EuiFlexItem>
+                  <EuiTextArea
+                    placeholder="Paste wrapped backup secret share here"
+                    onChange={(e) => setWrappedShare(e.target.value)}
+                    value={wrappedShare}
+                    fullWidth={true}
+                    rows={5}
+                  />
+                </EuiFlexItem>
+                <EuiFlexItem>
+                  <EuiFilePicker
+                    initialPromptText={
+                      <span>
+                        OR choose a <code>.recovery-share.txt</code> file
+                      </span>
+                    }
+                    onChange={handleFileSelection}
+                    accept=".recovery-share.txt"
+                    aria-label="Select wrapped secret share file"
+                    display="large"
+                  />
+                </EuiFlexItem>
+              </EuiFlexGroup>
+            </EuiFormRow>
+          )}
+
+          {!unwrappedShare && fileError && (
+            <EuiFormRow fullWidth={true}>
+              <EuiCallOut title="File Error" color="danger" iconType="alert">
+                <p>{fileError}</p>
+              </EuiCallOut>
             </EuiFormRow>
           )}
 

@@ -193,7 +193,7 @@ pub async fn backup_initiate_restore_finalize(
         .enumerate()
     {
         let share_file = output_dir.join(format!(
-            "restore-{}-{}-share-{}-{}.recovery-share",
+            "restore-{}-{}-share-{}-{}.recovery-share.txt",
             response_bundle.journalist_id,
             format_timestamp_for_filename(now),
             i + 1,
@@ -264,12 +264,13 @@ pub async fn backup_complete_restore(
 
     let k = 1;
     let restored_encrypted_vault =
-        coverup_finish_restore_step(in_progress_bundle, shares, &backup_msg_key_pairs, k)
+        coverup_finish_restore_step(in_progress_bundle.clone(), shares, &backup_msg_key_pairs, k)
             .with_context(|| "Failed to complete restore step")?;
 
     // Save the restored encrypted vault to disk
     let output_file = restore_vault_in_dir.join(format!(
-        "restored-{}.vault",
+        "{}-restored-{}.vault",
+        in_progress_bundle.journalist_identity,
         format_timestamp_for_filename(now)
     ));
     fs::write(&output_file, &restored_encrypted_vault).await?;
