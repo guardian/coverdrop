@@ -307,6 +307,11 @@ criteria = "safe-to-deploy"
 delta = "0.46.0 -> 0.50.1"
 notes = "Security update regarding ANSI escape injections"
 
+[[audits.num-bigint-dig]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.4 -> 0.8.6"
+
 [[audits.object]]
 who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
 criteria = "safe-to-deploy"
@@ -418,6 +423,11 @@ notes = "This provides wrappers for user information for the redox-os https://so
 who = "Sam Cutler <sam.cutler@theguardian.com>"
 criteria = "safe-to-deploy"
 delta = "7.3.1 -> 7.4.0"
+
+[[audits.rsa]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.7 -> 0.9.10"
 
 [[audits.rtoolbox]]
 who = "Sam Cutler <sam.cutler@theguardian.com>"
