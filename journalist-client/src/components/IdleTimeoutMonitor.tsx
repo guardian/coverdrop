@@ -135,7 +135,7 @@ export const IdleTimeoutMonitor = ({
             <span>Please re-enter your vault passphrase</span>
           </EuiTitle>
           <EuiSpacer size="s" />
-          <EuiText color="subdued">
+          <EuiText>
             Sentinel is still checking for messages but following a period of
             inactivity you must re-enter your passphrase to view them.
           </EuiText>
