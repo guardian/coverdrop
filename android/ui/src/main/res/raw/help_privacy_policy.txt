@@ -1,12 +1,16 @@
 # Secure Messaging privacy policy
 
-The Secure Messaging software in the Guardian app is currently in a testing phase. At this stage the feature does not have a distinct privacy policy to that which we publish for the rest of the Guardian app.
+The Secure Messaging tool is a component of the Guardian app. The privacy policy for the Guardian app can be found in the app Settings page. 
+
+Additional security and privacy measures when you use the Secure Messaging tool are described below.
 
 ### All Secure Messaging users are anonymous
 
-This feature is designed to be used anonymously. As a consequence, messages sent to our journalists using Secure Messaging contain no accompanying data about who sent that message, from where, and from what kind of device. We can't even tell exactly when you wrote a message.
+This tool is designed to be used anonymously. As a consequence, messages sent to our journalists using Secure Messaging contain no accompanying data about who sent that message, from where, and from what kind of device. We can't even tell exactly when you wrote a message.
 
-If you are signed in to the Guardian app, that information is not known by the Secure Messaging feature. Similarly, the rest of the Guardian app on your mobile device does not know if you are sending messages to the Guardian using Secure Messaging. The Secure Messaging App cannot discover anything about you that you don't choose to tell us.
+Even if you are signed in to the Guardian app, your sign-in details are unavailable to the Secure Messaging feature. Similarly, the rest of the Guardian app on your mobile device does not know if you are sending messages to the Guardian using Secure Messaging. 
+
+The Secure Messaging tool cannot reveal anything about you that you don't choose to tell us.
 
 Your correspondence with our journalists is held in an encrypted vault on your phone. This vault is secured by a passphrase known only to you. Messages disappear automatically after 14 days.
 
@@ -21,4 +25,4 @@ SPACE
 
 At the point at which you send any information to us, the Guardian’s Editorial Code applies. See theguardian.com/editorial-code
 
-Last updated March 2025
+Last updated January 2026
