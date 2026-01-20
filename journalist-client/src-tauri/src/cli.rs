@@ -7,4 +7,8 @@ pub struct Cli {
     /// Prevent background tasks from starting when vault is unlocked
     #[arg(long)]
     pub no_background_tasks: bool,
+
+    /// launch tauri instance (headless by default)
+    #[arg(long)]
+    pub launch_tauri_instance: bool,
 }

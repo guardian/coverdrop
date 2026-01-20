@@ -185,9 +185,15 @@ pub async fn update_journalist_status(
 
 #[tauri::command]
 pub async fn launch_new_instance() -> Result<(), CommandError> {
+    // TODO ideally make this a signal to parent process to start this, so all child processes descend from the daemon
     launch_tauri_instance()
         .wait()
         .expect("waiting on new instance");
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn fully_exit_app() -> Result<(), CommandError> {
+    std::process::exit(1)
 }

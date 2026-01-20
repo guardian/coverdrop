@@ -32,6 +32,7 @@ import { getProfiles } from "../commands/profiles";
 import { open } from "@tauri-apps/plugin-dialog";
 import { Logs } from "../components/Logs.tsx";
 import { VersionInfo } from "../components/VersionInfo.tsx";
+import { fullyExitApp } from "../commands/admin.ts";
 
 type OpenVaultProps = {
   setVaultState: (s: VaultState) => void;
@@ -199,6 +200,18 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
       >
         <VersionInfo />
       </div>
+      <EuiLink
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          padding: "5px",
+        }}
+        onClick={fullyExitApp}
+      >
+        Quit both Sentinel and its always-on helper
+      </EuiLink>
       <EuiLink
         style={{
           position: "fixed",

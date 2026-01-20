@@ -4,6 +4,7 @@ import { UntrustedKeysAndJournalistProfiles } from "../model/bindings/UntrustedK
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
 import { LoggingSession } from "../model/bindings/LoggingSession.ts";
 import { LogEntry } from "../model/bindings/LogEntry.ts";
+import { ask } from "@tauri-apps/plugin-dialog";
 
 export const updateJournalistStatus = (
   newStatus: JournalistStatus,
@@ -46,6 +47,22 @@ export const getTrustAnchorDigests = (): Promise<
   TrustedOrganizationPublicKeyAndDigest[]
 > => {
   return invokeWithErrorMessage("get_trust_anchor_digests");
+};
+
+export const fullyExitApp = async (): Promise<void> => {
+  if (
+    !(await ask(
+      "It's strongly recommended to have Sentinel running. Are you really sure you want to completely exit?",
+      {
+        title: "Are you sure you want to exit Sentinel?",
+        kind: "warning",
+        okLabel: "Cancel", // make cancel the primary action
+        cancelLabel: "Exit",
+      },
+    ))
+  ) {
+    return await invokeWithErrorMessage("fully_exit_app");
+  }
 };
 
 export const launchNewSentinelInstance = (): Promise<void> => {

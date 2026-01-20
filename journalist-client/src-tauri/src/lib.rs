@@ -29,10 +29,11 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 
 use cli::Cli;
 
-use crate::commands::{admin::launch_new_instance, backup::get_backup_history};
 use crate::commands::{
-    admin::update_journalist_status,
-    backup::{get_backup_contacts, set_backup_contacts, unwrap_backup_secret_share},
+    admin::{fully_exit_app, launch_new_instance, update_journalist_status},
+    backup::{
+        get_backup_contacts, get_backup_history, set_backup_contacts, unwrap_backup_secret_share,
+    },
 };
 
 mod app_state;
@@ -102,14 +103,12 @@ pub fn launch_tauri_instance() -> Child {
     let current_executable_path = std::env::current_exe().expect("get path to current executable");
 
     Command::new(current_executable_path)
+        .arg("--launch-tauri-instance") // very important (TODO ideally use the definition in cli.rs)
         .spawn()
         .expect("failed to launch another Sentinel instance")
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let cli = Cli::parse();
-
+fn run_tauri(cli: Cli) {
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
@@ -157,6 +156,35 @@ pub fn run() {
                 .set_focus()
                 .expect("Could not focus main window during setup");
 
+            #[cfg(target_os = "macos")]
+            {
+                let current_executable_path = std::env::current_exe().expect("get path to current executable");
+
+                let login_items_result = Command::new("osascript")
+                    .arg("-e")
+                    .arg(format!(
+                        "tell application \"System Events\" to make login item at end with properties {{path:\"{}\"}}",
+                        current_executable_path.display()
+                    ))
+                    .output()
+                    .map(|output| {
+                        if !output.status.success() {
+                            Err(format!(
+                                "osascript failed with status {:?} and stderr: {}",
+                                output.status,
+                                String::from_utf8_lossy(&output.stderr)
+                            ))
+                        } else {
+                            Ok(())
+                        }
+                    });
+
+                match login_items_result {
+                    Ok(_) => tracing::info!("Successfully added to 'login items'"),
+                    Err(e) => tracing::warn!("Failed to add to 'login items' {:?}", e)
+                }
+            }
+
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
@@ -194,7 +222,8 @@ pub fn run() {
             launch_new_instance,
             send_notification,
             soft_lock_vault,
-            unlock_soft_locked_vault
+            unlock_soft_locked_vault,
+            fully_exit_app,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -221,4 +250,21 @@ pub fn run() {
             #[cfg(not(target_os = "macos"))]
             |_, _| {},
         );
+}
+
+fn run_daemon() {
+    while launch_tauri_instance().wait().unwrap().success() {
+        println!("Re-started Sentinel Tauri instance");
+    }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let cli = Cli::parse();
+
+    if cli.launch_tauri_instance {
+        run_tauri(cli)
+    } else {
+        run_daemon();
+    }
 }
