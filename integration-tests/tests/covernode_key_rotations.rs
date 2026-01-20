@@ -3,11 +3,7 @@ use std::time::Duration;
 use common::{
     api::forms::PostCoverNodeProvisioningPublicKeyForm,
     protocol::{
-        constants::{
-            COVERNODE_ID_KEY_VALID_DURATION_SECONDS,
-            COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS, DAY_IN_SECONDS,
-            ORGANIZATION_KEY_VALID_DURATION_SECONDS,
-        },
+        constants::{COVERNODE_ID_KEY_VALID_DURATION, ORGANIZATION_KEY_VALID_DURATION},
         keys::{
             generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
             generate_covernode_provisioning_key_pair,
@@ -16,6 +12,7 @@ use common::{
     task::RunnerMode,
 };
 
+use common::protocol::constants::COVERNODE_PROVISIONING_KEY_ROTATE_AFTER;
 use integration_tests::{
     api_wrappers::{
         get_and_verify_public_keys, trigger_all_init_tasks_covernode,
@@ -26,7 +23,7 @@ use integration_tests::{
 };
 use itertools::Itertools;
 
-/// This test rotates keys of of the CoverNode and then verifies that the keys are rotated.
+/// This test rotates keys of the CoverNode and then verifies that the keys are rotated.
 #[tokio::test]
 async fn covernode_key_rotations() {
     pretty_env_logger::try_init().unwrap();
@@ -56,7 +53,7 @@ async fn covernode_key_rotations() {
     // We move one week and a bit into the future. Once triggered, the CoverNode should rotate its
     // messaging keys: `COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS: i64 = 7 * DAY_IN_SECONDS`
     stack
-        .time_travel(stack.now() + Duration::from_secs(8 * DAY_IN_SECONDS as u64))
+        .time_travel(stack.now() + chrono::Duration::days(8))
         .await;
 
     trigger_key_rotation_covernode(stack.covernode_task_api_client()).await;
@@ -78,7 +75,7 @@ async fn covernode_key_rotations() {
     // its messaging keys again and also its identity keys:
     // `COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS: i64 = 2 * WEEK_IN_SECONDS`.
     stack
-        .time_travel(stack.now() + Duration::from_secs(8 * DAY_IN_SECONDS as u64))
+        .time_travel(stack.now() + chrono::Duration::days(8))
         .await;
 
     trigger_key_rotation_covernode(stack.covernode_task_api_client()).await;
@@ -139,9 +136,7 @@ async fn covernode_key_rotations() {
 
     // 2. All keys expired
     stack
-        .time_travel(
-            stack.now() + Duration::from_secs(ORGANIZATION_KEY_VALID_DURATION_SECONDS as u64),
-        )
+        .time_travel(stack.now() + ORGANIZATION_KEY_VALID_DURATION)
         .await;
 
     trigger_expired_key_deletion_identity_api(stack.identity_api_task_api_client()).await;
@@ -181,14 +176,7 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
 
     // time travel to avoid provisioning key being rejected by api
     stack
-        .time_travel(
-            stack.now()
-                + Duration::from_secs(
-                    COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS
-                        .try_into()
-                        .unwrap(),
-                ),
-        )
+        .time_travel(stack.now() + COVERNODE_PROVISIONING_KEY_ROTATE_AFTER)
         .await;
 
     // Create a new covernode id key signed with the current covernode provisioning key
@@ -389,12 +377,7 @@ async fn late_covernode_msg_and_id_key_rotations() {
     while !id_keys_expiry_match_provisioning(&stack).await {
         stack
             .time_travel(
-                stack.now()
-                    + Duration::from_secs(
-                        (COVERNODE_ID_KEY_VALID_DURATION_SECONDS - DAY_IN_SECONDS)
-                            .try_into()
-                            .unwrap(),
-                    ),
+                stack.now() + (COVERNODE_ID_KEY_VALID_DURATION - chrono::Duration::days(1)),
             )
             .await;
 

@@ -1,6 +1,6 @@
 use admin::{delete_journalist_form, submit_delete_journalist_form};
 use chrono::Duration;
-use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS;
+use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION;
 use integration_tests::{
     api_wrappers::{
         generate_test_desk, generate_test_journalist, get_and_verify_public_keys, get_public_keys,
@@ -111,12 +111,12 @@ async fn create_journalists() {
     vault.clean_up(stack.now()).await.expect("Clean up vault");
 
     let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
-    assert!(journalist_id_keys.count() == 1);
+    assert_eq!(journalist_id_keys.count(), 1);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
         .await
         .unwrap();
-    assert!(journalist_msg_keys.count() == 1);
+    assert_eq!(journalist_msg_keys.count(), 1);
 
     //
     // Journalist publishes a new messaging key
@@ -156,9 +156,7 @@ async fn create_journalists() {
 
     // Add a minute to `now` to side step any weird precision issues
     // when checking the certificates
-    let post_expiry = stack.now()
-        + Duration::minutes(1)
-        + Duration::seconds(JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS);
+    let post_expiry = stack.now() + Duration::minutes(1) + JOURNALIST_MSG_KEY_VALID_DURATION;
     stack.time_travel(post_expiry).await;
 
     let keys_and_profiles =
@@ -190,12 +188,12 @@ async fn create_journalists() {
 
     // expired msg keys should have been deleted, id key still exists
     let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
-    assert!(journalist_id_keys.count() == 1);
+    assert_eq!(journalist_id_keys.count(), 1);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
         .await
         .unwrap();
-    assert!(journalist_msg_keys.count() == 0);
+    assert_eq!(journalist_msg_keys.count(), 0);
 
     let keys_and_profiles =
         get_and_verify_public_keys(stack.api_client_cached(), &anchor_org_pks, stack.now()).await;
@@ -222,17 +220,17 @@ async fn create_journalists() {
 
     // all keys deleted
     let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
-    assert!(journalist_id_keys.count() == 0);
+    assert_eq!(journalist_id_keys.count(), 0);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
         .await
         .unwrap();
-    assert!(journalist_msg_keys.count() == 0);
+    assert_eq!(journalist_msg_keys.count(), 0);
 
     //
     // Delete journalist
     //
-    // Normally this is done by creating the deletion form offline with a journlist
+    // Normally this is done by creating the deletion form offline with a journalist
     // provisioning key and then the form is submitted separately so that the key
     // material is never exposed to the internet.
     //

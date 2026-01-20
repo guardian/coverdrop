@@ -13,10 +13,10 @@ pub mod secrets;
 pub mod stack;
 pub mod utils;
 pub mod vectors;
-use std::{future::Future, thread::sleep, time::Duration};
-
 pub use images::{dev_j2u_mixing_config, dev_u2j_mixing_config};
 pub use stack::CoverDropStack;
+use std::{future::Future, time::Duration};
+use tokio::time::sleep;
 
 // Generic retry for async functions
 pub async fn retry_async<T, E, R, F>(sleep_duration: Duration, attempts: usize, func: F) -> T
@@ -30,7 +30,7 @@ where
             Ok(v) => return v,
             Err(e) => {
                 tracing::warn!("Failed attempt in retry loop: {:?}", e);
-                sleep(sleep_duration);
+                sleep(sleep_duration).await;
             }
         }
     }

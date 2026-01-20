@@ -1,8 +1,6 @@
 use std::{
     cell::{RefCell, RefMut},
     path::Path,
-    thread,
-    time::Duration,
 };
 
 use admin::generate_journalist;
@@ -104,7 +102,7 @@ pub async fn load_mailboxes(
     }
 
     // Wait for the journalists to be picked up by the CoverNode
-    thread::sleep(Duration::from_secs(2));
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     let tofu_org_pks = load_anchor_org_pks(&keys_path, keys_generated_at).expect("Load org pks");
 

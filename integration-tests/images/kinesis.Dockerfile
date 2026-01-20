@@ -1,7 +1,7 @@
 # Build a kinesalite service
 FROM node:18-alpine AS builder
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 RUN npm install -g kinesalite@3.3.3 
 

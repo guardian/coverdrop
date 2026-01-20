@@ -1,12 +1,10 @@
 //! This module contains functions for signing existing, but unregistered keys
 //! They are generally used as part of key rotation services.
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 
 use crate::{
     crypto::keys::key_certificate_data::KeyCertificateData,
-    protocol::constants::{
-        COVERNODE_ID_KEY_VALID_DURATION_SECONDS, JOURNALIST_ID_KEY_VALID_DURATION_SECONDS,
-    },
+    protocol::constants::{COVERNODE_ID_KEY_VALID_DURATION, JOURNALIST_ID_KEY_VALID_DURATION},
 };
 
 use super::{
@@ -21,7 +19,7 @@ pub fn sign_covernode_id_pk(
     now: DateTime<Utc>,
 ) -> CoverNodeIdPublicKey {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(COVERNODE_ID_KEY_VALID_DURATION_SECONDS),
+        COVERNODE_ID_KEY_VALID_DURATION,
         covernode_provisioning_key_pair,
         now,
     );
@@ -39,7 +37,7 @@ pub fn sign_journalist_id_pk(
     now: DateTime<Utc>,
 ) -> JournalistIdPublicKey {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS),
+        JOURNALIST_ID_KEY_VALID_DURATION,
         journalist_provisioning_key_pair,
         now,
     );

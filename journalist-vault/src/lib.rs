@@ -27,7 +27,7 @@ pub use vault_message::{J2UMessage, U2JMessage, VaultMessage};
 use crate::info_queries::journalist_id;
 use crate::logging::LoggingSession;
 pub use backup_queries::BackupHistoryEntry;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use common::{
     api::{
         api_client::ApiClient,
@@ -56,8 +56,8 @@ use common::{
     },
     protocol::{
         constants::{
-            HOUR_IN_SECONDS, JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS,
-            JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS, MESSAGE_VALID_FOR_DURATION_IN_SECONDS,
+            JOURNALIST_ID_KEY_ROTATE_AFTER, JOURNALIST_MSG_KEY_ROTATE_AFTER,
+            MESSAGE_VALID_FOR_DURATION,
         },
         keys::{
             generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
@@ -839,15 +839,13 @@ impl JournalistVault {
         // Identity key rotation
         //
 
-        let seconds_since_last_update = self
+        let last_update = self
             .last_published_id_key_pair_at()
             .await?
-            .unwrap_or(DateTime::<Utc>::MIN_UTC) // If we've never uploaded a key set to distant past
-            .signed_duration_since(now)
-            .num_seconds()
-            .abs();
+            .unwrap_or(DateTime::<Utc>::MIN_UTC);
+        let duration_since_last_update = (now - last_update).abs();
 
-        if seconds_since_last_update > JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS {
+        if duration_since_last_update > JOURNALIST_ID_KEY_ROTATE_AFTER {
             match self
                 .generate_id_key_pair_and_rotate_pk(api_client, now)
                 .await
@@ -859,23 +857,24 @@ impl JournalistVault {
                 Err(e) => tracing::error!("Failed to refresh identity key: {:?}", e),
             }
         } else {
-            tracing::debug!("Not refreshing identity keys since only {} hours have elapsed since the last rotation",
-                    seconds_since_last_update / HOUR_IN_SECONDS);
+            let hours_elapsed = duration_since_last_update.num_hours();
+            tracing::debug!(
+                "Not refreshing identity keys since only {} hours have elapsed since the last rotation",
+                hours_elapsed
+            );
         }
 
         //
         // Messaging key rotation
         //
 
-        let seconds_since_last_update = self
-            .last_published_msg_key_pair_at()
-            .await?
-            .unwrap_or(DateTime::<Utc>::MIN_UTC) // If we've never uploaded a key set to distant past
-            .signed_duration_since(now)
-            .num_seconds()
-            .abs();
+        let duration_since_last_update = now.signed_duration_since(
+            self.last_published_msg_key_pair_at()
+                .await?
+                .unwrap_or(DateTime::<Utc>::MIN_UTC), // If we've never uploaded a key set to distant past
+        );
 
-        if seconds_since_last_update > JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS {
+        if duration_since_last_update > JOURNALIST_MSG_KEY_ROTATE_AFTER {
             match self
                 .generate_msg_key_pair_and_upload_pk(api_client, now)
                 .await
@@ -887,8 +886,11 @@ impl JournalistVault {
                 Err(e) => tracing::error!("Failed to refresh messaging key: {:?}", e),
             }
         } else {
-            tracing::debug!("Not refreshing messaging keys since only {} hours have elapsed since the last rotation",
-                    seconds_since_last_update / HOUR_IN_SECONDS);
+            let hours_elapsed = duration_since_last_update.num_hours();
+            tracing::debug!(
+                "Not refreshing messaging keys since only {} hours have elapsed since the last rotation",
+                hours_elapsed
+            );
         }
 
         Ok(did_rotate_some_keys)
@@ -1157,10 +1159,10 @@ impl JournalistVault {
 
     /// - Delete expired id and msg key pairs.
     /// - Delete expired organization and provisioning public keys
-    /// - Remove messages that are more than MESSAGE_VALID_FOR_DURATION_IN_SECONDS  old
+    /// - Remove messages that are more than MESSAGE_VALID_FOR_DURATION old
     /// - Delete old logs
     pub async fn clean_up(&self, now: DateTime<Utc>) -> anyhow::Result<()> {
-        let message_deletion_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
+        let message_deletion_duration = MESSAGE_VALID_FOR_DURATION;
 
         let mut tx = self.pool.begin().await?;
 

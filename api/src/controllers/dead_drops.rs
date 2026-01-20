@@ -1,13 +1,12 @@
 use std::num::NonZeroU32;
 
 use crate::anchor_org_pk_cache::AnchorOrganizationPublicKeyCache;
-use crate::cache_control::{add_cache_control_header, DEAD_DROP_TTL_IN_SECONDS};
+use crate::cache_control::{add_cache_control_header, DEAD_DROP_TTL};
 use crate::dead_drop_limits::DeadDropLimits;
 use crate::error::AppError;
 use crate::services::database::Database;
 use axum::extract::{Query, State};
 use axum::Json;
-use chrono::Duration;
 use common::api::models::dead_drop_summary::DeadDropSummary;
 use common::api::models::dead_drops::{
     DeadDropId, UnpublishedJournalistToUserDeadDrop, UnpublishedUserToJournalistDeadDrop,
@@ -66,7 +65,7 @@ pub async fn get_user_dead_drops(
         .await?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(DEAD_DROP_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, DEAD_DROP_TTL);
 
     Ok((
         headers,
@@ -95,7 +94,7 @@ pub async fn get_journalist_dead_drops(
         .await?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(DEAD_DROP_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, DEAD_DROP_TTL);
 
     Ok((
         headers,
@@ -158,7 +157,7 @@ pub async fn get_user_recent_dead_drop_summary(
         .await?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(DEAD_DROP_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, DEAD_DROP_TTL);
 
     Ok((headers, Json(summaries)))
 }
@@ -172,7 +171,7 @@ pub async fn get_journalist_recent_dead_drop_summary(
         .await?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(DEAD_DROP_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, DEAD_DROP_TTL);
 
     Ok((headers, Json(summaries)))
 }

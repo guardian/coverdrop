@@ -4,10 +4,8 @@ use common::{
     epoch::Epoch,
     protocol::{
         constants::{
-            DAY_IN_SECONDS, JOURNALIST_ID_KEY_VALID_DURATION_SECONDS,
-            JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS,
-            JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS,
-            ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+            JOURNALIST_ID_KEY_VALID_DURATION, JOURNALIST_MSG_KEY_VALID_DURATION,
+            JOURNALIST_PROVISIONING_KEY_VALID_DURATION, ORGANIZATION_KEY_VALID_DURATION,
         },
         keys::{anchor_org_pk, generate_organization_key_pair},
     },
@@ -34,9 +32,8 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     insert_org_pk(&mut conn, &anchor_org_pk, now).await.unwrap();
 
     // insert a provisioning key that will outlive its parent
-    let provisioning_key_not_valid_after = now
-        + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS)
-        + Duration::seconds(JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS);
+    let provisioning_key_not_valid_after =
+        now + ORGANIZATION_KEY_VALID_DURATION + JOURNALIST_PROVISIONING_KEY_VALID_DURATION;
     let journalist_provisioning_key_pair = UnsignedSigningKeyPair::generate()
         .to_signed_key_pair(&org_key_pair, provisioning_key_not_valid_after);
     insert_journalist_provisioning_pk(
@@ -52,8 +49,8 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     let db_provisioning_pk = db_journalist_provisioning_pks.next().unwrap();
 
     // insert an id key that will outlive its parent
-    let id_key_not_valid_after = provisioning_key_not_valid_after
-        + Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS);
+    let id_key_not_valid_after =
+        provisioning_key_not_valid_after + JOURNALIST_ID_KEY_VALID_DURATION;
     let journalist_id_key_pair = UnsignedSigningKeyPair::generate()
         .to_signed_key_pair(&journalist_provisioning_key_pair, id_key_not_valid_after);
     let created_at = now;
@@ -73,8 +70,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     let db_id_key_pair_row = journalist_id_key_pairs.next().unwrap();
 
     // insert an msg key that will outlive its parent
-    let msg_key_not_valid_after =
-        id_key_not_valid_after + Duration::seconds(JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS);
+    let msg_key_not_valid_after = id_key_not_valid_after + JOURNALIST_MSG_KEY_VALID_DURATION;
     let journalist_msg_key_pair = UnsignedEncryptionKeyPair::generate()
         .to_signed_key_pair(&journalist_id_key_pair, msg_key_not_valid_after);
     insert_candidate_msg_key_pair(
@@ -89,9 +85,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     assert!(journalist_msg_key_pairs.is_some());
 
     // delete the org pk when it has expired
-    let after_org_key_expiry = now
-        + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS)
-        + Duration::seconds(DAY_IN_SECONDS);
+    let after_org_key_expiry = now + ORGANIZATION_KEY_VALID_DURATION + Duration::days(1);
     delete_expired_org_pks(&mut conn, after_org_key_expiry)
         .await
         .unwrap();

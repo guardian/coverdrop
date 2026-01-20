@@ -2,7 +2,7 @@ use chrono;
 use common::api::models::journalist_id::JournalistIdentity;
 use common::client::mailbox::user_mailbox::MAX_MAILBOX_MESSAGES;
 use common::crypto::keys::public_key::PublicKey;
-use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS;
+use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION;
 use common::protocol::keys::{UntrustedUserKeyPair, UserKeyPair, UserPublicKey};
 use reqwest::Url;
 use serde_json::Value;
@@ -11,7 +11,6 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, PgPool,
 };
-use std::time::Duration;
 
 use crate::model::{AllReceivedJournalistToUserMessages, User};
 
@@ -307,13 +306,7 @@ impl Database {
 
         // messages older than the validity of a journalist message key are
         // considered undelivered and should be ignored
-        let message_key_validity_cutoff = now
-            - Duration::new(
-                JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS
-                    .try_into()
-                    .unwrap(),
-                0,
-            );
+        let message_key_validity_cutoff = now - JOURNALIST_MSG_KEY_VALID_DURATION;
 
         let row = sqlx::query!(
             r#"
@@ -334,7 +327,7 @@ impl Database {
                 FROM u2j
                 CROSS JOIN j2u
             "#,
-            now - Duration::new(max_delivery_time_hours * 3600, 0),
+            now - chrono::Duration::hours(max_delivery_time_hours as i64),
             message_key_validity_cutoff,
         )
         .fetch_one(&mut *connection)

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::Duration;
-use common::{protocol::constants::MINUTE_IN_SECONDS, task::Task, time};
+use common::{task::Task, time};
 use journalist_vault::JournalistVault;
 
 use crate::app_state::PublicInfo;
@@ -46,6 +46,6 @@ impl Task for SyncJournalistProvisioningPublicKeys {
     }
 
     fn interval(&self) -> Duration {
-        Duration::seconds(MINUTE_IN_SECONDS * 10)
+        Duration::minutes(10)
     }
 }

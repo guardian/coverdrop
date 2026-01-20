@@ -1,11 +1,10 @@
-use std::time::Duration;
-
 use aws_config::default_provider::credentials::DefaultCredentialsChain;
 use aws_sdk_s3::config::Region;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
 use aws_sdk_s3::presigning::PresigningConfig;
 use aws_sdk_s3::types::Object;
 use aws_sdk_s3::Client;
+use chrono::Duration;
 use reqwest::Url;
 
 use crate::clap::AwsConfig;
@@ -46,10 +45,10 @@ impl S3Client {
         &self,
         bucket: &str,
         key: &str,
-        expires_in_seconds: u64,
+        expires_in: Duration,
     ) -> anyhow::Result<String> {
         let presigning_config = PresigningConfig::builder()
-            .expires_in(Duration::from_secs(expires_in_seconds))
+            .expires_in(expires_in.to_std().expect("convert duration to std"))
             .build()?;
 
         let request = self

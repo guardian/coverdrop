@@ -9,23 +9,20 @@ use serde_with::{
     serde_as,
 };
 
-use crate::{
-    crypto::{
-        keys::{
-            role::Role,
-            serde::{PublicSigningKeyHex, SignatureHex},
-            signing::{
-                traits::{self, PublicSigningKey},
-                SignedSigningKeyPair,
-            },
-            Ed25519PublicKey,
+use crate::crypto::{
+    keys::{
+        role::Role,
+        serde::{PublicSigningKeyHex, SignatureHex},
+        signing::{
+            traits::{self, PublicSigningKey},
+            SignedSigningKeyPair,
         },
-        Signature,
+        Ed25519PublicKey,
     },
-    protocol::constants::HOUR_IN_SECONDS,
+    Signature,
 };
 
-pub const DEFAULT_FORM_TTL_SECONDS: i64 = HOUR_IN_SECONDS;
+pub const DEFAULT_FORM_TTL: Duration = Duration::hours(1);
 
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone)]
@@ -108,7 +105,7 @@ where
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = serde_json::to_vec(&form)?;
-        let not_valid_after = now + chrono::Duration::seconds(DEFAULT_FORM_TTL_SECONDS);
+        let not_valid_after = now + DEFAULT_FORM_TTL;
         let buf = Self::new_signing_buf(&body, now, not_valid_after);
         Ok(Self {
             body,

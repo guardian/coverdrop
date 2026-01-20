@@ -225,7 +225,6 @@ pub async fn upload_keys_to_api(
 
     let started_polling = time::now();
     let max_duration = chrono::Duration::minutes(10);
-    let max_duration_seconds = max_duration.num_seconds();
     let mut throttle = Throttle::new(Duration::from_secs(10));
 
     while !api_has_anchor_org_pk(api_client, &anchor_org_pk_bundle.anchor_org_pk).await? {
@@ -234,7 +233,7 @@ pub async fn upload_keys_to_api(
         println!(
             "Waiting for new organization key to appear in API (waited {}s/{}s)",
             elapsed.num_seconds(),
-            max_duration_seconds
+            max_duration.num_seconds()
         );
 
         if elapsed > max_duration {

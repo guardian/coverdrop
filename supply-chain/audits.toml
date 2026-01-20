@@ -87,6 +87,11 @@ criteria = "safe-to-deploy"
 delta = "1.0.97 -> 1.0.99"
 notes = "Minor changes"
 
+[[audits.chrono]]
+who = "Daniel Hugenroth <daniel.hugenroth@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.39 -> 0.4.40"
+
 [[audits.clap]]
 who = "Mario Savarese <mario.savarese@guardian.co.uk>"
 criteria = "safe-to-deploy"

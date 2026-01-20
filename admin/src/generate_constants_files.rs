@@ -40,6 +40,16 @@ macro_rules! format_android_constant_val {
     }};
 }
 
+macro_rules! format_android_val_constant_duration {
+    ($var:expr) => {{
+        format_args!(
+            "internal const val {:}_SECONDS = {:}\n",
+            stringify!($var),
+            format_number($var.num_seconds().try_into().unwrap()),
+        )
+    }};
+}
+
 macro_rules! format_android_constant_val_byte {
     ($var:expr) => {{
         format_args!(
@@ -67,28 +77,28 @@ fn generate_constants_file_android(path: &Path) -> anyhow::Result<()> {
     writer.write_all(ANDROID_PACKAGE_DECLARATION)?;
     writer.write_all(TOP_OF_FILE_COMMENT)?;
 
-    writer.write_fmt(format_android_constant_val!(
-        JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        JOURNALIST_PROVISIONING_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        JOURNALIST_ID_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        JOURNALIST_ID_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        JOURNALIST_MSG_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        COVERNODE_PROVISIONING_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        COVERNODE_ID_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        COVERNODE_ID_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        COVERNODE_MSG_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        COVERNODE_MSG_KEY_VALID_DURATION
     ))?;
 
     writer.write_fmt(format_android_constant_val!(
@@ -112,20 +122,20 @@ fn generate_constants_file_android(path: &Path) -> anyhow::Result<()> {
     writer.write_fmt(format_android_constant_val!(MESSAGE_PADDING_LEN))?;
     writer.write_fmt(format_android_constant_val!(RECIPIENT_TAG_LEN))?;
 
-    writer.write_fmt(format_android_constant_val!(
-        MESSAGE_VALID_FOR_DURATION_IN_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        MESSAGE_VALID_FOR_DURATION
     ))?;
-    writer.write_fmt(format_android_constant_val!(
-        MESSAGE_EXPIRY_WARNING_IN_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        MESSAGE_EXPIRY_WARNING
     ))?;
-    writer.write_fmt(format_android_constant_val!(
-        CLIENT_DEAD_DROP_CACHE_TTL_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        CLIENT_DEAD_DROP_CACHE_TTL
     ))?;
-    writer.write_fmt(format_android_constant_val!(
-        CLIENT_DEFAULT_DOWNLOAD_RATE_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        CLIENT_DEFAULT_DOWNLOAD_RATE
     ))?;
-    writer.write_fmt(format_android_constant_val!(
-        CLIENT_STATUS_DOWNLOAD_RATE_SECONDS
+    writer.write_fmt(format_android_val_constant_duration!(
+        CLIENT_STATUS_DOWNLOAD_RATE
     ))?;
     writer.write_fmt(format_android_constant_val!(COVERNODE_WRAPPING_KEY_COUNT))?;
 
@@ -149,6 +159,26 @@ macro_rules! format_ios_let_constant {
             "    public static let {:} = {:}\n",
             (stringify!($var)).to_case(Case::Camel),
             format_number($var.try_into().unwrap()),
+        )
+    }};
+}
+
+macro_rules! format_ios_let_constant_duration_seconds {
+    ($var:expr) => {{
+        format_args!(
+            "    public static let {:} = {:}\n",
+            (format!("{:}_SECONDS", stringify!($var))).to_case(Case::Camel),
+            format_number($var.num_seconds().try_into().unwrap()),
+        )
+    }};
+}
+
+macro_rules! format_ios_let_constant_duration_in_seconds {
+    ($var:expr) => {{
+        format_args!(
+            "    public static let {:} = {:}\n",
+            (format!("{:}_IN_SECONDS", stringify!($var))).to_case(Case::Camel),
+            format_number($var.num_seconds().try_into().unwrap()),
         )
     }};
 }
@@ -181,28 +211,28 @@ fn generate_constants_file_ios(path: &Path) -> anyhow::Result<()> {
 
     writer.write_all(IOS_CONSTANTS_STRUCT_START)?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        JOURNALIST_PROVISIONING_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        JOURNALIST_ID_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        JOURNALIST_ID_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        JOURNALIST_MSG_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        COVERNODE_PROVISIONING_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        COVERNODE_ID_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        COVERNODE_ID_KEY_VALID_DURATION
     ))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        COVERNODE_MSG_KEY_VALID_DURATION_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        COVERNODE_MSG_KEY_VALID_DURATION
     ))?;
 
     writer.write_fmt(format_ios_let_constant!(
@@ -232,17 +262,23 @@ fn generate_constants_file_ios(path: &Path) -> anyhow::Result<()> {
     writer.write_fmt(format_ios_let_constant!(POLY1305_AUTH_TAG_LEN))?;
     writer.write_fmt(format_ios_let_constant!(TWO_PARTY_BOX_NONCE_LEN))?;
 
-    writer.write_fmt(format_ios_let_constant!(
-        MESSAGE_VALID_FOR_DURATION_IN_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_in_seconds!(
+        MESSAGE_VALID_FOR_DURATION
     ))?;
-    writer.write_fmt(format_ios_let_constant!(MESSAGE_EXPIRY_WARNING_IN_SECONDS))?;
-    writer.write_fmt(format_ios_let_constant!(MAX_BACKGROUND_DURATION_IN_SECONDS))?;
-    writer.write_fmt(format_ios_let_constant!(CLIENT_DEAD_DROP_CACHE_TTL_SECONDS))?;
-    writer.write_fmt(format_ios_let_constant!(
-        CLIENT_DEFAULT_DOWNLOAD_RATE_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_in_seconds!(
+        MESSAGE_EXPIRY_WARNING
     ))?;
-    writer.write_fmt(format_ios_let_constant!(
-        CLIENT_STATUS_DOWNLOAD_RATE_SECONDS
+    writer.write_fmt(format_ios_let_constant_duration_in_seconds!(
+        MAX_BACKGROUND_DURATION
+    ))?;
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        CLIENT_DEAD_DROP_CACHE_TTL
+    ))?;
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        CLIENT_DEFAULT_DOWNLOAD_RATE
+    ))?;
+    writer.write_fmt(format_ios_let_constant_duration_seconds!(
+        CLIENT_STATUS_DOWNLOAD_RATE
     ))?;
 
     writer.write_fmt(format_ios_let_constant!(COVERNODE_WRAPPING_KEY_COUNT))?;

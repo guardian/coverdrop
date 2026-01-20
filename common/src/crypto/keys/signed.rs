@@ -19,10 +19,13 @@ pub trait SignedKey<R: Role> {
     /// Return the timestamp after which we notify admins that the key needs rotating
     fn rotation_notification_time(&self) -> DateTime<Utc> {
         // In general we want to notify when half the key's valid duration has elapsed.
-        // We're not using *_ROTATE_AFTER_SECONDS constants here because journalist keys are rotated every day
+        // We're not using *_ROTATE_AFTER constants here because journalist keys are rotated every day
         // and 24 hours before expiry is too short notice!
         // TODO rewrite once we're keeping track of key creation times.
-        self.not_valid_after() - Duration::seconds(R::valid_duration_seconds().unwrap_or(0) / 2)
+        self.not_valid_after()
+            - R::valid_duration()
+                .map(|d| d / 2)
+                .unwrap_or_else(|| Duration::seconds(0))
     }
 
     fn as_bytes(&self) -> &[u8];
@@ -86,18 +89,21 @@ fn test_rotation_notification_time() {
 
     use crate::{
         crypto::keys::signing::UnsignedSigningKeyPair,
-        protocol::constants::ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+        protocol::constants::ORGANIZATION_KEY_VALID_DURATION,
     };
 
     use crate::protocol::keys::generate_covernode_provisioning_key_pair;
 
     let now: DateTime<Utc> = "2025-01-01T00:00:00Z".parse().unwrap();
-    let org_key_expires = now + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS);
+    let org_key_expires = now + ORGANIZATION_KEY_VALID_DURATION;
     let org_key =
         UnsignedSigningKeyPair::<Organization>::generate().to_self_signed_key_pair(org_key_expires);
 
     let expected_notification_time: DateTime<Utc> = "2025-07-02T00:00:00Z".parse().unwrap();
-    assert!(org_key.rotation_notification_time() == expected_notification_time);
+    assert_eq!(
+        org_key.rotation_notification_time(),
+        expected_notification_time
+    );
 
     // A provisioning key is created one month before the org key expires.
     let now: DateTime<Utc> = "2025-12-01T00:00:00Z".parse().unwrap();

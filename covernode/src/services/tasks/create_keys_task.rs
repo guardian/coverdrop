@@ -3,9 +3,7 @@ use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use common::{
     protocol::{
-        constants::{
-            COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS, COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS,
-        },
+        constants::{COVERNODE_ID_KEY_ROTATE_AFTER, COVERNODE_MSG_KEY_ROTATE_AFTER},
         keys::{
             generate_covernode_messaging_key_pair, generate_unregistered_covernode_id_key_pair,
             CoverNodeIdKeyPairWithEpoch, CoverNodeMessagingKeyPair,
@@ -38,8 +36,7 @@ impl CreateKeysTask {
         if let Some(latest_id_key_pair) = published_id_key_pairs.latest_key() {
             let key_pair_created_at = latest_id_key_pair.created_at;
 
-            let key_pair_rotate_at =
-                key_pair_created_at + Duration::seconds(COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS);
+            let key_pair_rotate_at = key_pair_created_at + COVERNODE_ID_KEY_ROTATE_AFTER;
 
             tracing::info!(
                 "Checking latest identity key rotation time ({}) against now ({})",
@@ -75,8 +72,7 @@ impl CreateKeysTask {
         // enough to require a rotation
         if let Some(latest_msg_key_pair_with_epoch) = published_msg_key_pairs.latest_key() {
             let key_pair_created_at = latest_msg_key_pair_with_epoch.created_at;
-            let key_pair_rotate_at =
-                key_pair_created_at + Duration::seconds(COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS);
+            let key_pair_rotate_at = key_pair_created_at + COVERNODE_MSG_KEY_ROTATE_AFTER;
 
             tracing::info!(
                 "Checking latest messaging key rotation time ({}) against now ({})",
@@ -179,17 +175,14 @@ impl Task for CreateKeysTask {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use crate::services::tasks::CreateKeysTask;
     use chrono::{DateTime, Utc};
     use common::{
         epoch::Epoch,
         protocol::{
             constants::{
-                COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS, COVERNODE_ID_KEY_VALID_DURATION_SECONDS,
-                COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS,
-                COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS,
+                COVERNODE_ID_KEY_ROTATE_AFTER, COVERNODE_ID_KEY_VALID_DURATION,
+                COVERNODE_MSG_KEY_ROTATE_AFTER, COVERNODE_PROVISIONING_KEY_VALID_DURATION,
             },
             keys::{
                 generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
@@ -260,15 +253,10 @@ mod tests {
     }
 
     /// Scenario 2:
-    /// Id key is older than COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS → rotation required.
+    /// Id key is older than COVERNODE_ID_KEY_ROTATE_AFTER → rotation required.
     #[tokio::test]
     async fn id_key_older_than_rotation_period_requires_rotation() {
-        let old_time = now()
-            - Duration::from_secs(
-                (COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS + 1)
-                    .try_into()
-                    .unwrap(),
-            );
+        let old_time = now() - COVERNODE_ID_KEY_ROTATE_AFTER - chrono::Duration::seconds(1);
         let provisioning_key = create_test_provisioning_key(old_time);
         let keypair = create_test_covernode_id_key_pair(old_time, provisioning_key);
         let published = vec![keypair];
@@ -288,19 +276,14 @@ mod tests {
     ///
     #[tokio::test]
     async fn id_key_has_truncated_expiry_but_age_less_than_rotation_period_no_rotation() {
-        let covernode_provisioning_key_valid_duration_seconds: u64 =
-            COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS
-                .try_into()
-                .unwrap();
-
-        let near_expiry = now()
-            - Duration::from_secs(covernode_provisioning_key_valid_duration_seconds - 3600 * 7);
+        let near_expiry =
+            now() - COVERNODE_PROVISIONING_KEY_VALID_DURATION + chrono::Duration::hours(7);
 
         // By generating the keys this way, we ensure that the provisioning key expiry is 7 hours from now()
         let provisioning_key = create_test_provisioning_key(near_expiry);
 
         // This ID key is recent enough to avoid rotation ie only 7 hours old
-        let id_recent_date = now() - Duration::from_secs(3600 * 7);
+        let id_recent_date = now() - chrono::Duration::hours(7);
         // As the parent provisioning key is near expiry, this means that when a child ID key is generated, it will have a truncated expiry date too
         let id_key = generate_covernode_id_key_pair(&provisioning_key, id_recent_date);
 
@@ -342,15 +325,10 @@ mod tests {
     }
 
     /// Scenario 2:
-    /// Msg Key is older than COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS  → no rotation should occur.
+    /// Msg Key is older than COVERNODE_MSG_KEY_ROTATE_AFTER → no rotation should occur.
     #[tokio::test]
     async fn msg_key_older_than_rotation_period_requires_rotation() {
-        let old_time = now()
-            - Duration::from_secs(
-                (COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS + 1)
-                    .try_into()
-                    .unwrap(),
-            );
+        let old_time = now() - COVERNODE_MSG_KEY_ROTATE_AFTER - chrono::Duration::seconds(1);
         let provisioning_key = create_test_provisioning_key(old_time);
         let covernode_id_key_pair = create_test_covernode_id_key_pair(old_time, provisioning_key);
         let published_covernode_id_key_pair = vec![covernode_id_key_pair.clone()];
@@ -380,26 +358,20 @@ mod tests {
     ///
     #[tokio::test]
     async fn msg_key_near_expiry_but_still_less_that_rotation_period_no_rotation() {
-        let covernode_provisioning_key_valid_duration_seconds: u64 =
-            COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS
-                .try_into()
-                .unwrap();
         let provisioning_near_expiry =
-            now() - Duration::from_secs(covernode_provisioning_key_valid_duration_seconds - 60 * 5);
+            now() - COVERNODE_PROVISIONING_KEY_VALID_DURATION + chrono::Duration::minutes(5);
 
         let provisioning_key = create_test_provisioning_key(provisioning_near_expiry);
 
-        let covernode_id_key_valid_duration_seconds: u64 =
-            COVERNODE_ID_KEY_VALID_DURATION_SECONDS.try_into().unwrap();
         let id_near_expiry =
-            now() - Duration::from_secs(covernode_id_key_valid_duration_seconds - 60 * 10);
+            now() - COVERNODE_ID_KEY_VALID_DURATION + chrono::Duration::minutes(10);
 
         let covernode_id_key_pair =
             create_test_covernode_id_key_pair(id_near_expiry, provisioning_key);
         let published_covernode_id_key_pair = vec![covernode_id_key_pair.clone()];
 
         // This message key needs to be recent enough to avoid rotation but also have a truncated expiry date
-        let msg_recent_date = now() - Duration::from_secs(3600 * 7);
+        let msg_recent_date = now() - chrono::Duration::hours(7);
 
         let covernode_msg_key_pair =
             create_test_covernode_msg_key_pair(msg_recent_date, covernode_id_key_pair.clone());

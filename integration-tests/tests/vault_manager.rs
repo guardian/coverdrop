@@ -6,9 +6,7 @@ use admin::{
 };
 use chrono::Duration;
 use common::{
-    protocol::{
-        constants::ORGANIZATION_KEY_VALID_DURATION_SECONDS, keys::generate_organization_key_pair,
-    },
+    protocol::{constants::ORGANIZATION_KEY_VALID_DURATION, keys::generate_organization_key_pair},
     throttle::Throttle,
     time,
 };
@@ -42,10 +40,8 @@ async fn vault_manager_test() -> anyhow::Result<()> {
     // we want to test the reseeding, so we can check our error logging is ok
     // Setup the stack so that we have valid journalist provisioning, identity and messaging keys.
     // Then we time travel so that all the keys are expired
-    // travel ORGANIZATION_KEY_VALID_DURATION_SECONDS + 1 day into the future, there should be no valid id key any more
-    let future = stack.now()
-        + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS)
-        + Duration::days(1);
+    // travel ORGANIZATION_KEY_VALID_DURATION + 1 day into the future, there should be no valid id key any more
+    let future = stack.now() + ORGANIZATION_KEY_VALID_DURATION + Duration::days(1);
 
     stack.time_travel(future).await;
 
@@ -82,7 +78,6 @@ async fn vault_manager_test() -> anyhow::Result<()> {
 
     let started_polling = time::now();
     let max_duration = chrono::Duration::minutes(10);
-    let max_duration_seconds = max_duration.num_seconds();
     let mut throttle = Throttle::new(CoreDuration::from_secs(10));
 
     while !api_has_anchor_org_pk(
@@ -96,7 +91,7 @@ async fn vault_manager_test() -> anyhow::Result<()> {
         println!(
             "Waiting for new organization key to appear in API (waited {}s/{}s)",
             elapsed.num_seconds(),
-            max_duration_seconds
+            max_duration.num_seconds()
         );
 
         if elapsed > max_duration {

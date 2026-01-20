@@ -2,11 +2,7 @@ use async_trait::async_trait;
 use chrono::Duration;
 use common::{
     api::api_client::ApiClient,
-    protocol::{
-        constants::MINUTE_IN_SECONDS,
-        journalist::new_encrypted_cover_message_from_journalist_via_covernode,
-    },
-    task::Task,
+    protocol::journalist::new_encrypted_cover_message_from_journalist_via_covernode, task::Task,
     time,
 };
 use journalist_vault::JournalistVault;
@@ -97,6 +93,6 @@ impl Task for SendJournalistMessages {
     }
 
     fn interval(&self) -> Duration {
-        Duration::seconds(MINUTE_IN_SECONDS)
+        Duration::minutes(1)
     }
 }

@@ -1,17 +1,17 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.90.0 AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.92.0 AS chef
 WORKDIR /usr/src/app
 
 #
 # PLAN (learn dependencies)
 #
-FROM chef as planner
+FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 #
 # BUILD
 #
-FROM chef as builder
+FROM chef AS builder
 
 # pre-build dependencies (and cache!)
 COPY --from=planner /usr/src/app/recipe.json recipe.json

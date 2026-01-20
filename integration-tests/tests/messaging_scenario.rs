@@ -1,8 +1,3 @@
-use std::{
-    thread::{self, sleep},
-    time::Duration,
-};
-
 use client::commands::{
     journalist::{
         dead_drops::load_journalist_dead_drop_messages,
@@ -18,10 +13,13 @@ use integration_tests::{
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector, CoverDropStack,
 };
 use journalist_vault::VaultMessage;
+use std::time::Duration;
+
+// Polling period for dead drop deletion in the test environment
+const DELETE_OLD_DEAD_DROPS_POLLING_PERIOD: Duration = Duration::from_secs(2);
 
 static USER_MESSAGE: &str = "This is a test message from the user to the journalist";
 static JOURNALIST_MESSAGE: &str = "This is a test message from the journalist to the user";
-const DELETE_OLD_DEAD_DROPS_POLLING_PERIOD_SECONDS: u64 = 2;
 
 /// This test is a high level integration test that tests the full messaging scenario.
 ///
@@ -40,11 +38,7 @@ async fn messaging_scenario() {
     pretty_env_logger::try_init().unwrap();
 
     let mut stack = CoverDropStack::builder()
-        .with_delete_old_dead_drops_poll_seconds(
-            DELETE_OLD_DEAD_DROPS_POLLING_PERIOD_SECONDS
-                .try_into()
-                .unwrap(),
-        )
+        .with_delete_old_dead_drops_poll_duration(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD)
         .build()
         .await;
 
@@ -100,7 +94,7 @@ async fn messaging_scenario() {
                 .expect("Send use cover message")
         }
 
-        thread::sleep(Duration::from_secs(5));
+        tokio::time::sleep(Duration::from_secs(5)).await;
     }
 
     save_test_vector!("user_sent_message_and_processed", &stack);
@@ -180,7 +174,7 @@ async fn messaging_scenario() {
                 .expect("Send journalist cover message")
         }
 
-        thread::sleep(Duration::from_secs(5));
+        tokio::time::sleep(Duration::from_secs(5)).await;
     }
 
     save_test_vector!("journalist_replied_and_processed", &stack);
@@ -231,9 +225,7 @@ async fn messaging_scenario() {
         stack.time_travel(still_exists_time).await;
 
         // Wait for the dead drop deletion poller to run
-        sleep(Duration::from_secs(
-            DELETE_OLD_DEAD_DROPS_POLLING_PERIOD_SECONDS + 1,
-        ));
+        tokio::time::sleep(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD + Duration::from_secs(1)).await;
 
         // There seems to be some timing related issues where an extra dead drop is sometimes published
         // So we will assert that the original dead drop still exists.
@@ -252,9 +244,7 @@ async fn messaging_scenario() {
         stack.time_travel(no_dead_drops_time).await;
 
         // Wait for the dead drop deletion poller to run
-        sleep(Duration::from_secs(
-            DELETE_OLD_DEAD_DROPS_POLLING_PERIOD_SECONDS + 1,
-        ));
+        tokio::time::sleep(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD + Duration::from_secs(1)).await;
 
         // After 14 days the original dead drop should be deleted.
         let dead_drop_list_after_delete = get_user_dead_drops(stack.api_client_cached(), 0).await;

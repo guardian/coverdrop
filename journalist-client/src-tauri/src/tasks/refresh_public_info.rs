@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use chrono::Duration;
 use common::{
     api::{api_client::ApiClient, models::journalist_id::JournalistIdentity},
-    protocol::constants::MINUTE_IN_SECONDS,
     task::Task,
     time,
 };
@@ -70,6 +69,6 @@ impl Task for RefreshPublicInfo {
     }
 
     fn interval(&self) -> Duration {
-        Duration::seconds(MINUTE_IN_SECONDS)
+        Duration::minutes(1)
     }
 }

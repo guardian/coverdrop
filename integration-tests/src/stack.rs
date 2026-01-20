@@ -15,7 +15,6 @@ use std::net::IpAddr;
 use std::{
     fs::File,
     path::{Path, PathBuf},
-    thread::sleep,
     time::{Duration, Instant},
 };
 use testcontainers::core::Host::Addr;
@@ -58,6 +57,7 @@ use crate::{
 };
 use covernode_database::Database;
 use tempfile::{tempdir_in, TempDir};
+use tokio::time::sleep;
 
 /// A full stack represents a full deployment of the system, including the API, Kinesis, Postgres and the Covernode.
 pub struct CoverDropStack {
@@ -111,7 +111,6 @@ pub struct CoverDropStackBuilder {
     additional_journalists: Option<u8>,
     varnish_api_cache: bool,
     covernode_key_mode: CoverNodeKeyMode,
-    dead_drop_limit: Option<i64>,
     covernode_task_runner_mode: Option<RunnerMode>,
     identity_api_task_runner_mode: Option<RunnerMode>,
     cover_message_sender: bool,
@@ -123,18 +122,13 @@ impl CoverDropStackBuilder {
         self
     }
 
-    pub fn with_delete_old_dead_drops_poll_seconds(mut self, seconds: i64) -> Self {
-        self.delete_old_dead_drops_poll_seconds = Some(seconds);
+    pub fn with_delete_old_dead_drops_poll_duration(mut self, duration: Duration) -> Self {
+        self.delete_old_dead_drops_poll_seconds = Some(duration.as_secs() as i64);
         self
     }
 
     pub fn with_additional_journalists(mut self, number: u8) -> Self {
         self.additional_journalists = Some(number);
-        self
-    }
-
-    pub fn with_dead_drop_limit(mut self, seconds: i64) -> Self {
-        self.dead_drop_limit = Some(seconds);
         self
     }
 
@@ -317,7 +311,6 @@ impl CoverDropStackBuilder {
             base_time,
             self.delete_old_dead_drops_poll_seconds,
             self.default_journalist_id,
-            self.dead_drop_limit,
             kinesis_ip,
             minio_client_url,
             Addr(minio_ip_address),
@@ -616,7 +609,6 @@ impl CoverDropStack {
             default_journalist_id: None,
             varnish_api_cache: false,
             covernode_key_mode: CoverNodeKeyMode::ProvidedKeyPair,
-            dead_drop_limit: None,
             identity_api_task_runner_mode: None,
             covernode_task_runner_mode: None,
             cover_message_sender: false,
@@ -684,7 +676,7 @@ impl CoverDropStack {
         time_travel_container(&self.identity_api, to).await;
 
         // Time travel is async - let's wait a bit to give the docker instances time to catch up.
-        sleep(Duration::from_secs(2));
+        sleep(Duration::from_secs(2)).await;
 
         info!("Time travelled to: {}", now());
     }

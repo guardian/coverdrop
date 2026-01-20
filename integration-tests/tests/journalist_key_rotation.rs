@@ -1,17 +1,14 @@
-use std::time::Duration;
-
+use chrono::Duration;
+use common::form::DEFAULT_FORM_TTL;
+use common::protocol::constants::JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER;
 use common::{
     api::{
         forms::{PostJournalistIdPublicKeyForm, PostJournalistProvisioningPublicKeyForm},
         models::journalist_id::JournalistIdentity,
     },
-    form::DEFAULT_FORM_TTL_SECONDS,
-    protocol::{
-        constants::JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
-        keys::{
-            generate_journalist_id_key_pair, generate_journalist_messaging_key_pair,
-            generate_journalist_provisioning_key_pair,
-        },
+    protocol::keys::{
+        generate_journalist_id_key_pair, generate_journalist_messaging_key_pair,
+        generate_journalist_provisioning_key_pair,
     },
 };
 use integration_tests::{
@@ -67,7 +64,7 @@ async fn id_key_rotation_form_expires() {
 
     // time travel past id key form expiry
     stack
-        .time_travel(stack.now() + Duration::from_secs(DEFAULT_FORM_TTL_SECONDS as u64 + 10))
+        .time_travel(stack.now() + DEFAULT_FORM_TTL + Duration::seconds(10))
         .await;
 
     // the form should have expired and is no longer returned by the API
@@ -109,10 +106,7 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
 
     // time travel to avoid new provisioning key being rejected by api
     stack
-        .time_travel(
-            stack.now()
-                + Duration::from_secs(JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS as u64),
-        )
+        .time_travel(stack.now() + JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER)
         .await;
 
     // Create, but don't publish, a new journalist id key signed with the current journalist provisioning key

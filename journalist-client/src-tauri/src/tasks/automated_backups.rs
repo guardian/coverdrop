@@ -11,7 +11,7 @@ use common::{
     backup::constants::BACKUP_DATA_MAX_SIZE_BYTES,
     protocol::{
         backup::{sentinel_create_backup, sentinel_put_backup_data_to_s3, RecoveryContact},
-        constants::{MINUTE_IN_SECONDS, SECRET_SHARING_K_VALUE, SECRET_SHARING_N_VALUE},
+        constants::{SECRET_SHARING_K_VALUE, SECRET_SHARING_N_VALUE},
     },
     task::Task,
     time,
@@ -306,6 +306,6 @@ impl Task for AutomatedBackups {
     }
 
     fn interval(&self) -> Duration {
-        Duration::seconds(MINUTE_IN_SECONDS)
+        Duration::minutes(1)
     }
 }

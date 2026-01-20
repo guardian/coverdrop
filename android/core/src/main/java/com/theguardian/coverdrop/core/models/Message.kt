@@ -1,8 +1,8 @@
 package com.theguardian.coverdrop.core.models
 
 import androidx.annotation.VisibleForTesting
-import com.theguardian.coverdrop.core.generated.MESSAGE_EXPIRY_WARNING_IN_SECONDS
-import com.theguardian.coverdrop.core.generated.MESSAGE_VALID_FOR_DURATION_IN_SECONDS
+import com.theguardian.coverdrop.core.generated.MESSAGE_EXPIRY_WARNING_SECONDS
+import com.theguardian.coverdrop.core.generated.MESSAGE_VALID_FOR_DURATION_SECONDS
 import com.theguardian.coverdrop.core.persistence.StoredMessage
 import com.theguardian.coverdrop.core.persistence.StoredMessageType
 import com.theguardian.coverdrop.core.utils.DefaultClock
@@ -56,15 +56,15 @@ sealed class Message(
      */
     fun getExpiryState(now: Instant): ExpiryState {
         val beforeThisIsExpired = now
-            .minusSeconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS.toLong())
+            .minusSeconds(MESSAGE_VALID_FOR_DURATION_SECONDS.toLong())
 
         val beforeThisIsSoonExpiring = beforeThisIsExpired
-            .plusSeconds(MESSAGE_EXPIRY_WARNING_IN_SECONDS.toLong())
+            .plusSeconds(MESSAGE_EXPIRY_WARNING_SECONDS.toLong())
 
         return if (timestamp.isAfter(beforeThisIsSoonExpiring)) {
             ExpiryState.Fresh
         } else if (timestamp.isAfter(beforeThisIsExpired)) {
-            val expiresAt = timestamp.plusSeconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS.toLong())
+            val expiresAt = timestamp.plusSeconds(MESSAGE_VALID_FOR_DURATION_SECONDS.toLong())
             ExpiryState.SoonToBeExpired(expiresAt = expiresAt)
         } else {
             ExpiryState.Expired

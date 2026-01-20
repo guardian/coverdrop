@@ -1,6 +1,6 @@
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use common::{
-    protocol::{constants::MESSAGE_VALID_FOR_DURATION_IN_SECONDS, keys::UserPublicKey},
+    protocol::{constants::MESSAGE_VALID_FOR_DURATION, keys::UserPublicKey},
     FixedSizeMessageText,
 };
 use serde::{Deserialize, Serialize};
@@ -42,13 +42,12 @@ impl U2JMessage {
         custom_expiry: Option<DateTime<Utc>>,
         read: bool,
     ) -> anyhow::Result<Self> {
-        let message_retention_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
         Ok(Self {
             id,
             user_pk: from,
             message: message.to_string()?,
             received_at,
-            normal_expiry: received_at + message_retention_duration,
+            normal_expiry: received_at + MESSAGE_VALID_FOR_DURATION,
             custom_expiry,
             read,
         })
@@ -65,14 +64,13 @@ impl J2UMessage {
         sent_at: DateTime<Utc>,
         custom_expiry: Option<DateTime<Utc>>,
     ) -> anyhow::Result<Self> {
-        let message_retention_duration = Duration::seconds(MESSAGE_VALID_FOR_DURATION_IN_SECONDS);
         Ok(Self {
             id,
             user_pk: to,
             message: message.to_string()?,
             is_sent,
             sent_at,
-            normal_expiry: sent_at + message_retention_duration,
+            normal_expiry: sent_at + MESSAGE_VALID_FOR_DURATION,
             custom_expiry,
         })
     }

@@ -1,6 +1,6 @@
 use axum::extract::{Path, State};
 use axum::Json;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use common::{
     api::{
         forms::{
@@ -25,10 +25,9 @@ use common::{
     },
     protocol::{
         constants::{
-            COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS, COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS,
-            COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
-            JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS, JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS,
-            JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
+            COVERNODE_ID_KEY_ROTATE_AFTER, COVERNODE_MSG_KEY_ROTATE_AFTER,
+            COVERNODE_PROVISIONING_KEY_ROTATE_AFTER, JOURNALIST_ID_KEY_ROTATE_AFTER,
+            JOURNALIST_MSG_KEY_ROTATE_AFTER, JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER,
         },
         keys::{
             verify_covernode_id_pk, verify_covernode_messaging_pk,
@@ -44,9 +43,7 @@ use http::HeaderMap;
 
 use crate::{
     anchor_org_pk_cache::AnchorOrganizationPublicKeyCache,
-    cache_control::{
-        add_cache_control_header, PUBLIC_KEYS_TTL_IN_SECONDS, ROTATION_FORM_TTL_IN_SECONDS,
-    },
+    cache_control::{add_cache_control_header, PUBLIC_KEYS_TTL, ROTATION_FORM_TTL},
     constants::MAX_NON_DESK_JOURNALIST_DESCRIPTION_LEN,
     error::AppError,
     services::database::Database,
@@ -77,7 +74,7 @@ pub async fn get_public_keys(
     let keys = keys.to_untrusted();
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(PUBLIC_KEYS_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, PUBLIC_KEYS_TTL);
 
     Ok((
         headers,
@@ -190,15 +187,11 @@ pub async fn delete_journalist(
 /// Function used by key upload controllers to check if a key has been rotated too recently
 fn check_if_key_rotation_too_recent(
     latest_pk_added_at: Option<DateTime<Utc>>,
-    min_rotate_after_seconds: i64,
+    min_rotate_after: chrono::Duration,
 ) -> Result<(), AppError> {
     if let Some(latest_added_at) = latest_pk_added_at {
-        let seconds_since_last_rotation = latest_added_at
-            .signed_duration_since(time::now())
-            .num_seconds()
-            .abs();
-
-        if seconds_since_last_rotation < min_rotate_after_seconds {
+        let duration_since_last_rotation = (time::now() - latest_added_at).abs();
+        if duration_since_last_rotation < min_rotate_after {
             return Err(AppError::KeyRotationTooRecent);
         }
     }
@@ -210,15 +203,11 @@ fn check_if_key_rotation_too_recent(
 /// This will be useful if the system gets stuck in a state where it is consistently rotating
 fn warn_if_key_rotation_too_recent<R: Role>(
     latest_pk_added_at: Option<DateTime<Utc>>,
-    min_rotate_after_seconds: i64,
+    min_rotate_after: chrono::Duration,
 ) {
     if let Some(latest_added_at) = latest_pk_added_at {
-        let seconds_since_last_rotation = latest_added_at
-            .signed_duration_since(time::now())
-            .num_seconds()
-            .abs();
-
-        if seconds_since_last_rotation < min_rotate_after_seconds {
+        let duration_since_last_rotation = (time::now() - latest_added_at).abs();
+        if duration_since_last_rotation < min_rotate_after {
             tracing::warn!("Key {} has been rotated too recently", R::display());
         }
     }
@@ -243,10 +232,7 @@ pub async fn post_covernode_provisioning_key(
         .latest_provisioning_pk_added_at()
         .await?;
 
-    check_if_key_rotation_too_recent(
-        latest_pk_added_at,
-        COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
-    )?;
+    check_if_key_rotation_too_recent(latest_pk_added_at, COVERNODE_PROVISIONING_KEY_ROTATE_AFTER)?;
 
     let new_provisioning_pk = form
         .to_verified_form_data(verifying_org_pk, time::now())
@@ -320,7 +306,7 @@ pub async fn post_covernode_id_key(
 
     warn_if_key_rotation_too_recent::<CoverNodeId>(
         latest_pk_added_at,
-        COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS,
+        COVERNODE_ID_KEY_ROTATE_AFTER,
     );
 
     let epoch = db
@@ -382,7 +368,7 @@ pub async fn post_covernode_msg_key(
 
     warn_if_key_rotation_too_recent::<CoverNodeMessaging>(
         latest_pk_added_at,
-        COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS,
+        COVERNODE_MSG_KEY_ROTATE_AFTER,
     );
 
     let epoch = db
@@ -412,10 +398,7 @@ pub async fn post_journalist_provisioning_key(
         .latest_provisioning_pk_added_at()
         .await?;
 
-    check_if_key_rotation_too_recent(
-        latest_pk_added_at,
-        JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS,
-    )?;
+    check_if_key_rotation_too_recent(latest_pk_added_at, JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER)?;
 
     let new_provisioning_pk = form
         .to_verified_form_data(verifying_org_pk, time::now())
@@ -491,10 +474,7 @@ pub async fn get_journalist_id_pk_rotation_forms(
         })?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(
-        &mut headers,
-        Duration::seconds(ROTATION_FORM_TTL_IN_SECONDS),
-    );
+    add_cache_control_header(&mut headers, ROTATION_FORM_TTL);
 
     Ok((headers, Json(result)))
 }
@@ -555,7 +535,7 @@ pub async fn post_journalist_id_key(
 
     warn_if_key_rotation_too_recent::<JournalistId>(
         latest_pk_added_at,
-        JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS,
+        JOURNALIST_ID_KEY_ROTATE_AFTER,
     );
 
     let epoch = db
@@ -592,7 +572,7 @@ pub async fn get_journalist_id_pk_with_epoch(
         })?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(PUBLIC_KEYS_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, PUBLIC_KEYS_TTL);
 
     Ok((headers, Json(pk_with_epoch)))
 }
@@ -644,7 +624,7 @@ pub async fn post_journalist_msg_key(
 
     warn_if_key_rotation_too_recent::<JournalistMessaging>(
         latest_pk_added_at,
-        JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS,
+        JOURNALIST_MSG_KEY_ROTATE_AFTER,
     );
 
     let epoch = db

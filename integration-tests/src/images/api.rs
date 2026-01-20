@@ -19,7 +19,6 @@ pub struct ApiArgs {
     base_time: DateTime<Utc>,
     delete_old_dead_drops_poll_seconds: Option<i64>,
     default_journalist_id: Option<String>,
-    dead_drop_limit: Option<i64>,
     kinesis_ip: IpAddr,
     kinesis_port: u16,
     minio_url: String,
@@ -35,7 +34,6 @@ impl ApiArgs {
         base_time: DateTime<Utc>,
         delete_old_dead_drops_poll_seconds: Option<i64>,
         default_journalist_id: Option<String>,
-        dead_drop_limit: Option<i64>,
         kinesis_ip: IpAddr,
         kinesis_port: u16,
         minio_url: String,
@@ -47,7 +45,6 @@ impl ApiArgs {
             base_time,
             delete_old_dead_drops_poll_seconds,
             default_journalist_id,
-            dead_drop_limit,
             kinesis_ip,
             kinesis_port,
             minio_url,
@@ -75,11 +72,6 @@ impl ImageArgs for ApiArgs {
             .map(|id| format!("--default-journalist-id={id}"))
             .unwrap_or_else(|| "".to_owned());
 
-        let u2j_dead_drop_limit_arg = self
-            .dead_drop_limit
-            .map(|limit| format!("--u2j-dead-drops-per-request-limit={limit}"))
-            .unwrap_or_else(|| "".to_owned());
-
         let kinesis_flags = format!(
             "--kinesis-endpoint=http://{}:{} --kinesis-journalist-stream=journalist-messages --kinesis-user-stream=user-messages ",
             self.kinesis_ip, self.kinesis_port
@@ -88,9 +80,11 @@ impl ImageArgs for ApiArgs {
         let minio_flags = format!("--s3-endpoint-url={}", self.minio_url);
 
         let task_runner_mode = "--task-runner-mode=timer-and-manually-triggered";
-        let command = format!("{set_time_arg} && ./api --stage=dev --keys-path=/var/keys {postgres_arg} \
-            {delete_old_dead_drops_poll_seconds_arg} {default_journalist_id_arg} {u2j_dead_drop_limit_arg} \
-            {task_runner_mode} {kinesis_flags} {minio_flags}");
+        let command = format!(
+            "{set_time_arg} && ./api --stage=dev --keys-path=/var/keys {postgres_arg} \
+            {delete_old_dead_drops_poll_seconds_arg} {default_journalist_id_arg} \
+            {task_runner_mode} {kinesis_flags} {minio_flags}"
+        );
 
         println!("Starting API with: {command}");
 

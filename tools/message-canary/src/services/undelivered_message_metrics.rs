@@ -1,5 +1,4 @@
-use std::time::Duration;
-
+use chrono::Duration;
 use common::{throttle::Throttle, time::now};
 
 use crate::canary_state::CanaryState;
@@ -8,7 +7,7 @@ use crate::canary_state::CanaryState;
 /// A message is considered undelivered if it was sent
 /// - more than `max_delivery_time_hours` ago
 /// - more recently than the duration of the validity of a journalist messaging
-///   key (`JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS`).
+///   key (`JOURNALIST_MSG_KEY_VALID_DURATION`).
 pub async fn create_undelivered_message_metrics(
     canary_state: CanaryState,
     max_delivery_time_hours: u64,
@@ -19,7 +18,7 @@ pub async fn create_undelivered_message_metrics(
     );
 
     // select metric value every 5 minutes
-    let mut throttle = Throttle::new(Duration::from_secs(5 * 60));
+    let mut throttle = Throttle::new(Duration::minutes(5).to_std()?);
 
     loop {
         let current_time = now();

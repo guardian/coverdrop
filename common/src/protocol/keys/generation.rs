@@ -3,15 +3,14 @@ use chrono::{DateTime, Duration, Utc};
 use crate::{
     crypto::keys::{role::Role, signing::traits::PublicSigningKey},
     protocol::constants::{
-        COVERNODE_ID_KEY_VALID_DURATION_SECONDS, COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS,
-        JOURNALIST_ID_KEY_VALID_DURATION_SECONDS,
-        JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS,
-        ORGANIZATION_KEY_VALID_DURATION_SECONDS,
+        COVERNODE_ID_KEY_VALID_DURATION, COVERNODE_PROVISIONING_KEY_VALID_DURATION,
+        JOURNALIST_ID_KEY_VALID_DURATION, JOURNALIST_PROVISIONING_KEY_VALID_DURATION,
+        ORGANIZATION_KEY_VALID_DURATION,
     },
 };
 
 use crate::protocol::constants::{
-    COVERNODE_MSG_KEY_VALID_DURATION_SECONDS, JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS,
+    COVERNODE_MSG_KEY_VALID_DURATION, JOURNALIST_MSG_KEY_VALID_DURATION,
 };
 
 use super::*;
@@ -35,7 +34,7 @@ pub fn generate_child_expiry_not_valid_after<R: Role>(
 }
 
 pub fn generate_organization_key_pair(now: DateTime<Utc>) -> OrganizationKeyPair {
-    let not_valid_after = now + Duration::seconds(ORGANIZATION_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = now + ORGANIZATION_KEY_VALID_DURATION;
 
     UnsignedSigningKeyPair::generate().to_self_signed_key_pair(not_valid_after)
 }
@@ -46,7 +45,7 @@ pub fn generate_journalist_provisioning_key_pair(
     now: DateTime<Utc>,
 ) -> JournalistProvisioningKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS),
+        JOURNALIST_PROVISIONING_KEY_VALID_DURATION,
         org_key_pair,
         now,
     );
@@ -60,7 +59,7 @@ pub fn generate_journalist_id_key_pair(
     now: DateTime<Utc>,
 ) -> JournalistIdKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(JOURNALIST_ID_KEY_VALID_DURATION_SECONDS),
+        JOURNALIST_ID_KEY_VALID_DURATION,
         journalist_provisioning_key_pair,
         now,
     );
@@ -74,13 +73,13 @@ pub fn generate_unregistered_journalist_id_key_pair() -> UnregisteredJournalistI
 }
 
 /// Create a new encryption key pair with the public key's `not_valid_after` set to the
-/// default period a journalist key is valid. This is equal to [`JOURNALIST_KEY_VALID_DURATION_SECONDS`] from `now()`
+/// default period a journalist key is valid. This is equal to [`JOURNALIST_MSG_KEY_VALID_DURATION`] from `now()`
 pub fn generate_journalist_messaging_key_pair(
     journalist_id_key_pair: &JournalistIdKeyPair,
     now: DateTime<Utc>,
 ) -> JournalistMessagingKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS),
+        JOURNALIST_MSG_KEY_VALID_DURATION,
         journalist_id_key_pair,
         now,
     );
@@ -95,7 +94,7 @@ pub fn generate_covernode_provisioning_key_pair(
     now: DateTime<Utc>,
 ) -> CoverNodeProvisioningKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS),
+        COVERNODE_PROVISIONING_KEY_VALID_DURATION,
         org_key_pair,
         now,
     );
@@ -109,7 +108,7 @@ pub fn generate_covernode_id_key_pair(
     now: DateTime<Utc>,
 ) -> CoverNodeIdKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(COVERNODE_ID_KEY_VALID_DURATION_SECONDS),
+        COVERNODE_ID_KEY_VALID_DURATION,
         covernode_provisioning_key_pair,
         now,
     );
@@ -124,13 +123,13 @@ pub fn generate_unregistered_covernode_id_key_pair() -> UnregisteredCoverNodeIdK
 }
 
 /// Create a new encryption key pair with the public key's `not_valid_after` set to the
-/// default period a CoverNode key is valid. This is equal to [`COVERNODE_KEY_VALID_DURATION_SECONDS`] from `now()`
+/// default period a CoverNode key is valid. This is equal to [`COVERNODE_MSG_KEY_VALID_DURATION`] from `now()`
 pub fn generate_covernode_messaging_key_pair(
     covernode_id_key_pair: &CoverNodeIdKeyPair,
     now: DateTime<Utc>,
 ) -> CoverNodeMessagingKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
-        Duration::seconds(COVERNODE_MSG_KEY_VALID_DURATION_SECONDS),
+        COVERNODE_MSG_KEY_VALID_DURATION,
         covernode_id_key_pair,
         now,
     );

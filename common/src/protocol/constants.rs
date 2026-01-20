@@ -1,75 +1,69 @@
 // IMPORTANT: After changes to this file run `cargo run --bin admin generate-mobile-constants-files`
 // to keep the mobile constants files in sync.
-// NOTE! Once `chrono` stabilizes `weeks`, `days`, etc. as `const fn`s then we can change these over to
-// be proper `Duration`s rather than as `i64` amounts of seconds
 
-// Amounts of time represented in seconds
-pub const MINUTE_IN_SECONDS: i64 = 60;
-pub const HOUR_IN_SECONDS: i64 = 60 * MINUTE_IN_SECONDS;
-pub const DAY_IN_SECONDS: i64 = 24 * HOUR_IN_SECONDS;
-pub const WEEK_IN_SECONDS: i64 = 7 * DAY_IN_SECONDS;
+use chrono::Duration;
 
-/// The time in seconds an organization key is valid for.
+/// The time an organization key is valid for.
 /// The expiry time is quite long because provisioning a new key requires
 /// access to a physical machine where the secret organization key is stored
-pub const ORGANIZATION_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
+pub const ORGANIZATION_KEY_VALID_DURATION: Duration = Duration::weeks(52);
 
 /// The amount of time between key rotations for the organization key
-pub const ORGANIZATION_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
+pub const ORGANIZATION_KEY_ROTATE_AFTER: Duration = Duration::weeks(26);
 
-/// The time in seconds the journalist provisioning key is valid for.
-pub const JOURNALIST_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
+/// The amount of time the journalist provisioning is valid for
+pub const JOURNALIST_PROVISIONING_KEY_VALID_DURATION: Duration = Duration::weeks(52);
 
 /// The amount of time between key rotations for the journalist provisioning key
-pub const JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
+pub const JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER: Duration = Duration::weeks(26);
 
 /// Valid for two months in case a journalist goes on sabbatical for a month
-pub const JOURNALIST_ID_KEY_VALID_DURATION_SECONDS: i64 = 8 * WEEK_IN_SECONDS;
+pub const JOURNALIST_ID_KEY_VALID_DURATION: Duration = Duration::weeks(8);
 
 /// The amount of time between key rotations for the journalist identity key
-pub const JOURNALIST_ID_KEY_ROTATE_AFTER_SECONDS: i64 = 4 * WEEK_IN_SECONDS;
+pub const JOURNALIST_ID_KEY_ROTATE_AFTER: Duration = Duration::weeks(4);
 
-/// The time in seconds that a journalist key is valid.
+/// The time that a journalist key is valid.
 ///
 /// In the key material this is represented as a `not_valid_after` created with the pseudocode
-/// `Date.now() + JOURNALIST_KEY_VALID_DURATION_SECONDS`
-pub const JOURNALIST_MSG_KEY_VALID_DURATION_SECONDS: i64 = 2 * WEEK_IN_SECONDS;
+/// `Date.now() + JOURNALIST_MSG_KEY_VALID_DURATION`
+pub const JOURNALIST_MSG_KEY_VALID_DURATION: Duration = Duration::weeks(2);
 
-/// The amount of seconds between journalist messaging key rotations
-pub const JOURNALIST_MSG_KEY_ROTATE_AFTER_SECONDS: i64 = DAY_IN_SECONDS;
+/// The amount of time between journalist messaging key rotations
+pub const JOURNALIST_MSG_KEY_ROTATE_AFTER: Duration = Duration::days(1);
 
-/// The time in seconds the CoverNode provisioning key is valid for.
-pub const COVERNODE_PROVISIONING_KEY_VALID_DURATION_SECONDS: i64 = 52 * WEEK_IN_SECONDS;
+/// The amount of time the covernode provisioning is valid for
+pub const COVERNODE_PROVISIONING_KEY_VALID_DURATION: Duration = Duration::weeks(52);
 
 /// The amount of time between key rotations for the CoverNode provisioning key
-pub const COVERNODE_PROVISIONING_KEY_ROTATE_AFTER_SECONDS: i64 = 26 * WEEK_IN_SECONDS;
+pub const COVERNODE_PROVISIONING_KEY_ROTATE_AFTER: Duration = Duration::weeks(26);
 
 /// CoverNode id key validity duration
-pub const COVERNODE_ID_KEY_VALID_DURATION_SECONDS: i64 = 4 * WEEK_IN_SECONDS;
+pub const COVERNODE_ID_KEY_VALID_DURATION: Duration = Duration::weeks(4);
 
 /// The amount of time between key rotations for the CoverNode identity key
-pub const COVERNODE_ID_KEY_ROTATE_AFTER_SECONDS: i64 = 2 * WEEK_IN_SECONDS;
+pub const COVERNODE_ID_KEY_ROTATE_AFTER: Duration = Duration::weeks(2);
 
-/// The time in seconds that the CoverNode messaging key is valid.
+/// The time that the CoverNode messaging key is valid.
 ///
 /// In the key material this is represented as a `not_valid_after` created with the pseudocode
-/// `Date.now() + COVERNODE_KEY_VALID_DURATION_SECONDS`
-pub const COVERNODE_MSG_KEY_VALID_DURATION_SECONDS: i64 = 2 * WEEK_IN_SECONDS;
+/// `Date.now() + COVERNODE_MSG_KEY_VALID_DURATION`
+pub const COVERNODE_MSG_KEY_VALID_DURATION: Duration = Duration::weeks(2);
 
-/// The max amount of time in seconds remaining on the latests CoverNode messaging key before a new one can be uploaded.
-pub const COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS: i64 = WEEK_IN_SECONDS;
+/// The max amount of time remaining on the latest CoverNode messaging key before a new one can be uploaded.
+pub const COVERNODE_MSG_KEY_ROTATE_AFTER: Duration = Duration::weeks(1);
 
 /// The maximum time-to-live of entries within the clients' cache of the published user-facing dead-drops. The client
 /// should use the most-recent dead-drop entry's timestamp as the reference of `now` to ensure that wrong local clock
 /// does not lead to early evictions.
-pub const CLIENT_DEAD_DROP_CACHE_TTL_SECONDS: i64 = 2 * WEEK_IN_SECONDS;
+pub const CLIENT_DEAD_DROP_CACHE_TTL: Duration = Duration::weeks(2);
 
 /// The maximum rate at which the client downloads new dead-drop entries and key hierarchies from the
 /// CoverNode API.
-pub const CLIENT_DEFAULT_DOWNLOAD_RATE_SECONDS: i64 = HOUR_IN_SECONDS;
+pub const CLIENT_DEFAULT_DOWNLOAD_RATE: Duration = Duration::hours(1);
 
 /// The maximum rate at which the client downloads status updated from the CoverNode API.
-pub const CLIENT_STATUS_DOWNLOAD_RATE_SECONDS: i64 = 5 * MINUTE_IN_SECONDS;
+pub const CLIENT_STATUS_DOWNLOAD_RATE: Duration = Duration::minutes(5);
 
 /// The size a message is padded to after compression.
 pub const MESSAGE_PADDING_LEN: u16 = 512;
@@ -296,11 +290,13 @@ pub const MULTI_ANONYMOUS_BOX_SECRET_KEY_LEN: usize = 32;
 //
 
 /// Messages are valid for 14 days from their sent / received time
-pub const MESSAGE_VALID_FOR_DURATION_IN_SECONDS: i64 = 14 * DAY_IN_SECONDS;
+pub const MESSAGE_VALID_FOR_DURATION: Duration = Duration::days(14);
+
 /// Users are warned their messages will expire up to 48 hours before they expire
-pub const MESSAGE_EXPIRY_WARNING_IN_SECONDS: i64 = 2 * DAY_IN_SECONDS;
+pub const MESSAGE_EXPIRY_WARNING: Duration = Duration::days(2);
+
 /// Maximum time the user can background the app before they are logged out
-pub const MAX_BACKGROUND_DURATION_IN_SECONDS: i64 = 5 * MINUTE_IN_SECONDS;
+pub const MAX_BACKGROUND_DURATION: Duration = Duration::minutes(5);
 
 //
 // Journalist vault backup constants

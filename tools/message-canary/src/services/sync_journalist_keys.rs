@@ -1,5 +1,4 @@
-use std::time::Duration;
-
+use chrono::Duration;
 use common::{throttle::Throttle, time};
 
 use crate::canary_state::CanaryState;
@@ -7,8 +6,8 @@ use crate::canary_state::CanaryState;
 /// Finds provisioning keys which have been added to the API but which have not yet been added to the journalist vault.
 /// Any new provisioning keys that can be verified by a trust anchor in the vault are inserted into the vault.
 pub async fn sync_journalist_provisioning_pks(canary_state: CanaryState) -> anyhow::Result<()> {
-    let throttle_duration = Duration::from_secs(10 * 60);
-    let mut throttle = Throttle::new(throttle_duration);
+    let throttle_duration = Duration::minutes(10);
+    let mut throttle = Throttle::new(throttle_duration.to_std()?);
 
     loop {
         let now = time::now();

@@ -1,5 +1,3 @@
-use std::{thread, time::Duration};
-
 use client::commands::{
     journalist::{
         dead_drops::load_journalist_dead_drop_messages,
@@ -85,7 +83,7 @@ async fn multiple_journalists_messaging_scenario() {
         )
         .await;
 
-        thread::sleep(Duration::from_secs(5));
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 
     save_test_vector!("user_sent_message_and_processed", &stack);
@@ -156,7 +154,7 @@ async fn multiple_journalists_messaging_scenario() {
                 .expect("Send journalist cover message")
         }
 
-        thread::sleep(Duration::from_secs(5));
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 
     save_test_vector!("journalist_1_replied_and_processed", &stack);
@@ -199,7 +197,7 @@ async fn multiple_journalists_messaging_scenario() {
                 .expect("Send journalist cover message")
         }
 
-        thread::sleep(Duration::from_secs(5));
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
     }
 
     save_test_vector!("journalist_2_replied_and_processed", &stack);

@@ -1,13 +1,12 @@
 use std::env;
 
 use crate::{
-    cache_control::{add_cache_control_header, HEALTHCHECK_TTL_IN_SECONDS, STATUS_TTL_IN_SECONDS},
+    cache_control::{add_cache_control_header, HEALTHCHECK_TTL, STATUS_TTL},
     error::AppError,
     services::database::Database,
 };
 use axum::extract::State;
 use axum::Json;
-use chrono::Duration;
 use common::{
     api::{
         forms::PostSystemStatusEventForm,
@@ -29,7 +28,7 @@ pub async fn get_healthcheck() -> (HeaderMap, Json<HealthCheck>) {
     let result = HealthCheck::new("api", "ok");
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(HEALTHCHECK_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, HEALTHCHECK_TTL);
 
     (headers, Json(result))
 }
@@ -40,7 +39,7 @@ pub async fn get_latest_status(
     let status = db.system_queries.get_latest_status().await?;
 
     let mut headers = HeaderMap::new();
-    add_cache_control_header(&mut headers, Duration::seconds(STATUS_TTL_IN_SECONDS));
+    add_cache_control_header(&mut headers, STATUS_TTL);
 
     match status {
         Some(s) => Ok((headers, Json(s.into_published()))),

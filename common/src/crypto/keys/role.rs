@@ -1,19 +1,21 @@
+use chrono::Duration;
+
 pub trait Role: Clone {
     fn display() -> &'static str;
     fn entity_name() -> &'static str;
-    fn valid_duration_seconds() -> Option<i64>;
-    fn rotate_after_seconds() -> Option<i64>;
+    fn valid_duration() -> Option<Duration>;
+    fn rotate_after() -> Option<Duration>;
 }
 
 #[macro_export]
 macro_rules! define_role {
-    ($name:ident, $display: tt, $entity_name: tt, $valid_duration_seconds: expr, $rotate_after_seconds: expr) => {
+    ($name:ident, $display: tt, $entity_name: tt, $valid_duration: expr, $rotate_after: expr) => {
         #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, Hash)]
         #[serde(deny_unknown_fields)]
         pub struct $name {}
 
-        impl Role for $name {
-            /// A human readable name for this role
+        impl $crate::crypto::keys::role::Role for $name {
+            /// A human-readable name for this role
             fn display() -> &'static str {
                 $display
             }
@@ -24,14 +26,14 @@ macro_rules! define_role {
                 $entity_name
             }
 
-            /// Return the duration in seconds for which keys of this role are valid
-            fn valid_duration_seconds() -> Option<i64> {
-                $valid_duration_seconds
+            /// Return the duration for which keys of this role are valid
+            fn valid_duration() -> Option<chrono::Duration> {
+                $valid_duration
             }
 
-            /// Return the duration in seconds after which keys of this role should rotate
-            fn rotate_after_seconds() -> Option<i64> {
-                $rotate_after_seconds
+            /// Return the duration after which keys of this role should rotate
+            fn rotate_after() -> Option<chrono::Duration> {
+                $rotate_after
             }
         }
     };
@@ -41,7 +43,7 @@ macro_rules! define_role {
 }
 
 // A test role used for testing cryptographic primitives without valid duration or rotation time
-// Used unit tests and in the admin crate to generate test vectors for cross platform testing
+// Used unit tests and in the admin crate to generate test vectors for cross-platform testing
 define_role!(Test, "Test key", "test_key");
 
 // A test role with a valid duration and rotation time
@@ -49,6 +51,6 @@ define_role!(
     Test2,
     "Test key 2",
     "test_key_with_rotate_after",
-    Some(60 * 60 * 24),
-    Some(60 * 60 * 12)
+    Some(Duration::hours(24)),
+    Some(Duration::hours(12))
 );

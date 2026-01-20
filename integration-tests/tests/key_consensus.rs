@@ -1,21 +1,18 @@
-use api::cache_control::PUBLIC_KEYS_TTL_IN_SECONDS;
+use api::cache_control::PUBLIC_KEYS_TTL;
 use client::commands::user::{
     dead_drops::load_user_dead_drop_messages, messages::send_user_to_journalist_real_message,
 };
-use common::protocol::constants::COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS;
+use common::protocol::constants::COVERNODE_MSG_KEY_ROTATE_AFTER;
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
     dev_u2j_mixing_config, save_test_vector,
     utils::send_user_to_journalist_cover_messages,
     CoverDropStack,
 };
-use std::{
-    thread::{self},
-    time::Duration,
-};
+use std::time::Duration;
 
 const INITIAL_USER_MESSAGE: &str = "This is the initial test message from user to the journalist";
-const SLEEP_DURATION: u64 = 5;
+const SLEEP_DURATION: Duration = Duration::from_secs(5);
 
 /// Tests the following key consensus issue related to cached responses from the API:
 /// - A covernode rotates its messaging keys, creating key 2, and sends the public key to the API
@@ -30,7 +27,7 @@ async fn key_consensus() -> anyhow::Result<()> {
     pretty_env_logger::try_init().unwrap();
 
     let mut stack = CoverDropStack::builder()
-        .with_delete_old_dead_drops_poll_seconds(2)
+        .with_delete_old_dead_drops_poll_duration(SLEEP_DURATION)
         .with_varnish_api_cache(true)
         .build()
         .await;
@@ -85,15 +82,14 @@ async fn key_consensus() -> anyhow::Result<()> {
     };
 
     // make covernode rotate messaging keys
-    let after_covernode_key_rotation = stack.now()
-        + Duration::from_secs(COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS.try_into().unwrap());
+    let after_covernode_key_rotation = stack.now() + COVERNODE_MSG_KEY_ROTATE_AFTER;
 
     stack.time_travel(after_covernode_key_rotation).await;
 
-    thread::sleep(Duration::from_secs(2));
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     stack
-        .time_travel(stack.now() + Duration::from_secs(60.try_into().unwrap()))
+        .time_travel(stack.now() + chrono::Duration::minutes(1))
         .await;
 
     // assert that uncached api response has new covernode msg pk
@@ -102,7 +98,7 @@ async fn key_consensus() -> anyhow::Result<()> {
 
     assert!(new_keys_and_profiles.max_epoch > initial_epoch);
     let new_covernode_msg_pks_count = new_keys_and_profiles.keys.covernode_msg_pk_iter().count();
-    assert!(new_covernode_msg_pks_count == 2);
+    assert_eq!(new_covernode_msg_pks_count, 2);
 
     // assert that the cached api response is equal to the initial one
     let cached_keys_and_profiles =
@@ -139,12 +135,12 @@ async fn key_consensus() -> anyhow::Result<()> {
     )
     .await;
 
-    thread::sleep(Duration::from_secs(SLEEP_DURATION));
+    tokio::time::sleep(SLEEP_DURATION).await;
 
     let success: bool = {
         let mut success = false;
-        let num_attempts = PUBLIC_KEYS_TTL_IN_SECONDS;
-        for i in 0..num_attempts {
+        // Retry for the duration of the TTL, checking once per second
+        for i in 0..PUBLIC_KEYS_TTL.num_seconds() {
             let keys_and_profiles = get_and_verify_public_keys(
                 stack.api_client_uncached(),
                 &anchor_org_pks,
@@ -180,9 +176,9 @@ async fn key_consensus() -> anyhow::Result<()> {
             } else {
                 tracing::info!(
                     "Message not found, attempts remaining: {}",
-                    num_attempts - i
+                    PUBLIC_KEYS_TTL.num_seconds() - i
                 );
-                thread::sleep(Duration::from_secs(1));
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
         }
         success

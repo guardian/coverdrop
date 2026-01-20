@@ -1,6 +1,4 @@
-use crate::backup::constants::{
-    BACKUP_ID_KEY_VALID_DURATION_SECONDS, BACKUP_MSG_KEY_VALID_DURATION_SECONDS,
-};
+use crate::backup::constants::{BACKUP_ID_KEY_VALID_DURATION, BACKUP_MSG_KEY_VALID_DURATION};
 
 use crate::backup::roles::{BackupId, BackupMsg};
 use crate::crypto::keys::encryption::{
@@ -19,7 +17,7 @@ use crate::crypto::keys::untrusted::signing::{
 };
 use crate::protocol::keys::{OrganizationKeyPair, OrganizationPublicKey};
 use crate::protocol::roles::AnchorOrganization;
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use std::path::Path;
 
 pub type BackupIdPublicKey = SignedPublicSigningKey<BackupId>;
@@ -38,7 +36,7 @@ pub fn generate_backup_id_key_pair(
     org_key_pair: &OrganizationKeyPair,
     now: DateTime<Utc>,
 ) -> BackupIdKeyPair {
-    let not_valid_after = now + Duration::seconds(BACKUP_ID_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = now + BACKUP_ID_KEY_VALID_DURATION;
 
     UnsignedSigningKeyPair::generate().to_signed_key_pair(org_key_pair, not_valid_after)
 }
@@ -55,7 +53,7 @@ pub fn generate_backup_msg_key_pair(
     backup_id_pk: &BackupIdKeyPair,
     now: DateTime<Utc>,
 ) -> BackupMsgKeyPair {
-    let not_valid_after = now + Duration::seconds(BACKUP_MSG_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = now + BACKUP_MSG_KEY_VALID_DURATION;
     let encryption_key_pair: EncryptionKeyPair<BackupMsg, PublicEncryptionKey<BackupMsg>> =
         UnsignedEncryptionKeyPair::<BackupMsg>::generate();
 

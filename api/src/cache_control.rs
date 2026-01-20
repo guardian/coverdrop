@@ -1,13 +1,12 @@
 use axum::http::HeaderValue;
 use chrono::Duration;
-use common::protocol::constants::MINUTE_IN_SECONDS;
 use http::{header::CACHE_CONTROL, HeaderMap};
 
-pub const DEAD_DROP_TTL_IN_SECONDS: i64 = 5 * MINUTE_IN_SECONDS;
-pub const PUBLIC_KEYS_TTL_IN_SECONDS: i64 = MINUTE_IN_SECONDS;
-pub const STATUS_TTL_IN_SECONDS: i64 = 5;
-pub const HEALTHCHECK_TTL_IN_SECONDS: i64 = 1;
-pub const ROTATION_FORM_TTL_IN_SECONDS: i64 = 5;
+pub const DEAD_DROP_TTL: Duration = Duration::minutes(5);
+pub const PUBLIC_KEYS_TTL: Duration = Duration::minutes(1);
+pub const STATUS_TTL: Duration = Duration::seconds(5);
+pub const HEALTHCHECK_TTL: Duration = Duration::seconds(1);
+pub const ROTATION_FORM_TTL: Duration = Duration::seconds(5);
 
 /// Insert the header `cache-control: max-age=ttl` into a header map.
 /// The TTL is converted into seconds

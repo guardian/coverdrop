@@ -15,9 +15,9 @@ use std::time::Duration;
 
 use crate::state::CoverTrafficState;
 
-const KEY_UPDATE_INTERVAL_SECONDS: u64 = 60;
-const TRAFFIC_STATISTICS_OUTPUT_INTERVAL_SECONDS: i64 = 15;
-const UPDATE_MPH_INTERVAL_SECONDS: i64 = 60 * 5; // 5 minutes
+const KEY_UPDATE_INTERVAL: chrono::Duration = chrono::Duration::seconds(60);
+const TRAFFIC_STATISTICS_OUTPUT_INTERVAL: chrono::Duration = chrono::Duration::seconds(15);
+const UPDATE_MPH_INTERVAL: chrono::Duration = chrono::Duration::minutes(5);
 
 pub async fn send_cover_traffic_continuously(
     api_client: ApiClient,
@@ -38,7 +38,7 @@ pub async fn send_cover_traffic_continuously(
         let shared_state = shared_state.clone();
 
         async move {
-            let mut throttle = Throttle::new(Duration::from_secs(KEY_UPDATE_INTERVAL_SECONDS));
+            let mut throttle = Throttle::new(KEY_UPDATE_INTERVAL.to_std().unwrap());
 
             loop {
                 throttle.wait().await;
@@ -201,9 +201,7 @@ impl OutputRateController {
         }
 
         // Output statistics
-        if now() - self.last_output_statistics
-            > chrono::Duration::seconds(TRAFFIC_STATISTICS_OUTPUT_INTERVAL_SECONDS)
-        {
+        if now() - self.last_output_statistics > TRAFFIC_STATISTICS_OUTPUT_INTERVAL {
             let total_running_duration = now() - self.start_time;
             tracing::info!(
                 "Executed '{}' {} times within {} seconds",
@@ -215,7 +213,7 @@ impl OutputRateController {
         }
 
         // Check if we need to change our messages per hour
-        if now() - self.last_updated_mph > chrono::Duration::seconds(UPDATE_MPH_INTERVAL_SECONDS) {
+        if now() - self.last_updated_mph > UPDATE_MPH_INTERVAL {
             self.update_messages_per_second().await;
 
             self.last_updated_mph = now()

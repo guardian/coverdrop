@@ -4,6 +4,7 @@ use crate::error::AppError;
 use crate::services::database::Database;
 use axum::extract::State;
 use axum::Json;
+use chrono::Duration;
 use clap::ValueEnum;
 use common::api::forms::{PostBackupIdKeyForm, PostBackupMsgKeyForm};
 use common::aws::s3::client::S3Client;
@@ -11,7 +12,6 @@ use common::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
 use common::backup::keys::{verify_backup_id_pk, verify_backup_msg_pk};
 use common::clap::Stage;
 use common::protocol::backup::get_backup_bucket_name;
-use common::protocol::constants::HOUR_IN_SECONDS;
 use common::time;
 
 pub async fn retrieve_upload_url(
@@ -42,7 +42,7 @@ pub async fn retrieve_upload_url(
         AppError::IncorrectStageFound(e)
     })?;
 
-    let url_expiry_in_seconds = HOUR_IN_SECONDS as u64;
+    let url_expiry_in = Duration::hours(1);
 
     let created_at = time::now().to_rfc3339();
 
@@ -52,7 +52,7 @@ pub async fn retrieve_upload_url(
     let filepath = format!("{}/{}.backup", signing_journalist_id, created_at);
 
     if let Ok(presigned_url) = s3_client
-        .create_presigned_put_object_url(&backup_bucket_name, &filepath, url_expiry_in_seconds)
+        .create_presigned_put_object_url(&backup_bucket_name, &filepath, url_expiry_in)
         .await
     {
         Ok(presigned_url)

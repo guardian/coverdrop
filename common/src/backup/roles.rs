@@ -1,4 +1,3 @@
-use crate::crypto::keys::role::Role;
 use crate::define_role;
 
 define_role!(BackupMsg, "backup message", "backup_msg");

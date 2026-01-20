@@ -16,7 +16,6 @@ use crate::protocol::backup_data::{
     BackupData, BackupDataWithSignature, BackupEncryptedPaddedVault, BackupEncryptedSecretShare,
     BackupEncryptedSecretShareWithRecipient, EncryptedSecretShare, VerifiedBackupData,
 };
-use crate::protocol::constants::MINUTE_IN_SECONDS;
 use crate::protocol::roles::{JournalistId, JournalistMessaging};
 use anyhow::Context;
 use chrono::{DateTime, Utc};
@@ -165,7 +164,7 @@ pub async fn sentinel_put_backup_data_to_s3(
     // Upload the backup data to the presigned URL
     // TODO consider passing in a reqwest client from the caller
     // Override the default timeout to allow for large uploads
-    let client = new_reqwest_client_with_timeout(Duration::from_secs(3 * MINUTE_IN_SECONDS as u64));
+    let client = new_reqwest_client_with_timeout(Duration::from_mins(3));
     client
         .put(presigned_upload_url)
         .json(&verified_backup_data.to_unverified().unwrap())

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 
 use crate::{
     crypto::keys::{
@@ -14,7 +14,7 @@ use crate::{
     },
 };
 
-use super::{constants::ADMIN_KEY_VALID_DURATION_SECONDS, roles::Admin};
+use super::{constants::ADMIN_KEY_VALID_DURATION, roles::Admin};
 
 pub type UntrustedAdminPublicKey = UntrustedSignedPublicSigningKey<Admin>;
 pub type UntrustedAdminKeyPair = UntrustedSignedSigningKeyPair<Admin>;
@@ -25,7 +25,7 @@ pub fn generate_admin_key_pair(
     org_key_pair: &OrganizationKeyPair,
     now: DateTime<Utc>,
 ) -> AdminKeyPair {
-    let not_valid_after = now + Duration::seconds(ADMIN_KEY_VALID_DURATION_SECONDS);
+    let not_valid_after = now + ADMIN_KEY_VALID_DURATION;
 
     UnsignedSigningKeyPair::generate().to_signed_key_pair(org_key_pair, not_valid_after)
 }

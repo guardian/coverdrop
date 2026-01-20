@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use crate::{app_state::PublicInfo, model::BackendToFrontendEvent, tasks::BackupManager};
 use async_trait::async_trait;
 use chrono::Duration;
-use common::{api::api_client::ApiClient, protocol::constants::HOUR_IN_SECONDS, task::Task, time};
+use common::{api::api_client::ApiClient, task::Task, time};
 use journalist_vault::JournalistVault;
 use tauri::AppHandle;
 
@@ -70,6 +70,6 @@ impl Task for RotateJournalistKeys {
     }
 
     fn interval(&self) -> Duration {
-        Duration::seconds(HOUR_IN_SECONDS)
+        Duration::hours(1)
     }
 }
