@@ -24,11 +24,8 @@ pub async fn get_trust_anchor_digests(
 ) -> Result<Vec<TrustedOrganizationPublicKeyAndDigest>, CommandError> {
     let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
 
-    let now = time::now();
-
     let digests = vault
-        .org_pks(now)
-        .await
+        .org_pks()
         .context(VaultSnafu {
             failed_to: "read organization public keys",
         })?

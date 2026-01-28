@@ -1,0 +1,12 @@
+[package]
+name = "trust-anchors"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+common = { version = "0.1.0", path = "../common" }
+hex.workspace = true
+serde_json.workspace = true
+tracing.workspace = true

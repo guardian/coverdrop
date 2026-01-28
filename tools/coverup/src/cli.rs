@@ -350,17 +350,6 @@ pub enum JournalistVaultCommand {
         #[clap(long)]
         password_path: Option<PathBuf>,
     },
-    /// Add a new trust anchor to an existing vault
-    AddTrustAnchor {
-        #[clap(long)]
-        vault_path: PathBuf,
-        #[clap(long)]
-        password: Option<String>,
-        #[clap(long, conflicts_with = "password")]
-        password_path: Option<PathBuf>,
-        #[clap(long)]
-        trust_anchor_path: PathBuf,
-    },
     // TODO: delete https://github.com/guardian/coverdrop-internal/issues/3100
     MigrateHexArgon2Database {
         #[clap(long)]
@@ -381,6 +370,8 @@ pub enum JournalistVaultCommand {
         password_path: Option<PathBuf>,
         #[clap(long)]
         journalist_provisioning_pk_path: PathBuf,
+        #[clap(long)]
+        stage: Stage,
     },
 }
 

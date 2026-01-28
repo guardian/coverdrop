@@ -45,7 +45,10 @@ pub async fn copy_file(
                 let file_exists_in_pvc = data_copier_pod.file_exists_in_pvc(pvc_path).await?;
 
                 if file_exists_in_pvc {
-                    anyhow::bail!("File in PVC '{}' already exists, if you wish to overwrite the file rerun the command with --force", local_path.display());
+                    anyhow::bail!(
+                        "File in PVC '{}' already exists, if you wish to overwrite the file rerun the command with --force",
+                        local_path.display()
+                    );
                 }
             }
 
@@ -68,7 +71,10 @@ pub async fn copy_file(
             LocalOrPvcPath::Local { path: local_path },
         ) => {
             if local_path.exists() && !force {
-                anyhow::bail!("Local file '{}' already exists, if you wish to overwrite the file rerun the command with --force", local_path.display());
+                anyhow::bail!(
+                    "Local file '{}' already exists, if you wish to overwrite the file rerun the command with --force",
+                    local_path.display()
+                );
             }
 
             data_copier_pod.copy_from_pod(local_path, pvc_path).await?;

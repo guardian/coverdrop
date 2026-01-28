@@ -3,6 +3,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 use chrono::{DateTime, Utc};
 use common::{
     api::api_client::ApiClient,
+    clap::Stage,
     client::VerifiedKeysAndJournalistProfiles,
     protocol::keys::{load_anchor_org_pks, UserKeyPair},
     time,
@@ -11,6 +12,7 @@ use common::{
 use journalist_vault::JournalistVault;
 use message_canary_database::{database::Database, model::User};
 use tokio::{sync::RwLock, time::sleep};
+use trust_anchors::get_trust_anchors;
 
 /// Wraps the state used by the canary. This just reduces the amount of cloning we need
 /// for creating each of the async tasks.
@@ -39,6 +41,7 @@ impl CanaryState {
         messaging_client: MessagingClient,
         db: Database,
         num_users: u16,
+        stage: Stage,
     ) -> anyhow::Result<Self> {
         //
         // Vaults
@@ -48,7 +51,6 @@ impl CanaryState {
         let mut vaults = HashMap::new();
         let mut paths = tokio::fs::read_dir(&vaults_path).await?;
         let keys_path = keys_path.into();
-        let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
 
         let mut any_new_journalists = false;
         while let Some(path) = paths.next_entry().await? {
@@ -65,7 +67,8 @@ impl CanaryState {
 
                 let password = std::fs::read_to_string(&password_path)?;
 
-                let vault = JournalistVault::open(&path, &password).await?;
+                let trust_anchors = get_trust_anchors(&stage, time::now())?;
+                let vault = JournalistVault::open(&path, &password, trust_anchors).await?;
 
                 let set_up_occurred = vault
                     .process_vault_setup_bundle(&api_client, time::now())
@@ -76,16 +79,6 @@ impl CanaryState {
                 }
 
                 let journalist_id = vault.journalist_id().await?;
-
-                // load anchor org pks from file system into each vault
-                tracing::info!(
-                    "attempting to add {} anchor org pks to vault {}",
-                    anchor_org_pks.len(),
-                    journalist_id
-                );
-                for org_pk in &anchor_org_pks {
-                    vault.add_org_pk(org_pk, time::now()).await?;
-                }
 
                 vaults.insert(path.to_owned(), vault);
                 db.insert_journalist(&journalist_id).await?;

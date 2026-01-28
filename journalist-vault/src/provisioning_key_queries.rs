@@ -1,7 +1,8 @@
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::protocol::keys::{
-    anchor_org_pk, verify_journalist_provisioning_pk, JournalistProvisioningPublicKey,
-    OrganizationPublicKey, UntrustedAnchorOrganizationPublicKey,
+    verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys,
+    JournalistProvisioningPublicKey, OrganizationPublicKey,
     UntrustedJournalistProvisioningPublicKey,
 };
 use sqlx::SqliteConnection;
@@ -11,30 +12,36 @@ use crate::{key_rows::JournalistProvisioningPublicKeyRow, org_key_queries};
 pub(crate) async fn journalist_provisioning_pks(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
+    trust_anchors: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<impl Iterator<Item = JournalistProvisioningPublicKeyRow>> {
+    let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
+
     let provisioning_pks = sqlx::query!(
         r#"
             SELECT
                 journalist_provisioning_pks.id      AS "id: i64",
-                journalist_provisioning_pks.pk_json AS "provisioning_pk_json: String",
-                anchor_organization_pks.pk_json    AS "org_pk_json: String"
+                journalist_provisioning_pks.pk_json AS "provisioning_pk_json: String"
             FROM journalist_provisioning_pks
-            JOIN anchor_organization_pks
-                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id
         "#
     )
     .fetch_all(conn)
     .await?
     .into_iter()
     .flat_map(move |row| {
-        let org_pk =
-            serde_json::from_str::<UntrustedAnchorOrganizationPublicKey>(&row.org_pk_json)?;
-        let org_pk = anchor_org_pk(&org_pk, now)?.into_non_anchor();
-
         let provisioning_pk = serde_json::from_str::<UntrustedJournalistProvisioningPublicKey>(
             &row.provisioning_pk_json,
         )?;
-        let provisioning_pk = verify_journalist_provisioning_pk(&provisioning_pk, &org_pk, now)?;
+
+        // try to verify the provisioning pk against each trust anchor
+        let provisioning_pk = org_pks_from_trust_anchors
+            .iter()
+            .find_map(|org_pk| {
+                verify_journalist_provisioning_pk(&provisioning_pk, org_pk, now).ok()
+            })
+            .context(format!(
+                "Could not verify provisioning pk with id {}",
+                row.id
+            ))?;
 
         let pk_row = JournalistProvisioningPublicKeyRow::new(row.id, provisioning_pk);
 

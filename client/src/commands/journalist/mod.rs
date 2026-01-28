@@ -6,6 +6,7 @@ pub mod messages;
 use std::path::PathBuf;
 
 use common::aws::kinesis::client::KinesisClient;
+use common::clap::Stage;
 use common::{
     api::api_client::ApiClient, crypto::keys::signing::traits::PublicSigningKey,
     protocol::keys::UserPublicKey, time,
@@ -31,10 +32,12 @@ pub async fn handle_journalist_command(
     command: JournalistCommand,
     api_client: ApiClient,
     kinesis_client: KinesisClient,
+    stage: Stage,
 ) -> anyhow::Result<()> {
-    let vault = load_journalist_vault_from_args(&vault_path, password, password_path).await?;
+    let vault =
+        load_journalist_vault_from_args(&vault_path, password, password_path, stage).await?;
 
-    let org_pks = vault.org_pks(time::now()).await?;
+    let org_pks = vault.org_pks()?;
 
     let keys_and_profiles = api_client
         .get_public_keys()

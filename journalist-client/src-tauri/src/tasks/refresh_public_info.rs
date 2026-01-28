@@ -32,7 +32,7 @@ impl Task for RefreshPublicInfo {
     }
 
     async fn run(&self) -> anyhow::Result<()> {
-        let anchor_org_pks = self.vault.org_pks(time::now()).await?;
+        let anchor_org_pks = self.vault.org_pks()?;
 
         tracing::debug!("Getting public info from API {:?}", self.api_client);
 

@@ -21,6 +21,7 @@ metrics.workspace = true
 common.path = "../../common"
 journalist-vault.path = "../../journalist-vault"
 message-canary-database.path = "./message-canary-database"
+trust-anchors.path = "../../trust-anchors"
 
 
 [package.metadata.deb]

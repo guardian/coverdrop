@@ -10,7 +10,10 @@ use common::{
     crypto::keys::role::Role,
     protocol::{
         self,
-        keys::{load_anchor_org_pks, load_journalist_provisioning_key_pairs_with_parent_org_pks},
+        keys::{
+            load_anchor_org_pks, load_journalist_provisioning_key_pairs_with_parent_org_pks,
+            AnchorOrganizationPublicKey,
+        },
         roles::JournalistProvisioning,
     },
     Error,
@@ -36,9 +39,12 @@ pub async fn generate_journalist(
     status: JournalistStatus,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) -> anyhow::Result<JournalistVaultPaths> {
     let org_pks = load_anchor_org_pks(&keys_path, now)?;
 
+    // TODO use load_journalist_provisioning_key_pairs once we no longer need to pass org_pks to JournalistVault::create
+    // https://github.com/guardian/coverdrop-internal/issues/3788
     let org_pks_and_journalist_provisioning_key_pairs =
         load_journalist_provisioning_key_pairs_with_parent_org_pks(&keys_path, &org_pks, now)?;
 
@@ -81,6 +87,7 @@ pub async fn generate_journalist(
         &journalist_id,
         &org_and_journalist_provisioning_pks,
         now,
+        trust_anchors,
     )
     .await?;
 

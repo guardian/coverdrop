@@ -17,7 +17,8 @@ pub async fn create_tunnel(
     if port_in_use(local_port).await {
         anyhow::bail!(
             "Port {} is already in use. Please choose a different port or find and kill the existing process (`lsof -i :{}`)",
-            local_port, local_port
+            local_port,
+            local_port
         );
     }
     println!("Creating tunnel to {remote_host}:{remote_port} at localhost:{local_port}");

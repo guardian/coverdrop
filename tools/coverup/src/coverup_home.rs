@@ -102,7 +102,11 @@ impl CoverUpHome {
         let path = self.kubeconfig_for_stage(stage);
 
         if !path.exists() {
-            anyhow::bail!("Kubeconfig file {:?} does not exist. Use the command `coverup {} kubeconfig` to fetch it",  path, stage.as_clap_str());
+            anyhow::bail!(
+                "Kubeconfig file {:?} does not exist. Use the command `coverup {} kubeconfig` to fetch it",
+                path,
+                stage.as_clap_str()
+            );
         }
 
         Ok(path)
@@ -142,7 +146,10 @@ impl CoverUpHome {
             .join(format!("{}-keys", stage.as_guardian_str()));
 
         if !keys_dir.exists() {
-            anyhow::bail!("Directory {} doesn't exist - it should have been created by the set-up-dev process", keys_dir.as_os_str().to_string_lossy());
+            anyhow::bail!(
+                "Directory {} doesn't exist - it should have been created by the set-up-dev process",
+                keys_dir.as_os_str().to_string_lossy()
+            );
         }
 
         Ok(keys_dir)

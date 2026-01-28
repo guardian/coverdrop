@@ -1,11 +1,11 @@
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
     epoch::Epoch,
     protocol::keys::{
-        anchor_org_pk, verify_journalist_provisioning_pk, JournalistIdPublicKey,
-        JournalistMessagingKeyPair, UntrustedAnchorOrganizationPublicKey,
-        UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
-        UntrustedJournalistProvisioningPublicKey,
+        verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdPublicKey,
+        JournalistMessagingKeyPair, UntrustedJournalistIdKeyPair,
+        UntrustedJournalistMessagingKeyPair, UntrustedJournalistProvisioningPublicKey,
     },
 };
 use sqlx::SqliteConnection;
@@ -18,7 +18,10 @@ use crate::{
 pub(crate) async fn candidate_msg_key_pair(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
+    trust_anchors: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<Option<CandidateJournalistMessagingKeyPairRow>> {
+    let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
+
     let maybe_candidate_msg_key_pair = sqlx::query!(
         r#"
             SELECT
@@ -26,29 +29,32 @@ pub(crate) async fn candidate_msg_key_pair(
                 journalist_msg_key_pairs.key_pair_json AS "msg_key_pair_json: String",
                 journalist_msg_key_pairs.added_at     AS "added_at: DateTime<Utc>",
                 journalist_id_key_pairs.key_pair_json  AS "id_key_pair_json: String",
-                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String",
-                anchor_organization_pks.pk_json     AS "org_pk_json: String"
+                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String"
             FROM journalist_msg_key_pairs
             JOIN journalist_id_key_pairs
                 ON journalist_id_key_pairs.id = journalist_msg_key_pairs.id_key_pair_id
             JOIN journalist_provisioning_pks
                 ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id
-            JOIN anchor_organization_pks
-                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id
             WHERE journalist_msg_key_pairs.epoch IS NULL
         "#
     )
     .fetch_optional(conn)
     .await?
     .map(move |row| {
-        let org_pk =
-            serde_json::from_str::<UntrustedAnchorOrganizationPublicKey>(&row.org_pk_json)?;
-        let org_pk = anchor_org_pk(&org_pk, now)?.into_non_anchor();
-
         let provisioning_pk = serde_json::from_str::<UntrustedJournalistProvisioningPublicKey>(
             &row.provisioning_pk_json,
         )?;
-        let provisioning_pk = verify_journalist_provisioning_pk(&provisioning_pk, &org_pk, now)?;
+
+        // try to verify the provisioning pk against each trust anchor
+        let provisioning_pk = org_pks_from_trust_anchors
+            .iter()
+            .find_map(|org_pk| {
+                verify_journalist_provisioning_pk(&provisioning_pk, org_pk, now).ok()
+            })
+            .context(format!(
+                "Could not verify provisioning pk for msg key id {}",
+                row.id
+            ))?;
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
@@ -73,7 +79,10 @@ pub(crate) async fn candidate_msg_key_pair(
 pub(crate) async fn published_msg_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
+    trust_anchors: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<impl Iterator<Item = PublishedJournalistMessagingKeyPairRow>> {
+    let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
+
     let msg_key_pairs = sqlx::query!(
         r#"
             SELECT
@@ -82,15 +91,12 @@ pub(crate) async fn published_msg_key_pairs(
                 journalist_msg_key_pairs.added_at     AS "added_at: DateTime<Utc>",
                 journalist_msg_key_pairs.epoch        AS "epoch: Epoch",
                 journalist_id_key_pairs.key_pair_json  AS "id_key_pair_json: String",
-                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String",
-                anchor_organization_pks.pk_json     AS "org_pk_json: String"
+                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String"
             FROM journalist_msg_key_pairs
             JOIN journalist_id_key_pairs
                 ON journalist_id_key_pairs.id = journalist_msg_key_pairs.id_key_pair_id
             JOIN journalist_provisioning_pks
                 ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id
-            JOIN anchor_organization_pks
-                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id
             WHERE journalist_msg_key_pairs.epoch IS NOT NULL
         "#
     )
@@ -98,14 +104,20 @@ pub(crate) async fn published_msg_key_pairs(
     .await?
     .into_iter()
     .flat_map(move |row| {
-        let org_pk =
-            serde_json::from_str::<UntrustedAnchorOrganizationPublicKey>(&row.org_pk_json)?;
-        let org_pk = anchor_org_pk(&org_pk, now)?.into_non_anchor();
-
         let provisioning_pk = serde_json::from_str::<UntrustedJournalistProvisioningPublicKey>(
             &row.provisioning_pk_json,
         )?;
-        let provisioning_pk = verify_journalist_provisioning_pk(&provisioning_pk, &org_pk, now)?;
+
+        // try to verify the provisioning pk against each trust anchor
+        let provisioning_pk = org_pks_from_trust_anchors
+            .iter()
+            .find_map(|org_pk| {
+                verify_journalist_provisioning_pk(&provisioning_pk, org_pk, now).ok()
+            })
+            .context(format!(
+                "Could not verify provisioning pk for msg key id {}",
+                row.id
+            ))?;
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
@@ -153,10 +165,11 @@ pub(crate) async fn insert_candidate_msg_key_pair(
     id_pk: &JournalistIdPublicKey,
     msg_key_pair: &JournalistMessagingKeyPair,
     now: DateTime<Utc>,
+    org_pks: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<()> {
     let key_pair_json = serde_json::to_string(&msg_key_pair.to_untrusted())?;
 
-    let id_key_pair_id = id_key_queries::published_id_key_pairs(conn, now)
+    let id_key_pair_id = id_key_queries::published_id_key_pairs(conn, now, org_pks)
         .await?
         .find(|key_pair_row| key_pair_row.key_pair.public_key() == id_pk)
         .map(|key_pair_row| key_pair_row.id)
@@ -199,7 +212,10 @@ pub(crate) async fn promote_candidate_msg_key_pair_to_published(
     .await?;
 
     if result.rows_affected() != 1 {
-        tracing::warn!("Unexpected number of rows updated when promoting journalist messaging key pair from candidate to published, expected 1 was {}", result.rows_affected());
+        tracing::warn!(
+            "Unexpected number of rows updated when promoting journalist messaging key pair from candidate to published, expected 1 was {}",
+            result.rows_affected()
+        );
     }
 
     Ok(())

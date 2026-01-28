@@ -58,6 +58,7 @@ pub async fn generate_test_journalist(
     keys_dir: impl AsRef<Path>,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) {
     generate_journalist(
         keys_dir,
@@ -70,13 +71,14 @@ pub async fn generate_test_journalist(
         JournalistStatus::Visible,
         &vault_path,
         now,
+        trust_anchors.clone(),
     )
     .await
     .expect("Create journalist");
 
     let vault_path = vault_path.as_ref().join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, trust_anchors)
         .await
         .expect("Load desk vault");
 
@@ -91,6 +93,7 @@ pub async fn generate_test_desk(
     keys_dir: impl AsRef<Path>,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) {
     generate_journalist(
         keys_dir,
@@ -103,13 +106,14 @@ pub async fn generate_test_desk(
         JournalistStatus::Visible,
         &vault_path,
         now,
+        trust_anchors.clone(),
     )
     .await
     .expect("Create desk");
 
     let desk_vault_path = vault_path.as_ref().join("generated_test_desk.vault");
 
-    let desk_vault = JournalistVault::open(&desk_vault_path, MAILBOX_PASSWORD)
+    let desk_vault = JournalistVault::open(&desk_vault_path, MAILBOX_PASSWORD, trust_anchors)
         .await
         .expect("Load desk vault");
 

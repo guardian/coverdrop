@@ -17,6 +17,7 @@ members = [
     "tools/message-canary",
     "tools/coverup",
     "u2j-appender",
+    "trust-anchors",
 ]
 
 resolver = "2"

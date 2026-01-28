@@ -196,6 +196,16 @@ impl Stage {
         }
     }
 
+    pub fn from_guardian_str(s: &str) -> anyhow::Result<Self> {
+        match s.to_uppercase().as_str() {
+            "PROD" => Ok(Stage::Production),
+            "STAGING" => Ok(Stage::Staging),
+            "CODE" => Ok(Stage::Code),
+            "DEV" => Ok(Stage::Development),
+            other => Err(anyhow::anyhow!("unknown stage '{}'", other)),
+        }
+    }
+
     /// Converts the `Stage` into a string slice showing the most convenient name
     /// for typing on the command line. Useful in help messages.
     pub fn as_clap_str(&self) -> &'static str {

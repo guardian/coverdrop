@@ -23,7 +23,7 @@ where
     F: Fn() -> DateTime<Utc>,
 {
     let now = now_fn();
-    let org_pks = vault.org_pks(now).await?;
+    let org_pks = vault.org_pks()?;
 
     let keys_and_profiles = get_public_keys(&org_pks, &api_client, now).await?;
 

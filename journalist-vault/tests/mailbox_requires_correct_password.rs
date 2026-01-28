@@ -1,10 +1,12 @@
 use chrono::Utc;
 use common::{
     api::models::journalist_id::JournalistIdentity,
+    clap::Stage,
     protocol::keys::{generate_journalist_provisioning_key_pair, generate_organization_key_pair},
 };
 use journalist_vault::JournalistVault;
 use tempfile::tempdir_in;
+use trust_anchors::get_trust_anchors;
 
 #[tokio::test]
 async fn vault_requires_correct_password() {
@@ -20,6 +22,8 @@ async fn vault_requires_correct_password() {
     let journalist_provisioning_key_pair =
         generate_journalist_provisioning_key_pair(&org_key_pair, now);
 
+    let trust_anchors = get_trust_anchors(&Stage::Development, now).expect("loaded trust anchors");
+
     // Create vault
     {
         let anchor_org_pk = org_key_pair.public_key().clone().into_anchor();
@@ -34,6 +38,7 @@ async fn vault_requires_correct_password() {
             &journalist_id,
             &org_and_journalist_provisioning_pks,
             now,
+            trust_anchors.clone(),
         )
         .await
         .expect("Create journalist vault");
@@ -41,7 +46,7 @@ async fn vault_requires_correct_password() {
 
     // Open vault with correct password
     {
-        let vault = JournalistVault::open(&db_path, "test_password")
+        let vault = JournalistVault::open(&db_path, "test_password", trust_anchors.clone())
             .await
             .expect("Load journalist vault");
 
@@ -52,7 +57,8 @@ async fn vault_requires_correct_password() {
 
     // Open vault with wrong password
     {
-        let vault = JournalistVault::open(&db_path, "wrong_test_password").await;
+        let vault =
+            JournalistVault::open(&db_path, "wrong_test_password", trust_anchors.clone()).await;
         assert!(vault.is_err());
     }
 }

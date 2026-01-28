@@ -69,6 +69,7 @@ async fn main() -> anyhow::Result<()> {
             password_path,
             kinesis_config,
             aws_config,
+            stage,
         } => {
             let kinesis_client = KinesisClient::new(
                 &kinesis_config,
@@ -83,6 +84,7 @@ async fn main() -> anyhow::Result<()> {
                 command,
                 api_client,
                 kinesis_client,
+                stage,
             )
             .await
         }

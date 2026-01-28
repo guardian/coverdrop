@@ -49,6 +49,7 @@ use common::tracing::init_tracing;
 use journalist_vault::JournalistVault;
 use journalist_vault::PASSWORD_EXTENSION;
 use tokio::fs;
+use trust_anchors::get_trust_anchors;
 
 #[cfg(feature = "integration-tests")]
 mod integration_tests;
@@ -159,12 +160,14 @@ async fn main() -> anyhow::Result<()> {
             vault_path,
             is_desk,
             keys_path,
+            stage,
         } => {
             let password = password.map(anyhow::Ok).unwrap_or_else(|| {
                 let password_generator = PasswordGenerator::from_eff_large_wordlist()?;
                 anyhow::Ok(password_generator.generate(DEFAULT_PASSPHRASE_WORDS))
             })?;
 
+            let trust_anchors = get_trust_anchors(&stage, time::now())?;
             generate_journalist(
                 keys_path,
                 display_name,
@@ -176,6 +179,7 @@ async fn main() -> anyhow::Result<()> {
                 status,
                 vault_path,
                 time::now(),
+                trust_anchors,
             )
             .await?;
 
@@ -193,11 +197,14 @@ async fn main() -> anyhow::Result<()> {
         Commands::ChangeVaultPassword {
             vault_path,
             current_password,
+            stage,
         } => {
             let password_generator = PasswordGenerator::from_eff_large_wordlist()?;
             let new_password = password_generator.generate(DEFAULT_PASSPHRASE_WORDS);
 
-            let journalist_vault = JournalistVault::open(&vault_path, &current_password).await?;
+            let trust_anchors = get_trust_anchors(&stage, time::now())?;
+            let journalist_vault =
+                JournalistVault::open(&vault_path, &current_password, trust_anchors).await?;
 
             journalist_vault.change_password(&new_password).await?;
 
@@ -235,9 +242,11 @@ async fn main() -> anyhow::Result<()> {
             vault_path,
             password,
             password_path,
+            stage,
         } => {
             let password = validate_password_from_args(password, password_path)?;
-            let vault = JournalistVault::open(&vault_path, &password).await?;
+            let trust_anchors = get_trust_anchors(&stage, time::now())?;
+            let vault = JournalistVault::open(&vault_path, &password, trust_anchors).await?;
 
             let now = time::now();
 
@@ -303,7 +312,9 @@ async fn main() -> anyhow::Result<()> {
             .save_to_disk(&form_path)?;
 
             println!("Backup identity key form saved to {:?}.", form_path);
-            println!("Move this to an online machine and post it to the api with post-backup-identity-key-form WITHIN ONE HOUR!");
+            println!(
+                "Move this to an online machine and post it to the api with post-backup-identity-key-form WITHIN ONE HOUR!"
+            );
 
             Ok(())
         }
@@ -323,7 +334,9 @@ async fn main() -> anyhow::Result<()> {
             let anchor_org_pks = load_anchor_org_pks(&keys_path, time::now())?;
             // return early if no anchor org pks found
             if anchor_org_pks.is_empty() {
-                anyhow::bail!("No anchor organization public keys found in the keys path. Cannot generate backup messaging key pair.");
+                anyhow::bail!(
+                    "No anchor organization public keys found in the keys path. Cannot generate backup messaging key pair."
+                );
             }
             let backup_id_key_pairs =
                 load_backup_id_key_pairs(&keys_path, &anchor_org_pks, time::now())?;
@@ -350,7 +363,9 @@ async fn main() -> anyhow::Result<()> {
             .save_to_disk(&form_path)?;
 
             println!("Backup messaging key form saved to {:?}.", form_path);
-            println!("Move this to an online machine and post it to the api with post-backup-messaging-key-form WITHIN ONE HOUR!");
+            println!(
+                "Move this to an online machine and post it to the api with post-backup-messaging-key-form WITHIN ONE HOUR!"
+            );
 
             Ok(())
         }

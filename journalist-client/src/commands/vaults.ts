@@ -11,13 +11,13 @@ export const getVaultState = (): Promise<VaultState | null> => {
 };
 
 export const unlockVault = async (
-  profile: string,
+  stage: string,
   path: string,
   password: string,
 ): Promise<void> => {
   const outcome = await invokeWithErrorMessage<OpenVaultOutcome>(
     "unlock_vault",
-    { profile, path, password },
+    { stage, path, password },
   );
 
   if (outcome.type === "openedOffline") {
@@ -59,10 +59,6 @@ export const unlockSoftLockedVault = (
 
 export const getColocatedPassword = (path: string): Promise<string | null> => {
   return invokeWithSilencedErrorMessage("get_colocated_password", { path });
-};
-
-export const addTrustAnchor = (path: string): Promise<string | null> => {
-  return invokeWithErrorMessage("add_trust_anchor", { path });
 };
 
 export const sendDesktopNotification = (args: {

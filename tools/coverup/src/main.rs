@@ -23,7 +23,6 @@ use common::crypto::keys::serde::StorableKeyMaterial;
 use common::protocol::keys::{
     anchor_org_pk, verify_journalist_provisioning_pk, UntrustedAnchorOrganizationPublicKey,
     UntrustedJournalistProvisioningKeyPair, UntrustedJournalistProvisioningPublicKey,
-    UntrustedOrganizationPublicKey,
 };
 use common::time;
 use coverup_home::CoverUpHome;
@@ -32,6 +31,7 @@ use journalist_vault::JournalistVault;
 use multipass::list_coverdrop_nodes;
 use rpassword::prompt_password;
 use ssh_scp::{command_over_ssh, tunnel_and_port_forward};
+use trust_anchors::get_trust_anchors;
 
 use std::fs::File;
 use std::io::Write;
@@ -133,7 +133,9 @@ async fn main() -> anyhow::Result<()> {
                 admin_machine_ip,
                 port,
             } => {
-                println!("Fetching bearer token, which you'll need to login to the dashboard. Check the stdout of the ssh command for the token");
+                println!(
+                    "Fetching bearer token, which you'll need to login to the dashboard. Check the stdout of the ssh command for the token"
+                );
                 command_over_ssh(
                     &ssh_user,
                     admin_machine_ip,
@@ -439,35 +441,20 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
             }
-            JournalistVaultCommand::AddTrustAnchor {
-                vault_path,
-                password,
-                password_path,
-                trust_anchor_path,
-            } => {
-                let password = validate_password_from_args(password, password_path)?;
-                let vault = JournalistVault::open(&vault_path, &password).await?;
-
-                let now = time::now();
-
-                let org_pk = UntrustedOrganizationPublicKey::load_from_file(&trust_anchor_path)?;
-                let org_pk = anchor_org_pk(&org_pk.to_tofu_anchor(), now)?;
-
-                vault.add_org_pk(&org_pk, now).await?;
-                println!("OK");
-            }
             JournalistVaultCommand::AddProvisioningPublicKey {
                 vault_path,
                 password,
                 password_path,
                 journalist_provisioning_pk_path,
+                stage,
             } => {
                 let password = validate_password_from_args(password, password_path)?;
-                let vault = JournalistVault::open(&vault_path, &password).await?;
+                let trust_anchors = get_trust_anchors(&stage, time::now())?;
+                let vault = JournalistVault::open(&vault_path, &password, trust_anchors).await?;
 
                 let now = time::now();
 
-                let org_pks = vault.org_pks(now).await?;
+                let org_pks = vault.org_pks()?;
 
                 let journalist_provisioning_pk =
                     UntrustedJournalistProvisioningPublicKey::load_from_file(

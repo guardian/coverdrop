@@ -8,7 +8,7 @@ use super::*;
 /// Trust a serialized trusted organization public key, this is used when reading a key from a trusted store
 /// such as the local file system or a journalist vault.
 ///
-/// We still perform the self-signing certificate check incase the key has expired
+/// We still perform the self-signing certificate check in case the key has expired
 pub fn anchor_org_pk(
     untrusted: &UntrustedAnchorOrganizationPublicKey,
     now: DateTime<Utc>,

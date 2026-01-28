@@ -39,6 +39,7 @@ covernode.path = "../covernode"
 identity-api.path = "../identity-api"
 integration-test-queries.path = "integration-test-queries"
 journalist-vault.path = "../journalist-vault"
+trust-anchors = { path = "../trust-anchors" }
 u2j-appender.path = "../u2j-appender"
 
 [dev-dependencies]

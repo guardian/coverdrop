@@ -29,6 +29,7 @@ async fn message_round_trip() {
     let journalist_id = JournalistIdentity::new("Hello").unwrap();
 
     let org_key_pair = generate_organization_key_pair(now);
+    let trust_anchors = vec![org_key_pair.public_key().clone().into_anchor()];
 
     let journalist_provisioning_key_pair =
         generate_journalist_provisioning_key_pair(&org_key_pair, now);
@@ -56,6 +57,7 @@ async fn message_round_trip() {
             &journalist_id,
             &org_and_journalist_provisioning_pks,
             now,
+            trust_anchors.clone(),
         )
         .await
         .expect("Create journalist vault");
@@ -71,7 +73,7 @@ async fn message_round_trip() {
     }
 
     {
-        let vault = JournalistVault::open(&db_path, "test_password")
+        let vault = JournalistVault::open(&db_path, "test_password", trust_anchors.clone())
             .await
             .expect("Load journalist vault");
 

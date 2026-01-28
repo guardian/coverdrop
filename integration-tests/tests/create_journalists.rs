@@ -1,5 +1,6 @@
 use admin::{delete_journalist_form, submit_delete_journalist_form};
 use chrono::Duration;
+
 use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION;
 use integration_tests::{
     api_wrappers::{
@@ -51,6 +52,7 @@ async fn create_journalists() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -59,6 +61,7 @@ async fn create_journalists() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -66,7 +69,7 @@ async fn create_journalists() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
         .await
         .expect("Load journalist vault");
 

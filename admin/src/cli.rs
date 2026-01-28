@@ -197,6 +197,9 @@ pub enum Commands {
         /// The keys directory containing the trust anchor and journalist provisioning key pair
         #[clap(long)]
         keys_path: PathBuf,
+        /// The stage the vault is for
+        #[clap(long)]
+        stage: Stage,
     },
     /// Updates the passphrase of a journalist vault to a new randomly generated one. Where applicable, the encryption
     /// scheme is updated to the latest variant. The new passphrase is saved in the respective .password file.
@@ -207,6 +210,9 @@ pub enum Commands {
         /// The current passphrase of the vault
         #[clap(long)]
         current_password: String,
+        /// The stage the vault is for
+        #[clap(long)]
+        stage: Stage,
     },
     UpdateJournalist {
         /// The ID of the journalist you wish to update
@@ -243,6 +249,9 @@ pub enum Commands {
         password: Option<String>,
         #[clap(long, conflicts_with = "password")]
         password_path: Option<PathBuf>,
+        /// The stage the vault is for
+        #[clap(long)]
+        stage: Stage,
     },
     /// Delete a given journalist
     DeleteJournalist {

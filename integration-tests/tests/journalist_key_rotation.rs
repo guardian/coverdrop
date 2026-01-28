@@ -33,6 +33,7 @@ async fn id_key_rotation_form_expires() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -40,7 +41,7 @@ async fn id_key_rotation_form_expires() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
         .await
         .expect("Load journalist vault");
 
@@ -92,6 +93,7 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -195,6 +197,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -212,7 +215,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
         .await
         .expect("Load journalist vault");
 

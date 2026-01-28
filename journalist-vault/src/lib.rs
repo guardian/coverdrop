@@ -1,6 +1,5 @@
 mod backup_queries;
 mod id_key_queries;
-mod id_pk_family_queries;
 mod info_queries;
 pub mod key_rows;
 pub mod logging;
@@ -18,8 +17,7 @@ use anyhow::Context;
 use key_rows::{
     AllVaultKeys, UntrustedCandidateJournalistIdKeyPairRow,
     UntrustedCandidateJournalistMessagingKeyPairRow, UntrustedJournalistProvisioningPublicKeyRow,
-    UntrustedOrganizationPublicKeyRow, UntrustedPublishedJournalistIdKeyPairRow,
-    UntrustedPublishedJournalistMessagingKeyPairRow,
+    UntrustedPublishedJournalistIdKeyPairRow, UntrustedPublishedJournalistMessagingKeyPairRow,
 };
 use std::{path::Path, time::Duration as StdDuration};
 pub use vault_message::{J2UMessage, U2JMessage, VaultMessage};
@@ -61,7 +59,7 @@ use common::{
         },
         keys::{
             generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
-            AnchorOrganizationPublicKey, JournalistIdKeyPair, JournalistIdPublicKeyFamilyList,
+            AnchorOrganizationPublicKey, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
             JournalistMessagingKeyPair, JournalistProvisioningPublicKey, LatestKey,
             OrganizationPublicKey, UnregisteredJournalistIdKeyPair, UserPublicKey,
         },
@@ -111,18 +109,21 @@ pub struct User {
 #[derive(Clone)]
 pub struct JournalistVault {
     pub pool: SqlitePool,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 }
-
 impl JournalistVault {
     pub async fn create(
         path: impl AsRef<Path>,
         password: &str,
         journalist_id: &JournalistIdentity,
+        // TODO remove org_pks once initializer no longer needs them
+        // https://github.com/guardian/coverdrop-internal/issues/3788
         org_and_journalist_provisioning_pks: &[(
             AnchorOrganizationPublicKey,
             JournalistProvisioningPublicKey,
         )],
         now: DateTime<Utc>,
+        trust_anchors: Vec<AnchorOrganizationPublicKey>,
     ) -> anyhow::Result<Self> {
         let db = Argon2SqlCipher::new(path, password).await?;
         let pool = db.into_sqlite_pool();
@@ -137,7 +138,6 @@ impl JournalistVault {
             org_key_queries::insert_org_pk(&mut conn, org_pk, now).await?;
 
             let org_pk = org_pk.to_non_anchor();
-
             provisioning_key_queries::insert_journalist_provisioning_pk(
                 &mut conn,
                 &org_pk,
@@ -147,10 +147,17 @@ impl JournalistVault {
             .await?;
         }
 
-        Ok(Self { pool })
+        Ok(Self {
+            pool,
+            trust_anchors,
+        })
     }
 
-    pub async fn open(path: impl AsRef<Path>, password: &str) -> anyhow::Result<Self> {
+    pub async fn open(
+        path: impl AsRef<Path>,
+        password: &str,
+        trust_anchors: Vec<AnchorOrganizationPublicKey>,
+    ) -> anyhow::Result<Self> {
         if !path.as_ref().exists() {
             anyhow::bail!(
                 "Path to journalist vault does not exist {}",
@@ -167,7 +174,10 @@ impl JournalistVault {
         let mut conn = pool.acquire().await?;
         let _ = info_queries::journalist_id(&mut conn).await?;
 
-        Ok(Self { pool })
+        Ok(Self {
+            pool,
+            trust_anchors,
+        })
     }
 
     pub async fn check_password(&self, path: impl AsRef<Path>, password: &str) -> bool {
@@ -250,40 +260,40 @@ impl JournalistVault {
     pub async fn all_vault_keys(&self, now: DateTime<Utc>) -> anyhow::Result<AllVaultKeys> {
         let mut conn = self.pool.begin().await?;
 
-        let org_pks = org_key_queries::org_pks(&mut conn, now)
-            .await?
-            .map(|row| UntrustedOrganizationPublicKeyRow {
-                id: row.id,
-                pk: row.pk.to_untrusted(),
-            })
-            .collect();
+        let trust_anchors = self.trust_anchors()?;
+        let org_pks_untrusted = trust_anchors.to_untrusted();
 
-        let journalist_provisioning_pks =
-            provisioning_key_queries::journalist_provisioning_pks(&mut conn, now)
+        let journalist_provisioning_pks = provisioning_key_queries::journalist_provisioning_pks(
+            &mut conn,
+            now,
+            trust_anchors.clone(),
+        )
+        .await?
+        .map(|row| UntrustedJournalistProvisioningPublicKeyRow {
+            id: row.id,
+            pk: row.pk.to_untrusted(),
+        })
+        .collect();
+
+        let published_id_key_pairs =
+            id_key_queries::published_id_key_pairs(&mut conn, now, trust_anchors.clone())
                 .await?
-                .map(|row| UntrustedJournalistProvisioningPublicKeyRow {
+                .map(|row| UntrustedPublishedJournalistIdKeyPairRow {
                     id: row.id,
-                    pk: row.pk.to_untrusted(),
+                    key_pair: row.key_pair.to_untrusted(),
+                    epoch: row.epoch,
                 })
                 .collect();
 
-        let published_id_key_pairs = id_key_queries::published_id_key_pairs(&mut conn, now)
-            .await?
-            .map(|row| UntrustedPublishedJournalistIdKeyPairRow {
-                id: row.id,
-                key_pair: row.key_pair.to_untrusted(),
-                epoch: row.epoch,
-            })
-            .collect();
-
-        let published_msg_key_pairs = msg_key_queries::published_msg_key_pairs(&mut conn, now)
-            .await?
-            .map(|row| UntrustedPublishedJournalistMessagingKeyPairRow {
-                id: row.id,
-                key_pair: row.key_pair.to_untrusted(),
-                epoch: row.epoch,
-            })
-            .collect();
+        let published_msg_key_pairs =
+            msg_key_queries::published_msg_key_pairs(&mut conn, now, trust_anchors.clone())
+                .await?
+                .map(|row| UntrustedPublishedJournalistMessagingKeyPairRow {
+                    id: row.id,
+                    key_pair: row.key_pair.to_untrusted(),
+                    epoch: row.epoch,
+                })
+                .collect();
 
         let candidate_id_key_pair =
             id_key_queries::candidate_id_key_pair(&mut conn)
@@ -294,16 +304,17 @@ impl JournalistVault {
                     key_pair: row.key_pair.to_untrusted(),
                 });
 
-        let candidate_msg_key_pair = msg_key_queries::candidate_msg_key_pair(&mut conn, now)
-            .await?
-            .map(|row| UntrustedCandidateJournalistMessagingKeyPairRow {
-                id: row.id,
-                added_at: row.added_at,
-                key_pair: row.key_pair.to_untrusted(),
-            });
+        let candidate_msg_key_pair =
+            msg_key_queries::candidate_msg_key_pair(&mut conn, now, trust_anchors.clone())
+                .await?
+                .map(|row| UntrustedCandidateJournalistMessagingKeyPairRow {
+                    id: row.id,
+                    added_at: row.added_at,
+                    key_pair: row.key_pair.to_untrusted(),
+                });
 
         Ok(AllVaultKeys {
-            org_pks,
+            org_pks: org_pks_untrusted,
             journalist_provisioning_pks,
             candidate_msg_key_pair,
             candidate_id_key_pair,
@@ -465,28 +476,15 @@ impl JournalistVault {
     // Keys
     //
 
-    pub async fn org_pks(
-        &self,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<Vec<AnchorOrganizationPublicKey>> {
-        let mut conn = self.pool.acquire().await?;
-
-        let org_pks = org_key_queries::org_pks(&mut conn, now)
-            .await?
-            .map(|pk_row| pk_row.into_public_key())
-            .collect();
-
-        Ok(org_pks)
+    // TODO move toward using trust_anchors() and AnchorOrganizationPublicKeys
+    pub fn org_pks(&self) -> anyhow::Result<Vec<AnchorOrganizationPublicKey>> {
+        Ok(self.trust_anchors.clone())
     }
 
-    pub async fn add_org_pk(
-        &self,
-        org_pk: &AnchorOrganizationPublicKey,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-
-        org_key_queries::insert_org_pk(&mut conn, org_pk, now).await
+    pub fn trust_anchors(&self) -> anyhow::Result<AnchorOrganizationPublicKeys> {
+        Ok(AnchorOrganizationPublicKeys::new(
+            self.trust_anchors.clone(),
+        ))
     }
 
     pub async fn provisioning_pks(
@@ -495,8 +493,9 @@ impl JournalistVault {
     ) -> anyhow::Result<Vec<JournalistProvisioningPublicKey>> {
         let mut conn = self.pool.acquire().await?;
 
+        let trust_anchors = self.trust_anchors()?;
         let provisioning_keys =
-            provisioning_key_queries::journalist_provisioning_pks(&mut conn, now)
+            provisioning_key_queries::journalist_provisioning_pks(&mut conn, now, trust_anchors)
                 .await?
                 .map(|row| row.pk)
                 .collect();
@@ -527,7 +526,8 @@ impl JournalistVault {
     ) -> anyhow::Result<impl Iterator<Item = JournalistIdKeyPair>> {
         let mut conn = self.pool.acquire().await?;
 
-        let id_key_pairs = id_key_queries::published_id_key_pairs(&mut conn, now)
+        let trust_anchors = self.trust_anchors()?;
+        let id_key_pairs = id_key_queries::published_id_key_pairs(&mut conn, now, trust_anchors)
             .await?
             .map(|row| row.key_pair);
 
@@ -540,7 +540,8 @@ impl JournalistVault {
     ) -> anyhow::Result<Option<JournalistIdKeyPair>> {
         let mut conn = self.pool.acquire().await?;
 
-        let latest_key_pair = id_key_queries::published_id_key_pairs(&mut conn, now)
+        let trust_anchors = self.trust_anchors()?;
+        let latest_key_pair = id_key_queries::published_id_key_pairs(&mut conn, now, trust_anchors)
             .await?
             .map(|key_pair_row| key_pair_row.key_pair)
             .collect::<Vec<_>>()
@@ -555,14 +556,17 @@ impl JournalistVault {
     ) -> anyhow::Result<impl Iterator<Item = JournalistMessagingKeyPair>> {
         let mut conn = self.pool.acquire().await?;
 
-        let candidate_msg_key_pair = msg_key_queries::candidate_msg_key_pair(&mut conn, now)
-            .await?
-            .into_iter()
-            .map(|row| row.key_pair);
+        let trust_anchors = self.trust_anchors()?;
+        let candidate_msg_key_pair =
+            msg_key_queries::candidate_msg_key_pair(&mut conn, now, trust_anchors.clone())
+                .await?
+                .into_iter()
+                .map(|row| row.key_pair);
 
-        let published_msg_key_pairs = msg_key_queries::published_msg_key_pairs(&mut conn, now)
-            .await?
-            .map(|iter| iter.key_pair);
+        let published_msg_key_pairs =
+            msg_key_queries::published_msg_key_pairs(&mut conn, now, trust_anchors)
+                .await?
+                .map(|iter| iter.key_pair);
 
         let combined_msg_key_pairs = candidate_msg_key_pair.chain(published_msg_key_pairs);
 
@@ -575,11 +579,13 @@ impl JournalistVault {
     ) -> anyhow::Result<Option<JournalistMessagingKeyPair>> {
         let mut conn = self.pool.acquire().await?;
 
-        let latest_key_pair = msg_key_queries::published_msg_key_pairs(&mut conn, now)
-            .await?
-            .map(|key_pair_row| key_pair_row.key_pair)
-            .collect::<Vec<_>>()
-            .into_latest_key();
+        let trust_anchors = self.trust_anchors()?;
+        let latest_key_pair =
+            msg_key_queries::published_msg_key_pairs(&mut conn, now, trust_anchors)
+                .await?
+                .map(|key_pair_row| key_pair_row.key_pair)
+                .collect::<Vec<_>>()
+                .into_latest_key();
 
         Ok(latest_key_pair)
     }
@@ -588,15 +594,6 @@ impl JournalistVault {
         let mut conn = self.pool.acquire().await?;
 
         user_queries::user_pks(&mut conn).await
-    }
-
-    pub async fn id_pk_family_list(
-        &self,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<JournalistIdPublicKeyFamilyList> {
-        let mut conn = self.pool.acquire().await?;
-
-        id_pk_family_queries::id_pk_families(&mut conn, now).await
     }
 
     /// Generates a new ID key pair and upload form, requires a journalist provisioning
@@ -655,8 +652,9 @@ impl JournalistVault {
     ) -> anyhow::Result<bool> {
         let mut conn = self.pool.acquire().await?;
 
+        let trust_anchors = self.trust_anchors()?;
         if let Some(vault_setup_bundle) =
-            vault_setup_bundle::get_vault_setup_bundle(&mut *conn, now).await?
+            vault_setup_bundle::get_vault_setup_bundle(&mut *conn, now, trust_anchors).await?
         {
             let journalist_id = self.journalist_id().await?;
 
@@ -716,7 +714,9 @@ impl JournalistVault {
                 )
                 .await?;
             } else {
-                tracing::warn!("Journalist setup bundle is running but the key is already in the vault. This indicates a possible previous partial failure.");
+                tracing::warn!(
+                    "Journalist setup bundle is running but the key is already in the vault. This indicates a possible previous partial failure."
+                );
             }
 
             // Attempt to set the max dead drop id to the current max
@@ -791,8 +791,7 @@ impl JournalistVault {
             )
         }
 
-        let org_pks = self.org_pks(now).await?;
-
+        let org_pks = self.org_pks()?;
         for journalist_provisioning_pk in journalist_provisioning_pks_to_insert {
             // find the trust anchor that has signed the provisioning key to insert
             let maybe_keys = org_pks.iter().find_map(|org_pk| {
@@ -830,7 +829,9 @@ impl JournalistVault {
         now: DateTime<Utc>,
     ) -> anyhow::Result<bool> {
         if self.latest_id_key_pair(now).await?.is_none() {
-            anyhow::bail!("No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded")
+            anyhow::bail!(
+                "No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded"
+            )
         };
 
         let mut did_rotate_some_keys = false;
@@ -915,7 +916,9 @@ impl JournalistVault {
         now: DateTime<Utc>,
     ) -> anyhow::Result<Option<Epoch>> {
         let Some(latest_id_key_pair) = self.latest_id_key_pair(now).await? else {
-            anyhow::bail!("No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair.")
+            anyhow::bail!(
+                "No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
+            )
         };
 
         let journalist_id = self.journalist_id().await?;
@@ -936,7 +939,10 @@ impl JournalistVault {
                     .get_journalist_id_pk_with_epoch(candidate_id_key_pair.public_key())
                     .await?
                 {
-                    tracing::info!("Candidate key appears to have been rotated already, promoting vault key from candidate to published. Candidate key {:?}", candidate_id_key_pair.public_key_hex());
+                    tracing::info!(
+                        "Candidate key appears to have been rotated already, promoting vault key from candidate to published. Candidate key {:?}",
+                        candidate_id_key_pair.public_key_hex()
+                    );
                     let epoch = signed_id_pk_with_epoch.epoch;
 
                     self.promote_candidate_id_key_pair_to_published(
@@ -1050,12 +1056,14 @@ impl JournalistVault {
 
         let mut tx = self.pool.begin().await?;
 
+        let trust_anchors = self.trust_anchors()?;
+
         tracing::info!("Finding provisioning key");
         // HACK HACK HACK
         // Finding the correct signing key by attempting to verify all of them
         // we should probably just return it from the API
         let maybe_provisioning_pk_and_signed_id_pk =
-            provisioning_key_queries::journalist_provisioning_pks(&mut tx, now)
+            provisioning_key_queries::journalist_provisioning_pks(&mut tx, now, trust_anchors)
                 .await?
                 .find_map(|provisioning_key_pair_row| {
                     let provisioning_pk = &provisioning_key_pair_row.pk;
@@ -1105,7 +1113,9 @@ impl JournalistVault {
             )
             .await?;
         } else {
-            anyhow::bail!("Failed to find parent provisioning public key while inserting new identity key pair");
+            anyhow::bail!(
+                "Failed to find parent provisioning public key while inserting new identity key pair"
+            );
         }
 
         tx.commit().await?;
@@ -1119,13 +1129,18 @@ impl JournalistVault {
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         let Some(latest_id_key_pair) = self.latest_id_key_pair(now).await? else {
-            anyhow::bail!("No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair.")
+            anyhow::bail!(
+                "No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
+            )
         };
 
         let mut conn = self.pool.acquire().await?;
 
         let candidate_msg_key_pair = {
-            if let Some(candidate_msg_key_pair) = candidate_msg_key_pair(&mut conn, now).await? {
+            let trust_anchors = self.trust_anchors()?;
+            if let Some(candidate_msg_key_pair) =
+                candidate_msg_key_pair(&mut conn, now, trust_anchors.clone()).await?
+            {
                 candidate_msg_key_pair.key_pair
             } else {
                 let candidate_msg_key_pair =
@@ -1136,6 +1151,7 @@ impl JournalistVault {
                     latest_id_key_pair.public_key(),
                     &candidate_msg_key_pair,
                     now,
+                    trust_anchors.clone(),
                 )
                 .await?;
 
@@ -1157,8 +1173,8 @@ impl JournalistVault {
         Ok(())
     }
 
-    /// - Delete expired id and msg key pairs.
-    /// - Delete expired organization and provisioning public keys
+    /// - Delete expired id and msg key pairs
+    /// - Delete expired provisioning public keys
     /// - Remove messages that are more than MESSAGE_VALID_FOR_DURATION old
     /// - Delete old logs
     pub async fn clean_up(&self, now: DateTime<Utc>) -> anyhow::Result<()> {
@@ -1180,9 +1196,6 @@ impl JournalistVault {
         provisioning_key_queries::delete_expired_provisioning_pks(&mut tx, now)
             .await
             .context("delete expired provisioning pks")?;
-        org_key_queries::delete_expired_org_pks(&mut tx, now)
-            .await
-            .context("delete expired org pks")?;
 
         logging::delete_old_logs(&mut tx, now)
             .await

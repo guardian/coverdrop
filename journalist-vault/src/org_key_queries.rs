@@ -6,6 +6,10 @@ use sqlx::SqliteConnection;
 
 use crate::key_rows::OrganizationPublicKeyRow;
 
+// TODO remove module
+// TODO migration to drop anchor_organization_pks table
+// https://github.com/guardian/coverdrop-internal/issues/3788
+
 pub(crate) async fn insert_org_pk(
     conn: &mut SqliteConnection,
     org_pk: &AnchorOrganizationPublicKey,
@@ -51,21 +55,4 @@ pub(crate) async fn org_pks(
         });
 
     Ok(pks)
-}
-
-pub(crate) async fn delete_expired_org_pks(
-    conn: &mut SqliteConnection,
-    now: DateTime<Utc>,
-) -> anyhow::Result<()> {
-    sqlx::query!(
-        r#"
-            DELETE FROM anchor_organization_pks
-            WHERE pk_json->>'not_valid_after' < $1;
-        "#,
-        now
-    )
-    .execute(conn)
-    .await?;
-
-    Ok(())
 }

@@ -1,7 +1,8 @@
 use common::{
-    crypto::keys::{public_key::PublicKey, serde::StorableKeyMaterial},
-    protocol::keys::{anchor_org_pk, UntrustedOrganizationPublicKey},
-    time,
+    clap::Stage,
+    crypto::keys::{public_key::PublicKey, untrusted::signing::UntrustedSignedPublicSigningKey},
+    protocol::keys::UntrustedOrganizationPublicKey,
+    protocol::{keys::AnchorOrganizationPublicKey, roles::Organization},
 };
 use snafu::{OptionExt as _, ResultExt as _};
 use std::{collections::HashSet, path::Path};
@@ -9,9 +10,7 @@ use tauri::State;
 
 use crate::{
     app_state::AppStateHandle,
-    error::{
-        AnyhowSnafu, CommandError, GenericSnafu, MissingProfileSnafu, VaultLockedSnafu, VaultSnafu,
-    },
+    error::{CommandError, GenericSnafu, MissingProfileSnafu, VaultSnafu},
     model::{OpenVaultOutcome, Profiles, VaultState},
 };
 
@@ -27,24 +26,28 @@ pub async fn get_vault_state(
 #[tauri::command]
 pub async fn unlock_vault(
     path: &Path,
-    profile: &str,
+    stage: String,
     password: &str,
     app: State<'_, AppStateHandle>,
     profiles: State<'_, Profiles>,
 ) -> Result<OpenVaultOutcome, CommandError> {
     let profiles = profiles.inner();
 
-    let api_url = profiles.api_url(profile).context(MissingProfileSnafu)?;
+    let api_url = profiles.api_url(&stage).context(MissingProfileSnafu)?;
+
+    let stage = Stage::from_guardian_str(stage.as_str())
+        .ok()
+        .context(GenericSnafu {
+            ctx: "No trust anchors exist for stage provide",
+        })?;
 
     let (vault, api_client) = app
         .inner()
-        .unlock_vault(api_url, path, password)
+        .unlock_vault(stage, api_url, path, password)
         .await
         .context(VaultSnafu {
             failed_to: "unlock vault, is your password correct?",
         })?;
-
-    let now = time::now();
 
     let Ok(keys) = api_client.get_public_keys().await else {
         // If we're not able to get the public key hierarchy we can't
@@ -54,15 +57,13 @@ pub async fn unlock_vault(
         return Ok(OpenVaultOutcome::OpenedOffline);
     };
 
-    // Failure to read the org pks out of the DB is a bad sign so let's just fail opening if we can't
-    let vault_org_pks = vault
-        .org_pks(now)
-        .await
+    let org_pks: HashSet<UntrustedSignedPublicSigningKey<Organization>> = vault
+        .org_pks()
         .context(VaultSnafu {
-            failed_to: "read trust anchors from vault",
+            failed_to: "get trust anchors for profile",
         })?
-        .iter()
-        .map(|org_pk| org_pk.to_non_anchor().to_untrusted())
+        .into_iter()
+        .map(|org_pk: AnchorOrganizationPublicKey| org_pk.to_non_anchor().to_untrusted())
         .collect::<HashSet<_>>();
 
     let api_org_pks = keys
@@ -71,13 +72,17 @@ pub async fn unlock_vault(
         .cloned()
         .collect::<HashSet<UntrustedOrganizationPublicKey>>();
 
-    let org_pks_missing_in_api = vault_org_pks
+    let org_pks_missing_in_api = org_pks
         .difference(&api_org_pks)
         .map(|org_pk| org_pk.public_key_hex())
         .collect();
 
+    // TODO if the API has org keys we don't have, it means that Sentinel needs to be updated,
+    // or the user has the wrong stage selected. We should lock the vault and inform the user
+    // rather than proceeding with a warning.
+    // https://github.com/guardian/coverdrop-internal/issues/3785
     let org_pks_missing_in_vault = api_org_pks
-        .difference(&vault_org_pks)
+        .difference(&org_pks)
         .map(|org_pk| org_pk.public_key_hex())
         .collect();
 
@@ -128,34 +133,6 @@ pub async fn get_colocated_password(path: &Path) -> Result<Option<String>, Comma
         }
         Err(_) => Ok(None),
     }
-}
-
-#[tauri::command]
-pub async fn add_trust_anchor(
-    path: &Path,
-    app: State<'_, AppStateHandle>,
-) -> Result<(), CommandError> {
-    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
-
-    // We skip the permissions check here since that is designed for use on services which treat a badly permissioned
-    // key as an invalid state and panic. We don't expect users of the journalist client to even understand what unix
-    // permissions are, never mind set them. Given this will only be used when loading public keys I think this is alright.
-    let org_pk = UntrustedOrganizationPublicKey::load_from_file_skip_permissions_check(path)
-        .context(AnyhowSnafu {
-            failed_to: "read new trust anchor from disk",
-        })?;
-
-    let now = time::now();
-
-    let org_pk = anchor_org_pk(&org_pk.to_tofu_anchor(), now).context(AnyhowSnafu {
-        failed_to: "verify new trust anchor",
-    })?;
-
-    vault.add_org_pk(&org_pk, now).await.context(VaultSnafu {
-        failed_to: "add new anchor",
-    })?;
-
-    Ok(())
 }
 
 #[tauri::command]

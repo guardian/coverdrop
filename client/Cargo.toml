@@ -17,3 +17,4 @@ tokio.workspace = true
 
 common.path = "../common"
 journalist-vault.path = "../journalist-vault"
+trust-anchors = { path = "../trust-anchors" }

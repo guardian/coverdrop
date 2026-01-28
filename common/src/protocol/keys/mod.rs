@@ -148,6 +148,30 @@ impl AnchorOrganizationPublicKey {
     }
 }
 
+// TODO move toward using this type over Vec<AnchorOrganizationPublicKey>
+/// A collection of anchor organization public keys used as trust anchors.
+#[derive(Clone)]
+pub struct AnchorOrganizationPublicKeys(Vec<AnchorOrganizationPublicKey>);
+
+impl AnchorOrganizationPublicKeys {
+    pub fn new(keys: Vec<AnchorOrganizationPublicKey>) -> Self {
+        AnchorOrganizationPublicKeys(keys)
+    }
+
+    /// Convert the trust anchors into non-anchor organization public keys.
+    pub fn into_non_anchors(&self) -> Vec<OrganizationPublicKey> {
+        self.0
+            .iter()
+            .map(|ta| ta.clone().into_non_anchor())
+            .collect()
+    }
+
+    /// Convert the trust anchors into untrusted anchor organization public keys.
+    pub fn to_untrusted(&self) -> Vec<UntrustedAnchorOrganizationPublicKey> {
+        self.0.iter().map(|ta| ta.to_untrusted()).collect()
+    }
+}
+
 pub type OrganizationPublicKey = SignedPublicSigningKey<Organization>;
 pub type OrganizationKeyPair = SignedSigningKeyPair<Organization>;
 

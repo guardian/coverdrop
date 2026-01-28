@@ -9,6 +9,8 @@ set -x
 #
 # You should never have to run this script due to a key expiring.
 # The integration tests are supposed to manage time correctly.
+#
+# TODO could this be an admin command like refresh-integration-test-keys instead of a bash script?
 
 SCRIPT_PATH=$(
 	cd $(dirname $0)
@@ -29,6 +31,7 @@ rm "${KEYS_PATH}/keys_generated_at.txt" || true
 date -u +"%Y-%m-%dT%H:%M:%SZ" >"${KEYS_PATH}/keys_generated_at.txt"
 
 cargo run --quiet --bin admin -- generate-organization-key-pair --keys-path "$KEYS_PATH"
+echo "org key created in ${KEYS_PATH} - Be sure to move this to the trust anchors crate: trust-anchors/development.json"
 cargo run --quiet --bin admin -- generate-journalist-provisioning-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
 cargo run --quiet --bin admin -- generate-covernode-provisioning-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
 cargo run --quiet --bin admin -- generate-covernode-identity-key-pair --covernode-id covernode_001 --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api

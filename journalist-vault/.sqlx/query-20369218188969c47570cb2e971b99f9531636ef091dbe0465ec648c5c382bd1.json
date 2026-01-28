@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_id_key_pairs.id            AS \"id: i64\",\n                journalist_id_key_pairs.key_pair_json AS \"id_key_pair_json: String\",\n                journalist_id_key_pairs.published_at  AS \"published_at: DateTime<Utc>\",\n                journalist_id_key_pairs.epoch         AS \"epoch: Epoch\",\n                journalist_provisioning_pks.pk_json   AS \"provisioning_pk_json: String\"\n            FROM journalist_id_key_pairs\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "id_key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "published_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "epoch: Epoch",
+        "ordinal": 3,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "20369218188969c47570cb2e971b99f9531636ef091dbe0465ec648c5c382bd1"
+}

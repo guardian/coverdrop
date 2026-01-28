@@ -48,7 +48,9 @@ pub async fn bring_up(
         .collect::<HashSet<&Ipv4Addr>>();
 
     if unique_ips.len() != node_count.get() as usize {
-        anyhow::bail!("Multipass created two nodes with the same IP address, manually delete them using `multipass delete` and try again")
+        anyhow::bail!(
+            "Multipass created two nodes with the same IP address, manually delete them using `multipass delete` and try again"
+        )
     }
 
     // Time to build the inventory file for ansible
@@ -58,9 +60,7 @@ pub async fn bring_up(
     let _inventory = AnsibleInventory {
         k3s_cluster: InventoryCluster {
             children: InventoryChildren {
-                server: InventoryServer {
-                    hosts
-                },
+                server: InventoryServer { hosts },
             },
             vars: InventoryVars {
                 ansible_port: 22,
@@ -69,9 +69,9 @@ pub async fn bring_up(
                 token,
                 api_endpoint: "{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}",
                 extra_server_args: "",
-                extra_agent_args: ""
-            }
-        }
+                extra_agent_args: "",
+            },
+        },
     };
 
     println!("thats all folks!");

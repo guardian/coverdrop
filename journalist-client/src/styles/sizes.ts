@@ -17,9 +17,6 @@ export const sizes = {
     height: "100vh",
     minWidth: "325px",
   },
-  addTrustAnchorModal: {
-    width: widths.genericModalWidth,
-  },
   coverMessageBurstModal: {
     width: widths.genericModalWidth,
   },

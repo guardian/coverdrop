@@ -1,10 +1,10 @@
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
     api::forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
     protocol::keys::{
-        anchor_org_pk, verify_journalist_provisioning_pk, JournalistIdKeyPair,
-        UntrustedAnchorOrganizationPublicKey, UntrustedJournalistIdKeyPair,
-        UntrustedJournalistProvisioningPublicKey,
+        verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
+        UntrustedJournalistIdKeyPair, UntrustedJournalistProvisioningPublicKey,
     },
 };
 use sqlx::{Executor, Sqlite, Transaction};
@@ -65,10 +65,13 @@ pub(crate) async fn insert_vault_setup_bundle(
 pub(crate) async fn get_vault_setup_bundle<'a, E>(
     conn: E,
     now: DateTime<Utc>,
+    trust_anchors: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<Option<SeedInfoRow>>
 where
     E: Executor<'a, Database = Sqlite>,
 {
+    let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
+
     sqlx::query!(
         r#"
             SELECT
@@ -77,26 +80,29 @@ where
                 pk_upload_form_json                  AS "pk_upload_form_json: String",
                 keypair_json                         AS "keypair_json: String",
                 register_journalist_form_json        AS "register_journalist_form_json: String",
-                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String",
-                anchor_organization_pks.pk_json     AS "org_pk_json: String"
+                journalist_provisioning_pks.pk_json  AS "provisioning_pk_json: String"
             FROM vault_setup_bundle
             JOIN journalist_provisioning_pks
                 ON journalist_provisioning_pks.id = vault_setup_bundle.provisioning_pk_id
-            JOIN anchor_organization_pks
-                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id
         "#
     )
     .fetch_optional(conn)
     .await?
     .map(|row| -> anyhow::Result<SeedInfoRow> {
-        let org_pk =
-            serde_json::from_str::<UntrustedAnchorOrganizationPublicKey>(&row.org_pk_json)?;
-        let org_pk = anchor_org_pk(&org_pk, now)?.into_non_anchor();
-
         let provisioning_pk = serde_json::from_str::<UntrustedJournalistProvisioningPublicKey>(
             &row.provisioning_pk_json,
         )?;
-        let provisioning_pk = verify_journalist_provisioning_pk(&provisioning_pk, &org_pk, now)?;
+
+        // try to verify the provisioning pk against each trust anchor
+        let provisioning_pk = org_pks_from_trust_anchors
+            .iter()
+            .find_map(|org_pk| {
+                verify_journalist_provisioning_pk(&provisioning_pk, org_pk, now).ok()
+            })
+            .context(format!(
+                "Could not verify vault_setup_bundle with id {}",
+                row.id
+            ))?;
 
         let pk_upload_form =
             serde_json::from_str::<PostJournalistIdPublicKeyForm>(&row.pk_upload_form_json)?;

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                journalist_provisioning_pks.id      AS \"id: i64\",\n                journalist_provisioning_pks.pk_json AS \"provisioning_pk_json: String\"\n            FROM journalist_provisioning_pks\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "a50a098ee2a531099017e67174ccc1eaaaebca9e499cef420f4f903d3549c464"
+}

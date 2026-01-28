@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use common::clap::{AwsConfig, KinesisConfig};
+use common::clap::{AwsConfig, KinesisConfig, Stage};
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -75,5 +75,9 @@ pub enum Command {
         /// Journalist subcommand
         #[clap(subcommand)]
         command: JournalistCommand,
+
+        /// The stage the vault is for
+        #[clap(long)]
+        stage: Stage,
     },
 }

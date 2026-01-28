@@ -13,8 +13,8 @@ use commands::{
     },
     profiles::get_profiles,
     vaults::{
-        add_trust_anchor, get_colocated_password, get_vault_state, send_notification,
-        soft_lock_vault, unlock_soft_locked_vault, unlock_vault,
+        get_colocated_password, get_vault_state, send_notification, soft_lock_vault,
+        unlock_soft_locked_vault, unlock_vault,
     },
 };
 use logging::JournalistClientLogLayer;
@@ -218,7 +218,6 @@ fn run_tauri(cli: Cli) {
             burst_cover_messages,
             get_trust_anchor_digests,
             get_vault_keys,
-            add_trust_anchor,
             launch_new_instance,
             send_notification,
             soft_lock_vault,

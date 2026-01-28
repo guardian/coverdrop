@@ -2,8 +2,9 @@ use chrono::{DateTime, Utc};
 use client::commands::user::messages::send_user_to_journalist_cover_message;
 use common::api::models::covernode_id::CoverNodeIdentity;
 use common::aws::s3::client::S3Client;
-use common::clap::Stage::Development;
+use common::clap::Stage::{self, Development};
 use common::protocol::backup::get_backup_bucket_name;
+use common::protocol::keys::AnchorOrganizationPublicKey;
 use common::service;
 use common::task::{RunnerMode, TaskApiClient, TASK_RUNNER_API_PORT};
 use itertools::Itertools;
@@ -20,6 +21,7 @@ use std::{
 use testcontainers::core::Host::Addr;
 use testcontainers::core::{CmdWaitFor, ExecCommand};
 use testcontainers::ContainerAsync;
+use trust_anchors::get_trust_anchors;
 use uuid::Uuid;
 
 use common::clap::{AwsConfig, KinesisConfig};
@@ -102,6 +104,7 @@ pub struct CoverDropStack {
     s3_client: S3Client,
 
     covernode_id: CoverNodeIdentity,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 }
 
 pub struct CoverDropStackBuilder {
@@ -182,6 +185,9 @@ impl CoverDropStackBuilder {
         for key_dir in all_key_dirs {
             std::fs::create_dir(key_dir).expect("Create key dir");
         }
+
+        let trust_anchors =
+            get_trust_anchors(&Stage::Development, now()).expect("loaded trust anchors");
 
         //Copy all static keys into the temp dir so that we can do more tests where new keys are added "manually"
         fs::read_dir(&source_keys_path)
@@ -463,6 +469,7 @@ impl CoverDropStackBuilder {
             additional_journalists,
             &stack_keys.user_key_pair,
             stack_keys.keys_generated_at,
+            trust_anchors.clone(),
         )
         .await;
 
@@ -585,6 +592,7 @@ impl CoverDropStackBuilder {
             kinesis_client,
             s3_client,
             covernode_id,
+            trust_anchors,
         };
 
         // Move the infrastructure's time to be appropriate for the keys
@@ -678,7 +686,7 @@ impl CoverDropStack {
         // Time travel is async - let's wait a bit to give the docker instances time to catch up.
         sleep(Duration::from_secs(2)).await;
 
-        info!("Time travelled to: {}", now());
+        info!("Time traveled to: {}", now());
     }
 
     pub fn base_time(&self) -> DateTime<Utc> {
@@ -705,6 +713,10 @@ impl CoverDropStack {
 
     pub fn covernode_id(&self) -> &CoverNodeIdentity {
         &self.covernode_id
+    }
+
+    pub fn trust_anchors(&self) -> Vec<AnchorOrganizationPublicKey> {
+        self.trust_anchors.clone()
     }
 
     pub async fn scale_kinesis(&self) {
@@ -736,6 +748,7 @@ impl CoverDropStack {
         JournalistVault::open(
             self.temp_dir_path().join("static_test_journalist.vault"),
             MAILBOX_PASSWORD,
+            self.trust_anchors.clone(),
         )
         .await
         .expect("Load static journalist vault")
@@ -759,6 +772,7 @@ impl CoverDropStack {
             self.temp_dir_path()
                 .join(format!("additional_test_journalist_{index}.vault")),
             MAILBOX_PASSWORD,
+            self.trust_anchors.clone(),
         )
         .await
         .expect("Load additional journalist vault")

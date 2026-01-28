@@ -19,7 +19,6 @@ import { PublicInfoPanel } from "./PublicInfoPanel";
 import { BurstCoverMessageModal } from "./BurstMessageModal";
 import { VaultKeysPanel } from "./VaultKeysPanel";
 import { TrustedKeyDigestsModal } from "./TrustedKeyDigestsModal";
-import { AddTrustAnchorModal } from "./AddTrustAnchorModal";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
 import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
 import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
@@ -78,9 +77,6 @@ export const SettingsPopover = ({
     useState(false);
 
   const [trustedKeyDigestModalVisible, setTrustedKeyDigestModalVisible] =
-    useState(false);
-
-  const [addTrustAnchorModalVisible, setAddTrustAnchorModalVisible] =
     useState(false);
 
   const [forceRotateKeyType, setForceRotateKeyType] = useState<
@@ -145,11 +141,6 @@ export const SettingsPopover = ({
       setIsFlyoutVisible(true);
       setIsPopoverOpen(false);
     });
-  };
-
-  const addTrustAnchorClicked = () => {
-    setAddTrustAnchorModalVisible(true);
-    setIsPopoverOpen(false);
   };
 
   const burstCoverMessagesClicked = () => {
@@ -245,14 +236,6 @@ export const SettingsPopover = ({
     <TrustedKeyDigestsModal
       closeModal={() => {
         setTrustedKeyDigestModalVisible(false);
-      }}
-    />
-  );
-
-  const addTrustAnchorModal = addTrustAnchorModalVisible && (
-    <AddTrustAnchorModal
-      closeModal={() => {
-        setAddTrustAnchorModalVisible(false);
       }}
     />
   );
@@ -388,11 +371,6 @@ export const SettingsPopover = ({
           >
             Force messaging key rotation
           </EuiContextMenuItem>
-          {devMode && (
-            <EuiContextMenuItem icon="link" onClick={addTrustAnchorClicked}>
-              Add trust anchor
-            </EuiContextMenuItem>
-          )}
           <EuiContextMenuItem
             icon="popout"
             onClick={async () => {
@@ -420,7 +398,6 @@ export const SettingsPopover = ({
       {flyout}
       {burstCoverMessagesModal}
       {trustedKeyDigestModal}
-      {addTrustAnchorModal}
       {forceRotateKeyModal}
       {chooseBackupContactModal}
       {restoreBackupSecretShareModal}

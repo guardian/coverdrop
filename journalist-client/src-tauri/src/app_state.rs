@@ -1,5 +1,6 @@
 use common::{
     api::api_client::ApiClient,
+    clap::Stage,
     client::VerifiedKeysAndJournalistProfiles,
     generators::NameGenerator,
     task::{RunnerMode, TaskRunner},
@@ -16,6 +17,7 @@ use tokio::{
     sync::{RwLock, RwLockReadGuard},
     task::JoinHandle,
 };
+use trust_anchors::get_trust_anchors;
 
 use crate::{
     logging::LogReceiver,
@@ -90,6 +92,7 @@ impl AppStateHandle {
 
     pub async fn unlock_vault(
         &self,
+        stage: Stage,
         api_url: &Url,
         path: impl AsRef<Path>,
         password: &str,
@@ -97,7 +100,8 @@ impl AppStateHandle {
         tracing::debug!("Attempting to open vault: {}", path.as_ref().display());
         tracing::debug!("Using API URL: {}", api_url);
 
-        let vault = JournalistVault::open(&path, password).await?;
+        let trust_anchors = get_trust_anchors(&stage, time::now())?;
+        let vault = JournalistVault::open(&path, password, trust_anchors).await?;
         let path = path.as_ref().to_path_buf();
 
         tracing::debug!("Vault successfully opened!");

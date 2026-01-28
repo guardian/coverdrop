@@ -7,7 +7,7 @@ use common::{
             JOURNALIST_ID_KEY_VALID_DURATION, JOURNALIST_MSG_KEY_VALID_DURATION,
             JOURNALIST_PROVISIONING_KEY_VALID_DURATION, ORGANIZATION_KEY_VALID_DURATION,
         },
-        keys::{anchor_org_pk, generate_organization_key_pair},
+        keys::{anchor_org_pk, generate_organization_key_pair, AnchorOrganizationPublicKeys},
     },
 };
 use sqlx::{pool::PoolConnection, Sqlite};
@@ -15,8 +15,11 @@ use sqlx::{pool::PoolConnection, Sqlite};
 use crate::{
     id_key_queries::{insert_registered_id_key_pair, published_id_key_pairs},
     msg_key_queries::{candidate_msg_key_pair, insert_candidate_msg_key_pair},
-    org_key_queries::{delete_expired_org_pks, insert_org_pk},
-    provisioning_key_queries::{insert_journalist_provisioning_pk, journalist_provisioning_pks},
+    org_key_queries::insert_org_pk,
+    provisioning_key_queries::{
+        delete_expired_provisioning_pks, insert_journalist_provisioning_pk,
+        journalist_provisioning_pks,
+    },
 };
 
 #[sqlx::test]
@@ -30,6 +33,8 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     let anchor_org_pk =
         anchor_org_pk(&untrusted_org_pk.to_tofu_anchor(), now).expect("Make org pk");
     insert_org_pk(&mut conn, &anchor_org_pk, now).await.unwrap();
+    let org_pks = vec![anchor_org_pk];
+    let trust_anchors = AnchorOrganizationPublicKeys::new(org_pks.clone());
 
     // insert a provisioning key that will outlive its parent
     let provisioning_key_not_valid_after =
@@ -44,8 +49,11 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     )
     .await
     .unwrap();
+
     let mut db_journalist_provisioning_pks =
-        journalist_provisioning_pks(&mut conn, now).await.unwrap();
+        journalist_provisioning_pks(&mut conn, now, trust_anchors.clone())
+            .await
+            .unwrap();
     let db_provisioning_pk = db_journalist_provisioning_pks.next().unwrap();
 
     // insert an id key that will outlive its parent
@@ -66,10 +74,12 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     )
     .await
     .unwrap();
-    let mut journalist_id_key_pairs = published_id_key_pairs(&mut conn, now).await.unwrap();
+    let mut journalist_id_key_pairs = published_id_key_pairs(&mut conn, now, trust_anchors.clone())
+        .await
+        .unwrap();
     let db_id_key_pair_row = journalist_id_key_pairs.next().unwrap();
 
-    // insert an msg key that will outlive its parent
+    // insert a msg key that will outlive its parent
     let msg_key_not_valid_after = id_key_not_valid_after + JOURNALIST_MSG_KEY_VALID_DURATION;
     let journalist_msg_key_pair = UnsignedEncryptionKeyPair::generate()
         .to_signed_key_pair(&journalist_id_key_pair, msg_key_not_valid_after);
@@ -78,36 +88,49 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         db_id_key_pair_row.key_pair.public_key(),
         &journalist_msg_key_pair,
         now,
+        trust_anchors.clone(),
     )
     .await
     .unwrap();
-    let journalist_msg_key_pairs = candidate_msg_key_pair(&mut conn, now).await.unwrap();
+    let journalist_msg_key_pairs = candidate_msg_key_pair(&mut conn, now, trust_anchors.clone())
+        .await
+        .unwrap();
     assert!(journalist_msg_key_pairs.is_some());
 
-    // delete the org pk when it has expired
-    let after_org_key_expiry = now + ORGANIZATION_KEY_VALID_DURATION + Duration::days(1);
-    delete_expired_org_pks(&mut conn, after_org_key_expiry)
+    let after_provisioning_key_expiry = provisioning_key_not_valid_after + Duration::days(1);
+    delete_expired_provisioning_pks(&mut conn, after_provisioning_key_expiry)
         .await
         .unwrap();
 
     // provisioning key deleted
-    let journalist_provisioning_pks_after =
-        journalist_provisioning_pks(&mut conn, after_org_key_expiry)
-            .await
-            .unwrap();
+    let journalist_provisioning_pks_after = journalist_provisioning_pks(
+        &mut conn,
+        after_provisioning_key_expiry,
+        trust_anchors.clone(),
+    )
+    .await
+    .unwrap();
     assert_eq!(journalist_provisioning_pks_after.count(), 0);
 
     // id key deleted
-    let journalist_id_key_pairs_after = published_id_key_pairs(&mut conn, after_org_key_expiry)
-        .await
-        .unwrap();
+    let journalist_id_key_pairs_after = published_id_key_pairs(
+        &mut conn,
+        after_provisioning_key_expiry,
+        trust_anchors.clone(),
+    )
+    .await
+    .unwrap();
     assert_eq!(journalist_id_key_pairs_after.count(), 0);
 
     // msg key deleted
-    let journalist_provisioning_pks_after = candidate_msg_key_pair(&mut conn, after_org_key_expiry)
-        .await
-        .unwrap();
-    assert!(journalist_provisioning_pks_after.is_none());
+    let msg_keys_after = candidate_msg_key_pair(
+        &mut conn,
+        after_provisioning_key_expiry,
+        trust_anchors.clone(),
+    )
+    .await
+    .unwrap();
+    assert!(msg_keys_after.is_none());
 
     Ok(())
 }

@@ -43,6 +43,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+ "trust-anchors",
 ]
 
 [[package]]
@@ -1689,6 +1690,7 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
+ "trust-anchors",
 ]
 
 [[package]]
@@ -1997,6 +1999,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "tracing-subscriber",
+ "trust-anchors",
  "walkdir",
 ]
 
@@ -4176,6 +4179,7 @@ dependencies = [
  "testcontainers",
  "tokio",
  "tracing",
+ "trust-anchors",
  "u2j-appender",
  "uuid",
 ]
@@ -4323,6 +4327,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "trust-anchors",
  "ts-rs",
 ]
 
@@ -4343,6 +4348,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tracing",
+ "trust-anchors",
  "ts-rs",
 ]
 
@@ -4843,6 +4849,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tracing",
+ "trust-anchors",
  "uuid",
 ]
 
@@ -8699,6 +8706,18 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "trust-anchors"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "common",
+ "hex",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]

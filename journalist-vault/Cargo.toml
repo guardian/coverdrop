@@ -26,3 +26,4 @@ common = { path = "../common" }
 [dev-dependencies]
 tempfile.workspace = true
 common = { path = "../common", features = ["test-utils"] }
+trust-anchors = { path = "../trust-anchors" }

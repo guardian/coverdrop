@@ -174,7 +174,7 @@ impl SeedInfoRow {
 
 #[derive(Serialize)]
 pub struct AllVaultKeys {
-    pub org_pks: Vec<UntrustedOrganizationPublicKeyRow>,
+    pub org_pks: Vec<UntrustedAnchorOrganizationPublicKey>,
     pub journalist_provisioning_pks: Vec<UntrustedJournalistProvisioningPublicKeyRow>,
 
     pub candidate_id_key_pair: Option<UntrustedCandidateJournalistIdKeyPairRow>,

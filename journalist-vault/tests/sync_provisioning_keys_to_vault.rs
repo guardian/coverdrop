@@ -1,3 +1,5 @@
+use std::vec;
+
 use chrono::Utc;
 use common::{
     api::models::journalist_id::JournalistIdentity,
@@ -15,7 +17,9 @@ async fn sync_provisioning_keys_to_vault() {
     let now = Utc::now();
 
     let journalist_id = JournalistIdentity::new("Hello").unwrap();
+
     let org_key_pair = generate_organization_key_pair(now);
+    let trust_anchors = vec![org_key_pair.public_key().clone().into_anchor()];
 
     let journalist_provisioning_key_pair_1 =
         generate_journalist_provisioning_key_pair(&org_key_pair, now);
@@ -34,13 +38,14 @@ async fn sync_provisioning_keys_to_vault() {
             &journalist_id,
             &org_and_journalist_provisioning_pks,
             now,
+            trust_anchors.clone(),
         )
         .await
         .expect("Create journalist vault");
     }
 
     // Open vault with correct password
-    let vault = JournalistVault::open(&db_path, "test_password")
+    let vault = JournalistVault::open(&db_path, "test_password", trust_anchors.clone())
         .await
         .expect("Load journalist vault");
     let vault_journalist_id = vault.journalist_id().await.expect("Get journalist ID");
@@ -73,11 +78,11 @@ async fn sync_provisioning_keys_to_vault() {
         .await
         .expect("got provisioning pks from database");
     assert_eq!(vault_journalist_provisioning_pks.len(), 2);
-    assert_eq!(
-        original_provisioning_and_valid_provisioning,
-        // need to turn Vec<SignedPublicSigningKey<JournalistProvisioning>> into
-        // Vec<&SignedPublicSigningKey<JournalistProvisioning>> before comparing. Is there a better way?
-        vault_journalist_provisioning_pks.iter().collect::<Vec<_>>(),
+    assert!(
+        vault_journalist_provisioning_pks.contains(journalist_provisioning_key_pair_1.public_key()),
+    );
+    assert!(
+        vault_journalist_provisioning_pks.contains(journalist_provisioning_key_pair_2.public_key()),
     );
 
     // Attempt to sync a list of provision keys containing a key signed by an org key that does
@@ -99,10 +104,12 @@ async fn sync_provisioning_keys_to_vault() {
         .expect("got provisioning pks from database");
 
     // Only the first two keys exist in the vault
+    // The third, invalid provisioning key was not inserted.
     assert_eq!(vault_journalist_provisioning_pks.len(), 2);
-    assert_eq!(
-        // The third, invalid provisioning key was not inserted.
-        original_provisioning_and_valid_provisioning,
-        vault_journalist_provisioning_pks.iter().collect::<Vec<_>>(),
+    assert!(
+        vault_journalist_provisioning_pks.contains(journalist_provisioning_key_pair_1.public_key()),
+    );
+    assert!(
+        vault_journalist_provisioning_pks.contains(journalist_provisioning_key_pair_2.public_key()),
     );
 }

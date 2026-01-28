@@ -1,11 +1,11 @@
+use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
     epoch::Epoch,
     protocol::keys::{
-        anchor_org_pk, verify_journalist_provisioning_pk, JournalistIdKeyPair,
-        UnregisteredJournalistIdKeyPair, UntrustedAnchorOrganizationPublicKey,
-        UntrustedJournalistIdKeyPair, UntrustedJournalistProvisioningPublicKey,
-        UntrustedUnregisteredJournalistIdKeyPair,
+        verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
+        UnregisteredJournalistIdKeyPair, UntrustedJournalistIdKeyPair,
+        UntrustedJournalistProvisioningPublicKey, UntrustedUnregisteredJournalistIdKeyPair,
     },
 };
 use sqlx::SqliteConnection;
@@ -72,7 +72,10 @@ pub(crate) async fn candidate_id_key_pair(
 pub(crate) async fn published_id_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
+    trust_anchors: AnchorOrganizationPublicKeys,
 ) -> anyhow::Result<impl Iterator<Item = PublishedJournalistIdKeyPairRow>> {
+    let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
+
     let id_key_pairs = sqlx::query!(
         r#"
             SELECT
@@ -80,27 +83,30 @@ pub(crate) async fn published_id_key_pairs(
                 journalist_id_key_pairs.key_pair_json AS "id_key_pair_json: String",
                 journalist_id_key_pairs.published_at  AS "published_at: DateTime<Utc>",
                 journalist_id_key_pairs.epoch         AS "epoch: Epoch",
-                journalist_provisioning_pks.pk_json   AS "provisioning_pk_json: String",
-                anchor_organization_pks.pk_json      AS "org_pk_json: String"
+                journalist_provisioning_pks.pk_json   AS "provisioning_pk_json: String"
             FROM journalist_id_key_pairs
             JOIN journalist_provisioning_pks
                 ON journalist_provisioning_pks.id = journalist_id_key_pairs.provisioning_pk_id
-            JOIN anchor_organization_pks
-                ON anchor_organization_pks.id = journalist_provisioning_pks.organization_pk_id
         "#
     )
     .fetch_all(conn)
     .await?
     .into_iter()
     .flat_map(move |row| {
-        let org_pk =
-            serde_json::from_str::<UntrustedAnchorOrganizationPublicKey>(&row.org_pk_json)?;
-        let org_pk = anchor_org_pk(&org_pk, now)?.into_non_anchor();
-
         let provisioning_pk = serde_json::from_str::<UntrustedJournalistProvisioningPublicKey>(
             &row.provisioning_pk_json,
         )?;
-        let provisioning_pk = verify_journalist_provisioning_pk(&provisioning_pk, &org_pk, now)?;
+
+        // try to verify the provisioning pk against each trust anchor
+        let provisioning_pk = org_pks_from_trust_anchors
+            .iter()
+            .find_map(|org_pk| {
+                verify_journalist_provisioning_pk(&provisioning_pk, org_pk, now).ok()
+            })
+            .context(format!(
+                "Could not verify provisioning pk for id key id {}",
+                row.id
+            ))?;
 
         let id_key_pair_id = row.id;
         let epoch = row.epoch;

@@ -11,9 +11,9 @@ use common::{
     crypto::keys::{serde::StorableKeyMaterial, signing::traits},
     protocol::{
         keys::{
-            load_anchor_org_pks, JournalistIdKeyPair, JournalistMessagingKeyPair,
-            UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
-            UntrustedUserKeyPair, UserKeyPair,
+            load_anchor_org_pks, AnchorOrganizationPublicKey, JournalistIdKeyPair,
+            JournalistMessagingKeyPair, UntrustedJournalistIdKeyPair,
+            UntrustedJournalistMessagingKeyPair, UntrustedUserKeyPair, UserKeyPair,
         },
         roles::{JournalistId, JournalistProvisioning},
     },
@@ -55,6 +55,7 @@ pub async fn load_mailboxes(
     additional_journalists: u8,
     user_key_pair: &UserKeyPair,
     keys_generated_at: DateTime<Utc>,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) -> StackMailboxes {
     //
     // Load the fixed vault using statically provided keys
@@ -71,6 +72,7 @@ pub async fn load_mailboxes(
         temp_dir,
         &keys_path,
         keys_generated_at,
+        trust_anchors.clone(),
     )
     .await;
 
@@ -96,6 +98,7 @@ pub async fn load_mailboxes(
             temp_dir,
             &keys_path,
             keys_generated_at,
+            trust_anchors.clone(),
         )
         .await;
         additional_journalist_vaults.push(vault);
@@ -131,6 +134,7 @@ pub async fn create_journalist_vault(
     temp_dir: &TempDir,
     keys_path: impl AsRef<Path>,
     keys_generated_at: DateTime<Utc>,
+    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) -> JournalistVault {
     let vault_path = temp_dir
         .path()
@@ -148,11 +152,12 @@ pub async fn create_journalist_vault(
         JournalistStatus::Visible,
         &vault_path,
         keys_generated_at,
+        trust_anchors.clone(),
     )
     .await
     .expect("Generate vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, trust_anchors)
         .await
         .expect("Load desk vault");
 

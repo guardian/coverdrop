@@ -54,6 +54,7 @@ identity-api.path = "../../identity-api"
 identity-api-database.path = "../../identity-api/identity-api-database"
 journalist-vault.path = "../../journalist-vault"
 open = "5.3.1"
+trust-anchors.path = "../../trust-anchors"
 
 [dev-dependencies]
 tempfile.workspace = true

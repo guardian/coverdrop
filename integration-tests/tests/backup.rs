@@ -396,6 +396,7 @@ async fn create_recovery_contact_vault_and_return_messaging_keys(
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
+        stack.trust_anchors(),
     )
     .await;
 
@@ -403,7 +404,7 @@ async fn create_recovery_contact_vault_and_return_messaging_keys(
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
         .await
         .expect("Load journalist vault");
 

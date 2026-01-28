@@ -50,6 +50,7 @@ async fn main() -> anyhow::Result<()> {
         messaging_client,
         db,
         cli.num_users,
+        cli.stage,
     )
     .await?;
 

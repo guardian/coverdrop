@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                vault_setup_bundle.id                AS \"id: i64\",\n                provisioning_pk_id                   AS \"provisioning_pk_id: i64\",\n                pk_upload_form_json                  AS \"pk_upload_form_json: String\",\n                keypair_json                         AS \"keypair_json: String\",\n                register_journalist_form_json        AS \"register_journalist_form_json: String\",\n                journalist_provisioning_pks.pk_json  AS \"provisioning_pk_json: String\"\n            FROM vault_setup_bundle\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = vault_setup_bundle.provisioning_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Int64"
+      },
+      {
+        "name": "provisioning_pk_id: i64",
+        "ordinal": 1,
+        "type_info": "Int64"
+      },
+      {
+        "name": "pk_upload_form_json: String",
+        "ordinal": 2,
+        "type_info": "Null"
+      },
+      {
+        "name": "keypair_json: String",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "register_journalist_form_json: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 5,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "1a09b5cf7f82f9a7b9da7385c170f2395c713f92d5459d6336093569788784e5"
+}

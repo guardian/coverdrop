@@ -20,6 +20,7 @@ common = { path = "../common", features = ["test-utils"] }
 covernode-database.path = "../covernode/covernode-database"
 journalist-vault.path = "../journalist-vault"
 log = "0.4.25"
+trust-anchors = { path = "../trust-anchors" }
 
 [features]
 integration-tests = []
