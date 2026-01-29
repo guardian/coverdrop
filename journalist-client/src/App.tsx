@@ -82,7 +82,6 @@ const App = ({
     maybeOpenVaultId: vaultState?.id,
     isImportantStuffInProgress,
     isHung: !!maybeHungAt,
-    isSoftLocked: vaultState?.isSoftLocked,
   });
 
   const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(

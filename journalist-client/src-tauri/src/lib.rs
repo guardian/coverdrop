@@ -22,7 +22,7 @@ use model::Profiles;
 use notifications::start_notification_service;
 use reqwest::Url;
 use std::process::{Child, Command};
-use std::{fs::File, path::Path, str::FromStr};
+use std::{fs::File, path::Path, str::FromStr, thread};
 use tauri::{App, Manager as _};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
@@ -253,6 +253,12 @@ fn run_tauri(cli: Cli) {
 
 fn run_daemon() {
     while launch_tauri_instance().wait().unwrap().success() {
+        let seconds_to_wait = 3;
+        println!(
+            "Sentinel Tauri instance exited, re-launching in {} seconds...",
+            seconds_to_wait
+        );
+        thread::sleep(std::time::Duration::from_secs(seconds_to_wait));
         println!("Re-started Sentinel Tauri instance");
     }
 }
