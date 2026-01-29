@@ -23,6 +23,7 @@ use crate::crypto::{
 };
 
 pub const DEFAULT_FORM_TTL: Duration = Duration::hours(1);
+pub const BUNDLE_FORM_TTL: Duration = Duration::weeks(4);
 
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone)]

@@ -9,11 +9,13 @@ use admin::post_covernode_provisioning_key_pair;
 use admin::post_journalist_provisioning_key_pair;
 use admin::post_log_config_form;
 use admin::reseed_journalist_vault_id_key_pair;
-use admin::run_setup_ceremony;
+use admin::run_key_ceremony;
 use admin::submit_delete_journalist_form;
 use admin::update_journalist;
 use admin::update_system_status;
 use admin::upload_keys_to_api;
+use admin::AssumeYes;
+use admin::CeremonyType;
 use admin::{
     backup_complete_restore, backup_initiate_restore, backup_initiate_restore_finalize,
     delete_journalist_form,
@@ -69,11 +71,28 @@ async fn main() -> anyhow::Result<()> {
             covernode_db_password,
             org_key_pair_path,
         } => {
-            run_setup_ceremony(
+            run_key_ceremony(
+                CeremonyType::InitialSetup,
                 output_directory,
-                covernode_count,
-                assume_yes,
-                covernode_db_password,
+                AssumeYes::from_boolean(assume_yes),
+                Some(covernode_count),
+                Some(covernode_db_password),
+                org_key_pair_path,
+                time::now(),
+            )
+            .await
+        }
+        Commands::RunOrgKeyRotationCeremony {
+            output_directory,
+            assume_yes,
+            org_key_pair_path,
+        } => {
+            run_key_ceremony(
+                CeremonyType::OrgKeyRotation,
+                output_directory,
+                AssumeYes::from_boolean(assume_yes),
+                None,
+                None,
                 org_key_pair_path,
                 time::now(),
             )

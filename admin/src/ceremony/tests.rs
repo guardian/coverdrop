@@ -1,15 +1,15 @@
 #[cfg(test)]
 mod test {
-    use crate::ceremony::anchor_public_key_bundle::AnchorOrganizationPublicKeyBundle;
     use crate::ceremony::public_key_forms_bundle::PublicKeyFormsBundle;
     use crate::ceremony::set_system_status_available_bundle::SetSystemStatusAvailableBundle;
     use crate::ceremony::state_machine::CeremonyState;
-    use crate::ceremony::CeremonyStep;
-    use crate::generate_organization_key_pair;
+    use crate::ceremony::{AssumeYes, CeremonyStep};
+    use crate::CeremonyType;
     use common::api::models::covernode_id::CoverNodeIdentity;
+    use common::backup::keys::{UntrustedBackupIdKeyPair, UntrustedBackupMsgKeyPair};
     use common::protocol::keys::{
-        load_org_key_pairs, UntrustedCoverNodeIdKeyPair, UntrustedCoverNodeProvisioningKeyPair,
-        UntrustedJournalistProvisioningKeyPair, UntrustedOrganizationKeyPair,
+        UntrustedCoverNodeIdKeyPair, UntrustedCoverNodeProvisioningKeyPair,
+        UntrustedJournalistProvisioningKeyPair, UntrustedOrganizationPublicKey,
     };
     use common::system::keys::UntrustedAdminKeyPair;
     use common::time;
@@ -18,6 +18,7 @@ mod test {
     use std::collections::{HashMap, HashSet};
     use std::path::Path;
     use std::{fs::File, num::NonZeroU8};
+    use strum::IntoEnumIterator;
     use tempfile::tempdir_in;
 
     /// Utility function to check that the paths in the ceremony state
@@ -35,44 +36,30 @@ mod test {
         let temp_dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
         let covernode_count = NonZeroU8::new(1).unwrap();
 
-        let mut ceremony = CeremonyStep::new();
         let mut state = CeremonyState::new(
+            CeremonyType::InitialSetup,
+            AssumeYes::DefaultYes,
             &temp_dir,
-            covernode_count,
-            true,
-            "some-password".to_string(),
+            Some(covernode_count),
+            Some("some-password".to_string()),
             None,
             time::now(),
         );
 
-        while let Some(step) = ceremony.next() {
-            ceremony = step;
-            ceremony.execute(&mut state).await.expect("Execute step");
+        for step in CeremonyStep::iter() {
+            step.execute(&mut state).await.expect("Execute step");
             let state = state.clone();
-            match ceremony {
-                CeremonyStep::Zero => {
-                    assert!(state.org_key_pair_file.is_none());
-                }
-                CeremonyStep::One => {
-                    // Assert all bundles are there and can be deserialized
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
-                }
-                CeremonyStep::Two => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+            match step {
+                CeremonyStep::InitialStep => {}
+                CeremonyStep::GenerateOrganizationKeyPair => {}
+                CeremonyStep::GenerateJournalistProvisioningKeyPair => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
                 }
-                CeremonyStep::Three => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GenerateCoverNodeProvisioningKeyPair => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -80,14 +67,11 @@ mod test {
                     ));
                     assert!(state.covernode_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
-                            UntrustedJournalistProvisioningKeyPair,
+                            UntrustedCoverNodeProvisioningKeyPair,
                         >
                     ));
                 }
-                CeremonyStep::Four => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GenerateCoverNodeDatabase => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -99,7 +83,7 @@ mod test {
                         >
                     ));
 
-                    for covernode_id in 1..=(state.covernode_count).into() {
+                    for covernode_id in 1..=(state.covernode_count).unwrap().into() {
                         let covernode_identity = CoverNodeIdentity::from_node_id(covernode_id);
                         let covernode_database_path = state
                             .output_directory
@@ -108,10 +92,7 @@ mod test {
                         assert!(covernode_database_path.is_file())
                     }
                 }
-                CeremonyStep::Five => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GenerateAdminKeyPair => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -126,10 +107,7 @@ mod test {
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
                 }
-                CeremonyStep::Six => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GenerateBackupKeys => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -142,15 +120,39 @@ mod test {
                     ));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
+                    ));
+                    assert!(state.backup_id_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupIdKeyPair>
+                    ));
+                    assert!(state.backup_msg_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupMsgKeyPair>
+                    ));
+                }
+                CeremonyStep::GenerateSystemStatusBundle => {
+                    assert!(state.journalist_provisioning_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<
+                            UntrustedJournalistProvisioningKeyPair,
+                        >
+                    ));
+                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<
+                            UntrustedCoverNodeProvisioningKeyPair,
+                        >
+                    ));
+                    assert!(state.admin_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
+                    ));
+                    assert!(state.backup_id_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupIdKeyPair>
+                    ));
+                    assert!(state.backup_msg_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupMsgKeyPair>
                     ));
                     assert!(state.set_system_status_available_bundle.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<SetSystemStatusAvailableBundle>
                     ));
                 }
-                CeremonyStep::Seven => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GenerateAnchorOrganizationPublicKeyFile => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -164,17 +166,20 @@ mod test {
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
+                    assert!(state.backup_id_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupIdKeyPair>
+                    ));
+                    assert!(state.backup_msg_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupMsgKeyPair>
+                    ));
                     assert!(state.set_system_status_available_bundle.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<SetSystemStatusAvailableBundle>
                     ));
-                    assert!(state.anchor_org_pk_bundle.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<AnchorOrganizationPublicKeyBundle>
+                    assert!(state.anchor_org_pk_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationPublicKey>
                     ));
                 }
-                CeremonyStep::Eight | CeremonyStep::Nine => {
-                    assert!(state.org_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationKeyPair>
-                    ));
+                CeremonyStep::GeneratePublicKeyFormsBundle | CeremonyStep::FinalStep => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<
                             UntrustedJournalistProvisioningKeyPair,
@@ -188,11 +193,17 @@ mod test {
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
+                    assert!(state.backup_id_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupIdKeyPair>
+                    ));
+                    assert!(state.backup_msg_key_pair_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedBackupMsgKeyPair>
+                    ));
                     assert!(state.set_system_status_available_bundle.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<SetSystemStatusAvailableBundle>
                     ));
-                    assert!(state.anchor_org_pk_bundle.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<AnchorOrganizationPublicKeyBundle>
+                    assert!(state.anchor_org_pk_file.is_some_and(
+                        exists_on_disk_and_can_be_deserialized::<UntrustedOrganizationPublicKey>
                     ));
                     assert!(state.public_key_forms_bundle.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<PublicKeyFormsBundle>
@@ -210,19 +221,18 @@ mod test {
         let covernode_count = NonZeroU8::new(covernodes).unwrap();
         let covernode_db_password = "some-password";
 
-        let mut ceremony = CeremonyStep::new();
         let mut state = CeremonyState::new(
+            CeremonyType::InitialSetup,
+            AssumeYes::DefaultYes,
             &temp_dir,
-            covernode_count,
-            true,
-            covernode_db_password.to_string(),
+            Some(covernode_count),
+            Some(covernode_db_password.to_string()),
             None,
             time::now(),
         );
 
-        while let Some(step) = ceremony.next() {
-            ceremony = step;
-            ceremony.execute(&mut state).await.expect("Execute step");
+        for step in CeremonyStep::iter() {
+            step.execute(&mut state).await.expect("Execute step");
         }
 
         let mut covernode_keys = HashMap::<CoverNodeIdentity, UntrustedCoverNodeIdKeyPair>::new();
@@ -256,60 +266,5 @@ mod test {
                 .len(),
             covernodes as usize
         );
-    }
-
-    #[tokio::test]
-    async fn use_provided_organization_key_pair() {
-        let temp_dir = tempdir_in(std::env::current_dir().unwrap()).unwrap();
-        let covernode_count = NonZeroU8::new(1).unwrap();
-
-        let now = time::now();
-        generate_organization_key_pair(temp_dir.path(), true, now)
-            .expect("Create new org key pair in temp dir");
-
-        let original_org_key_pair = load_org_key_pairs(temp_dir.path(), now)
-            .expect("Read back org key pair")[0]
-            .to_untrusted();
-
-        let mut ceremony = CeremonyStep::new();
-        let mut state = CeremonyState::new(
-            &temp_dir,
-            covernode_count,
-            true,
-            "some-password".to_string(),
-            Some(temp_dir.path().to_owned()),
-            time::now(),
-        );
-
-        while let Some(step) = ceremony.next() {
-            ceremony = step;
-            ceremony
-                .execute(&mut state)
-                .await
-                .expect("Failed to execute step");
-
-            let state = state.clone();
-            match ceremony {
-                CeremonyStep::Zero => {
-                    assert!(state.org_key_pair_file.is_none());
-                }
-                CeremonyStep::One => {
-                    // Assert all bundles are there and can be deserialized
-                    let org_key_pair_file_path = state
-                        .org_key_pair_file
-                        .expect("Org key pair file to be created");
-
-                    // Get org key pair out from file
-                    let reader = File::open(org_key_pair_file_path).expect("Could not open file");
-                    let org_key_pair =
-                        serde_json::from_reader::<_, UntrustedOrganizationKeyPair>(reader)
-                            .expect("Deserialize org key pair file");
-
-                    // Check they are the same (the ceremony didn't generate a new key pair)
-                    assert_eq!(org_key_pair, original_org_key_pair);
-                }
-                _ => {}
-            }
-        }
     }
 }

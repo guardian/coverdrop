@@ -21,7 +21,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 #[allow(clippy::enum_variant_names)]
 pub enum Commands {
-    /// Must be ran offline!
+    /// Must be run offline!
     ///
     /// Run the CoverDrop set up ceremony. Creates various key pairs
     /// and a post-ceremony bundle to be uploaded to the API once
@@ -39,6 +39,23 @@ pub enum Commands {
         /// The password for the CoverNode key database.
         #[clap(long)]
         covernode_db_password: String,
+        /// Optionally, run the ceremony with a provided root organization key pair. This will
+        /// cause the tool to skip the creation of a new organization key pair and use the provided
+        /// one instead.
+        #[clap(long)]
+        org_key_pair_path: Option<PathBuf>,
+    },
+    /// Must be run offline!
+    ///
+    /// Run the Org Key Rotation ceremony. This creates a new organization key pair and all of its child keys
+    /// (journalists and covernodes, provisioning keys, admin key, backup keys).
+    RunOrgKeyRotationCeremony {
+        /// The directory where the secret and public bundles will be saved
+        #[clap(long)]
+        output_directory: PathBuf,
+        /// Automatic yes to prompts. Assume "yes" as answer to all prompts and run non-interactively.
+        #[clap(short = 'y', long = "yes")]
+        assume_yes: bool,
         /// Optionally, run the ceremony with a provided root organization key pair. This will
         /// cause the tool to skip the creation of a new organization key pair and use the provided
         /// one instead.

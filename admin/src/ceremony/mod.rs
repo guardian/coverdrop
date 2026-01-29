@@ -1,6 +1,5 @@
 pub mod anchor_public_key_bundle;
 pub mod public_key_forms_bundle;
-mod script;
 mod set_system_status_available_bundle;
 mod state_machine;
 mod tests;
@@ -20,6 +19,7 @@ use common::{
 use public_key_forms_bundle::*;
 use serde::de::DeserializeOwned;
 use state_machine::*;
+use strum::IntoEnumIterator;
 
 use self::set_system_status_available_bundle::{
     save_set_system_status_available_bundle, SetSystemStatusAvailableBundle,
@@ -40,8 +40,8 @@ pub const ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME: &str =
 
 /// Prompts the user to type in a confirmation word in order to proceed
 /// with the next step of the ceremony
-fn ask_user_to_confirm(message: &str, assume_yes: bool) -> anyhow::Result<()> {
-    if assume_yes {
+fn ask_user_to_confirm(message: &str, assume_yes: AssumeYes) -> anyhow::Result<()> {
+    if assume_yes == AssumeYes::DefaultYes {
         return Ok(());
     }
 
@@ -59,11 +59,34 @@ fn ask_user_to_confirm(message: &str, assume_yes: bool) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn run_setup_ceremony(
+#[derive(Clone, PartialEq)]
+pub enum CeremonyType {
+    InitialSetup,
+    OrgKeyRotation,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum AssumeYes {
+    AlwaysAsk,
+    DefaultYes,
+}
+
+impl AssumeYes {
+    pub fn from_boolean(assume_yes: bool) -> Self {
+        if assume_yes {
+            AssumeYes::DefaultYes
+        } else {
+            AssumeYes::AlwaysAsk
+        }
+    }
+}
+
+pub async fn run_key_ceremony(
+    ceremony_type: CeremonyType,
     output_directory: impl AsRef<Path>,
-    covernode_count: NonZeroU8,
-    assume_yes: bool,
-    covernode_db_password: String,
+    assume_yes: AssumeYes,
+    covernode_count: Option<NonZeroU8>,
+    covernode_db_password: Option<String>,
     org_key_pair_path: Option<PathBuf>,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
@@ -72,48 +95,19 @@ pub async fn run_setup_ceremony(
     }
 
     let mut state = CeremonyState::new(
+        ceremony_type,
+        assume_yes,
         &output_directory,
         covernode_count,
-        assume_yes,
         covernode_db_password,
         org_key_pair_path,
         now,
     );
 
-    let mut ceremony = CeremonyStep::new();
-
-    // Start the ceremony - Step Zero
-    ceremony.execute(&mut state).await?;
-
     // Walk through every step of the ceremony until it's complete
-    while let Some(step) = ceremony.next() {
+    for step in CeremonyStep::iter() {
         step.execute(&mut state).await?;
-        ceremony = step;
     }
-
-    // Now we've got our keys we need to plan what we're going to do with them once we're outside the ceremony.
-
-    // Key Role                | Secret post-ceremony action              | Public post-ceremony action
-    // ------------------------+------------------------------------------+-----------------------------------
-    // Organization            | Keep key pair in safe                    | Distribute trusted public key
-    // CoverNode Provisioning  | Store key pair for identity service      | Upload public key to API via form
-    // Journalist Provisioning | Store key pair for identity service      | Upload public key to API via form
-    // CoverNode Identity      | Store key pair for CoverNode initial key | Upload public key to API via form
-    // System Status           | Store key pair for developers            | Set initial status in API via form
-
-    // The post-ceremony actions are performed over several "bundles" of data. Some of which can be exposed to the internet:
-    //   - Trusted public key bundle | a single key bundle for distributing the trusted organization key to our various build systems
-    //                               | this is separate from the upload bundle because it must be handled differently
-    //                               | e.g. the API must be seeded with a trusted key before it can accept upload forms.
-    //   - Upload bundle             | for uploading public keys and system status to the API in a production system
-
-    // The follow bundles can be on a machine which has internet access, but must NOT be published
-    //   - System status key pairs         | Distributed to developers to allow them to rotate keys
-    //   - Identity provisioning key pairs | for distributing to the identity services
-    //   - CoverNode initial key pair      | to provide the CoverNode services with their initial identities.
-
-    // The following bundles must never be exposed to the internet, and should be treated with care:
-    //   - Organization key pair           | for high security storage of the top level key pair
 
     Ok(())
 }
@@ -195,6 +189,7 @@ pub async fn api_has_anchor_org_pk(
     Ok(has_key)
 }
 
+// TODO: get rid of anchor org public key bundle and instead look for an org public key file.
 pub async fn upload_keys_to_api(
     bundle_path: impl AsRef<Path>,
     api_client: &ApiClient,

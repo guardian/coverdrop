@@ -17,7 +17,7 @@ pub use backups::{
 };
 pub use ceremony::{
     anchor_public_key_bundle, api_has_anchor_org_pk, public_key_forms_bundle,
-    read_bundle_from_disk, run_setup_ceremony, upload_keys_to_api,
+    read_bundle_from_disk, run_key_ceremony, upload_keys_to_api, AssumeYes, CeremonyType,
     ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME,
 };
 pub use delete_journalist_form::{delete_journalist_form, submit_delete_journalist_form};

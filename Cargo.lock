@@ -41,6 +41,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "strum 0.25.0",
  "tempfile",
  "tokio",
  "trust-anchors",
