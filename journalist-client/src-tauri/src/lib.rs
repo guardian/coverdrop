@@ -159,12 +159,37 @@ fn run_tauri(cli: Cli) {
             #[cfg(target_os = "macos")]
             {
                 let current_executable_path = std::env::current_exe().expect("get path to current executable");
+                let current_executable_path = current_executable_path.as_path();
+
+                let mut app_path = std::path::PathBuf::new();
+                for component in current_executable_path.components() {
+                    app_path.push(component.as_os_str());
+                    if let Some(s) = component.as_os_str().to_str() {
+                        if s.ends_with(".app") {
+                            break;
+                        }
+                    }
+                }
+                let current_app_path = app_path.as_path();
+
+                // if current_executable_path != current_app_path {
+                    // get the last part of the executable path (should be `journalist-client`)
+                    let executable_login_item_name =
+                        current_executable_path.components().next_back().unwrap().as_os_str().to_string_lossy();
+                    // attempt to remove any existing login item pointing to the binary
+                    let _ = Command::new("osascript")
+                        .arg("-e")
+                        .arg(format!(
+                            "tell application \"System Events\" to delete (login items whose name is \"{}\")",
+                            executable_login_item_name
+                        )).output();
+                // }
 
                 let login_items_result = Command::new("osascript")
                     .arg("-e")
                     .arg(format!(
                         "tell application \"System Events\" to make login item at end with properties {{path:\"{}\"}}",
-                        current_executable_path.display()
+                        current_app_path.display()
                     ))
                     .output()
                     .map(|output| {
