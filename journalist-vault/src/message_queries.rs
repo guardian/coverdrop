@@ -221,7 +221,7 @@ pub(crate) async fn set_custom_expiry(
     Ok(())
 }
 
-pub(crate) async fn get_queue_length(conn: &mut SqliteConnection) -> anyhow::Result<i32> {
+pub(crate) async fn get_queue_length(conn: &mut SqliteConnection) -> anyhow::Result<i64> {
     let queue_length = sqlx::query_scalar!(r#"SELECT COUNT() FROM outbound_queue"#,)
         .fetch_one(conn)
         .await?;

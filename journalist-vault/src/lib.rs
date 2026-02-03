@@ -389,7 +389,7 @@ impl JournalistVault {
         unencrypted_message: &FixedSizeMessageText,
         encrypted_message: EncryptedJournalistToCoverNodeMessage,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<i32> {
+    ) -> anyhow::Result<i64> {
         let mut tx = self.pool.begin().await?;
 
         // insert into users table if not already present
@@ -422,7 +422,7 @@ impl JournalistVault {
 
     /// Delete a message from the outbound queue and returns the new queue length.
     /// This should only be called after a message has successfully been sent to the Kinesis stream
-    pub async fn delete_queue_message(&self, id: i64) -> anyhow::Result<i32> {
+    pub async fn delete_queue_message(&self, id: i64) -> anyhow::Result<i64> {
         let mut tx = self.pool.begin().await?;
 
         message_queries::delete_queue_message(&mut tx, id).await?;

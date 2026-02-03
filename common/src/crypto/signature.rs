@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use ed25519_dalek::{ed25519::SignatureBytes, Signature as Ed25519Signature, SIGNATURE_LENGTH};
 use serde::{Deserialize, Serialize};
-use sqlx::{database::HasValueRef, error::BoxDynError, Database, Decode};
+use sqlx::{error::BoxDynError, Database, Decode};
 use std::{hash::Hasher, marker::PhantomData};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -33,7 +33,7 @@ where
     &'r [u8]: Decode<'r, DB>,
     DB: Database,
 {
-    fn decode(value: <DB as HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: DB::ValueRef<'r>) -> Result<Self, BoxDynError> {
         let value = <&[u8] as Decode<DB>>::decode(value)?;
 
         Ok(Signature::<T>::from_vec_unchecked(value.to_vec()))

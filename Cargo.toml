@@ -83,7 +83,7 @@ k8s-openapi = { version = "0.23.0", features = ["latest"] }
 kube = { version = "0.96.0", features = ["client", "runtime", "ws"] }
 lazy_static = "1.4.0"
 libc = "0.2.150"
-libsqlite3-sys = { version = "0.27", optional = false, default-features = false, features = [
+libsqlite3-sys = { version = "0.30", optional = false, default-features = false, features = [
     "bundled-sqlcipher-vendored-openssl",
 ] }
 log = "0.4.17"
@@ -109,7 +109,7 @@ serde_with = { version = "3.1.0", features = ["base64"] }
 serial_test = "3.1.1"
 sha2 = "0.10"
 sodiumoxide = "0.2.7"
-sqlx = "0.7.3"
+sqlx = "0.8.6"
 snafu = "0.8.5"
 strum = { version = "0.25.0", features = ["derive"] }
 tempfile = "3.3.0"

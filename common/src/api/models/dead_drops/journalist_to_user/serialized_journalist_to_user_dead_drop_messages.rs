@@ -4,7 +4,7 @@ use serde_with::{
     formats::Unpadded,
     serde_as,
 };
-use sqlx::{database::HasValueRef, error::BoxDynError, Database, Decode};
+use sqlx::{error::BoxDynError, Database, Decode};
 
 use crate::{
     api::models::messages::journalist_to_user_message::EncryptedJournalistToUserMessage,
@@ -54,7 +54,7 @@ where
     &'r [u8]: Decode<'r, DB>,
     DB: Database,
 {
-    fn decode(value: <DB as HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: DB::ValueRef<'r>) -> Result<Self, BoxDynError> {
         let value = <&[u8] as Decode<DB>>::decode(value)?;
 
         Ok(SerializedJournalistToUserDeadDropMessages::from_vec_unchecked(value.to_vec()))

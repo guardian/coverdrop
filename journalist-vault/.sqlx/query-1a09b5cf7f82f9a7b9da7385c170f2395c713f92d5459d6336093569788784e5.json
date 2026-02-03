@@ -6,12 +6,12 @@
       {
         "name": "id: i64",
         "ordinal": 0,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "provisioning_pk_id: i64",
         "ordinal": 1,
-        "type_info": "Int64"
+        "type_info": "Integer"
       },
       {
         "name": "pk_upload_form_json: String",

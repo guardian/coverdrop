@@ -8,7 +8,6 @@ use serde_with::{
 };
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 use sodiumoxide::utils::memzero;
-use sqlx::database::HasValueRef;
 use sqlx::error::BoxDynError;
 use sqlx::{Database, Decode};
 
@@ -129,7 +128,7 @@ where
     &'r [u8]: Decode<'r, DB>,
     DB: Database,
 {
-    fn decode(value: <DB as HasValueRef<'r>>::ValueRef) -> Result<Self, BoxDynError> {
+    fn decode(value: DB::ValueRef<'r>) -> Result<Self, BoxDynError> {
         let value = <&[u8] as Decode<DB>>::decode(value)?;
 
         Ok(AnonymousBox::<T>::from_vec_unchecked(value.to_vec()))

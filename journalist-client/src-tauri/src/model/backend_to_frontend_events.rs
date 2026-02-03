@@ -46,7 +46,7 @@ struct AlertPayload {
 }
 
 pub trait BackendToFrontendEvent {
-    fn emit_outbound_queue_length_event(&self, length: i32) -> anyhow::Result<()>;
+    fn emit_outbound_queue_length_event(&self, length: i64) -> anyhow::Result<()>;
 
     fn emit_dead_drops_pull_started(&self) -> anyhow::Result<()>;
     fn emit_dead_drops_remaining_event(&self, count: usize) -> anyhow::Result<()>;
@@ -62,7 +62,7 @@ pub trait BackendToFrontendEvent {
 }
 
 impl BackendToFrontendEvent for AppHandle {
-    fn emit_outbound_queue_length_event(&self, length: i32) -> anyhow::Result<()> {
+    fn emit_outbound_queue_length_event(&self, length: i64) -> anyhow::Result<()> {
         self.emit(EventType::OutboundQueueLength.as_str(), length)?;
         Ok(())
     }
