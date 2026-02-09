@@ -5,7 +5,6 @@ pub mod key_rows;
 pub mod logging;
 mod message_queries;
 mod msg_key_queries;
-mod org_key_queries;
 pub mod provisioning_key_queries;
 #[cfg(test)]
 mod test_vault_clean_up;
@@ -61,7 +60,7 @@ use common::{
             generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
             AnchorOrganizationPublicKey, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
             JournalistMessagingKeyPair, JournalistProvisioningPublicKey, LatestKey,
-            OrganizationPublicKey, UnregisteredJournalistIdKeyPair, UserPublicKey,
+            UnregisteredJournalistIdKeyPair, UserPublicKey,
         },
         roles::JournalistProvisioning,
     },
@@ -116,12 +115,7 @@ impl JournalistVault {
         path: impl AsRef<Path>,
         password: &str,
         journalist_id: &JournalistIdentity,
-        // TODO remove org_pks once initializer no longer needs them
-        // https://github.com/guardian/coverdrop-internal/issues/3788
-        org_and_journalist_provisioning_pks: &[(
-            AnchorOrganizationPublicKey,
-            JournalistProvisioningPublicKey,
-        )],
+        journalist_provisioning_pks: &[JournalistProvisioningPublicKey],
         now: DateTime<Utc>,
         trust_anchors: Vec<AnchorOrganizationPublicKey>,
     ) -> anyhow::Result<Self> {
@@ -134,13 +128,9 @@ impl JournalistVault {
 
         info_queries::create_initial_info(&mut conn, journalist_id).await?;
 
-        for (org_pk, journalist_provisioning_pk) in org_and_journalist_provisioning_pks {
-            org_key_queries::insert_org_pk(&mut conn, org_pk, now).await?;
-
-            let org_pk = org_pk.to_non_anchor();
+        for journalist_provisioning_pk in journalist_provisioning_pks {
             provisioning_key_queries::insert_journalist_provisioning_pk(
                 &mut conn,
-                &org_pk,
                 journalist_provisioning_pk,
                 now,
             )
@@ -505,7 +495,6 @@ impl JournalistVault {
 
     pub async fn add_provisioning_pk(
         &self,
-        org_pk: &OrganizationPublicKey,
         journalist_provisioning_pk: &JournalistProvisioningPublicKey,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
@@ -513,7 +502,6 @@ impl JournalistVault {
 
         provisioning_key_queries::insert_journalist_provisioning_pk(
             &mut conn,
-            org_pk,
             journalist_provisioning_pk,
             now,
         )
@@ -794,7 +782,7 @@ impl JournalistVault {
         let org_pks = self.org_pks()?;
         for journalist_provisioning_pk in journalist_provisioning_pks_to_insert {
             // find the trust anchor that has signed the provisioning key to insert
-            let maybe_keys = org_pks.iter().find_map(|org_pk| {
+            let maybe_verified_journalist_provisioning_pk = org_pks.iter().find_map(|org_pk| {
                 let org_pk = org_pk.to_non_anchor();
                 verify_journalist_provisioning_pk(
                     &journalist_provisioning_pk.to_untrusted(),
@@ -802,14 +790,13 @@ impl JournalistVault {
                     now,
                 )
                 .ok()
-                .map(|journalist_provisioning_pk| (org_pk, journalist_provisioning_pk))
             });
 
-            if let Some((org_pk, journalist_provisioning_pk)) = maybe_keys {
+            if let Some(journalist_provisioning_pk) = maybe_verified_journalist_provisioning_pk {
                 tracing::info!(
                     "Found signing key for provisioning key. Inserting provisioning key."
                 );
-                self.add_provisioning_pk(&org_pk, &journalist_provisioning_pk, now)
+                self.add_provisioning_pk(&journalist_provisioning_pk, now)
                     .await?;
             } else {
                 tracing::warn!(

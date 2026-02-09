@@ -461,21 +461,21 @@ async fn main() -> anyhow::Result<()> {
                         &journalist_provisioning_pk_path,
                     )?;
 
-                let maybe_keys = org_pks.iter().find_map(|org_pk| {
+                let maybe_verified_journalist_provisioning_pk = org_pks.iter().find_map(|org_pk| {
                     let org_pk = org_pk.to_non_anchor();
                     verify_journalist_provisioning_pk(&journalist_provisioning_pk, &org_pk, now)
                         .ok()
-                        .map(|journalist_provisioning_pk| (org_pk, journalist_provisioning_pk))
                 });
 
-                let Some((org_pk, journalist_provisioning_pk)) = maybe_keys else {
+                let Some(journalist_provisioning_pk) = maybe_verified_journalist_provisioning_pk
+                else {
                     anyhow::bail!(
                         "Could not find trust anchor for journalist provisioning public key"
                     );
                 };
 
                 vault
-                    .add_provisioning_pk(&org_pk, &journalist_provisioning_pk, now)
+                    .add_provisioning_pk(&journalist_provisioning_pk, now)
                     .await?;
 
                 println!("OK");

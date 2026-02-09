@@ -12,11 +12,10 @@ use common::{
     api::forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
     epoch::Epoch,
     protocol::keys::{
-        AnchorOrganizationPublicKey, JournalistIdKeyPair, JournalistMessagingKeyPair,
-        JournalistProvisioningPublicKey, UnregisteredJournalistIdKeyPair,
-        UntrustedAnchorOrganizationPublicKey, UntrustedJournalistIdKeyPair,
-        UntrustedJournalistMessagingKeyPair, UntrustedJournalistProvisioningPublicKey,
-        UntrustedUnregisteredJournalistIdKeyPair,
+        JournalistIdKeyPair, JournalistMessagingKeyPair, JournalistProvisioningPublicKey,
+        UnregisteredJournalistIdKeyPair, UntrustedAnchorOrganizationPublicKey,
+        UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
+        UntrustedJournalistProvisioningPublicKey, UntrustedUnregisteredJournalistIdKeyPair,
     },
 };
 use serde::{ser::SerializeStruct as _, Serialize};
@@ -51,7 +50,6 @@ where
     }
 }
 
-pub(crate) type OrganizationPublicKeyRow = PublicKeyRow<AnchorOrganizationPublicKey>;
 pub(crate) type JournalistProvisioningPublicKeyRow = PublicKeyRow<JournalistProvisioningPublicKey>;
 
 // Unverified versions

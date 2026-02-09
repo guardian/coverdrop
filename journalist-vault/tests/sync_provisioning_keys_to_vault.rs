@@ -26,17 +26,14 @@ async fn sync_provisioning_keys_to_vault() {
 
     // Setup - create vault
     {
-        let anchor_org_pk = org_key_pair.public_key().clone().into_anchor();
-        let org_and_journalist_provisioning_pks = vec![(
-            anchor_org_pk,
-            journalist_provisioning_key_pair_1.public_key().clone(),
-        )];
+        let journalist_provisioning_pks =
+            vec![journalist_provisioning_key_pair_1.public_key().clone()];
 
         let _ = JournalistVault::create(
             &db_path,
             "test_password",
             &journalist_id,
-            &org_and_journalist_provisioning_pks,
+            &journalist_provisioning_pks,
             now,
             trust_anchors.clone(),
         )

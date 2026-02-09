@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO journalist_provisioning_pks (pk_json, added_at)\n            SELECT ?1, ?2\n            WHERE NOT EXISTS (\n                SELECT pk_json FROM journalist_provisioning_pks\n                WHERE json_extract(pk_json, '$.key') = json_extract(?1, '$.key')\n                AND json_extract(pk_json, '$.certificate') = json_extract(?1, '$.certificate')\n                AND json_extract(pk_json, '$.not_valid_after') = json_extract(?1, '$.not_valid_after')\n            );\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "9b6321dfaa41af5d958b8b102ba7898983e35b69bc2d20aac538934ef576a91b"
+}

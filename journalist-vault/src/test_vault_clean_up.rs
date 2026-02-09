@@ -15,7 +15,6 @@ use sqlx::{pool::PoolConnection, Sqlite};
 use crate::{
     id_key_queries::{insert_registered_id_key_pair, published_id_key_pairs},
     msg_key_queries::{candidate_msg_key_pair, insert_candidate_msg_key_pair},
-    org_key_queries::insert_org_pk,
     provisioning_key_queries::{
         delete_expired_provisioning_pks, insert_journalist_provisioning_pk,
         journalist_provisioning_pks,
@@ -32,7 +31,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
 
     let anchor_org_pk =
         anchor_org_pk(&untrusted_org_pk.to_tofu_anchor(), now).expect("Make org pk");
-    insert_org_pk(&mut conn, &anchor_org_pk, now).await.unwrap();
+
     let org_pks = vec![anchor_org_pk];
     let trust_anchors = AnchorOrganizationPublicKeys::new(org_pks.clone());
 
@@ -43,7 +42,6 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         .to_signed_key_pair(&org_key_pair, provisioning_key_not_valid_after);
     insert_journalist_provisioning_pk(
         &mut conn,
-        &trusted_org_pk,
         &journalist_provisioning_key_pair.to_public_key(),
         now,
     )

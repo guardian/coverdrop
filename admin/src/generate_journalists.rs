@@ -11,7 +11,7 @@ use common::{
     protocol::{
         self,
         keys::{
-            load_anchor_org_pks, load_journalist_provisioning_key_pairs_with_parent_org_pks,
+            load_anchor_org_pks, load_journalist_provisioning_key_pairs,
             AnchorOrganizationPublicKey,
         },
         roles::JournalistProvisioning,
@@ -43,23 +43,18 @@ pub async fn generate_journalist(
 ) -> anyhow::Result<JournalistVaultPaths> {
     let org_pks = load_anchor_org_pks(&keys_path, now)?;
 
-    // TODO use load_journalist_provisioning_key_pairs once we no longer need to pass org_pks to JournalistVault::create
-    // https://github.com/guardian/coverdrop-internal/issues/3788
-    let org_pks_and_journalist_provisioning_key_pairs =
-        load_journalist_provisioning_key_pairs_with_parent_org_pks(&keys_path, &org_pks, now)?;
+    let journalist_provisioning_key_pairs =
+        load_journalist_provisioning_key_pairs(&keys_path, &org_pks, now)?;
 
-    let latest_journalist_provisioning_key_pair = org_pks_and_journalist_provisioning_key_pairs
+    let latest_journalist_provisioning_key_pair = journalist_provisioning_key_pairs
         .iter()
-        .map(|(_, journalist_provisioning_key_pair)| journalist_provisioning_key_pair)
         .max_by_key(|key_pair| key_pair.public_key().not_valid_after)
         .cloned()
         .ok_or_else(|| Error::LatestKeyPairNotFound(JournalistProvisioning::display()))?;
 
-    let org_and_journalist_provisioning_pks = org_pks_and_journalist_provisioning_key_pairs
+    let journalist_provisioning_pks = journalist_provisioning_key_pairs
         .into_iter()
-        .map(|(org_pk, journalist_provisioning_key_pair)| {
-            (org_pk, journalist_provisioning_key_pair.to_public_key())
-        })
+        .map(|journalist_provisioning_key_pair| journalist_provisioning_key_pair.to_public_key())
         .collect::<Vec<_>>();
 
     let journalist_id = id.unwrap_or_else(|| display_name.to_lowercase().replace(' ', "_"));
@@ -85,7 +80,7 @@ pub async fn generate_journalist(
         &vault_path,
         password,
         &journalist_id,
-        &org_and_journalist_provisioning_pks,
+        &journalist_provisioning_pks,
         now,
         trust_anchors,
     )

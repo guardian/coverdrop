@@ -2,12 +2,11 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::protocol::keys::{
     verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys,
-    JournalistProvisioningPublicKey, OrganizationPublicKey,
-    UntrustedJournalistProvisioningPublicKey,
+    JournalistProvisioningPublicKey, UntrustedJournalistProvisioningPublicKey,
 };
 use sqlx::SqliteConnection;
 
-use crate::{key_rows::JournalistProvisioningPublicKeyRow, org_key_queries};
+use crate::key_rows::JournalistProvisioningPublicKeyRow;
 
 pub(crate) async fn journalist_provisioning_pks(
     conn: &mut SqliteConnection,
@@ -51,32 +50,25 @@ pub(crate) async fn journalist_provisioning_pks(
     Ok(provisioning_pks)
 }
 
+/// Inserts a verified journalist provisioning public key into the database.
 pub(crate) async fn insert_journalist_provisioning_pk(
     conn: &mut SqliteConnection,
-    org_pk: &OrganizationPublicKey,
     journalist_provisioning_pk: &JournalistProvisioningPublicKey,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
-    let org_pk_id = org_key_queries::org_pks(conn, now)
-        .await?
-        .find(|db_org_pk| db_org_pk.pk == *org_pk)
-        .map(|db_org_pk| db_org_pk.id)
-        .ok_or_else(|| anyhow::anyhow!("Could not find the correct organization key while inserting journalist provisioning key"))?;
-
     let pk_json = serde_json::to_string(&journalist_provisioning_pk.to_untrusted())?;
 
     sqlx::query!(
         r#"
-            INSERT OR IGNORE INTO journalist_provisioning_pks (organization_pk_id, pk_json, added_at)
-            SELECT ?1, ?2, ?3
+            INSERT OR IGNORE INTO journalist_provisioning_pks (pk_json, added_at)
+            SELECT ?1, ?2
             WHERE NOT EXISTS (
                 SELECT pk_json FROM journalist_provisioning_pks
-                WHERE json_extract(pk_json, '$.key') = json_extract(?2, '$.key')
-                AND json_extract(pk_json, '$.certificate') = json_extract(?2, '$.certificate')
-                AND json_extract(pk_json, '$.not_valid_after') = json_extract(?2, '$.not_valid_after')
+                WHERE json_extract(pk_json, '$.key') = json_extract(?1, '$.key')
+                AND json_extract(pk_json, '$.certificate') = json_extract(?1, '$.certificate')
+                AND json_extract(pk_json, '$.not_valid_after') = json_extract(?1, '$.not_valid_after')
             );
         "#,
-        org_pk_id,
         pk_json,
         now
     )
