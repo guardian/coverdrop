@@ -20,9 +20,6 @@ pub struct Cli {
     #[clap(long)]
     pub messaging_url: Url,
 
-    /// The path to the directory containing the trusted organization public keys
-    #[clap(long)]
-    pub keys_path: PathBuf,
     /// The path to the directory containing the canary vaults
     #[clap(long)]
     pub vaults_path: PathBuf,

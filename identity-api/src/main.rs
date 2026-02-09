@@ -8,6 +8,7 @@ use common::{
     api::api_client::ApiClient,
     metrics::{init_metrics, IDENTITY_API_NAMESPACE},
     task::{HeartbeatTask, Task as _, TaskRunner},
+    time,
     tracing::{init_tracing, log_task_exit, log_task_result_exit},
 };
 use identity_api::{
@@ -43,6 +44,19 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
     let api_client = ApiClient::new(cli.api_url);
 
     let database = Database::open(&cli.db_path, &cli.db_password).await?;
+
+    // Load trust anchors and insert them into the database on startup
+    let now = time::now();
+    let trust_anchors = trust_anchors::get_trust_anchors(&cli.stage, now)?;
+    tracing::info!(
+        "Inserting {} trust anchors into database",
+        trust_anchors.len()
+    );
+    for anchor_org_pk in &trust_anchors {
+        database
+            .insert_anchor_organization_pk(anchor_org_pk, now)
+            .await?;
+    }
 
     let check_file_system_for_keys_task =
         CheckFileSystemForKeysTask::new(Duration::seconds(60), cli.keys_path, database.clone());

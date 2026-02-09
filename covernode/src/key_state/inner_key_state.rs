@@ -120,10 +120,6 @@ impl InnerKeyState {
         &self.anchor_org_pks
     }
 
-    pub fn set_anchor_org_pks(&mut self, anchor_org_pks: Vec<AnchorOrganizationPublicKey>) {
-        self.anchor_org_pks = anchor_org_pks;
-    }
-
     pub fn covernode_msg_key_pairs_for_decryption_with_rank(
         &self,
         now: DateTime<Utc>,

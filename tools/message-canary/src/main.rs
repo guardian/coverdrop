@@ -44,7 +44,6 @@ async fn main() -> anyhow::Result<()> {
     let db = Database::new(cli.db_url.as_ref()).await?;
 
     let canary_state = CanaryState::new(
-        cli.keys_path,
         cli.vaults_path,
         api_client,
         messaging_client,

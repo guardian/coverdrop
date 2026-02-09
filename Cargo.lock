@@ -1936,6 +1936,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "trust-anchors",
 ]
 
 [[package]]
@@ -4012,6 +4013,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "trust-anchors",
 ]
 
 [[package]]

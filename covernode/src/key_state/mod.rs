@@ -1,13 +1,9 @@
 mod inner_key_state;
 
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use common::{
-    api::api_client::ApiClient,
-    aws::ssm::{client::SsmClient, prefix::ParameterPrefix},
-    protocol::keys::{load_anchor_org_pks, load_anchor_org_pks_from_ssm},
-};
+use common::{api::api_client::ApiClient, clap::Stage};
 use covernode_database::Database;
 use inner_key_state::{IdentityKeyPairCollection, MessagingKeyPairCollection};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -31,19 +27,11 @@ pub struct KeyState {
 impl KeyState {
     pub async fn new(
         db: Database,
-        keys_path: impl AsRef<Path>,
-        parameter_prefix: &Option<ParameterPrefix>,
         api_client: &ApiClient,
+        stage: &Stage,
         now: DateTime<Utc>,
     ) -> anyhow::Result<KeyState> {
-        let anchor_org_pks = if let Some(parameter_prefix) = parameter_prefix {
-            tracing::info!("Fetching trusted org pk from SSM");
-            let ssm_client = SsmClient::new_in_aws().await;
-            load_anchor_org_pks_from_ssm(&ssm_client, parameter_prefix, now).await?
-        } else {
-            tracing::info!("Fetching trusted org pk from disk");
-            load_anchor_org_pks(&keys_path, now)?
-        };
+        let anchor_org_pks = trust_anchors::get_trust_anchors(stage, now)?;
 
         let keys_and_profiles = api_client
             .get_public_keys()

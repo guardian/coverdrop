@@ -12,7 +12,6 @@ echo "Bootstrap script starting message canary"
     --db-url=$DB_URL \
     --api-url=$API_URL \
     --messaging-url=$MESSAGING_URL \
-    --keys-path=$KEYS_PATH \
     --vaults-path=$VAULTS_PATH \
     --mph-u2j=1 \
     --mph-j2u=1 \

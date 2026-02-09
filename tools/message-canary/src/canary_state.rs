@@ -5,7 +5,7 @@ use common::{
     api::api_client::ApiClient,
     clap::Stage,
     client::VerifiedKeysAndJournalistProfiles,
-    protocol::keys::{load_anchor_org_pks, UserKeyPair},
+    protocol::keys::{AnchorOrganizationPublicKey, UserKeyPair},
     time,
     u2j_appender::messaging_client::MessagingClient,
 };
@@ -24,9 +24,10 @@ pub struct CanaryState {
     pub messaging_client: MessagingClient,
 
     pub db: Database,
-    pub keys_path: PathBuf,
 
     pub users: Vec<User>,
+
+    pub trust_anchors: Vec<AnchorOrganizationPublicKey>,
 
     // Wrapping the vault map in a arc and lock so it can be copied
     // and updated easily
@@ -35,7 +36,6 @@ pub struct CanaryState {
 
 impl CanaryState {
     pub async fn new(
-        keys_path: impl Into<PathBuf>,
         vaults_path: impl Into<PathBuf>,
         api_client: ApiClient,
         messaging_client: MessagingClient,
@@ -50,9 +50,10 @@ impl CanaryState {
 
         let mut vaults = HashMap::new();
         let mut paths = tokio::fs::read_dir(&vaults_path).await?;
-        let keys_path = keys_path.into();
 
         let mut any_new_journalists = false;
+        let trust_anchors = get_trust_anchors(&stage, time::now())?;
+
         while let Some(path) = paths.next_entry().await? {
             let path = path.path();
             if path.extension().is_some_and(|e| e == "vault") {
@@ -67,8 +68,7 @@ impl CanaryState {
 
                 let password = std::fs::read_to_string(&password_path)?;
 
-                let trust_anchors = get_trust_anchors(&stage, time::now())?;
-                let vault = JournalistVault::open(&path, &password, trust_anchors).await?;
+                let vault = JournalistVault::open(&path, &password, trust_anchors.clone()).await?;
 
                 let set_up_occurred = vault
                     .process_vault_setup_bundle(&api_client, time::now())
@@ -110,11 +110,11 @@ impl CanaryState {
         let users = db.get_users(num_users).await?;
 
         Ok(Self {
-            keys_path,
             api_client,
             messaging_client,
             db,
             users,
+            trust_anchors,
             vaults: Arc::new(RwLock::new(vaults)),
         })
     }
@@ -133,9 +133,8 @@ impl CanaryState {
         now: DateTime<Utc>,
     ) -> anyhow::Result<VerifiedKeysAndJournalistProfiles> {
         let keys_and_profiles = self.api_client.get_public_keys().await?;
-        let anchor_org_pks = load_anchor_org_pks(&self.keys_path, now)?;
 
-        Ok(keys_and_profiles.into_trusted(&anchor_org_pks, now))
+        Ok(keys_and_profiles.into_trusted(&self.trust_anchors, now))
     }
 
     pub async fn get_users(&self) -> &[User] {

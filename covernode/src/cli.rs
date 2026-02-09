@@ -21,9 +21,6 @@ const PUBLISH_KEYS_TASK_PERIOD_SECONDS: &str = "60";
 /// The rate at which the delete expired keys task will run
 const DELETE_EXPIRED_KEYS_TASK_PERIOD_SECONDS: &str = "60";
 
-// The rate at which the trusted organization public key polling task will run
-const ANCHOR_ORGANIZATION_PUBLIC_KEY_POLLING_PERIOD_SECONDS: &str = "60";
-
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 #[clap(propagate_version = true)]
@@ -65,9 +62,6 @@ pub struct Cli {
     #[command(flatten)]
     pub kinesis_config: KinesisConfig,
 
-    /// A path to the directory where the various CoverNode keys are.
-    #[clap(long)]
-    pub keys_path: PathBuf,
     /// Instructs the process to park when the main function exits in an error state
     #[clap(long)]
     pub park_on_error: bool,
@@ -113,10 +107,6 @@ pub struct Cli {
     /// The amount of time in seconds to wait between attempting to delete expired keys
     #[clap(long, default_value = DELETE_EXPIRED_KEYS_TASK_PERIOD_SECONDS)]
     pub delete_expired_keys_task_period_seconds: NonZeroU32,
-
-    /// The amount of time in seconds to wait between polling for new org public keys
-    #[clap(long, default_value = ANCHOR_ORGANIZATION_PUBLIC_KEY_POLLING_PERIOD_SECONDS)]
-    pub anchor_organization_public_key_polling_period_seconds: NonZeroU32,
 
     /// The mode to start the task runner for either time based execution or manually triggered
     /// via a web server.

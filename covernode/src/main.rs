@@ -16,7 +16,7 @@ use covernode::*;
 use covernode_database::Database;
 use key_state::KeyState;
 use services::server;
-use services::tasks::{CreateKeysTask, PublishedKeysTask, TrustedOrganizationPublicKeyPollTask};
+use services::tasks::{CreateKeysTask, PublishedKeysTask};
 
 mod cli;
 
@@ -62,15 +62,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
 
     let db = Database::open(&cli.db_path, &cli.db_password).await?;
 
-    tracing::info!("Using key location {:?}", cli.keys_path);
-    let key_state = KeyState::new(
-        db.clone(),
-        &cli.keys_path,
-        &cli.parameter_prefix,
-        &api_client,
-        time::now(),
-    )
-    .await?;
+    let key_state = KeyState::new(db.clone(), &api_client, &cli.stage, time::now()).await?;
 
     tracing::debug!("Setting up background tasks");
     let mut background_tasks = tokio::spawn({
@@ -91,16 +83,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
             key_state.clone(),
         );
 
-        let anchor_org_pk_poll_task = TrustedOrganizationPublicKeyPollTask::new(
-            chrono::Duration::seconds(
-                cli.anchor_organization_public_key_polling_period_seconds
-                    .get() as i64,
-            ),
-            cli.keys_path.clone(),
-            cli.parameter_prefix.clone(),
-            key_state.clone(),
-        );
-
         let delete_expired_keys_task = DeleteExpiredKeysTask::new(
             chrono::Duration::seconds(cli.delete_expired_keys_task_period_seconds.get() as i64),
             key_state.clone(),
@@ -113,7 +95,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         runner.add_task(refresh_tag_lookup_table_task).await;
         runner.add_task(publish_keys_task).await;
         runner.add_task(create_keys_task).await;
-        runner.add_task(anchor_org_pk_poll_task).await;
         runner.add_task(heartbeat_task).await;
         runner.add_task(delete_expired_keys_task).await;
 

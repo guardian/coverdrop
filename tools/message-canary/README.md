@@ -29,7 +29,6 @@ false 56780`
 -   add journalist to canary db with `cargo run --bin message-canary --
 --api-url=https://secure-messaging-api.guardianapis.com/
 --db-url="postgresql://canary:canary@localhost:25432/canary"
---keys-path=/path/to/dir/with/trusted/org/pk/ add-journalist
 --id <JOURNALIST ID> --phone-number <JOURNALIST PHONE NUMBER> --pin <SIGNAL PIN>`
 -   to unregister the journalist from the signal cli, `./infra/scripts/dev-setup/on-premises/unregister-signal-account.sh <JOURNALIST PHONE NUMBER> 56780`
 
@@ -38,7 +37,6 @@ false 56780`
 `cargo run --bin message-canary --
 --api-url=https://secure-messaging-api.guardianapis.com/
 --db-url="postgresql://canary:canary@localhost:25432/canary"
---keys-path=/path/to/dir/with/trusted/org/pk/
 create-users --num-users=1 --user-mailbox-dir=tools/message-canary/user-mailboxes/`
 
 This will create `NUM_USERS` users (key pairs and mailboxes) and put them in the database
@@ -48,5 +46,4 @@ This will create `NUM_USERS` users (key pairs and mailboxes) and put them in the
 `cargo run --bin message-canary -- \
 --api-url=https://secure-messaging-api.guardianapis.com/ \
 --db-url="postgresql://canary:canary@localhost:25432/canary" \
---keys-path=/path/to/dir/with/trusted/org/pk/ \
 start --mph-u2j 1 --messaging-url=https://secure-messaging-msg.guardianapis.com`

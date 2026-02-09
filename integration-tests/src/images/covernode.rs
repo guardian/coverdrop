@@ -90,8 +90,6 @@ impl ImageArgs for CoverNodeArgs {
             self.identity_api_ip, self.identity_api_port
         );
 
-        let keys_path_flag = format!("--keys-path={}", self.keys_dir);
-
         let checkpoint_dir_arg = format!("--checkpoint-path={}", self.checkpoint_dir);
 
         let journalist_cache_refresh_period_seconds = "--journalist-cache-refresh-period-seconds=1";
@@ -131,7 +129,7 @@ impl ImageArgs for CoverNodeArgs {
             "{set_time_arg} && ./covernode --covernode-id {covernode_id} {db_args} \
             {api_url_arg} {identity_api_url_arg} {checkpoint_dir_arg} {journalist_cache_refresh_period_seconds} \
             {publish_keys_task_period_seconds_args} \
-            {keys_path_flag} {kinesis_flags} {u2j_mixing_parameters} \
+            {kinesis_flags} {u2j_mixing_parameters} \
             {j2u_mixing_parameters} {aws_flags} {runner_mode_arg} \
             {disable_stream_throttle} {stage}");
 

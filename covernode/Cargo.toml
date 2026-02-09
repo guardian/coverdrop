@@ -28,3 +28,4 @@ tracing-subscriber.workspace = true
 
 common.path = "../common"
 covernode-database.path = "./covernode-database"
+trust-anchors.path = "../trust-anchors"

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use chrono::Duration;
 use common::{
     protocol::keys::{
-        load_anchor_org_pks, load_covernode_provisioning_key_pairs_with_parent,
+        load_covernode_provisioning_key_pairs_with_parent,
         load_journalist_provisioning_key_pairs_with_parent,
     },
     task::Task,
@@ -37,25 +37,7 @@ impl Task for CheckFileSystemForKeysTask {
     async fn run(&self) -> anyhow::Result<()> {
         let now = time::now();
 
-        //
-        // Org pks
-        //
-
-        tracing::info!("Checking for anchor organization public keys");
-        let anchor_org_pks = load_anchor_org_pks(&self.keys_path, now)?;
-        tracing::info!(
-            "Found {} anchor organization public keys",
-            anchor_org_pks.len()
-        );
-
-        for anchor_org_pk in &anchor_org_pks {
-            tracing::info!("Adding anchor organization key to database");
-            self.database
-                .insert_anchor_organization_pk(anchor_org_pk, now)
-                .await?;
-        }
-
-        // Reload anchor org public keys to make sure we've got both the new and old keys.
+        // Load anchor org public keys from database
         let anchor_org_pks = self.database.select_anchor_organization_pks(now).await?;
 
         //

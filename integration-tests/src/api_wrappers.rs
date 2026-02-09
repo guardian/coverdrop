@@ -200,11 +200,6 @@ pub async fn trigger_all_init_tasks_covernode(task_api_client: &TaskApiClient<Co
         .trigger_task("create_keys")
         .await
         .expect("Trigger create keys task");
-
-    task_api_client
-        .trigger_task("anchor_org_pk_poll")
-        .await
-        .expect("Trigger trusted org pk poll task");
 }
 
 pub async fn trigger_expired_key_deletion_covernode(task_api_client: &TaskApiClient<CoverNode>) {

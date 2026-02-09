@@ -20,3 +20,4 @@ tracing.workspace = true
 
 common = { path = "../common" }
 identity-api-database = { path = "./identity-api-database" }
+trust-anchors = { path = "../trust-anchors" }
