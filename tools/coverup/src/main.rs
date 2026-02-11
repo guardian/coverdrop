@@ -249,7 +249,7 @@ async fn main() -> anyhow::Result<()> {
                 let kubeconfig_string = get_file_contents_from_instance(
                     aws_config,
                     ssm_output_bucket,
-                    "/home/ubuntu/.kube/config",
+                    "/etc/rancher/k3s/k3s.yaml",
                 )
                 .await?;
 
@@ -304,7 +304,7 @@ async fn main() -> anyhow::Result<()> {
                 scp(
                     node_ip,
                     ssh_user,
-                    "/home/ubuntu/.kube/config",
+                    "/etc/rancher/k3s/k3s.yaml",
                     &coverup_home.kubeconfig_for_stage(Stage::Development),
                     ScpDirection::RemoteToLocal,
                     &ssh_key_path,
