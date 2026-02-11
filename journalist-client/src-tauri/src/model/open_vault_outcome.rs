@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-/// This outcome is returned when a vault is successfully unlocked but includes warnings
+/// This outcome is returned when a vault is successfully unlocked
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(
     rename_all = "camelCase",
@@ -11,8 +11,5 @@ use ts_rs::TS;
 #[ts(export)]
 pub enum OpenVaultOutcome {
     OpenedOffline,
-    OpenedOnline {
-        org_pks_missing_in_vault: Vec<String>,
-        org_pks_missing_in_api: Vec<String>,
-    },
+    OpenedOnline,
 }

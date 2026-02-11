@@ -27,24 +27,6 @@ export const unlockVault = async (
         "Vault opened while offline, cannot perform preflight checks",
       );
   }
-
-  if (outcome.type === "openedOnline") {
-    for (const missingInVault of outcome.orgPksMissingInVault) {
-      useErrorStore
-        .getState()
-        .addWarning(
-          `Organization public key "${missingInVault.substring(0, 8)}" found in API but not in vault. This can cause issues, talk to the admin team.`,
-        );
-    }
-
-    for (const missingInApi of outcome.orgPksMissingInApi) {
-      useErrorStore
-        .getState()
-        .addWarning(
-          `Trust anchor ${missingInApi.substring(0, 8)} found in vault but not in API.`,
-        );
-    }
-  }
 };
 
 export const softLockVault = (): Promise<VaultState | null> => {

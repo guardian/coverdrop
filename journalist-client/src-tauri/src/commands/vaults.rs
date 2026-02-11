@@ -72,24 +72,21 @@ pub async fn unlock_vault(
         .cloned()
         .collect::<HashSet<UntrustedOrganizationPublicKey>>();
 
-    let org_pks_missing_in_api = org_pks
-        .difference(&api_org_pks)
-        .map(|org_pk| org_pk.public_key_hex())
-        .collect();
-
-    // TODO if the API has org keys we don't have, it means that Sentinel needs to be updated,
-    // or the user has the wrong stage selected. We should lock the vault and inform the user
-    // rather than proceeding with a warning.
-    // https://github.com/guardian/coverdrop-internal/issues/3785
-    let org_pks_missing_in_vault = api_org_pks
+    // If the API has org keys that aren't in the vault, it means Sentinel needs to be updated.
+    // We fail the unlock and inform the user.
+    let org_pks_missing_in_vault: Vec<String> = api_org_pks
         .difference(&org_pks)
         .map(|org_pk| org_pk.public_key_hex())
         .collect();
 
-    Ok(OpenVaultOutcome::OpenedOnline {
-        org_pks_missing_in_vault,
-        org_pks_missing_in_api,
-    })
+    if !org_pks_missing_in_vault.is_empty() {
+        return Err(GenericSnafu {
+            ctx: "Missing trust anchor. Update your version of Sentinel and contact an admin if the problem persists.",
+        }
+        .build());
+    }
+
+    Ok(OpenVaultOutcome::OpenedOnline)
 }
 
 #[tauri::command]
