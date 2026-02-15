@@ -45,7 +45,7 @@ export const BackgroundTaskTrackerWithLoadingBarIfApplicable = ({
       setMaybeHungAt(new Date());
       await getCurrentWindow().unminimize();
       await getCurrentWindow().show();
-    }, 60_000); // 1 minute timeout to consider the app "hung" (e.g. dead drops should run every 15s)
+    }, 300_000); // 5 minute timeout to consider the app "hung". Putting backups to S3 takes up to 3 minutes.
 
     // clears the timeout if backgroundTasks change before the timeout completes
     // background tasks can fail (e.g. network), but should still update the frontend,
