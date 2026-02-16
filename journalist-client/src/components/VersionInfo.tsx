@@ -1,6 +1,11 @@
 import { EuiLink, EuiText } from "@elastic/eui";
+import { useMemo } from "react";
 
-export const VersionInfo = () => {
+interface VersionInfoProps {
+  twoLines?: boolean;
+}
+
+export const VersionInfo = ({ twoLines }: VersionInfoProps) => {
   const maybeRepo = import.meta.env.VITE_GITHUB_REPO;
   const maybeGithubRepoName = maybeRepo?.startsWith("git@")
     ? maybeRepo.substring(maybeRepo.indexOf(":") + 1, maybeRepo.length - 4) // local repo ssh
@@ -12,10 +17,16 @@ export const VersionInfo = () => {
         )
       : maybeRepo;
 
+  const BUILD_DATE = useMemo(
+    () =>
+      import.meta.env.VITE_BUILD_DATE || `${new Date().toUTCString()} (DEV)`,
+    [],
+  );
+
   return (
     import.meta.env.VITE_GIT_SHA &&
     maybeGithubRepoName && (
-      <EuiText size="xs" textAlign="right" color="grey">
+      <EuiText size="xs" color="grey">
         built from:{" "}
         <EuiLink
           target="_blank"
@@ -24,9 +35,8 @@ export const VersionInfo = () => {
         >
           {import.meta.env.VITE_GIT_SHA?.substring(0, 7) || "DEV"}
         </EuiLink>
-        {import.meta.env.VITE_BUILD_DATE
-          ? ` at ${import.meta.env.VITE_BUILD_DATE}`
-          : " DEV"}
+        {twoLines ? <br /> : " "}
+        at {BUILD_DATE}
       </EuiText>
     )
   );

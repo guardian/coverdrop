@@ -198,7 +198,7 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
           padding: "5px",
         }}
       >
-        <VersionInfo />
+        <VersionInfo twoLines />
       </div>
       <EuiLink
         style={{

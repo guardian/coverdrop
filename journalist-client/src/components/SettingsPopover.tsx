@@ -389,8 +389,8 @@ export const SettingsPopover = ({
               Restore backup secret share
             </EuiContextMenuItem>
           }
-          <EuiContextMenuItem size="s">
-            <EuiSpacer size="s" />
+          <EuiSpacer size="s" />
+          <EuiContextMenuItem size="s" style={{ textAlign: "right" }}>
             <VersionInfo />
           </EuiContextMenuItem>
         </EuiContextMenuPanel>
