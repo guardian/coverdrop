@@ -114,7 +114,7 @@ const App = ({
       );
       if (!journalistProfile) {
         console.warn(
-          `Journalist profile for ${journalistId} not found. It might not have been posted to the API yet.`,
+          `Journalist profile for ${journalistId} not found. It may not yet have been posted to the API.`,
         );
         return;
       }
@@ -276,7 +276,7 @@ const App = ({
               <EuiModal
                 onClose={() =>
                   alert(
-                    "You cannot dismiss this message, please contact the digital investigations team.",
+                    "You cannot dismiss this message. Please contact the digital investigations team.",
                   )
                 }
               >
@@ -290,12 +290,12 @@ const App = ({
                     <em>This was detected {maybeHungAt.toString()}</em>
                   </p>
                   <p>
-                    Please contact digital investigations team ASAP, to help us
-                    track down the root cause.
+                    If this message persists for more than a few seconds, please
+                    contact the digital investigations team for help.
                   </p>
                   Ideally leave Sentinel running at this screen, but if needs be
-                  you can restart Sentinel to try to resolve the issue (please
-                  take a screenshot first).
+                  you can restart Sentinel to try to resolve the issue. (Please
+                  take a screenshot first to share with us.)
                 </EuiModalBody>
               </EuiModal>
             )}
