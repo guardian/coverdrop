@@ -78,6 +78,9 @@ pub enum Commands {
         /// The SSM parameter prefix needed to fetch the trusted organization public key.
         #[clap(name = "aws-parameter-prefix", long, env = "AWS_PARAMETER_PREFIX")]
         parameter_prefix: Option<ParameterPrefix>,
+        /// Flag to indicate this is an initial setup ceremony. If true, the system status bundle will be uploaded.
+        #[clap(long)]
+        initial_setup: bool,
     },
     /// Generate the top-level key pair which will be used to
     /// sign all the other keys.

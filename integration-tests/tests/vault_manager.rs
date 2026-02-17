@@ -1,9 +1,6 @@
 use common::crypto::keys::serde::StorableKeyMaterial;
 
-use admin::{
-    anchor_public_key_bundle::{save_anchor_public_key_bundle, AnchorOrganizationPublicKeyBundle},
-    api_has_anchor_org_pk, read_bundle_from_disk, ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME,
-};
+use admin::api_has_anchor_org_pk;
 use chrono::Duration;
 use common::{
     protocol::{constants::ORGANIZATION_KEY_VALID_DURATION, keys::generate_organization_key_pair},
@@ -68,24 +65,11 @@ async fn vault_manager_test() -> anyhow::Result<()> {
 
     let anchor_org_pk = org_key_pair.public_key().clone().into_anchor();
 
-    save_anchor_public_key_bundle(stack.temp_dir_path(), &anchor_org_pk)?;
-
-    let base_path = stack.temp_dir_path();
-
-    // Trusted org pk bundle
-    let bundle = base_path.join(ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME);
-    let anchor_org_pk_bundle = read_bundle_from_disk::<AnchorOrganizationPublicKeyBundle>(bundle)?;
-
     let started_polling = time::now();
     let max_duration = chrono::Duration::minutes(10);
     let mut throttle = Throttle::new(CoreDuration::from_secs(10));
 
-    while !api_has_anchor_org_pk(
-        stack.api_client_cached(),
-        &anchor_org_pk_bundle.anchor_org_pk,
-    )
-    .await?
-    {
+    while !api_has_anchor_org_pk(stack.api_client_cached(), &anchor_org_pk.to_untrusted()).await? {
         let elapsed = time::now() - started_polling;
 
         println!(

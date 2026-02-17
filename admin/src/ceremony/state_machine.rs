@@ -336,7 +336,7 @@ impl CeremonyStep {
                 confirm_environment_message
                     .push_str("\nPlease confirm you are running in such an environment.");
 
-                // Always make the user confirm that they're in a safe environment, regardless of assume_yes.
+                // always make the user confirm that they're in a safe environment, regardless of assume_yes
                 // Need to skip this in tests.
                 #[cfg(not(test))]
                 ask_user_to_confirm(&confirm_environment_message, AssumeYes::AlwaysAsk)?;

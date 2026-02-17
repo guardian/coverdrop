@@ -103,14 +103,21 @@ async fn main() -> anyhow::Result<()> {
             api_url,
             aws_config,
             parameter_prefix,
+            initial_setup,
         } => {
             let api_client = ApiClient::new(api_url);
+            let ceremony_type = if initial_setup {
+                CeremonyType::InitialSetup
+            } else {
+                CeremonyType::OrgKeyRotation
+            };
 
             upload_keys_to_api(
                 bundle_directory_path,
                 &api_client,
                 &aws_config,
                 &parameter_prefix,
+                ceremony_type,
             )
             .await
         }

@@ -1,10 +1,8 @@
-pub mod anchor_public_key_bundle;
 pub mod public_key_forms_bundle;
 mod set_system_status_available_bundle;
 mod state_machine;
 mod tests;
 
-use anchor_public_key_bundle::*;
 use chrono::{DateTime, Utc};
 use common::{
     api::api_client::ApiClient,
@@ -12,7 +10,10 @@ use common::{
         client::SsmClient, parameters::ANCHOR_ORG_PK_SSM_PARAMETER, prefix::ParameterPrefix,
     },
     crypto::keys::untrusted::signing::UntrustedSignedPublicSigningKey,
-    protocol::{keys::UntrustedAnchorOrganizationPublicKey, roles::AnchorOrganization},
+    protocol::{
+        keys::{load_anchor_org_pks, UntrustedAnchorOrganizationPublicKey},
+        roles::AnchorOrganization,
+    },
     throttle::Throttle,
     time,
 };
@@ -35,8 +36,6 @@ use std::{
 
 const PUBLIC_KEY_FORMS_BUNDLE_FILENAME: &str = "public_key_forms.bundle.json";
 const SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME: &str = "set_system_status_available.bundle.json";
-pub const ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME: &str =
-    "anchor_organization_public_key.bundle.json";
 
 /// Prompts the user to type in a confirmation word in order to proceed
 /// with the next step of the ceremony
@@ -116,14 +115,17 @@ pub async fn run_key_ceremony(
 /// If they don't, an error message listing the missing files is displayed.
 fn check_post_ceremony_bundles_exist(
     bundle_directory_path: impl AsRef<Path>,
+    ceremony_type: CeremonyType,
 ) -> Result<(), anyhow::Error> {
     let base_path = bundle_directory_path.as_ref();
 
-    let all_bundles = [
-        base_path.join(ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME),
-        base_path.join(PUBLIC_KEY_FORMS_BUNDLE_FILENAME),
-        base_path.join(SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME),
-    ];
+    let mut all_bundles = vec![base_path.join(PUBLIC_KEY_FORMS_BUNDLE_FILENAME)];
+
+    // Only require system status bundle for initial setup
+    if ceremony_type == CeremonyType::InitialSetup {
+        all_bundles.push(base_path.join(SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME));
+    }
+
     let all_bundles = all_bundles
         .iter()
         .map(|p| (p, p.exists()))
@@ -189,21 +191,29 @@ pub async fn api_has_anchor_org_pk(
     Ok(has_key)
 }
 
-// TODO: get rid of anchor org public key bundle and instead look for an org public key file.
 pub async fn upload_keys_to_api(
     bundle_path: impl AsRef<Path>,
     api_client: &ApiClient,
     aws_config: &AwsConfig,
     parameter_prefix: &Option<ParameterPrefix>,
+    ceremony_type: CeremonyType,
 ) -> anyhow::Result<()> {
     // Make sure all files needed for post-ceremony actions exist
-    check_post_ceremony_bundles_exist(&bundle_path)?;
+    check_post_ceremony_bundles_exist(&bundle_path, ceremony_type.clone())?;
 
     let base_path = bundle_path.as_ref();
 
-    // Trusted org pk bundle
-    let bundle = base_path.join(ANCHOR_ORGANIZATION_PUBLIC_KEY_BUNDLE_FILENAME);
-    let anchor_org_pk_bundle = read_bundle_from_disk::<AnchorOrganizationPublicKeyBundle>(bundle)?;
+    let anchor_org_pk = load_anchor_org_pks(base_path, time::now())?;
+
+    // return an error if there isn't exactly one trusted org pk
+    if anchor_org_pk.len() != 1 {
+        anyhow::bail!(
+            "Expected exactly one trusted organization public key, found {}",
+            anchor_org_pk.len()
+        );
+    }
+    let anchor_org_pk = &anchor_org_pk[0];
+    let untrusted_anchor_org_pk = anchor_org_pk.to_untrusted();
 
     match &parameter_prefix {
         Some(parameter_prefix) => {
@@ -211,7 +221,7 @@ pub async fn upload_keys_to_api(
             put_anchor_org_pk_parameter(
                 &ssm_client,
                 parameter_prefix,
-                &anchor_org_pk_bundle.anchor_org_pk,
+                &untrusted_anchor_org_pk,
             )
             .await?;
         },
@@ -222,7 +232,7 @@ pub async fn upload_keys_to_api(
     let max_duration = chrono::Duration::minutes(10);
     let mut throttle = Throttle::new(Duration::from_secs(10));
 
-    while !api_has_anchor_org_pk(api_client, &anchor_org_pk_bundle.anchor_org_pk).await? {
+    while !api_has_anchor_org_pk(api_client, &untrusted_anchor_org_pk).await? {
         let elapsed = time::now() - started_polling;
 
         println!(
@@ -255,13 +265,15 @@ pub async fn upload_keys_to_api(
 
     api_client.post_admin_pk(bundle.admin_pk_form).await?;
 
-    // Set system status available
-    let bundle = base_path.join(SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME);
-    let bundle = read_bundle_from_disk::<SetSystemStatusAvailableBundle>(bundle)?;
+    // Set system status available - only for initial setup
+    if ceremony_type == CeremonyType::InitialSetup {
+        let bundle = base_path.join(SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME);
+        let bundle = read_bundle_from_disk::<SetSystemStatusAvailableBundle>(bundle)?;
 
-    api_client
-        .post_status_event_form(bundle.set_system_status_form)
-        .await?;
+        api_client
+            .post_status_event_form(bundle.set_system_status_form)
+            .await?;
+    }
 
     Ok(())
 }
