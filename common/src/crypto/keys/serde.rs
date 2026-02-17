@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::fmt::Display;
 use std::marker::PhantomData;
 use std::{
     fs::{self, File},
@@ -119,6 +120,15 @@ impl<T> Hex<Signature<T>> for SignatureHex {
 pub enum StorableKeyMaterialType {
     PublicKey,
     KeyPair,
+}
+
+impl Display for StorableKeyMaterialType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::PublicKey => write!(f, "public key"),
+            Self::KeyPair => write!(f, "key pair"),
+        }
+    }
 }
 
 // This constant also used in `integration-tests/scripts/refresh_keys.sh`
@@ -317,8 +327,9 @@ pub trait StorableKeyMaterial<'a, KeyRole: Role>:
         let filter_regex = Regex::new(&filter_regex)?;
 
         tracing::debug!(
-            "Reading {} public keys from directory {}",
+            "Reading {} {} from directory {}",
             entity_name,
+            Self::TYPE,
             &path.as_ref().display()
         );
 

@@ -15,13 +15,17 @@ use common::{
     protocol::{
         self,
         keys::{
-            self, generate_covernode_id_key_pair, load_anchor_org_pks, load_covernode_id_key_pairs,
-            load_covernode_provisioning_key_pairs, load_latest_org_key_pair, LatestKey,
+            self, generate_covernode_id_key_pair, load_anchor_org_pks, load_backup_id_key_pairs,
+            load_backup_msg_key_pairs, load_covernode_id_key_pairs,
+            load_covernode_provisioning_key_pairs, load_journalist_provisioning_key_pairs,
+            load_latest_org_key_pair, LatestKey,
         },
     },
-    system::{self},
+    system::{self, keys::load_admin_key_pair},
     time::{self},
 };
+
+use crate::ceremony::public_key_forms_bundle::save_public_key_forms_bundle;
 
 /// Generates and saves a key pair file to disk, usually for use as a organization trust anchor
 /// Returns the path to the created file
@@ -255,6 +259,63 @@ pub async fn generate_covernode_messaging_key_pair(
             fs::canonicalize(keys_path).unwrap()
         );
     }
+
+    Ok(())
+}
+
+/// Loads all necessary key pairs from a directory and generates a public key forms bundle
+/// that can be uploaded to the API.
+pub fn generate_public_key_forms_bundle(
+    keys_path: impl AsRef<Path>,
+    output_directory: impl AsRef<Path>,
+    now: DateTime<Utc>,
+) -> anyhow::Result<()> {
+    // Load organization key pair
+    let org_key_pair = load_latest_org_key_pair(&keys_path, now)?;
+
+    // Create anchor org pks from the org key pair for verifying child keys
+    let anchor_org_pks = vec![org_key_pair.public_key().clone().into_anchor()];
+
+    // Load journalist provisioning key pairs
+    let journalist_provisioning_key_pairs =
+        load_journalist_provisioning_key_pairs(&keys_path, &anchor_org_pks, now)?;
+    let journalist_provisioning_key_pair =
+        journalist_provisioning_key_pairs.into_latest_key_required()?;
+
+    // Load covernode provisioning key pairs
+    let covernode_provisioning_key_pairs =
+        load_covernode_provisioning_key_pairs(&keys_path, &anchor_org_pks, now)?;
+    let covernode_provisioning_key_pair =
+        covernode_provisioning_key_pairs.into_latest_key_required()?;
+
+    // Load admin key pairs
+    let admin_key_pairs = load_admin_key_pair(&keys_path, &anchor_org_pks, now)?;
+    let admin_key_pair = admin_key_pairs.into_latest_key_required()?;
+
+    // Load backup id key pairs
+    let backup_id_key_pairs = load_backup_id_key_pairs(&keys_path, &anchor_org_pks, now)?;
+    let backup_id_key_pair = backup_id_key_pairs.into_latest_key_required()?;
+
+    // Load backup messaging key pairs
+    let backup_id_pks = vec![backup_id_key_pair.public_key().clone()];
+    let backup_msg_key_pairs = load_backup_msg_key_pairs(&keys_path, &backup_id_pks, now)?;
+    let backup_msg_key_pair = backup_msg_key_pairs.into_latest_key_required()?;
+
+    // Generate the bundle
+    let bundle_path = save_public_key_forms_bundle(
+        &output_directory,
+        &org_key_pair,
+        journalist_provisioning_key_pair.public_key().to_untrusted(),
+        covernode_provisioning_key_pair.public_key().to_untrusted(),
+        admin_key_pair.public_key().to_untrusted(),
+        &backup_id_key_pair,
+        backup_msg_key_pair.public_key().to_untrusted(),
+    )?;
+
+    println!(
+        "🔐 Public key forms bundle generated at {:?}",
+        fs::canonicalize(bundle_path).unwrap()
+    );
 
     Ok(())
 }

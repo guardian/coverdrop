@@ -629,11 +629,31 @@ impl CeremonyStep {
                 let bundle = save_public_key_forms_bundle(
                     output_directory,
                     state.org_key_pair.as_ref().unwrap(),
-                    state.journalist_provisioning_key_pair.as_ref().unwrap(),
-                    state.covernode_provisioning_key_pair.as_ref().unwrap(),
-                    state.admin_key_pair.as_ref().unwrap(),
+                    state
+                        .journalist_provisioning_key_pair
+                        .as_ref()
+                        .unwrap()
+                        .public_key()
+                        .to_untrusted(),
+                    state
+                        .covernode_provisioning_key_pair
+                        .as_ref()
+                        .unwrap()
+                        .public_key()
+                        .to_untrusted(),
+                    state
+                        .admin_key_pair
+                        .as_ref()
+                        .unwrap()
+                        .public_key()
+                        .to_untrusted(),
                     state.backup_id_key_pair.as_ref().unwrap(),
-                    state.backup_msg_key_pair.as_ref().unwrap(),
+                    state
+                        .backup_msg_key_pair
+                        .as_ref()
+                        .unwrap()
+                        .public_key()
+                        .to_untrusted(),
                 )?;
                 state.public_key_forms_bundle = Some(bundle);
 

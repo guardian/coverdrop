@@ -3,12 +3,12 @@ use common::{
         PostAdminPublicKeyForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
         PostCoverNodeProvisioningPublicKeyForm, PostJournalistProvisioningPublicKeyForm,
     },
-    backup::keys::BackupIdKeyPair,
+    backup::keys::{BackupIdKeyPair, UntrustedBackupMsgPublicKey},
     protocol::keys::{
-        BackupMessagingKeyPair, CoverNodeProvisioningKeyPair, JournalistProvisioningKeyPair,
-        OrganizationKeyPair,
+        OrganizationKeyPair, UntrustedCoverNodeProvisioningPublicKey,
+        UntrustedJournalistProvisioningPublicKey,
     },
-    system::keys::AdminKeyPair,
+    system::keys::UntrustedAdminPublicKey,
     time,
 };
 use serde::{Deserialize, Serialize};
@@ -34,33 +34,29 @@ pub struct PublicKeyFormsBundle {
 pub fn save_public_key_forms_bundle(
     output_directory: impl AsRef<Path>,
     org_key_pair: &OrganizationKeyPair,
-    journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
-    covernode_provisioning_key_pair: &CoverNodeProvisioningKeyPair,
-    admin_key_pair: &AdminKeyPair,
+    journalist_provisioning_pk: UntrustedJournalistProvisioningPublicKey,
+    covernode_provisioning_pk: UntrustedCoverNodeProvisioningPublicKey,
+    admin_pk: UntrustedAdminPublicKey,
     backup_id_key_pair: &BackupIdKeyPair,
-    backup_msg_key_pair: &BackupMessagingKeyPair,
+    backup_msg_pk: UntrustedBackupMsgPublicKey,
 ) -> anyhow::Result<PathBuf> {
     assert!(output_directory.as_ref().is_dir());
 
     let now = time::now();
 
     let journalist_provisioning_pk_form = PostJournalistProvisioningPublicKeyForm::new_for_bundle(
-        journalist_provisioning_key_pair.public_key().to_untrusted(),
+        journalist_provisioning_pk,
         org_key_pair,
         now,
     )?;
 
     let covernode_provisioning_pk_form = PostCoverNodeProvisioningPublicKeyForm::new_for_bundle(
-        covernode_provisioning_key_pair.public_key().to_untrusted(),
+        covernode_provisioning_pk,
         org_key_pair,
         now,
     )?;
 
-    let admin_pk_form = PostAdminPublicKeyForm::new_for_bundle(
-        admin_key_pair.public_key().to_untrusted(),
-        org_key_pair,
-        now,
-    )?;
+    let admin_pk_form = PostAdminPublicKeyForm::new_for_bundle(admin_pk, org_key_pair, now)?;
 
     let backup_id_pk_form = PostBackupIdKeyForm::new_for_bundle(
         backup_id_key_pair.public_key().to_untrusted(),
@@ -68,11 +64,8 @@ pub fn save_public_key_forms_bundle(
         now,
     )?;
 
-    let backup_msg_pk_form = PostBackupMsgKeyForm::new_for_bundle(
-        backup_msg_key_pair.public_key().to_untrusted(),
-        backup_id_key_pair,
-        now,
-    )?;
+    let backup_msg_pk_form =
+        PostBackupMsgKeyForm::new_for_bundle(backup_msg_pk, backup_id_key_pair, now)?;
 
     let bundle = PublicKeyFormsBundle {
         journalist_provisioning_pk_form,

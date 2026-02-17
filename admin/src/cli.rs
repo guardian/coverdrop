@@ -185,6 +185,26 @@ pub enum Commands {
         #[clap(long)]
         output_path: PathBuf,
     },
+    /// Generate a public key forms bundle from existing key pairs.
+    /// This loads all necessary key pairs from a directory and creates a bundle that can be uploaded to the API.
+    /// The following keys must be present in the keys-path directory:
+    ///
+    ///   - Org key pair
+    ///   - Journalist provisioning key pair
+    ///   - CoverNode provisioning key pair
+    ///   - Admin key pair
+    ///   - Backup id key pair
+    ///   - Backup messaging key pair
+    #[clap(verbatim_doc_comment)]
+    GeneratePublicKeyFormsBundle {
+        /// The directory containing all the key pairs (organization, journalist provisioning,
+        /// covernode provisioning, admin, backup id, and backup messaging key pairs)
+        #[clap(long)]
+        keys_path: PathBuf,
+        /// The directory where the public key forms bundle will be saved
+        #[clap(long)]
+        output_directory: PathBuf,
+    },
     /// Generate keys for journalists or desks
     GenerateJournalist {
         /// The name this journalist or desk

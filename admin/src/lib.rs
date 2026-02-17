@@ -27,6 +27,7 @@ pub use generate_keys::{
     generate_admin_key_pair, generate_covernode_identity_key_pair,
     generate_covernode_messaging_key_pair, generate_covernode_provisioning_key_pair,
     generate_journalist_provisioning_key_pair, generate_organization_key_pair,
+    generate_public_key_forms_bundle,
 };
 pub use generate_test_vectors::generate_test_vectors;
 pub use post_keys::{post_covernode_provisioning_key_pair, post_journalist_provisioning_key_pair};

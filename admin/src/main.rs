@@ -176,6 +176,10 @@ async fn main() -> anyhow::Result<()> {
             db_password,
             output_path,
         } => generate_covernode_database(keys_path, covernode_id, &db_password, output_path).await,
+        Commands::GeneratePublicKeyFormsBundle {
+            keys_path,
+            output_directory,
+        } => admin::generate_public_key_forms_bundle(keys_path, output_directory, time::now()),
         Commands::GenerateJournalist {
             display_name,
             id,
