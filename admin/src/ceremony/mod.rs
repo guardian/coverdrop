@@ -265,6 +265,14 @@ pub async fn upload_keys_to_api(
 
     api_client.post_admin_pk(bundle.admin_pk_form).await?;
 
+    api_client
+        .post_backup_signing_pk(bundle.backup_id_pk_form)
+        .await?;
+
+    api_client
+        .post_backup_encryption_pk(bundle.backup_msg_pk_form)
+        .await?;
+
     // Set system status available - only for initial setup
     if ceremony_type == CeremonyType::InitialSetup {
         let bundle = base_path.join(SET_SYSTEM_STATUS_AVAILABLE_BUNDLE_FILENAME);
