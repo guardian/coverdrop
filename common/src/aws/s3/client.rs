@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aws_config::default_provider::credentials::DefaultCredentialsChain;
 use aws_sdk_s3::config::Region;
 use aws_sdk_s3::operation::get_object::GetObjectOutput;
@@ -45,6 +47,7 @@ impl S3Client {
         &self,
         bucket: &str,
         key: &str,
+        metadata: Option<HashMap<String, String>>,
         expires_in: Duration,
     ) -> anyhow::Result<String> {
         let presigning_config = PresigningConfig::builder()
@@ -56,6 +59,7 @@ impl S3Client {
             .put_object()
             .bucket(bucket)
             .key(key)
+            .set_metadata(metadata)
             .presigned(presigning_config)
             .await?;
 

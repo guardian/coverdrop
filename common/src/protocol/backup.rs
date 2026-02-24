@@ -1,7 +1,8 @@
 use crate::api::api_client::ApiClient;
 use crate::api::models::journalist_id::JournalistIdentity;
 use crate::backup::constants::BACKUP_BUCKET_NAME_PREFIX;
-use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
+use crate::backup::constants::{S3_META_BACKUP_DATA_SIGNATURE, S3_META_SIGNED_WITH};
+use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlWithMetadataForm;
 use crate::backup::roles::BackupMsg;
 use crate::clap::Stage;
 use crate::clients::new_reqwest_client_with_timeout;
@@ -153,7 +154,11 @@ pub async fn sentinel_put_backup_data_to_s3(
     verified_backup_data: VerifiedBackupData,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
-    let backup_url_form = RetrieveUploadUrlForm::new(journalist_signing_key_pair, now)?;
+    let backup_url_form = RetrieveUploadUrlWithMetadataForm::new(
+        verified_backup_data.backup_data_signature.clone(),
+        journalist_signing_key_pair,
+        now,
+    )?;
 
     let presigned_upload_url = api_client
         .backup_retrieve_upload_url(backup_url_form)
@@ -161,16 +166,35 @@ pub async fn sentinel_put_backup_data_to_s3(
 
     tracing::info!("Got presigned S3 URL from API");
 
-    // Upload the backup data to the presigned URL
+    // Upload the backup data to the presigned URL.
+    // The body is the raw backup_data_bytes (CBOR-encoded BackupData). The signature and
+    // signing key are stored as S3 object metadata so the full BackupDataWithSignature can
+    // be reconstructed on download without JSON-serializing the large byte payload.
     // TODO consider passing in a reqwest client from the caller
     // Override the default timeout to allow for large uploads
     let client = new_reqwest_client_with_timeout(Duration::from_mins(3));
+
+    let backup_data_bytes = verified_backup_data.backup_data_bytes.as_bytes().to_vec();
+
     client
         .put(presigned_upload_url)
-        .json(&verified_backup_data.to_unverified().unwrap())
+        .header("content-type", "application/cbor")
+        .header(
+            format!("x-amz-meta-{}", S3_META_BACKUP_DATA_SIGNATURE),
+            serde_json::to_string(&verified_backup_data.backup_data_signature)
+                .context("serialize backup_data_signature")?,
+        )
+        .header(
+            format!("x-amz-meta-{}", S3_META_SIGNED_WITH),
+            serde_json::to_string(&verified_backup_data.signed_with.to_untrusted())
+                .context("serialize signed_with")?,
+        )
+        .body(backup_data_bytes)
         .send()
         .await
-        .context("PUT data to S3")?;
+        .context("PUT data to S3")?
+        .error_for_status()
+        .context("S3 rejected the backup upload")?;
 
     Ok(())
 }

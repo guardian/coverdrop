@@ -54,3 +54,13 @@ where
         handle_error(resp).await
     }
 }
+
+/// Turns the response to text and captures errors
+pub async fn handle_response_text(resp: Response) -> anyhow::Result<String> {
+    if resp.status().is_success() {
+        let text = resp.text().await?;
+        Ok(text)
+    } else {
+        handle_error(resp).await
+    }
+}

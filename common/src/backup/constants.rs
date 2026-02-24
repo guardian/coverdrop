@@ -9,3 +9,10 @@ pub const BACKUP_MSG_KEY_VALID_DURATION: Duration = Duration::weeks(52);
 pub const BACKUP_DATA_MAX_SIZE_BYTES: usize = 300 * 1024 * 1024; // 300 MB
 
 pub const BACKUP_BUCKET_NAME_PREFIX: &str = "journalist-vault-backups-";
+
+/// S3 object metadata key for the JSON-encoded backup data signature.
+pub const S3_META_BACKUP_DATA_SIGNATURE: &str = "backup-data-signature";
+
+/// S3 object metadata key for the JSON-encoded signing key
+/// (`UntrustedSignedPublicSigningKey`).
+pub const S3_META_SIGNED_WITH: &str = "signed-with";

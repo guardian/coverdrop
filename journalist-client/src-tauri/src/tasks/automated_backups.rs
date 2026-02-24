@@ -1,5 +1,3 @@
-#![allow(unreachable_code)]
-#![allow(unused_variables)]
 use crate::{
     app_state::PublicInfo,
     model::{AlertLevel, BackendToFrontendEvent, BackupAttemptFailureReason},
@@ -213,8 +211,6 @@ impl BackupManager {
                 SECRET_SHARING_K_VALUE.try_into().unwrap(),
                 now,
             )?;
-
-            let signed_backup_data = verified_backup_data.clone().to_unverified().unwrap();
 
             let put_backup_data_result = sentinel_put_backup_data_to_s3(
                 api_client,

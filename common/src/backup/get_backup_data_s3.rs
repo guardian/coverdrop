@@ -1,10 +1,16 @@
 use crate::{
     api::models::journalist_id::JournalistIdentity,
     aws::s3::client::S3Client,
+    backup::constants::{S3_META_BACKUP_DATA_SIGNATURE, S3_META_SIGNED_WITH},
     clap::Stage,
-    protocol::{backup::get_backup_bucket_name, backup_data::BackupDataWithSignature},
+    crypto::{keys::untrusted::signing::UntrustedSignedPublicSigningKey, Signature},
+    protocol::{
+        backup::get_backup_bucket_name,
+        backup_data::{BackupDataBytes, BackupDataWithSignature},
+        roles::JournalistId,
+    },
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use itertools::Itertools;
 
 /// This function gets the latest journalist backup (by insert order) from s3
@@ -37,10 +43,32 @@ pub async fn get_latest_journalist_backup_from_s3(
     if let Some(file_name) = file_name {
         let backup_file_output = s3_client.get_object(&bucket_name, file_name).await?;
 
-        let backup_bytes = backup_file_output.body.collect().await?;
+        // Extract metadata from the S3 object to reconstruct BackupDataWithSignature.
+        // The body contains the raw backup_data_bytes (CBOR); the signature and signing key
+        // are stored as S3 object metadata headers.
+        let metadata = backup_file_output
+            .metadata()
+            .context("No metadata on backup S3 object")?;
 
-        let bytes = backup_bytes.into_bytes();
-        let retrieved_signed_backup_data: BackupDataWithSignature = serde_json::from_slice(&bytes)?;
+        let signature_json = metadata
+            .get(S3_META_BACKUP_DATA_SIGNATURE)
+            .context("Missing backup-data-signature metadata")?;
+        let signed_with_json = metadata
+            .get(S3_META_SIGNED_WITH)
+            .context("Missing signed-with metadata")?;
+
+        let backup_data_signature: Signature<BackupDataBytes> =
+            serde_json::from_str(signature_json)
+                .context("deserialize backup-data-signature metadata")?;
+
+        let signed_with: UntrustedSignedPublicSigningKey<JournalistId> =
+            serde_json::from_str(signed_with_json).context("deserialize signed-with metadata")?;
+
+        let backup_bytes = backup_file_output.body.collect().await?;
+        let backup_data_bytes = BackupDataBytes(backup_bytes.into_bytes().to_vec());
+
+        let retrieved_signed_backup_data =
+            BackupDataWithSignature::new(backup_data_bytes, backup_data_signature, signed_with)?;
 
         Ok(retrieved_signed_backup_data)
     } else {

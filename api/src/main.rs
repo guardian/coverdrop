@@ -1,8 +1,10 @@
 use api::anchor_org_pk_cache::AnchorOrganizationPublicKeyCache;
 use api::api_state::ApiState;
 use api::cli::Cli;
+#[allow(deprecated)]
 use api::controllers::backups::{
     post_backup_encryption_pk, post_backup_signing_pk, retrieve_upload_url,
+    retrieve_upload_url_with_metadata,
 };
 use api::controllers::dead_drops::{
     get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
@@ -136,6 +138,7 @@ async fn main() -> anyhow::Result<()> {
         dead_drop_limits,
     );
 
+    #[allow(deprecated)]
     let app = Router::new()
         // General
         .route("/healthcheck", get(get_healthcheck))
@@ -213,7 +216,14 @@ async fn main() -> anyhow::Result<()> {
             "/backups/encryption-public-key",
             post(post_backup_encryption_pk),
         )
+        // deprecated endpoint which does not include metadata in the presigned URL
+        // TODO: remove this endpoint once there are no Sentinel versions which rely on it
         .route("/backups/retrieve-upload-url", post(retrieve_upload_url))
+        // new endpoint which includes metadata in the presigned URL response
+        .route(
+            "/backups/retrieve-upload-url-with-metadata",
+            post(retrieve_upload_url_with_metadata),
+        )
         .with_state(api_state);
 
     let app = Router::new()

@@ -7,7 +7,7 @@ use crate::api::models::dead_drops::{
     UnverifiedUserToJournalistDeadDropsList,
 };
 
-use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlForm;
+use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlWithMetadataForm;
 use crate::client::JournalistStatus;
 use crate::crypto::keys::public_key::PublicKey;
 use crate::epoch::Epoch;
@@ -23,7 +23,9 @@ use crate::api::models::{
     dead_drops::{DeadDropId, UnpublishedUserToJournalistDeadDrop},
     realms::Realm,
 };
-use crate::clients::{handle_response, handle_response_json, new_reqwest_client};
+use crate::clients::{
+    handle_response, handle_response_json, handle_response_text, new_reqwest_client,
+};
 use crate::system::keys::AdminKeyPair;
 
 use super::forms::{
@@ -85,20 +87,18 @@ impl ApiClient {
 
     pub async fn backup_retrieve_upload_url(
         &self,
-        form: RetrieveUploadUrlForm,
+        form: RetrieveUploadUrlWithMetadataForm,
     ) -> anyhow::Result<String> {
         let mut url = self.base_url.clone();
         url.path_segments_mut()
             .unwrap()
             .push("v1")
             .push("backups")
-            .push("retrieve-upload-url");
+            .push("retrieve-upload-url-with-metadata");
 
         let resp = self.client.post(url).json(&form).send().await?;
 
-        let upload_url = resp.text().await?;
-
-        Ok(upload_url)
+        handle_response_text(resp).await
     }
 
     pub async fn post_backup_signing_pk(&self, form: PostBackupIdKeyForm) -> anyhow::Result<()> {
