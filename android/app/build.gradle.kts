@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-apply(from = "../android-force-deps-upgrades.gradle")
 apply(from = "../android-lint.gradle")
 
 // The endpoint URLs and trusted org keys for the PROD stack

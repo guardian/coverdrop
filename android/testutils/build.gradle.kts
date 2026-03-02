@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-apply(from = "../android-force-deps-upgrades.gradle")
-
 android {
     namespace = "com.theguardian.coverdrop.testutils"
     compileSdk = libs.versions.compileSdk.get().toInt()

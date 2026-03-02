@@ -6,8 +6,6 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
-apply(from = "../android-force-deps-upgrades.gradle")
-
 android {
     namespace = "com.theguardian.coverdrop.ui.tests"
     compileSdk = libs.versions.compileSdk.get().toInt()

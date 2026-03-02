@@ -10,7 +10,6 @@ plugins {
     id("maven-publish")
 }
 
-apply(from = "../android-force-deps-upgrades.gradle")
 apply(from = "../android-lint.gradle")
 
 val prodConfig = loadProperties("coverdrop-prod.properties")

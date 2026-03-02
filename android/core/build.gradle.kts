@@ -5,8 +5,6 @@ plugins {
     signing
 }
 
-apply(from = "../android-force-deps-upgrades.gradle")
-
 android {
     namespace = "com.theguardian.coverdrop.core"
     compileSdk = libs.versions.compileSdk.get().toInt()
