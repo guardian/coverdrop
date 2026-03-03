@@ -39,6 +39,7 @@ ts-rs.workspace = true
 
 common = { path = "../../common" }
 journalist-vault = { path = "../../journalist-vault" }
+coverdrop-service = { path = "../../journalist-services/coverdrop-service" }
 tauri-plugin-notification = "2"
 trust-anchors = { path = "../../trust-anchors" }
 

@@ -28,6 +28,7 @@ use crate::{
         RotateJournalistKeys, SendJournalistMessages, SyncJournalistProvisioningPublicKeys,
     },
 };
+use coverdrop_service::JournalistCoverDropService;
 
 // Controls the state of the app.
 #[derive(Default)]
@@ -44,6 +45,7 @@ pub enum AppState {
         vault: JournalistVault,
         api_client: ApiClient,
         is_soft_locked: bool,
+        coverdrop_service: Arc<JournalistCoverDropService>,
     },
 }
 
@@ -109,9 +111,10 @@ impl AppStateHandle {
         let api_client = ApiClient::new(api_url.clone());
 
         tracing::debug!("Processing setup bundle");
-        vault
-            .process_vault_setup_bundle(&api_client, time::now())
-            .await?;
+        let service = JournalistCoverDropService::new(&api_client, &vault);
+        service.process_vault_setup_bundle(time::now()).await?;
+
+        let coverdrop_service = Arc::new(service);
 
         let runner_join_handle = if self.no_background_tasks {
             tracing::info!("Background tasks disabled via --no-background-tasks flag");
@@ -129,14 +132,12 @@ impl AppStateHandle {
                     SyncJournalistProvisioningPublicKeys::new(&vault, &self.public_info);
                 let pull_dead_drops_task = PullDeadDrops::new(
                     &self.app_handle,
-                    &api_client,
-                    &vault,
-                    &self.public_info,
+                    &coverdrop_service,
                     &self.notifications,
+                    &self.public_info,
                 );
                 let send_journalist_messages_task = SendJournalistMessages::new(
-                    &api_client,
-                    &vault,
+                    &coverdrop_service,
                     &self.public_info,
                     &self.app_handle,
                 );
@@ -187,6 +188,7 @@ impl AppStateHandle {
             vault: vault.clone(),
             api_client: api_client.clone(),
             is_soft_locked: false,
+            coverdrop_service: coverdrop_service.clone(),
         };
 
         Ok((vault, api_client))
@@ -272,5 +274,16 @@ impl AppStateHandle {
         &self,
     ) -> RwLockReadGuard<'_, Option<VerifiedKeysAndJournalistProfiles>> {
         self.public_info.0.read().await
+    }
+
+    pub async fn coverdrop_service(&self) -> Option<Arc<JournalistCoverDropService>> {
+        let guard = self.inner.read().await;
+
+        match &*guard {
+            AppState::LoggedOut => None,
+            AppState::LoggedIn {
+                coverdrop_service, ..
+            } => Some(coverdrop_service.clone()),
+        }
     }
 }

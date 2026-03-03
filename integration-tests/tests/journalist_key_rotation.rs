@@ -11,6 +11,7 @@ use common::{
         generate_journalist_provisioning_key_pair,
     },
 };
+use coverdrop_service::JournalistCoverDropService;
 use integration_tests::{
     api_wrappers::{generate_test_journalist, get_and_verify_public_keys},
     secrets::MAILBOX_PASSWORD,
@@ -46,8 +47,9 @@ async fn id_key_rotation_form_expires() {
         .expect("Load journalist vault");
 
     // post new id key form to API
-    vault
-        .generate_id_key_pair_and_rotate_pk(stack.api_client_uncached(), stack.now())
+    let service = JournalistCoverDropService::new(stack.api_client_uncached(), &vault);
+    service
+        .rotate_id_key(stack.now())
         .await
         .expect("rotate id key pair");
 

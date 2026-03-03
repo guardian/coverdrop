@@ -22,6 +22,7 @@ use common::{
     service::{self, CoverNode, IdentityApi},
     task::TaskApiClient,
 };
+use coverdrop_service::JournalistCoverDropService;
 use journalist_vault::JournalistVault;
 
 use crate::secrets::MAILBOX_PASSWORD;
@@ -82,8 +83,9 @@ pub async fn generate_test_journalist(
         .await
         .expect("Load desk vault");
 
-    vault
-        .process_vault_setup_bundle(api_client, now)
+    let service = JournalistCoverDropService::new(api_client, &vault);
+    service
+        .process_vault_setup_bundle(now)
         .await
         .expect("Onboard vault");
 }
@@ -117,8 +119,9 @@ pub async fn generate_test_desk(
         .await
         .expect("Load desk vault");
 
-    desk_vault
-        .process_vault_setup_bundle(api_client, now)
+    let service = JournalistCoverDropService::new(api_client, &desk_vault);
+    service
+        .process_vault_setup_bundle(now)
         .await
         .expect("Onboard vault");
 }
@@ -128,8 +131,9 @@ pub async fn upload_new_messaging_key(
     vault: &JournalistVault,
     now: DateTime<Utc>,
 ) {
-    vault
-        .generate_msg_key_pair_and_upload_pk(api_client, now)
+    let service = JournalistCoverDropService::new(api_client, vault);
+    service
+        .rotate_msg_key(now)
         .await
         .expect("Create and upload journalist messaging key")
 }

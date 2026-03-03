@@ -1683,6 +1683,7 @@ dependencies = [
  "chrono",
  "clap",
  "common",
+ "coverdrop-service",
  "hex",
  "journalist-vault",
  "regex",
@@ -1910,6 +1911,18 @@ dependencies = [
  "common",
  "reqwest",
  "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "coverdrop-service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "common",
+ "journalist-vault",
  "tokio",
  "tracing",
 ]
@@ -4158,6 +4171,7 @@ dependencies = [
  "chrono",
  "client",
  "common",
+ "coverdrop-service",
  "covernode",
  "covernode-database",
  "futures-core",
@@ -4310,6 +4324,7 @@ dependencies = [
  "chrono",
  "clap",
  "common",
+ "coverdrop-service",
  "directories",
  "hex",
  "journalist-vault",
@@ -4840,6 +4855,7 @@ dependencies = [
  "chrono",
  "clap",
  "common",
+ "coverdrop-service",
  "journalist-vault",
  "message-canary-database",
  "metrics",

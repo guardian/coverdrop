@@ -1,3 +1,4 @@
+use coverdrop_service::JournalistCoverDropService;
 use integration_tests::CoverDropStack;
 
 #[tokio::test]
@@ -37,8 +38,9 @@ async fn backup_keys_counting() {
     assert_eq!(count_1, 0, "Expected no new keys since last backup");
 
     // Rotating the messaging key should increase the count
-    journalist_vault
-        .generate_msg_key_pair_and_upload_pk(&api_client, stack.now())
+    let service = JournalistCoverDropService::new(&api_client, &journalist_vault);
+    service
+        .rotate_msg_key(stack.now())
         .await
         .expect("Generate and upload new messaging key");
     let count_2 = journalist_vault
@@ -51,8 +53,9 @@ async fn backup_keys_counting() {
     );
 
     // Creating and publishing a new identity key should further increase the count
-    journalist_vault
-        .generate_id_key_pair_and_rotate_pk(&api_client, stack.now())
+    let service = JournalistCoverDropService::new(&api_client, &journalist_vault);
+    service
+        .rotate_id_key(stack.now())
         .await
         .expect("Generate and upload new ID key");
     let count_3 = journalist_vault

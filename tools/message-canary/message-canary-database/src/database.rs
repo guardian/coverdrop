@@ -345,6 +345,9 @@ impl Database {
     // Dead drops
     //
 
+    // TODO we're moving to max dead drop being tracked by each vault rather than
+    // by the canary database. Remove this function and drop the table.
+    // https://github.com/guardian/coverdrop-internal/issues/3856
     pub async fn insert_u2j_processed_dead_drop(
         &self,
         dead_drop_id: &i32,

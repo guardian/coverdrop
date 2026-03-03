@@ -1,9 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use crate::{app_state::PublicInfo, model::BackendToFrontendEvent, tasks::BackupManager};
 use async_trait::async_trait;
 use chrono::Duration;
 use common::{api::api_client::ApiClient, task::Task, time};
+use coverdrop_service::JournalistCoverDropService;
 use journalist_vault::JournalistVault;
 use tauri::AppHandle;
 
@@ -14,6 +18,7 @@ pub struct RotateJournalistKeys {
     vault: JournalistVault,
     vault_path: PathBuf,
     public_info: PublicInfo,
+    coverdrop_service: Arc<JournalistCoverDropService>,
 }
 
 impl RotateJournalistKeys {
@@ -32,6 +37,7 @@ impl RotateJournalistKeys {
             vault: vault.clone(),
             vault_path: vault_path.to_path_buf(),
             public_info: public_info.clone(),
+            coverdrop_service: Arc::new(JournalistCoverDropService::new(api_client, vault)),
         }
     }
 }
@@ -45,10 +51,7 @@ impl Task for RotateJournalistKeys {
     async fn run(&self) -> anyhow::Result<()> {
         let now = time::now();
 
-        let did_rotate_some_keys = self
-            .vault
-            .check_and_rotate_keys(&self.api_client, now)
-            .await?;
+        let did_rotate_some_keys = self.coverdrop_service.check_and_rotate_keys(now).await?;
 
         if did_rotate_some_keys {
             self.app_handle.emit_journalist_keys_rotated_event()?;

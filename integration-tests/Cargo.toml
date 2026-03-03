@@ -38,6 +38,7 @@ covernode-database = { path = "../covernode/covernode-database", features = [
 covernode.path = "../covernode"
 identity-api.path = "../identity-api"
 integration-test-queries.path = "integration-test-queries"
+coverdrop-service.path = "../journalist-services/coverdrop-service"
 journalist-vault.path = "../journalist-vault"
 trust-anchors = { path = "../trust-anchors" }
 u2j-appender.path = "../u2j-appender"

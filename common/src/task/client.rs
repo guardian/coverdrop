@@ -2,15 +2,15 @@ use std::{marker::PhantomData, time::Duration};
 
 use reqwest::Url;
 
-use crate::{clients::new_reqwest_client, service::CoverDropService};
+use crate::{clients::new_reqwest_client, service::TaskClientService};
 
-pub struct TaskApiClient<T: CoverDropService> {
+pub struct TaskApiClient<T: TaskClientService> {
     client: reqwest::Client,
     base_url: Url,
     marker: PhantomData<T>,
 }
 
-impl<T: CoverDropService> TaskApiClient<T> {
+impl<T: TaskClientService> TaskApiClient<T> {
     pub fn new(base_url: Url) -> anyhow::Result<Self> {
         let client = new_reqwest_client();
         Ok(Self {

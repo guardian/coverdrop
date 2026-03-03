@@ -1,49 +1,37 @@
 use std::collections::HashSet;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::Duration;
 use common::{
-    api::{
-        api_client::ApiClient,
-        models::messages::user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
-    },
-    client::mailbox::mailbox_message::UserStatus,
-    protocol::{
-        covernode::verify_user_to_journalist_dead_drop_list,
-        journalist::get_decrypted_journalist_dead_drop_message, keys::UserPublicKey,
-    },
-    task::Task,
-    time,
+    client::mailbox::mailbox_message::UserStatus, protocol::keys::UserPublicKey, task::Task, time,
 };
-use journalist_vault::JournalistVault;
 use tauri::AppHandle;
 
 use crate::{app_state::PublicInfo, notifications::Notifications};
+use coverdrop_service::JournalistCoverDropService;
 
 use crate::model::BackendToFrontendEvent;
 
 pub struct PullDeadDrops {
     app_handle: AppHandle,
-    api_client: ApiClient,
-    vault: JournalistVault,
-    public_info: PublicInfo,
+    coverdrop_service: Arc<JournalistCoverDropService>,
     notifications: Notifications,
+    public_info: PublicInfo,
 }
 
 impl PullDeadDrops {
     pub fn new(
         app_handle: &AppHandle,
-        api_client: &ApiClient,
-        vault: &JournalistVault,
-        public_info: &PublicInfo,
+        coverdrop_service: &Arc<JournalistCoverDropService>,
         notifications: &Notifications,
+        public_info: &PublicInfo,
     ) -> Self {
         Self {
             app_handle: app_handle.clone(),
-            api_client: api_client.clone(),
-            vault: vault.clone(),
-            public_info: public_info.clone(),
+            coverdrop_service: coverdrop_service.clone(),
             notifications: notifications.clone(),
+            public_info: public_info.clone(),
         }
     }
 }
@@ -55,126 +43,49 @@ impl Task for PullDeadDrops {
     }
 
     async fn run(&self) -> anyhow::Result<()> {
-        let public_info = self.public_info.get().await;
+        // Use the CoverDrop service to pull and decrypt messages
+        let public_info_guard = self.public_info.get().await;
+        let Some(public_info) = public_info_guard.as_ref() else {
+            tracing::debug!("No public info available, skipping dead drop pull");
+            return Ok(());
+        };
 
-        if let Some(public_info) = public_info.as_ref() {
-            let now = time::now();
-            let keys = &public_info.keys;
+        self.app_handle.emit_dead_drops_pull_started()?;
 
-            self.app_handle.emit_dead_drops_pull_started()?;
+        let decrypted_messages = self
+            .coverdrop_service
+            .pull_and_decrypt_dead_drops(
+                public_info,
+                Some(move |remaining| {
+                    let _ = self.app_handle.emit_dead_drops_remaining_event(remaining);
+                }),
+                time::now(),
+            )
+            .await?;
+        tracing::info!(
+            "pull_and_decrypt_dead_drops returned {} messages",
+            decrypted_messages.len()
+        );
 
-            let ids_greater_than = self.vault.max_dead_drop_id().await?;
-
-            tracing::info!(
-                "Pulling dead drops with ID greater than {}",
-                ids_greater_than
-            );
-
-            let dead_drop_list = self
-                .api_client
-                .pull_all_journalist_dead_drops(ids_greater_than)
-                .await?;
-
-            let total_dead_drops_to_process = dead_drop_list.len();
-
-            self.app_handle
-                .emit_dead_drops_remaining_event(total_dead_drops_to_process)?;
-
-            let Some(max_dead_drop_id) = dead_drop_list
-                .dead_drops
-                .iter()
-                .max_by_key(|d| d.id)
-                .map(|d| d.id)
-            else {
-                tracing::info!("No dead drops in dead drop list");
-
-                return Ok(());
-            };
-
-            // TODO should we return early if verified dead drops < total dead drops?
-            // see https://github.com/guardian/coverdrop-internal/issues/3643
-            let dead_drops =
-                verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, time::now());
-
-            tracing::info!("Found {} dead drops", dead_drops.len());
-
-            // find the max epoch in the list of dead drops to make sure that the public info epoch is high enough to decrypt
-            let Some(max_dead_drop_epoch) =
-                dead_drops.iter().max_by_key(|d| d.epoch).map(|d| d.epoch)
-            else {
-                // this check is redundant but necessary to turn the epoch into Some
-                tracing::info!("No dead drops in dead drop list");
-                return Ok(());
-            };
-
-            if public_info.max_epoch < max_dead_drop_epoch {
-                tracing::info!("Max epoch of public key hierarchy {} is less than the max dead drop epoch {}. Returning early.", public_info.max_epoch, max_dead_drop_epoch);
-                return Ok(());
-            } else {
-                tracing::info!("Max epoch of public key hierarchy {} is greater than or equal to the max dead drop epoch {}. Attempting to decrypt.", public_info.max_epoch, max_dead_drop_epoch);
-            }
-
-            let journalist_msg_key_pairs = self
-                .vault
-                .msg_key_pairs_for_decryption(time::now())
-                .await?
-                .collect::<Vec<_>>();
-
-            let covernode_msg_pks = keys
-                .covernode_msg_pk_iter()
-                .map(|(_, msg_pk)| msg_pk)
-                .collect::<Vec<_>>();
-
-            let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> = dead_drops
-                .iter()
-                .enumerate()
-                .flat_map(|(index, dead_drop)| {
-                    let processed_dead_drop =
-                        dead_drop
-                            .data
-                            .messages
-                            .iter()
-                            .filter_map(|encrypted_message| {
-                                get_decrypted_journalist_dead_drop_message(
-                                    &covernode_msg_pks,
-                                    &journalist_msg_key_pairs,
-                                    encrypted_message,
-                                    dead_drop.id,
-                                )
-                            });
-                    let _ = self
-                        .app_handle
-                        .emit_dead_drops_remaining_event(total_dead_drops_to_process - index - 1);
-                    processed_dead_drop
-                })
-                .collect();
-
-            let users = self.vault.users().await?;
+        // Handle notifications for active users
+        if !decrypted_messages.is_empty() {
+            let users = self.coverdrop_service.get_users().await?;
             let active_users: HashSet<&UserPublicKey> = users
                 .iter()
                 .filter(|u| u.status == UserStatus::Active)
                 .map(|u| &u.user_pk)
                 .collect();
 
-            self.vault
-                .add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
-                    &decrypted_messages,
-                    max_dead_drop_id,
-                    now,
-                )
-                .await?;
+            let num_messages_from_active_users = decrypted_messages
+                .iter()
+                .filter(|m| active_users.contains(&&m.u2j_message.reply_key))
+                .count();
 
-            let messages_from_active_users: Vec<&UserToJournalistMessageWithDeadDropId> =
-                decrypted_messages
-                    .iter()
-                    .filter(|m| active_users.contains(&&m.u2j_message.reply_key))
-                    .collect();
-
-            if !messages_from_active_users.is_empty() {
-                let notification_message = if messages_from_active_users.len() == 1 {
+            if num_messages_from_active_users > 0 {
+                let notification_message = if num_messages_from_active_users == 1 {
                     "Received a message".to_owned()
                 } else {
-                    format!("Received {} messages", messages_from_active_users.len())
+                    format!("Received {} messages", num_messages_from_active_users)
                 };
 
                 self.notifications

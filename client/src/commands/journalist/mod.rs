@@ -11,6 +11,7 @@ use common::{
     api::api_client::ApiClient, crypto::keys::signing::traits::PublicSigningKey,
     protocol::keys::UserPublicKey, time,
 };
+use coverdrop_service::JournalistCoverDropService;
 
 use crate::commands::dead_drops::print_journalist_dead_drops;
 use crate::{
@@ -117,9 +118,8 @@ pub async fn handle_journalist_command(
             run_auto_reply_service(api_client, kinesis_client, &vault, time::now).await
         }
         JournalistCommand::GenerateMessagingKey => {
-            vault
-                .generate_msg_key_pair_and_upload_pk(&api_client, time::now())
-                .await
+            let service = JournalistCoverDropService::new(&api_client, &vault);
+            service.rotate_msg_key(time::now()).await
         }
         JournalistCommand::ReadVault => {
             let id_key_pairs = vault.id_key_pairs(time::now()).await?;

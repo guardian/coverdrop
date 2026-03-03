@@ -1,5 +1,6 @@
 use chrono::Duration;
 use common::{throttle::Throttle, time};
+use coverdrop_service::JournalistCoverDropService;
 
 use crate::canary_state::CanaryState;
 
@@ -14,9 +15,8 @@ pub async fn rotate_journalist_keys(canary_state: CanaryState) -> anyhow::Result
         for vault in vaults {
             let now = time::now();
 
-            vault
-                .check_and_rotate_keys(&canary_state.api_client, now)
-                .await?;
+            let service = JournalistCoverDropService::new(&canary_state.api_client, &vault);
+            service.check_and_rotate_keys(now).await?;
 
             vault.clean_up(now).await?;
         }

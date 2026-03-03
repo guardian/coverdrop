@@ -43,18 +43,14 @@ pub async fn get_trust_anchor_digests(
 
 #[tauri::command]
 pub async fn force_rotate_id_pk(app: State<'_, AppStateHandle>) -> Result<(), CommandError> {
-    let api_client = app
+    let coverdrop_service = app
         .inner()
-        .api_client()
+        .coverdrop_service()
         .await
-        .context(ApiClientUnavailableSnafu)?;
+        .context(VaultLockedSnafu)?;
 
-    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
-
-    let now = time::now();
-
-    vault
-        .generate_id_key_pair_and_rotate_pk(&api_client, now)
+    coverdrop_service
+        .rotate_id_key(time::now())
         .await
         .context(VaultSnafu {
             failed_to: "rotate identity key",
@@ -65,18 +61,14 @@ pub async fn force_rotate_id_pk(app: State<'_, AppStateHandle>) -> Result<(), Co
 
 #[tauri::command]
 pub async fn force_rotate_msg_pk(app: State<'_, AppStateHandle>) -> Result<(), CommandError> {
-    let api_client = app
+    let coverdrop_service = app
         .inner()
-        .api_client()
+        .coverdrop_service()
         .await
-        .context(ApiClientUnavailableSnafu)?;
+        .context(VaultLockedSnafu)?;
 
-    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
-
-    let now = time::now();
-
-    vault
-        .generate_msg_key_pair_and_upload_pk(&api_client, now)
+    coverdrop_service
+        .rotate_msg_key(time::now())
         .await
         .context(VaultSnafu {
             failed_to: "rotate messaging key",

@@ -2,6 +2,7 @@ use admin::{delete_journalist_form, submit_delete_journalist_form};
 use chrono::Duration;
 
 use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION;
+use coverdrop_service::{JournalistCoverDropService, ProcessVaultSetupBundleResult};
 use integration_tests::{
     api_wrappers::{
         generate_test_desk, generate_test_journalist, get_and_verify_public_keys, get_public_keys,
@@ -73,11 +74,13 @@ async fn create_journalists() {
         .await
         .expect("Load journalist vault");
 
-    let process_vault_initialization = vault
-        .process_vault_setup_bundle(stack.api_client_cached(), stack.now())
-        .await;
+    let service = JournalistCoverDropService::new(stack.api_client_cached(), &vault);
+    let process_vault_initialization = service.process_vault_setup_bundle(stack.now()).await;
 
-    assert!(matches!(process_vault_initialization, Ok(false)));
+    assert!(matches!(
+        process_vault_initialization,
+        Ok(ProcessVaultSetupBundleResult::AlreadyRegistered)
+    ));
 
     let journalist_id = vault.journalist_id().await.expect("Get journalist ID");
 

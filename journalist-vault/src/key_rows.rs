@@ -147,7 +147,7 @@ pub type UntrustedPublishedJournalistIdKeyPairRow =
 pub type UntrustedPublishedJournalistMessagingKeyPairRow =
     PublishedKeyPairRow<UntrustedJournalistMessagingKeyPair>;
 
-pub(crate) struct SeedInfoRow {
+pub struct SeedInfoRow {
     pub provisioning_pk_id: i64,
     pub pk_upload_form: PostJournalistIdPublicKeyForm,
     pub key_pair: JournalistIdKeyPair,
@@ -155,7 +155,7 @@ pub(crate) struct SeedInfoRow {
 }
 
 impl SeedInfoRow {
-    pub(crate) fn new(
+    pub fn new(
         provisioning_pk_id: i64,
         pk_upload_form: PostJournalistIdPublicKeyForm,
         key_pair: JournalistIdKeyPair,

@@ -16,5 +16,6 @@ thiserror.workspace = true
 tokio.workspace = true
 
 common.path = "../common"
+coverdrop-service.path = "../journalist-services/coverdrop-service"
 journalist-vault.path = "../journalist-vault"
 trust-anchors = { path = "../trust-anchors" }

@@ -3,11 +3,7 @@ use common::{
     client::mailbox::mailbox_message::UserStatus as MailboxUserStatus,
     protocol::{
         constants::MESSAGE_PADDING_LEN,
-        journalist::{
-            encrypt_real_message_from_journalist_to_user_via_covernode,
-            new_encrypted_cover_message_from_journalist_via_covernode,
-        },
-        keys::UserPublicKey,
+        journalist::new_encrypted_cover_message_from_journalist_via_covernode, keys::UserPublicKey,
     },
     time, Error as CommonError, FixedSizeMessageText,
 };
@@ -194,62 +190,30 @@ pub async fn submit_message(
     reply_key: String,
     message: String,
 ) -> Result<(), CommandError> {
-    let vault = app.inner().vault().await.context(VaultLockedSnafu)?;
-
-    let public_info = app.public_info().await;
-    let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
-
-    let keys = &public_info.keys;
-
-    let now = time::now();
-
-    let unencrypted_message = FixedSizeMessageText::new(&message)
-        .ok()
-        .context(GenericSnafu {
-            ctx: "Failed to create fixed size message",
-        })?;
-
-    let latest_journalist_msg_key_pair = vault
-        .latest_msg_key_pair(now)
+    let coverdrop_service = app
+        .inner()
+        .coverdrop_service()
         .await
-        // Deal with failure to read the vault
-        .context(VaultSnafu {
-            failed_to: "get latest messaging key pair",
-        })?
-        // Deal with vault read ok but there are no keys
         .context(GenericSnafu {
-            ctx: "No messaging keys in vault",
+            ctx: "CoverDrop service unavailable",
         })?;
 
     let user_pk = user_pk_from_hex(&reply_key)?;
 
-    let encrypted_message = encrypt_real_message_from_journalist_to_user_via_covernode(
-        keys,
-        &user_pk,
-        &latest_journalist_msg_key_pair,
-        &unencrypted_message,
-    )
-    .ok()
-    .context(GenericSnafu {
-        ctx: "Failed to encrypt message",
-    })?;
+    let public_info = app.public_info().await;
+    let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
 
-    let queue_length = vault
-        .add_message_from_journalist_to_user_and_enqueue(
-            &user_pk,
-            &unencrypted_message,
-            encrypted_message,
-            now,
-        )
+    let queue_length = coverdrop_service
+        .enqueue_j2u_message(public_info, &user_pk, &message, time::now())
         .await
-        .context(VaultSnafu {
+        .context(AnyhowSnafu {
             failed_to: "enqueue message",
         })?;
 
     app.app_handle
         .emit_outbound_queue_length_event(queue_length)
         .context(VaultSnafu {
-            failed_to: "get outbound queue length",
+            failed_to: "emit outbound queue length event",
         })?;
 
     Ok(())

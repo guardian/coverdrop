@@ -9,6 +9,7 @@ use common::{
     time,
     u2j_appender::messaging_client::MessagingClient,
 };
+use coverdrop_service::{JournalistCoverDropService, ProcessVaultSetupBundleResult};
 use journalist_vault::JournalistVault;
 use message_canary_database::{database::Database, model::User};
 use tokio::{sync::RwLock, time::sleep};
@@ -70,11 +71,14 @@ impl CanaryState {
 
                 let vault = JournalistVault::open(&path, &password, trust_anchors.clone()).await?;
 
-                let set_up_occurred = vault
-                    .process_vault_setup_bundle(&api_client, time::now())
-                    .await?;
+                let service = JournalistCoverDropService::new(&api_client, &vault);
+                let process_vault_setup_bundle_result =
+                    service.process_vault_setup_bundle(time::now()).await?;
 
-                if set_up_occurred {
+                if matches!(
+                    process_vault_setup_bundle_result,
+                    ProcessVaultSetupBundleResult::SuccessfullyProcessedBundle
+                ) {
                     any_new_journalists = true;
                 }
 

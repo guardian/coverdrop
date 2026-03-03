@@ -1,11 +1,9 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use chrono::Duration;
-use common::{
-    api::api_client::ApiClient,
-    protocol::journalist::new_encrypted_cover_message_from_journalist_via_covernode, task::Task,
-    time,
-};
-use journalist_vault::JournalistVault;
+use common::{task::Task, time};
+use coverdrop_service::JournalistCoverDropService;
 use tauri::AppHandle;
 
 use crate::app_state::PublicInfo;
@@ -13,22 +11,19 @@ use crate::app_state::PublicInfo;
 use crate::model::BackendToFrontendEvent;
 
 pub struct SendJournalistMessages {
-    api_client: ApiClient,
-    vault: JournalistVault,
+    coverdrop_service: Arc<JournalistCoverDropService>,
     public_info: PublicInfo,
     app_handle: AppHandle,
 }
 
 impl SendJournalistMessages {
     pub fn new(
-        api_client: &ApiClient,
-        vault: &JournalistVault,
+        coverdrop_service: &Arc<JournalistCoverDropService>,
         public_info: &PublicInfo,
         app_handle: &AppHandle,
     ) -> Self {
         Self {
-            api_client: api_client.clone(),
-            vault: vault.clone(),
+            coverdrop_service: coverdrop_service.clone(),
             public_info: public_info.clone(),
             app_handle: app_handle.clone(),
         }
@@ -42,8 +37,6 @@ impl Task for SendJournalistMessages {
     }
 
     async fn run(&self) -> anyhow::Result<()> {
-        let now = time::now();
-
         let public_info = self.public_info.get().await;
 
         //
@@ -55,38 +48,12 @@ impl Task for SendJournalistMessages {
         //
 
         if let Some(public_info) = public_info.as_ref() {
-            let Some(id_key_pair) = self.vault.latest_id_key_pair(now).await? else {
-                anyhow::bail!("No ID key pair found in vault");
-            };
-
-            if let Ok(Some(message)) = self.vault.head_queue_message().await {
-                tracing::debug!("Found message in vault queue");
-
-                self.api_client
-                    .post_journalist_msg(message.message, &id_key_pair, now)
-                    .await?;
-
-                tracing::debug!("Posting message was successful, deleting message from queue");
-
-                let queue_length = self.vault.delete_queue_message(message.id).await?;
-
-                self.app_handle
-                    .emit_outbound_queue_length_event(queue_length)?;
-
-                tracing::debug!("Successfully deleted message from queue");
-            } else {
-                let keys = &public_info.keys;
-
-                tracing::debug!("No message in vault queue, creating and sending cover message");
-
-                let message = new_encrypted_cover_message_from_journalist_via_covernode(keys)?;
-
-                self.api_client
-                    .post_journalist_msg(message, &id_key_pair, now)
-                    .await?;
-
-                tracing::debug!("Posting message was successful");
-            }
+            let queue_length = self
+                .coverdrop_service
+                .dequeue_and_send_j2u_message(&public_info.keys, time::now())
+                .await?;
+            self.app_handle
+                .emit_outbound_queue_length_event(queue_length)?;
         }
 
         Ok(())

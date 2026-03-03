@@ -18,6 +18,7 @@ use common::{
         roles::{JournalistId, JournalistProvisioning},
     },
 };
+use coverdrop_service::JournalistCoverDropService;
 use journalist_vault::{JournalistVault, VAULT_EXTENSION};
 use tempfile::TempDir;
 
@@ -161,8 +162,9 @@ pub async fn create_journalist_vault(
         .await
         .expect("Load desk vault");
 
-    vault
-        .process_vault_setup_bundle(api_client, keys_generated_at)
+    let service = JournalistCoverDropService::new(api_client, &vault);
+    service
+        .process_vault_setup_bundle(keys_generated_at)
         .await
         .expect("Onboard vault");
 

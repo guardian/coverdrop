@@ -1,10 +1,7 @@
 use std::{collections::HashSet, time::Duration};
 
-use common::{
-    crypto::keys::public_key::PublicKey,
-    protocol::journalist::encrypt_real_message_from_journalist_to_user_via_covernode,
-    throttle::Throttle, time, FixedSizeMessageText,
-};
+use common::{crypto::keys::public_key::PublicKey, throttle::Throttle, time};
+use coverdrop_service::JournalistCoverDropService;
 use journalist_vault::VaultMessage;
 use rand::seq::IteratorRandom as _;
 use uuid::Uuid;
@@ -25,12 +22,13 @@ pub async fn send_j2u(canary_state: CanaryState, mph_j2u: u32) -> anyhow::Result
     loop {
         let now = time::now();
 
-        let keys = canary_state.get_keys_and_profiles(now).await?.keys;
+        let keys_and_profiles = canary_state.get_keys_and_profiles(now).await?;
 
         let vaults = canary_state.vaults().await;
         let Some(vault) = vaults.get(journalist_index % vaults.len()) else {
             anyhow::bail!("No journalists in canary");
         };
+        let coverdrop_service = JournalistCoverDropService::new(&canary_state.api_client, vault);
         journalist_index += 1;
 
         let journalist_id = vault.journalist_id().await?;
@@ -59,21 +57,6 @@ pub async fn send_j2u(canary_state: CanaryState, mph_j2u: u32) -> anyhow::Result
         };
 
         let j2u_message = Uuid::new_v4().to_string();
-        let unencrypted_message = FixedSizeMessageText::new(&j2u_message)?;
-
-        let Some(latest_journalist_id_key_pair) = vault.latest_id_key_pair(now).await? else {
-            anyhow::bail!(
-                "Could not get latest identity key for journalist {}",
-                journalist_id
-            );
-        };
-
-        let Some(latest_journalist_msg_key_pair) = vault.latest_msg_key_pair(now).await? else {
-            anyhow::bail!(
-                "Could not get latest msg key for journalist {}",
-                journalist_id
-            );
-        };
 
         tracing::info!(
             "sending j2u message {} to user {}",
@@ -81,16 +64,11 @@ pub async fn send_j2u(canary_state: CanaryState, mph_j2u: u32) -> anyhow::Result
             user_pk.public_key_hex()
         );
 
-        let encrypted_message = encrypt_real_message_from_journalist_to_user_via_covernode(
-            &keys,
-            user_pk,
-            &latest_journalist_msg_key_pair,
-            &unencrypted_message,
-        )?;
-
-        canary_state
-            .api_client
-            .post_journalist_msg(encrypted_message, &latest_journalist_id_key_pair, now)
+        coverdrop_service
+            .enqueue_j2u_message(&keys_and_profiles, user_pk, j2u_message.as_str(), now)
+            .await?;
+        coverdrop_service
+            .dequeue_and_send_j2u_message(&keys_and_profiles.keys, now)
             .await?;
 
         canary_state

@@ -18,19 +18,16 @@ use key_rows::{
     UntrustedCandidateJournalistMessagingKeyPairRow, UntrustedJournalistProvisioningPublicKeyRow,
     UntrustedPublishedJournalistIdKeyPairRow, UntrustedPublishedJournalistMessagingKeyPairRow,
 };
-use std::{path::Path, time::Duration as StdDuration};
+use std::path::Path;
 pub use vault_message::{J2UMessage, U2JMessage, VaultMessage};
 
-use crate::info_queries::journalist_id;
+use crate::key_rows::SeedInfoRow;
 use crate::logging::LoggingSession;
 pub use backup_queries::BackupHistoryEntry;
 use chrono::{DateTime, Utc};
 use common::{
     api::{
-        api_client::ApiClient,
-        forms::{
-            PostJournalistForm, PostJournalistIdPublicKeyForm, RotateJournalistIdPublicKeyFormForm,
-        },
+        forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
         models::{
             dead_drops::DeadDropId,
             journalist_id::JournalistIdentity,
@@ -47,15 +44,9 @@ use common::{
         signing::{SignedPublicSigningKey, UnsignedSigningKeyPair},
     },
     epoch::Epoch,
-    identity_api::{
-        forms::post_rotate_journalist_id::RotateJournalistIdPublicKeyForm,
-        models::UntrustedJournalistIdPublicKeyWithEpoch,
-    },
+    identity_api::models::UntrustedJournalistIdPublicKeyWithEpoch,
     protocol::{
-        constants::{
-            JOURNALIST_ID_KEY_ROTATE_AFTER, JOURNALIST_MSG_KEY_ROTATE_AFTER,
-            MESSAGE_VALID_FOR_DURATION,
-        },
+        constants::MESSAGE_VALID_FOR_DURATION,
         keys::{
             generate_journalist_messaging_key_pair, verify_journalist_provisioning_pk,
             AnchorOrganizationPublicKey, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
@@ -630,130 +621,47 @@ impl JournalistVault {
         Ok(())
     }
 
-    /// Attempt to perform the initial vault set up.
-    /// Returns `Ok(true)` if the set up occurred, and `Ok(false)` if there was no seed info to process.
-    /// Any errors will return `Err(e)`.
-    pub async fn process_vault_setup_bundle(
+    /// Get the vault setup bundle if one exists.
+    pub async fn get_vault_setup_bundle(
         &self,
-        api_client: &ApiClient,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<bool> {
+    ) -> anyhow::Result<Option<SeedInfoRow>> {
         let mut conn = self.pool.acquire().await?;
-
         let trust_anchors = self.trust_anchors()?;
-        if let Some(vault_setup_bundle) =
-            vault_setup_bundle::get_vault_setup_bundle(&mut *conn, now, trust_anchors).await?
-        {
-            let journalist_id = self.journalist_id().await?;
+        vault_setup_bundle::get_vault_setup_bundle(&mut *conn, now, trust_anchors).await
+    }
 
-            tracing::debug!("Found journalist vault setup bundle for {}", journalist_id);
+    /// Delete the vault setup bundle.
+    pub async fn delete_vault_setup_bundle(&self) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        vault_setup_bundle::delete_vault_setup_bundle(&mut *conn).await
+    }
 
-            //
-            // Set up journalist profile
-            // Only done if this is the initial set up bundle, not a bundle to create a new key
-            // after a journalist has been offline for too long.
-            //
+    /// Insert a registered ID key pair into the vault.
+    pub async fn insert_registered_id_key_pair(
+        &self,
+        provisioning_pk_id: i64,
+        id_key_pair: &JournalistIdKeyPair,
+        created_at: DateTime<Utc>,
+        published_at: DateTime<Utc>,
+        epoch: Epoch,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        id_key_queries::insert_registered_id_key_pair(
+            &mut conn,
+            provisioning_pk_id,
+            id_key_pair,
+            created_at,
+            published_at,
+            epoch,
+        )
+        .await
+    }
 
-            if let Some(register_journalist_form) = vault_setup_bundle.register_journalist_form {
-                tracing::debug!(
-                    "Uploading journalist registration form for {}",
-                    journalist_id
-                );
-
-                // This is the first time this vault has been seeded - we also need to upload the journalist to the API
-                api_client
-                    .post_journalist_form(register_journalist_form)
-                    .await?;
-            }
-
-            //
-            // Set up identity public key in API
-            //
-
-            tracing::debug!(
-                "Uploading initial journalist public key to API for {}",
-                journalist_id
-            );
-
-            let epoch = api_client
-                .post_journalist_id_pk_form(vault_setup_bundle.pk_upload_form)
-                .await?;
-
-            //
-            // Set up identity public key in vault
-            //
-
-            let vault_id_key_pairs = self.id_key_pairs(now).await?.find(|vault_id_key_pair| {
-                vault_id_key_pair.public_key() == vault_setup_bundle.key_pair.public_key()
-            });
-
-            if vault_id_key_pairs.is_none() {
-                tracing::debug!(
-                    "Inserting initial journalist public key into vault for {}",
-                    journalist_id
-                );
-                id_key_queries::insert_registered_id_key_pair(
-                    &mut conn,
-                    vault_setup_bundle.provisioning_pk_id,
-                    &vault_setup_bundle.key_pair,
-                    now,
-                    now,
-                    epoch,
-                )
-                .await?;
-            } else {
-                tracing::warn!(
-                    "Journalist setup bundle is running but the key is already in the vault. This indicates a possible previous partial failure."
-                );
-            }
-
-            // Attempt to set the max dead drop id to the current max
-            // if we don't have any messaging keys.
-            //
-            // This isn't 100% required so if any part fails then just continue
-            if let Ok(None) = self.latest_msg_key_pair(now).await {
-                if let Ok(recent_dead_drops_summary) =
-                    api_client.get_journalist_recent_dead_drop_summary().await
-                {
-                    if let Some(max_dead_drop_summary) = recent_dead_drops_summary
-                        .iter()
-                        .max_by_key(|summary| summary.id)
-                    {
-                        if let Err(e) =
-                            info_queries::set_max_dead_drop_id(&mut conn, max_dead_drop_summary.id)
-                                .await
-                        {
-                            tracing::error!("Failed to set max dead drop id {:?}", e);
-                        }
-                    }
-                }
-            }
-
-            //
-            // Delete setup bundle from vault
-            //
-
-            tracing::debug!("Deleting vault setup bundle for {}", journalist_id);
-            vault_setup_bundle::delete_vault_setup_bundle(&mut *conn).await?;
-
-            tracing::debug!(
-                "Generating initial messaging key pair for {}",
-                journalist_id
-            );
-            self.generate_msg_key_pair_and_upload_pk(api_client, now)
-                .await?;
-
-            tracing::debug!("Successfully setup vault for {}", journalist_id);
-
-            // Return indicating that the seeding process ran
-            Ok(true)
-        } else {
-            let journalist_id = journalist_id(&mut conn).await?;
-            tracing::info!("Vault for {} has already been registered", journalist_id);
-
-            // Return indicating that the seeding process did not run
-            Ok(false)
-        }
+    /// Set the max dead drop ID in the vault.
+    pub async fn set_max_dead_drop_id(&self, max_dead_drop_id: i32) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        info_queries::set_max_dead_drop_id(&mut conn, max_dead_drop_id).await
     }
 
     /// Takes an iterator of journalist provisioning keys and inserts any that aren't already in the vault
@@ -809,229 +717,37 @@ impl JournalistVault {
         Ok(())
     }
 
-    /// Check if the journalist keys need to be rotated, if so, rotate them.
-    pub async fn check_and_rotate_keys(
+    /// Get the existing candidate ID key pair, or create one if it doesn't exist.
+    /// Returns the key pair and the timestamp when it was added.
+    pub async fn get_or_create_candidate_id_key_pair(
         &self,
-        api_client: &ApiClient,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<bool> {
-        if self.latest_id_key_pair(now).await?.is_none() {
-            anyhow::bail!(
-                "No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded"
-            )
-        };
+    ) -> anyhow::Result<(UnregisteredJournalistIdKeyPair, DateTime<Utc>)> {
+        let mut conn = self.pool.acquire().await?;
 
-        let mut did_rotate_some_keys = false;
-
-        //
-        // Identity key rotation
-        //
-
-        let last_update = self
-            .last_published_id_key_pair_at()
-            .await?
-            .unwrap_or(DateTime::<Utc>::MIN_UTC);
-        let duration_since_last_update = (now - last_update).abs();
-
-        if duration_since_last_update > JOURNALIST_ID_KEY_ROTATE_AFTER {
-            match self
-                .generate_id_key_pair_and_rotate_pk(api_client, now)
-                .await
-            {
-                Ok(_) => {
-                    tracing::info!("Refreshed identity keys");
-                    did_rotate_some_keys = true;
-                }
-                Err(e) => tracing::error!("Failed to refresh identity key: {:?}", e),
-            }
+        if let Some(candidate_id_key_pair_row) = candidate_id_key_pair(&mut conn).await? {
+            tracing::debug!("Found existing candidate id key pair");
+            Ok((
+                candidate_id_key_pair_row.key_pair,
+                candidate_id_key_pair_row.added_at,
+            ))
         } else {
-            let hours_elapsed = duration_since_last_update.num_hours();
-            tracing::debug!(
-                "Not refreshing identity keys since only {} hours have elapsed since the last rotation",
-                hours_elapsed
-            );
-        }
-
-        //
-        // Messaging key rotation
-        //
-
-        let duration_since_last_update = now.signed_duration_since(
-            self.last_published_msg_key_pair_at()
-                .await?
-                .unwrap_or(DateTime::<Utc>::MIN_UTC), // If we've never uploaded a key set to distant past
-        );
-
-        if duration_since_last_update > JOURNALIST_MSG_KEY_ROTATE_AFTER {
-            match self
-                .generate_msg_key_pair_and_upload_pk(api_client, now)
-                .await
-            {
-                Ok(_) => {
-                    tracing::info!("Refreshed messaging keys");
-                    did_rotate_some_keys = true;
-                }
-                Err(e) => tracing::error!("Failed to refresh messaging key: {:?}", e),
-            }
-        } else {
-            let hours_elapsed = duration_since_last_update.num_hours();
-            tracing::debug!(
-                "Not refreshing messaging keys since only {} hours have elapsed since the last rotation",
-                hours_elapsed
-            );
-        }
-
-        Ok(did_rotate_some_keys)
-    }
-
-    /// Generate a new ID key pair for this journalist and use the identity API to rotate to it
-    ///
-    /// Note that this function does *NOT* check if it's appropriate to rotate a key yet. That is,
-    /// it will not check if sufficient time has passed since the last key rotation before attempting to
-    /// upload a new key. This is primarily so that we can test that everything will still work in the cases
-    /// where timings are not well behaved.
-    ///
-    /// Warning! This function will poll the API for up to 20 seconds to see if the key has been
-    /// rotated. It should not be used where blocking flow for 20 seconds matters.
-    ///
-    /// Returns ok of some epoch if the key was successfully rotated this time. Returns ok
-    /// of none if everything went ok but the identity-api didn't rotate it within 20 seconds.
-    /// Returns an error if anything else went wrong, for example, if the API was unreachable.
-    pub async fn generate_id_key_pair_and_rotate_pk(
-        &self,
-        api_client: &ApiClient,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<Option<Epoch>> {
-        let Some(latest_id_key_pair) = self.latest_id_key_pair(now).await? else {
-            anyhow::bail!(
-                "No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
-            )
-        };
-
-        let journalist_id = self.journalist_id().await?;
-
-        tracing::debug!("Checking if candidate id key pair exists");
-        let (candidate_id_key_pair, candidate_key_pair_added_at) = {
-            let mut conn = self.pool.acquire().await?;
-
-            if let Some(candidate_id_key_pair_row) = candidate_id_key_pair(&mut conn).await? {
-                tracing::debug!("Found candidate id key pair");
-
-                let candidate_id_key_pair = candidate_id_key_pair_row.key_pair;
-                let candidate_key_pair_added_at = candidate_id_key_pair_row.added_at;
-
-                // Check if the candidate key was successfully published in a previous attempt
-                // to rotate the key
-                if let Some(signed_id_pk_with_epoch) = api_client
-                    .get_journalist_id_pk_with_epoch(candidate_id_key_pair.public_key())
-                    .await?
-                {
-                    tracing::info!(
-                        "Candidate key appears to have been rotated already, promoting vault key from candidate to published. Candidate key {:?}",
-                        candidate_id_key_pair.public_key_hex()
-                    );
-                    let epoch = signed_id_pk_with_epoch.epoch;
-
-                    self.promote_candidate_id_key_pair_to_published(
-                        candidate_id_key_pair,
-                        candidate_key_pair_added_at,
-                        signed_id_pk_with_epoch,
-                        now,
-                    )
-                    .await?;
-
-                    return Ok(Some(epoch));
-                }
-
-                (candidate_id_key_pair, candidate_key_pair_added_at)
-            } else {
-                tracing::debug!("Generating new candidate id key pair");
-                let candidate_id_key_pair = UnsignedSigningKeyPair::generate();
-                let candidate_key_pair_added_at = now;
-                insert_candidate_id_key_pair(
-                    &mut conn,
-                    &candidate_id_key_pair,
-                    candidate_key_pair_added_at,
-                )
-                .await?;
-                (candidate_id_key_pair, candidate_key_pair_added_at)
-            }
-        };
-
-        let candidate_id_pk = candidate_id_key_pair.public_key();
-
-        //
-        // The key did not successfully rotate on a previous iteration
-        // we need to check if we need to reupload the form
-        //
-
-        tracing::debug!("Fetching journalist ID key pair forms");
-        let current_queued_candidate_pks = api_client.get_journalist_id_pk_forms().await?;
-
-        let maybe_our_candidate_pk = current_queued_candidate_pks
-            .iter()
-            .find(|f| f.journalist_id == journalist_id);
-
-        // If there's no existing form in the API, or that form is expired
-        // then (re)create the form and upload it
-        let should_upload_form = maybe_our_candidate_pk.is_none()
-            || maybe_our_candidate_pk
-                .map(|form| form.form.not_valid_after() < now)
-                .unwrap_or(false);
-
-        // We haven't yet uploaded a candidate key to the queue, upload one now
-        if should_upload_form {
-            tracing::debug!("Uploading new form");
-            let form_for_identity_api =
-                RotateJournalistIdPublicKeyForm::new(candidate_id_pk, &latest_id_key_pair, now)?;
-
-            // Form to submit the inner form to the api
-            let form_for_api = RotateJournalistIdPublicKeyFormForm::new(
-                form_for_identity_api,
-                &latest_id_key_pair,
-                now,
-            )?;
-
-            api_client
-                .post_rotate_journalist_id_pk_form(form_for_api)
-                .await?;
-        }
-
-        let mut maybe_signed_id_pk_with_epoch = None;
-
-        // Poll for 60 seconds to see if the ID key has been given an epoch...
-        for _ in 0..60 {
-            tokio::time::sleep(StdDuration::from_secs(1)).await;
-
-            let polled_signed_id_pk_with_epoch = api_client
-                .get_journalist_id_pk_with_epoch(candidate_id_pk)
-                .await?;
-
-            if polled_signed_id_pk_with_epoch.is_some() {
-                maybe_signed_id_pk_with_epoch = polled_signed_id_pk_with_epoch;
-                break;
-            }
-        }
-
-        if let Some(signed_id_pk_with_epoch) = maybe_signed_id_pk_with_epoch {
-            let epoch = signed_id_pk_with_epoch.epoch;
-
-            self.promote_candidate_id_key_pair_to_published(
-                candidate_id_key_pair,
+            tracing::debug!("Generating new candidate id key pair");
+            let candidate_id_key_pair = UnsignedSigningKeyPair::generate();
+            let candidate_key_pair_added_at = now;
+            insert_candidate_id_key_pair(
+                &mut conn,
+                &candidate_id_key_pair,
                 candidate_key_pair_added_at,
-                signed_id_pk_with_epoch,
-                now,
             )
             .await?;
-
-            return Ok(Some(epoch));
+            Ok((candidate_id_key_pair, candidate_key_pair_added_at))
         }
-
-        tracing::info!("No signed journalist identity public key after 20 seconds of polling");
-        Ok(None)
     }
 
-    async fn promote_candidate_id_key_pair_to_published(
+    /// Promote a candidate ID key pair to published with the given signed public key and epoch.
+    /// This is a pure repository operation with no API calls.
+    pub async fn promote_candidate_id_key_pair_to_published(
         &self,
         candidate_id_key_pair: UnregisteredJournalistIdKeyPair,
         candidate_key_pair_created_at: DateTime<Utc>,
@@ -1110,54 +826,51 @@ impl JournalistVault {
         Ok(())
     }
 
-    pub async fn generate_msg_key_pair_and_upload_pk(
+    /// Get the existing candidate messaging key pair, or create one if it doesn't exist.
+    pub async fn get_or_create_candidate_msg_key_pair(
         &self,
-        api_client: &ApiClient,
         now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<JournalistMessagingKeyPair> {
         let Some(latest_id_key_pair) = self.latest_id_key_pair(now).await? else {
             anyhow::bail!(
-                "No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
+                "No ID key pairs present in vault, cannot create messaging key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
             )
         };
 
         let mut conn = self.pool.acquire().await?;
 
-        let candidate_msg_key_pair = {
-            let trust_anchors = self.trust_anchors()?;
-            if let Some(candidate_msg_key_pair) =
-                candidate_msg_key_pair(&mut conn, now, trust_anchors.clone()).await?
-            {
-                candidate_msg_key_pair.key_pair
-            } else {
-                let candidate_msg_key_pair =
-                    generate_journalist_messaging_key_pair(&latest_id_key_pair, now);
+        let trust_anchors = self.trust_anchors()?;
+        let candidate_msg_key_pair = if let Some(candidate_msg_key_pair) =
+            candidate_msg_key_pair(&mut conn, now, trust_anchors.clone()).await?
+        {
+            candidate_msg_key_pair.key_pair
+        } else {
+            let candidate_msg_key_pair =
+                generate_journalist_messaging_key_pair(&latest_id_key_pair, now);
 
-                insert_candidate_msg_key_pair(
-                    &mut conn,
-                    latest_id_key_pair.public_key(),
-                    &candidate_msg_key_pair,
-                    now,
-                    trust_anchors.clone(),
-                )
-                .await?;
-
-                candidate_msg_key_pair
-            }
-        };
-
-        let epoch = api_client
-            .post_journalist_msg_pk(
-                candidate_msg_key_pair.public_key(),
-                &latest_id_key_pair,
+            insert_candidate_msg_key_pair(
+                &mut conn,
+                latest_id_key_pair.public_key(),
+                &candidate_msg_key_pair,
                 now,
+                trust_anchors.clone(),
             )
             .await?;
 
-        promote_candidate_msg_key_pair_to_published(&mut conn, &candidate_msg_key_pair, epoch)
-            .await?;
+            candidate_msg_key_pair
+        };
 
-        Ok(())
+        Ok(candidate_msg_key_pair)
+    }
+
+    /// Promote a candidate messaging key pair to published with the given epoch.
+    pub async fn promote_candidate_msg_key_pair(
+        &self,
+        msg_key_pair: &JournalistMessagingKeyPair,
+        epoch: Epoch,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        promote_candidate_msg_key_pair_to_published(&mut conn, msg_key_pair, epoch).await
     }
 
     /// - Delete expired id and msg key pairs
