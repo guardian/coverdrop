@@ -312,7 +312,7 @@ When you start a new conversation you will be required to set a new passphrase. 
 let helpMarkdownPrivacyPolicy = """
 # Secure Messaging privacy policy
 
-The Secure Messaging tool is a component of the Guardian app. The privacy policy for the Guardian app can be found in the app Settings page. 
+The Secure Messaging tool is a component of the Guardian app. The privacy policy for the Guardian app can be found in the app Settings page.
 
 Additional security and privacy measures when you use the Secure Messaging tool are described below.
 
@@ -320,7 +320,7 @@ Additional security and privacy measures when you use the Secure Messaging tool 
 
 This tool is designed to be used anonymously. As a consequence, messages sent to our journalists using Secure Messaging contain no accompanying data about who sent that message, from where, and from what kind of device. We can't even tell exactly when you wrote a message.
 
-Even if you are signed in to the Guardian app, your sign-in details are unavailable to the Secure Messaging feature. Similarly, the rest of the Guardian app on your mobile device does not know if you are sending messages to the Guardian using Secure Messaging. 
+Even if you are signed in to the Guardian app, your sign-in details are unavailable to the Secure Messaging feature. Similarly, the rest of the Guardian app on your mobile device does not know if you are sending messages to the Guardian using Secure Messaging.
 
 The Secure Messaging tool cannot reveal anything about you that you don't choose to tell us.
 
