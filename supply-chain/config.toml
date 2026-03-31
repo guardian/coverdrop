@@ -109,10 +109,6 @@ criteria = "safe-to-deploy"
 version = "0.5.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.async-task]]
-version = "4.7.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.async-trait]]
 version = "0.1.86"
 criteria = "safe-to-deploy"
@@ -1053,10 +1049,6 @@ criteria = "safe-to-deploy"
 version = "0.18.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.parking]]
-version = "2.2.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.password-hash]]
 version = "0.5.0"
 criteria = "safe-to-deploy"
@@ -1171,10 +1163,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.proc-macro-crate]]
 version = "3.2.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.proc-macro-error]]
-version = "1.0.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.quick-xml]]
