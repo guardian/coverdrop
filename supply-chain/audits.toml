@@ -607,6 +607,18 @@ criteria = "safe-to-deploy"
 delta = "0.22.1 -> 0.22.2"
 notes = "Adding a budget to prevent DOS during path building"
 
+[[trusted.aes]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-05"
+end = "2027-03-31"
+
+[[trusted.aes-gcm]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-08-16"
+end = "2027-03-31"
+
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -665,7 +677,7 @@ end = "2025-10-16"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-07-23"
-end = "2024-07-17"
+end = "2027-03-31"
 
 [[trusted.atomic-take]]
 criteria = "safe-to-deploy"
@@ -847,6 +859,12 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2023-06-29"
 end = "2025-06-13"
 
+[[trusted.base16ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-01-13"
+end = "2027-03-31"
+
 [[trusted.bincode]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -907,11 +925,53 @@ user-id = 6743 # Ed Page (epage)
 start = "2022-04-15"
 end = "2024-07-17"
 
+[[trusted.core-models]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-06-23"
+end = "2027-03-31"
+
+[[trusted.core-models]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.ctr]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-06"
+end = "2027-03-31"
+
+[[trusted.ctr]]
+criteria = "safe-to-deploy"
+user-id = 5059 # Artyom Pavlov (newpavlov)
+start = "2019-03-11"
+end = "2027-03-31"
+
+[[trusted.ecdsa]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-10-29"
+end = "2027-03-31"
+
+[[trusted.elliptic-curve]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-12-05"
+end = "2027-03-31"
+
 [[trusted.env_logger]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-11-24"
 end = "2024-07-17"
+
+[[trusted.ff]]
+criteria = "safe-to-deploy"
+user-id = 6289 # Jack Grigg (str4d)
+start = "2021-08-11"
+end = "2027-03-31"
 
 [[trusted.filetime]]
 criteria = "safe-to-deploy"
@@ -925,6 +985,12 @@ user-id = 4333
 start = "2020-09-30"
 end = "2024-07-17"
 
+[[trusted.ghash]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-09-19"
+end = "2027-03-31"
+
 [[trusted.globset]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -935,13 +1001,49 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-13"
-end = "2024-07-17"
+end = "2027-03-31"
 
 [[trusted.hashbrown]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-04-02"
 end = "2025-10-16"
+
+[[trusted.hax-lib]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-06-18"
+end = "2027-03-31"
+
+[[trusted.hax-lib]]
+criteria = "safe-to-deploy"
+user-id = 333734 # maximebuyse
+start = "2025-05-16"
+end = "2027-03-31"
+
+[[trusted.hax-lib-macros]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-06-18"
+end = "2027-03-31"
+
+[[trusted.hax-lib-macros]]
+criteria = "safe-to-deploy"
+user-id = 333734 # maximebuyse
+start = "2025-05-16"
+end = "2027-03-31"
+
+[[trusted.hax-lib-macros-types]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-06-18"
+end = "2027-03-31"
+
+[[trusted.hax-lib-macros-types]]
+criteria = "safe-to-deploy"
+user-id = 333734 # maximebuyse
+start = "2025-05-16"
+end = "2027-03-31"
 
 [[trusted.headers]]
 criteria = "safe-to-deploy"
@@ -954,6 +1056,30 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-06-11"
 end = "2025-10-16"
+
+[[trusted.hpke-rs]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2020-11-10"
+end = "2027-03-31"
+
+[[trusted.hpke-rs-crypto]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2021-11-10"
+end = "2027-03-31"
+
+[[trusted.hpke-rs-libcrux]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-05-28"
+end = "2027-03-31"
+
+[[trusted.hpke-rs-rust-crypto]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2021-11-10"
+end = "2027-03-31"
 
 [[trusted.http]]
 criteria = "safe-to-deploy"
@@ -1033,6 +1159,18 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
 
+[[trusted.js-sys]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
+
+[[trusted.k256]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-12-05"
+end = "2027-03-31"
+
 [[trusted.libc]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1044,6 +1182,210 @@ criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2021-01-27"
 end = "2025-10-16"
+
+[[trusted.libcrux-aead]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-aesgcm]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-chacha20poly1305]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-chacha20poly1305]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-curve25519]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-curve25519]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-ecdh]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-03"
+end = "2027-03-31"
+
+[[trusted.libcrux-ecdh]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-hacl-rs]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-hacl-rs]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-hkdf]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-03"
+end = "2027-03-31"
+
+[[trusted.libcrux-hkdf]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-hmac]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-03"
+end = "2027-03-31"
+
+[[trusted.libcrux-hmac]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-intrinsics]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-02"
+end = "2027-03-31"
+
+[[trusted.libcrux-intrinsics]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2024-07-22"
+end = "2027-03-31"
+
+[[trusted.libcrux-kem]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-03"
+end = "2027-03-31"
+
+[[trusted.libcrux-kem]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-ml-kem]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-02"
+end = "2027-03-31"
+
+[[trusted.libcrux-ml-kem]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2024-07-22"
+end = "2027-03-31"
+
+[[trusted.libcrux-p256]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-p256]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-platform]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2023-09-25"
+end = "2027-03-31"
+
+[[trusted.libcrux-platform]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2024-07-22"
+end = "2027-03-31"
+
+[[trusted.libcrux-poly1305]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-poly1305]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-secrets]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-07-01"
+end = "2027-03-31"
+
+[[trusted.libcrux-secrets]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-sha2]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-sha2]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
+
+[[trusted.libcrux-sha3]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2024-07-02"
+end = "2027-03-31"
+
+[[trusted.libcrux-sha3]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2024-07-22"
+end = "2027-03-31"
+
+[[trusted.libcrux-traits]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2025-02-24"
+end = "2027-03-31"
+
+[[trusted.libcrux-traits]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2025-11-05"
+end = "2027-03-31"
 
 [[trusted.libm]]
 criteria = "safe-to-deploy"
@@ -1099,6 +1441,36 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-06-10"
 end = "2024-07-17"
 
+[[trusted.openmls]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2022-02-23"
+end = "2027-03-31"
+
+[[trusted.openmls_basic_credential]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2023-07-20"
+end = "2027-03-31"
+
+[[trusted.openmls_memory_storage]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2026-02-04"
+end = "2027-03-31"
+
+[[trusted.openmls_rust_crypto]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2022-02-23"
+end = "2027-03-31"
+
+[[trusted.openmls_traits]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2022-02-23"
+end = "2027-03-31"
+
 [[trusted.openssl-src]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1110,6 +1482,18 @@ criteria = "safe-to-deploy"
 user-id = 2017 # Matt Brubeck (mbrubeck)
 start = "2019-03-13"
 end = "2025-10-16"
+
+[[trusted.p256]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-01-06"
+end = "2027-03-31"
+
+[[trusted.p384]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-01-06"
+end = "2027-03-31"
 
 [[trusted.parking_lot]]
 criteria = "safe-to-deploy"
@@ -1129,11 +1513,23 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-19"
 end = "2024-07-17"
 
+[[trusted.polyval]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-08-13"
+end = "2027-03-31"
+
 [[trusted.pretty_env_logger]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-08-16"
 end = "2024-07-17"
+
+[[trusted.primeorder]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-06-30"
+end = "2027-03-31"
 
 [[trusted.proc-macro2]]
 criteria = "safe-to-deploy"
@@ -1171,6 +1567,12 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-04"
 end = "2024-07-17"
 
+[[trusted.rfc6979]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-02-09"
+end = "2027-03-31"
+
 [[trusted.rustix]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
@@ -1201,6 +1603,12 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2020-02-16"
 end = "2024-07-17"
 
+[[trusted.sec1]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-08-26"
+end = "2027-03-31"
+
 [[trusted.serde]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1211,7 +1619,7 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-25"
-end = "2024-07-17"
+end = "2027-03-31"
 
 [[trusted.serde_derive]]
 criteria = "safe-to-deploy"
@@ -1284,6 +1692,18 @@ criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-09-07"
 end = "2024-07-17"
+
+[[trusted.tls_codec]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2021-06-11"
+end = "2027-03-31"
+
+[[trusted.tls_codec_derive]]
+criteria = "safe-to-deploy"
+user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
+start = "2021-06-11"
+end = "2027-03-31"
 
 [[trusted.tokio]]
 criteria = "safe-to-deploy"
@@ -1405,6 +1825,12 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
 
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
+
 [[trusted.wasm-bindgen-backend]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1417,11 +1843,23 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
 
+[[trusted.wasm-bindgen-futures]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
+
 [[trusted.wasm-bindgen-macro]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
+
+[[trusted.wasm-bindgen-macro]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
 
 [[trusted.wasm-bindgen-macro-support]]
 criteria = "safe-to-deploy"
@@ -1429,11 +1867,29 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
 
+[[trusted.wasm-bindgen-macro-support]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
+
+[[trusted.wasm-bindgen-shared]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-15"
+end = "2027-03-31"
+
 [[trusted.web-sys]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2024-07-17"
+
+[[trusted.web-sys]]
+criteria = "safe-to-deploy"
+user-id = 145038 # Guy Bedford (guybedford)
+start = "2026-01-14"
+end = "2027-03-31"
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"

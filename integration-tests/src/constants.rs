@@ -37,3 +37,6 @@ pub const IDENTITY_API_DB_PASSWORD: &str = "identity-api-db-password-secret";
 
 // default minio port
 pub const MINIO_PORT: u16 = 9000;
+
+// The port used by the delivery service in the test containers (group messaging)
+pub const DELIVERY_SERVICE_PORT: u16 = delivery_service::DEFAULT_PORT;

@@ -21,7 +21,9 @@ use common::{
 };
 use integration_tests::api_wrappers::get_and_verify_public_keys;
 use integration_tests::{
-    api_wrappers::generate_test_journalist, secrets::MAILBOX_PASSWORD, CoverDropStack,
+    api_wrappers::generate_test_journalist,
+    secrets::MAILBOX_PASSWORD,
+    stack::{CoverDropStack, StackProfile},
 };
 use journalist_vault::JournalistVault;
 use std::time::Duration;
@@ -33,7 +35,7 @@ async fn backup_scenario() {
 
     // generated_test_desk in the identity which we are backing up the vault for
     let default_journalist_id = "generated_test_desk";
-    let stack = CoverDropStack::builder()
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_default_journalist_id(default_journalist_id)
         .build()
         .await;
@@ -397,6 +399,7 @@ async fn create_recovery_contact_vault_and_return_messaging_keys(
         stack.temp_dir_path(),
         stack.now(),
         stack.trust_anchors(),
+        None,
     )
     .await;
 

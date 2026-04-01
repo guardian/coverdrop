@@ -1,5 +1,5 @@
 use coverdrop_service::JournalistCoverDropService;
-use integration_tests::CoverDropStack;
+use integration_tests::stack::{CoverDropStack, StackProfile};
 
 #[tokio::test]
 /// This test verifies the key counting logic for backups in the journalist vault.
@@ -8,7 +8,7 @@ async fn backup_keys_counting() {
 
     // generated_test_desk in the identity which we are backing up the vault for
     let default_journalist_id = "generated_test_desk";
-    let stack = CoverDropStack::builder()
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_default_journalist_id(default_journalist_id)
         .build()
         .await;

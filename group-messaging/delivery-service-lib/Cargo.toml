@@ -1,0 +1,18 @@
+[package]
+name = "delivery-service-lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+openmls.workspace = true
+openmls_rust_crypto.workspace = true
+openmls_traits.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_bytes.workspace = true
+strum.workspace = true
+sqlx.workspace = true
+
+common = { path = "../../common" }

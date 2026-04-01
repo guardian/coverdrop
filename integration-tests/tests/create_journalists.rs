@@ -10,7 +10,7 @@ use integration_tests::{
     },
     save_test_vector,
     secrets::MAILBOX_PASSWORD,
-    CoverDropStack,
+    stack::{CoverDropStack, StackProfile},
 };
 use journalist_vault::JournalistVault;
 
@@ -24,7 +24,7 @@ async fn create_journalists() {
 
     let default_journalist_id = "generated_test_desk";
 
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_default_journalist_id(default_journalist_id)
         .build()
         .await;
@@ -54,6 +54,7 @@ async fn create_journalists() {
         stack.temp_dir_path(),
         stack.now(),
         stack.trust_anchors(),
+        None,
     )
     .await;
 

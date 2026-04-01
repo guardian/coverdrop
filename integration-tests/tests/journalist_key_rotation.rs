@@ -15,7 +15,7 @@ use coverdrop_service::JournalistCoverDropService;
 use integration_tests::{
     api_wrappers::{generate_test_journalist, get_and_verify_public_keys},
     secrets::MAILBOX_PASSWORD,
-    CoverDropStack,
+    stack::{CoverDropStack, StackProfile},
 };
 use itertools::Itertools;
 use journalist_vault::JournalistVault;
@@ -23,7 +23,7 @@ use journalist_vault::JournalistVault;
 /// This test asserts that expired journalist id key rotation forms are not returned by the API.
 #[tokio::test]
 async fn id_key_rotation_form_expires() {
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         // triggered identity api task runner so that journalist id key rotation task is only run when manually triggered
         .with_identity_api_task_runner_mode(common::task::RunnerMode::ManuallyTriggered)
         .build()
@@ -35,6 +35,7 @@ async fn id_key_rotation_form_expires() {
         stack.temp_dir_path(),
         stack.now(),
         stack.trust_anchors(),
+        None,
     )
     .await;
 
@@ -86,7 +87,9 @@ async fn id_key_rotation_form_expires() {
 /// successful provisioning key rotation. The API should accept the candidate id key signed by the old provisioning key.
 #[tokio::test]
 async fn concurrent_journalist_id_and_provisioning_key_rotations() {
-    let mut stack = CoverDropStack::builder().build().await;
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
+        .build()
+        .await;
 
     let anchor_org_pks = stack.keys().anchor_org_pks();
 
@@ -96,6 +99,7 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
         stack.temp_dir_path(),
         stack.now(),
         stack.trust_anchors(),
+        None,
     )
     .await;
 
@@ -190,7 +194,9 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
 async fn concurrent_journalist_msg_and_id_key_rotations() {
     // TODO this test only needs an api. Should builder have with_api, with_covernode, etc.
     // so we don't create an entire stack when we only need part of it?
-    let stack = CoverDropStack::builder().build().await;
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
+        .build()
+        .await;
 
     let anchor_org_pks = stack.keys().anchor_org_pks();
 
@@ -200,6 +206,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
         stack.temp_dir_path(),
         stack.now(),
         stack.trust_anchors(),
+        None,
     )
     .await;
 

@@ -10,7 +10,8 @@ use client::commands::{
 };
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
-    dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector, CoverDropStack,
+    dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
+    stack::{CoverDropStack, StackProfile},
 };
 use journalist_vault::VaultMessage;
 use std::time::Duration;
@@ -37,7 +38,7 @@ static JOURNALIST_MESSAGE: &str = "This is a test message from the journalist to
 async fn messaging_scenario() {
     pretty_env_logger::try_init().unwrap();
 
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_delete_old_dead_drops_poll_duration(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD)
         .build()
         .await;

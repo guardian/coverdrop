@@ -11,7 +11,7 @@ use core::time::Duration as CoreDuration;
 
 use integration_tests::{
     api_wrappers::{get_journalist_dead_drops, get_user_dead_drops},
-    CoverDropStack,
+    stack::{CoverDropStack, StackProfile},
 };
 
 /// This tests that we have the correct initial state when we create a stack, and that
@@ -23,7 +23,9 @@ use integration_tests::{
 async fn vault_manager_test() -> anyhow::Result<()> {
     pretty_env_logger::try_init().unwrap();
 
-    let mut stack = CoverDropStack::builder().build().await;
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
+        .build()
+        .await;
 
     //
     // Confirm clean initial state

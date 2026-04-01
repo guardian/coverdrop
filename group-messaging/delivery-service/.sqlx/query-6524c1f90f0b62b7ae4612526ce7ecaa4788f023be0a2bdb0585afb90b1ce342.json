@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    key_package_hash,\n                    key_package AS \"key_package: TlsSerialized\"\n                FROM key_packages\n                WHERE client_id = $1\n                AND consumed_at IS NULL\n                ORDER BY published_at ASC\n                LIMIT 1\n                FOR UPDATE SKIP LOCKED\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "key_package_hash",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 1,
+        "name": "key_package: TlsSerialized",
+        "type_info": "Bytea"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "6524c1f90f0b62b7ae4612526ce7ecaa4788f023be0a2bdb0585afb90b1ce342"
+}

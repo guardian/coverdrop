@@ -6,8 +6,8 @@ use common::protocol::constants::COVERNODE_MSG_KEY_ROTATE_AFTER;
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
     dev_u2j_mixing_config, save_test_vector,
+    stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
-    CoverDropStack,
 };
 use std::time::Duration;
 
@@ -26,7 +26,7 @@ const SLEEP_DURATION: Duration = Duration::from_secs(5);
 async fn key_consensus() -> anyhow::Result<()> {
     pretty_env_logger::try_init().unwrap();
 
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_delete_old_dead_drops_poll_duration(SLEEP_DURATION)
         .with_varnish_api_cache(true)
         .build()

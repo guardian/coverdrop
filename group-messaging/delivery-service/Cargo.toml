@@ -1,0 +1,43 @@
+[package]
+name = "delivery-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+axum-metrics.workspace = true
+axum.workspace = true
+chrono.workspace = true
+clap.workspace = true
+hex.workspace = true
+http.workspace = true
+metrics.workspace = true
+openmls.workspace = true
+openmls_rust_crypto.workspace = true
+rand.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx = { workspace = true, features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "json",
+    "chrono",
+    "uuid"
+] }
+strum.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tracing-subscriber.workspace = true
+tracing.workspace = true
+
+common = { path = "../../common" }
+delivery-service-lib = { path = "../delivery-service-lib" }
+trust-anchors = { path = "../../trust-anchors" }
+
+[dev-dependencies]
+http-body-util.workspace = true
+hyper.workspace = true
+tower = { version = "0.5", features = ["util"] }

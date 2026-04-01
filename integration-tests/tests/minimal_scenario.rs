@@ -6,8 +6,8 @@ use client::commands::journalist::messages::send_journalist_to_user_cover_messag
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
+    stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
-    CoverDropStack,
 };
 
 /// This test is a minimal integration test that generates valid looking data for all public API
@@ -17,7 +17,9 @@ use integration_tests::{
 async fn minimal_scenario() {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::builder().build().await;
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
+        .build()
+        .await;
 
     let anchor_org_pks = stack.keys().anchor_org_pks();
 

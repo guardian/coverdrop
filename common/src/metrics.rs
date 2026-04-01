@@ -5,6 +5,7 @@ pub const COVERNODE_NAMESPACE: &str = "CoverDrop/CoverNode";
 pub const API_NAMESPACE: &str = "CoverDrop/API";
 pub const IDENTITY_API_NAMESPACE: &str = "CoverDrop/IdentityAPI";
 pub const U2J_APPENDER_NAMESPACE: &str = "CoverDrop/U2JAppender";
+pub const DELIVERY_SERVICE_NAMESPACE: &str = "CoverDrop/DeliveryService";
 
 pub async fn init_metrics(
     namespace: impl Into<String>,

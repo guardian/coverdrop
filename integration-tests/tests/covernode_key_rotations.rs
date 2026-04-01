@@ -19,7 +19,8 @@ use integration_tests::{
         trigger_expired_key_deletion_covernode, trigger_expired_key_deletion_identity_api,
         trigger_key_rotation_covernode,
     },
-    save_test_vector, CoverDropStack,
+    save_test_vector,
+    stack::{CoverDropStack, StackProfile},
 };
 use itertools::Itertools;
 
@@ -28,7 +29,7 @@ use itertools::Itertools;
 async fn covernode_key_rotations() {
     pretty_env_logger::try_init().unwrap();
 
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
         .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
         .build()
@@ -156,7 +157,7 @@ async fn covernode_key_rotations() {
 /// successful provisioning key rotation takes place. The API should accept the candidate id key signed by the old provisioning key.
 #[tokio::test]
 async fn concurrent_covernode_id_and_provisioning_key_rotations() {
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
         .build()
         .await;
@@ -246,7 +247,7 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
 /// successful identity key rotation. The API should accept the candidate msg key signed by the old identity key.
 #[tokio::test]
 async fn concurrent_covernode_msg_and_id_key_rotations() {
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
         .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
         .build()
@@ -336,7 +337,7 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
 /// leading to a truncated messaging key lifetime, but not triggering a msg key rotation
 #[tokio::test]
 async fn late_covernode_msg_and_id_key_rotations() {
-    let mut stack = CoverDropStack::builder()
+    let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)
         .with_covernode_task_runner_mode(RunnerMode::ManuallyTriggered)
         .build()

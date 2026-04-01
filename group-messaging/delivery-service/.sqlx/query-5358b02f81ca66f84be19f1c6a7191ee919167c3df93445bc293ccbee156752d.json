@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT client_id AS \"client_id: JournalistIdentity\" FROM clients\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "client_id: JournalistIdentity",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5358b02f81ca66f84be19f1c6a7191ee919167c3df93445bc293ccbee156752d"
+}

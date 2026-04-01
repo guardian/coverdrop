@@ -5,6 +5,7 @@ pub mod api_wrappers;
 pub mod constants;
 pub mod containers;
 pub mod docker_utils;
+pub mod group_messaging_utils;
 pub mod images;
 pub mod keys;
 pub mod mailboxes;
@@ -14,7 +15,7 @@ pub mod stack;
 pub mod utils;
 pub mod vectors;
 pub use images::{dev_j2u_mixing_config, dev_u2j_mixing_config};
-pub use stack::CoverDropStack;
+pub use stack::{CoverDropStack, StackProfile};
 use std::{future::Future, time::Duration};
 use tokio::time::sleep;
 

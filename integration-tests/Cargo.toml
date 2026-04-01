@@ -43,5 +43,14 @@ journalist-vault.path = "../journalist-vault"
 trust-anchors = { path = "../trust-anchors" }
 u2j-appender.path = "../u2j-appender"
 
+# Group messaging dependencies
+delivery-service = { path = "../group-messaging/delivery-service" }
+delivery-service-lib = { path = "../group-messaging/delivery-service-lib" }
+base64.workspace = true
+openmls.workspace = true
+openmls_rust_crypto.workspace = true
+openmls_basic_credential.workspace = true
+openmls_traits.workspace = true
+
 [dev-dependencies]
 pretty_env_logger.workspace = true

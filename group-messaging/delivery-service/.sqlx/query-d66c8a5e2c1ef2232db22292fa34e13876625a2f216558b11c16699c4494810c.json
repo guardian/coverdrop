@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE key_packages SET consumed_at = $1 WHERE key_package_hash = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d66c8a5e2c1ef2232db22292fa34e13876625a2f216558b11c16699c4494810c"
+}

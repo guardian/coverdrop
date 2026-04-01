@@ -1,5 +1,6 @@
 mod api;
 mod covernode;
+mod delivery_service;
 mod identity_api;
 mod kinesis;
 mod minio;
@@ -9,6 +10,7 @@ mod varnish;
 
 pub use self::api::{Api, ApiArgs};
 pub use self::covernode::{dev_j2u_mixing_config, dev_u2j_mixing_config, CoverNode, CoverNodeArgs};
+pub use self::delivery_service::{DeliveryService, DeliveryServiceArgs};
 pub use self::identity_api::{IdentityApi, IdentityApiArgs};
 pub use self::kinesis::Kinesis;
 pub use self::minio::{Minio, MinioArgs};

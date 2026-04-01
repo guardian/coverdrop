@@ -60,11 +60,14 @@ pub async fn generate_test_journalist(
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
     trust_anchors: Vec<AnchorOrganizationPublicKey>,
+    display_name: Option<String>,
 ) {
+    let display_name = display_name.unwrap_or_else(|| "Generated Test Journalist".into());
+    let id = display_name.to_lowercase().replace(' ', "_");
     generate_journalist(
         keys_dir,
-        "Generated Test Journalist".into(),
-        None,
+        display_name,
+        Some(id.clone()),
         Some("journalist generated test".into()),
         "This is a test journalist".into(),
         false,
@@ -77,7 +80,7 @@ pub async fn generate_test_journalist(
     .await
     .expect("Create journalist");
 
-    let vault_path = vault_path.as_ref().join("generated_test_journalist.vault");
+    let vault_path = vault_path.as_ref().join(format!("{}.vault", id));
 
     let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, trust_anchors)
         .await

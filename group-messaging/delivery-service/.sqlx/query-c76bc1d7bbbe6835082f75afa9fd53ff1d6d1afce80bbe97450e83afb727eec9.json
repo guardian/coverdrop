@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    message_id AS \"message_id: i32\",\n                    content AS \"content: TlsSerialized\",\n                    published_at AS \"published_at: DateTime<Utc>\"\n                FROM messages\n                WHERE to_client_id = $1\n                AND message_id > $2\n                ORDER BY message_id ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "message_id: i32",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "content: TlsSerialized",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 2,
+        "name": "published_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c76bc1d7bbbe6835082f75afa9fd53ff1d6d1afce80bbe97450e83afb727eec9"
+}

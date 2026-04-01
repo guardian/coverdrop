@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use integration_tests::keys::CoverNodeKeyMode;
-use integration_tests::CoverDropStack;
+use integration_tests::stack::{CoverDropStack, StackProfile};
 use tokio::time::sleep;
 
 #[tokio::test]
@@ -9,7 +9,7 @@ use tokio::time::sleep;
 async fn covernode_setup_bundle_test() -> anyhow::Result<()> {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::builder()
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_covernode_key_mode(CoverNodeKeyMode::SetupBundle)
         .build()
         .await;

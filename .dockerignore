@@ -16,3 +16,37 @@ integration-tests/vectors/
 ios/
 supply-chain/
 target/
+debug/
+target-analyzer/
+node_modules/
+
+# Test data files (vault files, passwords, mailboxes)
+*.vault
+*.vault-shm
+*.vault-wal
+*.password
+*.mailbox
+*.properties
+
+# Build and cache directories
+**/build/
+**/target/
+**/.gradle/
+**/.idea/
+**/.vscode/
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+
+# Key rotation and ceremony files
+key_rotation_ceremony*/
+
+# Git
+.git/
+.gitignore
+
+# IDEs
+*.swp
+*.swo
+*~
+.DS_Store

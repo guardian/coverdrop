@@ -1,5 +1,6 @@
 pub mod api;
 pub mod covernode;
+pub mod delivery_service;
 pub mod identity_api;
 pub mod kinesis;
 pub mod minio;

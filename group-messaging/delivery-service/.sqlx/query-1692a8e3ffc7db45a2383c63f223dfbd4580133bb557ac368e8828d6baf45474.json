@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO key_packages (key_package_hash, client_id, published_at, key_package)\n                VALUES ($1, $2, $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Text",
+        "Timestamptz",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1692a8e3ffc7db45a2383c63f223dfbd4580133bb557ac368e8828d6baf45474"
+}

@@ -1,5 +1,5 @@
 use common::api::models::general::{StatusEvent, SystemStatus};
-use integration_tests::{save_test_vector, CoverDropStack};
+use integration_tests::{save_test_vector, CoverDropStack, StackProfile};
 
 /// This tests that we have the correct initial state when we create a stack, and that
 /// adding journalists works as expected.
@@ -9,7 +9,7 @@ use integration_tests::{save_test_vector, CoverDropStack};
 async fn set_system_status() {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::new().await;
+    let stack = CoverDropStack::new(StackProfile::CoverDropOnly).await;
 
     // Get the initial status of the system
     {

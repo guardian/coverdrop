@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    UPDATE groups\n                    SET epoch = $1, updated_at = $2\n                    WHERE group_id = $3\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamptz",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9f5ff0d06a3bdea7267ed5d7265ebe7d317da57caa8655a121f196d3bda31745"
+}

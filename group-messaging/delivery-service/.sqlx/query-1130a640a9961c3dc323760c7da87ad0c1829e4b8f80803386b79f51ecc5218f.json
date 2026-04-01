@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    INSERT INTO groups (group_id, epoch, updated_at)\n                    VALUES ($1, $2, $3)\n                    ON CONFLICT (group_id) DO NOTHING\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bytea",
+        "Int8",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1130a640a9961c3dc323760c7da87ad0c1829e4b8f80803386b79f51ecc5218f"
+}

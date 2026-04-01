@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO messages (to_client_id, published_at, content)\n                SELECT recipient, $2, $3\n                FROM UNNEST($1::text[]) AS recipient\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "TextArray",
+        "Timestamptz",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "49e297e534008b6615f522a309126f6598afccf077e2df55a18138cfe61c948f"
+}

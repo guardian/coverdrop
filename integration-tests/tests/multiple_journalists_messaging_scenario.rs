@@ -10,8 +10,8 @@ use client::commands::{
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
+    stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
-    CoverDropStack,
 };
 use journalist_vault::VaultMessage;
 
@@ -35,7 +35,7 @@ static JOURNALIST2_MESSAGE: &str = "This is a test message from the journalist 2
 async fn multiple_journalists_messaging_scenario() {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::builder()
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_additional_journalists(1)
         .build()
         .await;

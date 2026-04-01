@@ -16,7 +16,7 @@ use common::{
 };
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_user_dead_drops},
-    dev_u2j_mixing_config, CoverDropStack,
+    dev_u2j_mixing_config, CoverDropStack, StackProfile,
 };
 use rand::Rng;
 use tokio::time;
@@ -42,7 +42,7 @@ enum RandomMessage {
 async fn user_mailbox_filling_scenario() {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::new().await;
+    let stack = CoverDropStack::new(StackProfile::CoverDropOnly).await;
 
     let anchor_org_pks = stack.keys().anchor_org_pks();
 

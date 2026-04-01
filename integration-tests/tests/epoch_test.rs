@@ -10,7 +10,7 @@ pub use futures_util::stream::FuturesUnordered;
 use futures_util::StreamExt;
 use integration_tests::{
     constants::{POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_USER},
-    CoverDropStack,
+    stack::{CoverDropStack, StackProfile},
 };
 use sqlx::postgres::PgPoolOptions;
 use tokio::task::JoinHandle;
@@ -28,7 +28,7 @@ use tokio::task::JoinHandle;
 async fn epoch_test() {
     pretty_env_logger::try_init().unwrap();
 
-    let stack = CoverDropStack::builder()
+    let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_additional_journalists(1)
         .build()
         .await;

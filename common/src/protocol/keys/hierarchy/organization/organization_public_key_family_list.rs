@@ -525,6 +525,15 @@ impl OrganizationPublicKeyFamilyList {
             .find(|(_, pk)| pk.key == *candidate_key)
     }
 
+    pub fn find_journalist_id_from_pk_bytes(
+        &self,
+        candidate_key: &[u8],
+    ) -> Option<&JournalistIdentity> {
+        self.journalist_id_pk_iter()
+            .find(|(_, pk)| *pk.key.as_bytes() == *candidate_key)
+            .map(|(journalist_id, _)| journalist_id)
+    }
+
     //
     // Verification:
     //    Used when you have a verified key hierarchy and you want to
