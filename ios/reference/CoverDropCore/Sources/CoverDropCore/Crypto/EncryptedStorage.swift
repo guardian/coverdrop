@@ -21,6 +21,8 @@ public struct EncryptedStorageSession {
 enum EncryptedStorageError: Error {
     case storageFileMissing
     case storageFileDeserializationFailed
+    case contentTooLarge
+    case storageTrimmingFailed
     case encryptionFailed
     case decryptionFailed
 }
@@ -111,15 +113,13 @@ public class EncryptedStorage {
         session: EncryptedStorageSession,
         state: UnlockedSecretData
     ) async throws {
-        // Pad the new state to a fixed size
-        var statePadded: [UInt8] = state.asUnencryptedBytes()
-        Sodium().utils.pad(bytes: &statePadded, blockSize: EncryptedStorage.storagePaddingToSize)
+        let statePadded = try await EncryptedStorage.trimAndDeserializeToPaddedData(state: state)
 
         // Encrypt using an AEAD algorithm.
         // This sets an IV/nonce internally making it CPA and CCA secure.
         // The nonce is included in the returned ciphertext.
         guard let ciphertext: Bytes = Sodium().aead.xchacha20poly1305ietf.encrypt(
-            message: statePadded,
+            message: statePadded.paddedBytes(),
             secretKey: session.cachedKey
         ) else { throw EncryptionError.failedToEncrypt }
 
@@ -133,6 +133,38 @@ public class EncryptedStorage {
             file: file,
             data: Array(jsonData)
         )
+    }
+
+    /// Serializes the `UnlockedSecretData` to a fixed-sized byte array (`FixedSizedPadding`).
+    ///  - Throws: if the serialized data exceeds the maximum size, this throws `EncryptedStorageError.contentTooLarge`
+    static func toPaddedData(state: UnlockedSecretData) throws -> FixedSizedPadding {
+        return try FixedSizedPadding(
+            targetSize: EncryptedStorage.storagePaddingToSize,
+            bytes: state.asUnencryptedBytes()
+        )
+    }
+
+    /// Serializes the `UnlockedSecretData` to a fixed-size bytes array (`FixedSizedPadding`) while removing oldest
+    /// messages
+    /// until it fits within the target size (`storagePaddingToSize`).
+    ///  - Throws:`storageTrimmingFailed` if despite iterative removal of messages, the content does not serialize to a
+    /// byte array that fits within the fixed sized padding.
+    static func trimAndDeserializeToPaddedData(state: UnlockedSecretData) async throws -> FixedSizedPadding {
+        // In the vast majority of cases, the mailbox fits within the target size
+        if let padded = try? toPaddedData(state: state) {
+            return padded
+        }
+
+        // Otherwise try again while we remove the oldest message
+        while await state.removeOldestMessage() {
+            if let padded = try? toPaddedData(state: state) {
+                return padded
+            }
+        }
+
+        // Despite our best efforts to remove as many messages as possible, we fail to serialize. This should never
+        // happen.
+        throw EncryptedStorageError.storageTrimmingFailed
     }
 
     /// Derives a session with the provided passphrase that allows reading and writing to the storage.
@@ -190,9 +222,12 @@ public class EncryptedStorage {
             secretKey: [UInt8](session.cachedKey)
         ) else { throw EncryptedStorageError.decryptionFailed }
 
-        // Unpad and decode
-        Sodium().utils.unpad(bytes: &plaintext, blockSize: EncryptedStorage.storagePaddingToSize)
-        return try UnlockedSecretData.fromUnencryptedBytes(bytes: plaintext)
+        // Unpad and deserialize
+        let paddedState = try FixedSizedPadding.fromPaddedBytes(
+            plaintext,
+            targetSize: EncryptedStorage.storagePaddingToSize
+        )
+        return try UnlockedSecretData.fromUnencryptedBytes(bytes: paddedState.getBytes())
     }
 
     /// Named initializer to highlight that this should only be created from the secret data repository.

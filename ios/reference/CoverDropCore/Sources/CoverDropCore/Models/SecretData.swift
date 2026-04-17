@@ -86,6 +86,18 @@ public class UnlockedSecretData: Codable, Equatable, ObservableObject {
         }
     }
 
+    public func removeOldestMessage() async -> Bool {
+        guard let oldestMessage = messageMailbox.min(by: { $0.getDate() < $1.getDate() }) else {
+            return false
+        }
+
+        messageMailbox.remove(oldestMessage)
+        _ = await MainActor.run {
+            publishedMessageMailbox.remove(oldestMessage)
+        }
+        return true
+    }
+
     public static func == (lhs: UnlockedSecretData, rhs: UnlockedSecretData) -> Bool {
         return lhs.messageMailbox == rhs.messageMailbox &&
             lhs.userKey.publicKey.key == rhs.userKey.publicKey.key &&
