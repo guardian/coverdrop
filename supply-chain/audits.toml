@@ -130,6 +130,11 @@ criteria = "safe-to-deploy"
 delta = "0.20.1 -> 0.20.3"
 notes = "Simply bumps a transitive dependency."
 
+[[audits.deranged]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.5.5"
+
 [[audits.directories]]
 who = "Sam Cutler <sam.cutler@theguardian.com>"
 criteria = "safe-to-deploy"
