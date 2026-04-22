@@ -265,6 +265,11 @@ criteria = "safe-to-deploy"
 version = "0.0.1"
 notes = "This is required by the dirs create, and is to support redox-os within dirs"
 
+[[audits.lru-slab]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+version = "0.1.2"
+
 [[audits.matchers]]
 who = "Daniel Hugenroth <daniel.hugenroth.contractor@theguardian.com>"
 criteria = "safe-to-deploy"
