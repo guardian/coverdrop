@@ -345,47 +345,6 @@ impl Database {
     // Dead drops
     //
 
-    // TODO we're moving to max dead drop being tracked by each vault rather than
-    // by the canary database. Remove this function and drop the table.
-    // https://github.com/guardian/coverdrop-internal/issues/3856
-    pub async fn insert_u2j_processed_dead_drop(
-        &self,
-        dead_drop_id: &i32,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        let mut connection = self.pool.acquire().await?;
-
-        sqlx::query!(
-            r#"
-                INSERT INTO u2j_processed_dead_drops (
-                    dead_drop_id,
-                    processed_at
-                ) VALUES
-                ($1, $2)
-            "#,
-            dead_drop_id,
-            now,
-        )
-        .execute(&mut *connection)
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn get_max_u2j_dead_drop_id(&self) -> anyhow::Result<i32> {
-        let mut connection = self.pool.acquire().await?;
-        let row = sqlx::query!(
-            r#"
-                SELECT MAX(dead_drop_id) AS "max_dead_drop_id: i32"
-                FROM u2j_processed_dead_drops;
-            "#
-        )
-        .fetch_one(&mut *connection)
-        .await?;
-
-        Ok(row.max_dead_drop_id.unwrap_or(0))
-    }
-
     pub async fn insert_j2u_processed_dead_drop(
         &self,
         dead_drop_id: &i32,
