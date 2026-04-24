@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "npm@11.11.1",
+  "engines": {
+    "npm": ">=11.11.1"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && VITE_BUILD_DATE=$( date -u +\"%H:%M:%S %Z %Y-%m-%d\" ) vite build",
