@@ -228,6 +228,11 @@ criteria = "safe-to-deploy"
 version = "0.9.0"
 notes = "Hyper client and server bindings for Unix domain sockets, looks good"
 
+[[audits.id-arena]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "2.2.1 -> 2.3.0"
+
 [[audits.io-lifetimes]]
 who = "Sam Cutler <sam.cutler@guardian.co.uk>"
 criteria = "safe-to-deploy"
@@ -422,6 +427,16 @@ version = "0.12.5"
 who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
 version = "0.2.1"
+
+[[audits.rand_chacha]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.0 -> 0.10.0"
+
+[[audits.rand_core]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.10.0 -> 0.10.1"
 
 [[audits.rand_xoshiro]]
 who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
@@ -959,6 +974,18 @@ user-id = 5059 # Artyom Pavlov (newpavlov)
 start = "2019-03-11"
 end = "2027-03-31"
 
+[[trusted.dtoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2027-04-23"
+
+[[trusted.dyn-clone]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-12-23"
+end = "2027-04-23"
+
 [[trusted.ecdsa]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -976,6 +1003,12 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-11-24"
 end = "2024-07-17"
+
+[[trusted.erased-serde]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2020-01-06"
+end = "2027-04-23"
 
 [[trusted.ff]]
 criteria = "safe-to-deploy"
@@ -1144,6 +1177,12 @@ criteria = "safe-to-deploy"
 user-id = 539 # Josh Stone (cuviper)
 start = "2020-01-15"
 end = "2025-10-16"
+
+[[trusted.indoc]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-28"
+end = "2027-04-23"
 
 [[trusted.is-terminal]]
 criteria = "safe-to-deploy"
@@ -1471,6 +1510,12 @@ end = "2027-03-31"
 
 [[trusted.openmls_rust_crypto]]
 criteria = "safe-to-deploy"
+user-id = 104470 # raphaelrobert
+start = "2022-02-04"
+end = "2027-04-23"
+
+[[trusted.openmls_rust_crypto]]
+criteria = "safe-to-deploy"
 user-id = 150389 # Konrad Kohbrok (kkohbrok)
 start = "2022-02-23"
 end = "2027-03-31"
@@ -1534,6 +1579,12 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-08-16"
 end = "2024-07-17"
+
+[[trusted.prettyplease]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2022-01-04"
+end = "2027-04-23"
 
 [[trusted.primeorder]]
 criteria = "safe-to-deploy"
@@ -1625,6 +1676,12 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
 end = "2024-07-17"
 
+[[trusted.serde-untagged]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2023-08-27"
+end = "2027-04-23"
+
 [[trusted.serde_bytes]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1636,6 +1693,12 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
 end = "2024-07-17"
+
+[[trusted.serde_derive_internals]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-09-08"
+end = "2027-04-23"
 
 [[trusted.serde_json]]
 criteria = "safe-to-deploy"
@@ -1677,7 +1740,7 @@ end = "2025-10-16"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.termcolor]]
 criteria = "safe-to-deploy"
@@ -1780,6 +1843,12 @@ criteria = "safe-to-deploy"
 user-id = 10 # Carl Lerche (carllerche)
 start = "2019-04-27"
 end = "2024-07-17"
+
+[[trusted.typeid]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2024-05-13"
+end = "2027-04-23"
 
 [[trusted.ucd-trie]]
 criteria = "safe-to-deploy"
