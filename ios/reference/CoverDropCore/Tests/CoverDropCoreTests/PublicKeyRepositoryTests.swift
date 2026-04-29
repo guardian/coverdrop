@@ -63,7 +63,7 @@ final class PublicKeyRepositoryTests: XCTestCase {
         XCTAssertTrue(keys == results)
     }
 
-    func testFailsWhenWhenOutsideCacheTimeframeAndFileLoadAndApiFail() async throws {
+    func testFailsWhenWhenOutsideCacheTimeframeAndFileLoadAndApiFail() async {
         let sessionConfig = mockApiResponseFailure()
 
         let repo = PublicKeyRepository(
@@ -83,15 +83,13 @@ final class PublicKeyRepositoryTests: XCTestCase {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 
     func mockApiResponseFailure() -> URLSession {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = [:]
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 }

@@ -130,12 +130,11 @@ public enum CoverDropServiceHelper {
             )))
         ]
 
-        let data = UnlockedSecretData(
+        return UnlockedSecretData(
             messageMailbox: messages,
             userKey: userKeyPair,
             privateSendingQueueSecret: privateSendingQueueSecret
         )
-        return data
     }
 
     private static func addTestStorage(

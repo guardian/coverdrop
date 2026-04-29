@@ -2,7 +2,7 @@
 import XCTest
 
 final class PasswordGeneratorTests: XCTestCase {
-    func testLoadsFileSuccessfully() throws {
+    func testLoadsFileSuccessfully() {
         let generator = PasswordGenerator.shared
         XCTAssertEqual(
             // The large wordlist, contains enough words for passwords to be created from 5d6
@@ -24,10 +24,9 @@ final class PasswordGeneratorTests: XCTestCase {
         XCTAssertEqual(password.password, verify.password)
     }
 
-    // This test is useful if we change the underlying checksum method, since that would pass roundtrip
-    // but fail this test. If we were to accidentally change the checksum method then all our clients would
-    // suddently get their passwords rejected - very bad.
-
+    /// This test is useful if we change the underlying checksum method, since that would pass roundtrip
+    /// but fail this test. If we were to accidentally change the checksum method then all our clients would
+    /// suddently get their passwords rejected - very bad.
     func testCheckHardcodedString() throws {
         let password = "external jersey squeeze luckiness collector"
         let verify = try PasswordGenerator.checkValid(passwordInput: password)
@@ -35,11 +34,10 @@ final class PasswordGeneratorTests: XCTestCase {
         XCTAssertEqual(password, "\(verify.password)")
     }
 
-    // Since our word list is all lower case it's never valid to have an upper case character anywhere
-    // in the password. As such, it feels pointless to punish our users if they accidentally capitalise
-    // something. So we always lower case the password when checking it's valid.
-
-    func testCheckHardcodedStringCaseInsensitive() throws {
+    /// Since our word list is all lower case it's never valid to have an upper case character anywhere
+    /// in the password. As such, it feels pointless to punish our users if they accidentally capitalise
+    /// something. So we always lower case the password when checking it's valid.
+    func testCheckHardcodedStringCaseInsensitive() {
         let password = "external jersey SQUEEZE luckiness collector"
         guard let validated = try? PasswordGenerator.checkValid(passwordInput: password) else {
             XCTFail("Password in test was invalid")
@@ -57,7 +55,7 @@ final class PasswordGeneratorTests: XCTestCase {
         }
     }
 
-    // This could possibly be replaced with some genuine fuzzing, but this will do for now
+    /// This could possibly be replaced with some genuine fuzzing, but this will do for now
     func testFormatErrorsFail() throws {
         let passwords: [String] = [
             // Check that empty password is invalid

@@ -37,7 +37,7 @@ final class SecretDataRepositoryTests: XCTestCase {
         let passphrase = ValidPassword(password: "external jersey squeeze")
         try await secretDataRepository.createOrReset(passphrase: passphrase)
 
-        let recipient = PublicKeysHelper.shared.testDefaultJournalist!
+        let recipient = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
         let privateSendingQueueSecret = try PrivateSendingQueueSecret.fromSecureRandom()
         let userKeyPair: EncryptionKeypair<User> = try EncryptionKeypair<User>.generateEncryptionKeypair()
 
@@ -113,7 +113,7 @@ final class SecretDataRepositoryTests: XCTestCase {
         try await secretDataRepository.createOrReset(passphrase: passphrase)
 
         // Create a recipient journalist and the user key pair
-        let recipient = PublicKeysHelper.shared.testDefaultJournalist!
+        let recipient = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
         let privateSendingQueueSecret = try PrivateSendingQueueSecret.fromSecureRandom()
         let userKeyPair: EncryptionKeypair<User> = try EncryptionKeypair<User>.generateEncryptionKeypair()
 
@@ -206,7 +206,7 @@ final class SecretDataRepositoryTests: XCTestCase {
 
     func testMessagesAreBeingExpiredOnSave() async throws {
         // We do some manual time-travel, so let's lock us in with a stable base, doc!
-        let baseTime = try PublicKeysHelper.readLocalGeneratedAtFile()!
+        let baseTime = try XCTUnwrap(try PublicKeysHelper.readLocalGeneratedAtFile())
         let expiryTime = try baseTime.plusSeconds(Constants.messageValidForDurationInSeconds)
         TestingBridge.setCurrentTimeOverride(override: baseTime)
 
@@ -233,7 +233,7 @@ final class SecretDataRepositoryTests: XCTestCase {
         try await secretDataRepository.createOrReset(passphrase: passphrase)
 
         // Create a recipient journalist and the user key pair
-        let recipient = PublicKeysHelper.shared.testDefaultJournalist!
+        let recipient = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
         let privateSendingQueueSecret = try PrivateSendingQueueSecret.fromSecureRandom()
         let userKeyPair: EncryptionKeypair<User> = try EncryptionKeypair<User>.generateEncryptionKeypair()
 
@@ -414,7 +414,6 @@ final class SecretDataRepositoryTests: XCTestCase {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 }

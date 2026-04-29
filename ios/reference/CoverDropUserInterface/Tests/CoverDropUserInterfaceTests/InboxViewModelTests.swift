@@ -6,7 +6,7 @@ import XCTest
 // swiftlint:disable force_try
 @MainActor
 final class InboxViewModelTests: XCTestCase {
-    // the hour is the number of hours to add / subtract from noon
+    /// the hour is the number of hours to add / subtract from noon
     private func testDate(hourFromNoon hour: Int = 0) -> Date {
         if let date = try? XCTUnwrap(DateComponents(
             calendar: .current,
@@ -59,8 +59,8 @@ final class InboxViewModelTests: XCTestCase {
         XCTAssertNotNil(activeMessage)
     }
 
-    // Note this case should not be allowed within the UI
-    // You should not be able to send outbound messages to multiple journalists without receiving a reply
+    /// Note this case should not be allowed within the UI
+    /// You should not be able to send outbound messages to multiple journalists without receiving a reply
     func testActiveConversatoinWithTwoOutboundMessagesOnly() throws {
         let privateSendingQueueSecret = try PrivateSendingQueueSecret.fromSecureRandom()
 
@@ -329,7 +329,7 @@ final class InboxViewModelTests: XCTestCase {
         XCTAssertEqual(inactiveMessage?.count, 1)
 
         // and the inactive conversation is the older one
-        XCTAssertEqual(inactiveMessage!.first, expectedInactiveMessage)
+        XCTAssertEqual(inactiveMessage?.first, expectedInactiveMessage)
     }
 }
 

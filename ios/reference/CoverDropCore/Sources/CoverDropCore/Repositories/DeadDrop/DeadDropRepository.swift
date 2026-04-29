@@ -23,7 +23,6 @@ class DeadDropRepository: CacheableApiRepository<DeadDropData> {
     /// A merge and trim only happens when new dead drops have been got from the api.
     /// At any point in time, the dead drop api only has the last 2 weeks worth of dead drops, so inital loading will
     /// generally have a fixed size.
-
     override func getFromApiAndCache() async -> DeadDropData? {
         do {
             var availableCachedData: DeadDropData = .init(deadDrops: [])

@@ -27,7 +27,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         let results = try await DeadDropRepository(config: config, urlSession: urlSession)
             .downloadAndUpdateAllCaches(cacheEnabled: true)
 
-        XCTAssertTrue(results!.deadDrops.isEmpty)
+        XCTAssertTrue(try XCTUnwrap(results?.deadDrops.isEmpty))
     }
 
     func testFirstRunDoesNotCacheIfAPIResponseFailedAndCacheDisabled() async throws {
@@ -36,7 +36,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         let results = try await DeadDropRepository(config: config, urlSession: urlSession)
             .downloadAndUpdateAllCaches(cacheEnabled: false)
 
-        XCTAssertTrue(results!.deadDrops.isEmpty)
+        XCTAssertTrue(try XCTUnwrap(results?.deadDrops.isEmpty))
     }
 
     func testFirstRunWithOutsideCacheWindowApiResponseLoadsDeadDropsAndCacheDisabled() async throws {
@@ -218,15 +218,15 @@ final class DeadDropRepositoryTests: XCTestCase {
         }
 
         let deadDropDataResponse = Data(deadDropJsonResponse)
-        let deadDropMockApiResponse = [URL(string: "\(baseUrl + deadDropAPIPath)")!: MockResponse(
+        let deadDropMockApiResponse = try [XCTUnwrap(URL(string: "\(baseUrl + deadDropAPIPath)")): MockResponse(
             error: nil,
             data: deadDropDataResponse,
-            response: HTTPURLResponse(
-                url: URL(string: "\(baseUrl + deadDropAPIPath)")!,
+            response: XCTUnwrap(try HTTPURLResponse(
+                url: XCTUnwrap(URL(string: "\(baseUrl + deadDropAPIPath)")),
                 statusCode: 200,
                 httpVersion: nil,
                 headerFields: nil
-            )!
+            ))
         )]
 
         let urlSession = mockApiResponse(mockData: deadDropMockApiResponse)
@@ -272,19 +272,17 @@ final class DeadDropRepositoryTests: XCTestCase {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = suppliedMockData
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 
     func mockApiResponseFailure() -> URLSession {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = [:]
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 
-    func testDeadDrops_whenDownloadedWithNonEmptyStorage_thenMergedTrimmedAndAvailableAsMostRecent() async throws {
+    func testDeadDrops_whenDownloadedWithNonEmptyStorage_thenMergedTrimmedAndAvailableAsMostRecent() {
         let deadDropApril01 = fakeUserFacingDeadDrop(
             id: 10,
             createdAt: DateFormats.validateDate(date: "2023-04-01T00:00:00Z") ?? DateFunction.currentTime()

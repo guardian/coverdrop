@@ -8,11 +8,6 @@ struct MessageView: View {
     var message: UiMessage
     var id: Int
 
-    public init(message: UiMessage, id: Int) {
-        self.message = message
-        self.id = id
-    }
-
     var body: some View {
         HStack(alignment: .bottom) {
             if message.isOutgoing {

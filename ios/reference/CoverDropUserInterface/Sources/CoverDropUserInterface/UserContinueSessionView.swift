@@ -11,7 +11,7 @@ enum ContinueSessionError: Error {
 }
 
 extension ContinueSessionError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .missingWords:
             return "Please fill in all passphrase words."
@@ -129,7 +129,10 @@ struct UserContinueSessionView: View {
     }
 
     var lib: CoverDropLibrary
-    var wordCount: Int { lib.config.passphraseWordCount }
+    var wordCount: Int {
+        lib.config.passphraseWordCount
+    }
+
     var validPrefixes = Set<String>()
 
     @Published var state: State = .enter

@@ -12,8 +12,7 @@ struct DeadDropWebRepository: CacheableWebRepository {
     let baseUrl: String
 
     func get(params: [String: String]?) async throws -> DeadDropData {
-        let response: DeadDropData = try await call(endpoint: API.allDeadDrops(params: params))
-        return response
+        return try await call(endpoint: API.allDeadDrops(params: params))
     }
 }
 

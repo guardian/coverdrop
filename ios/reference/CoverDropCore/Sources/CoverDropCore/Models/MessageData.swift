@@ -117,12 +117,6 @@ public struct HandoverMessageData: Hashable, Codable, Comparable {
             lhs.timestamp < rhs.timestamp
     }
 
-    public static func == (lhs: HandoverMessageData, rhs: HandoverMessageData) -> Bool {
-        return lhs.handoverTo == rhs.handoverTo &&
-            lhs.sender == rhs.sender &&
-            lhs.timestamp == rhs.timestamp
-    }
-
     init?(sender: JournalistData, timestamp: Date, handoverTo: String) {
         if handoverTo.count > Constants.maxJournalistIdentityLen {
             return nil

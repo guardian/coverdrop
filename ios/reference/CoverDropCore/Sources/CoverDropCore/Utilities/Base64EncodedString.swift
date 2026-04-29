@@ -3,7 +3,7 @@ import Foundation
 /// A Base64EncodedString string is a base64 string representation of a byte array
 /// This is used to decode base64 encoded strings from our API responses
 public struct Base64EncodedString: Codable, Equatable {
-    // This init is here to facilitate testing
+    /// This init is here to facilitate testing
     init(bytes: [UInt8]) {
         self.bytes = bytes
     }

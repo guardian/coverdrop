@@ -15,7 +15,6 @@ import Sodium
 ///
 /// Please read `https://github.com/guardian/coverdrop/blob/main/docs/cryptography.md` for details on `AnonymousBox`
 /// functions
-
 public struct AnonymousBox<T: Encryptable>: Equatable {
     let pkTagAndCiphertext: [UInt8]
 }

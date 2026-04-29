@@ -15,7 +15,7 @@ final class InboxUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    func testConversationCannotBeRepliedToIfInactive() throws {
+    func testConversationCannotBeRepliedToIfInactive() {
         // This START_WITH_MESSAGES launch argument is required to add test messages to the inbox.
         // This is needed because we only decrypt messages for journalists already in your inbox,
         // so without these inital messages we cannot process the dead drop fixtures
@@ -42,7 +42,7 @@ final class InboxUITest: XCTestCase {
         ).count > 0)
     }
 
-    func testConversationCanBeRepliedToIfJournalistIsLastSender() throws {
+    func testConversationCanBeRepliedToIfJournalistIsLastSender() {
         // This START_WITH_MESSAGES launch argument is required to add test messages to the inbox.
         // This is needed because we only decrypt messages for journalists already in your inbox,
         // so without these inital messages we cannot process the dead drop fixtures

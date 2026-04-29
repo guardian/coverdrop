@@ -107,7 +107,9 @@ class OnboardingViewModel: ObservableObject {
 }
 
 enum OnboardingSteps: String, CustomStringConvertible, CaseIterable, Identifiable {
-    var id: Self { self }
+    var id: Self {
+        self
+    }
 
     case sendMessage = "Send a message"
     case checkResponse = "Check back for a response"

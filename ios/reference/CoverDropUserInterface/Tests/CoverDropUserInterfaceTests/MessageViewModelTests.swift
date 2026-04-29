@@ -23,7 +23,7 @@ final class MessageViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func testMessageLengthWithShortMessage() async {
+    func testMessageLengthWithShortMessage() {
         // GIVEN a `MessageViewModel`
         let sut = ConversationViewModel(lib: lib)
 
@@ -35,7 +35,7 @@ final class MessageViewModelTests: XCTestCase {
     }
 
     @MainActor
-    func testMessageLengthWithLongMessage() async {
+    func testMessageLengthWithLongMessage() {
         // GIVEN a `MessageViewModel`
         let sut = ConversationViewModel(lib: lib)
 

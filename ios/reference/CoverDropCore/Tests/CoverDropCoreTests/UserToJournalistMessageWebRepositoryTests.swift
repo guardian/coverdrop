@@ -10,7 +10,7 @@ final class UserToJournalistMessageRepositoryTests: XCTestCase {
         let bytesLength = (numRecipients * Sodium().secretBox.KeyBytes + Sodium().box.SealBytes) + Sodium().secretBox
             .MacBytes
 
-        let bytes = Sodium().randomBytes.buf(length: bytesLength)!
+        let bytes = try XCTUnwrap(Sodium().randomBytes.buf(length: bytesLength))
 
         let message = MultiAnonymousBox<UserToCoverNodeMessageData>(bytes: bytes)
         guard let data = message.asBytes().base64Encode() else {
@@ -34,7 +34,7 @@ final class UserToJournalistMessageRepositoryTests: XCTestCase {
         let bytesLength = (numRecipients * Sodium().secretBox.KeyBytes + Sodium().box.SealBytes) + Sodium().secretBox
             .MacBytes
 
-        let bytes = Sodium().randomBytes.buf(length: bytesLength)!
+        let bytes = try XCTUnwrap(Sodium().randomBytes.buf(length: bytesLength))
 
         let message = MultiAnonymousBox<UserToCoverNodeMessageData>(bytes: bytes)
         guard let data = message.asBytes().base64Encode() else {
@@ -59,15 +59,13 @@ final class UserToJournalistMessageRepositoryTests: XCTestCase {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = MockUrlData.getMockUrlData()
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 
     func mockApiResponseFailure() -> URLSession {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = [:]
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 }

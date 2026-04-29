@@ -18,8 +18,7 @@ func getHumanReadableDigest(key: Sign.KeyPair.PublicKey) -> String {
             .prefix(22)
     )
 
-    let chunked = base64.chunked(into: 6).joined(separator: " ")
-    return chunked
+    return base64.chunked(into: 6).joined(separator: " ")
 }
 
 extension String {

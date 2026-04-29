@@ -40,24 +40,21 @@ public class PublicKeysHelper {
                                                 config: StaticConfig) throws -> VerifiedPublicKeys? {
         // swiftlint:disable:next force_try
         let trustedOrganizationSigningKeys = try! PublicKeysHelper.readLocalTrustedOrganizationKeys(config: config)
-        let verifiedPublicKeysData = try VerifiedPublicKeys(
+        return try VerifiedPublicKeys(
             publicKeysData: publicKeysData,
             trustedOrganizationPublicKeys: trustedOrganizationSigningKeys,
             currentTime: DateFunction.currentTime()
         )
-        return verifiedPublicKeysData
     }
 
     public static func readLocalKeysFile() throws -> PublicKeysData {
         let data = try readLocalKeysJson()
-        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
-        return keys
+        return try JSONDecoder().decode(PublicKeysData.self, from: data)
     }
 
     public static func readLocalMultipleMessagingKeysFile() throws -> PublicKeysData {
         let data = try readLocalMultipleMessagingKeysJson()
-        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
-        return keys
+        return try JSONDecoder().decode(PublicKeysData.self, from: data)
     }
 
     public static func readLocalKeysJson() throws -> Data {
@@ -67,8 +64,7 @@ public class PublicKeysHelper {
             withExtension: ".json",
             subdirectory: "vectors/messaging_scenario/published_keys"
         ) else { throw KeysError.cannotFindFileError }
-        let data = try Data(contentsOf: resourceUrl)
-        return data
+        return try Data(contentsOf: resourceUrl)
     }
 
     public static func readLocalMultipleMessagingKeysJson() throws -> Data {
@@ -78,8 +74,7 @@ public class PublicKeysHelper {
             withExtension: ".json",
             subdirectory: "vectors/multiple_journalists_messaging_scenario/published_keys"
         ) else { throw KeysError.cannotFindFileError }
-        let data = try Data(contentsOf: resourceUrl)
-        return data
+        return try Data(contentsOf: resourceUrl)
     }
 
     public static func readLocalMessagingKeysNoDefaultJournalistJson() throws -> Data {
@@ -89,16 +84,14 @@ public class PublicKeysHelper {
             withExtension: ".json",
             subdirectory: "vectors/messaging_scenario/published_keys"
         ) else { throw KeysError.cannotFindFileError }
-        let data = try Data(contentsOf: resourceUrl)
-        return data
+        return try Data(contentsOf: resourceUrl)
     }
 
     public static func readLocalTrustedOrganizationKeys(config: StaticConfig) throws -> [TrustedOrganizationPublicKey] {
-        let trustedRootKeys = try OrganizationKeysLoader.loadTrustedOrganizationPublicKeys(
+        return try OrganizationKeysLoader.loadTrustedOrganizationPublicKeys(
             envType: config.envType,
             now: readLocalGeneratedAtFile()!
         )
-        return trustedRootKeys
     }
 
     public static func readLocalKeypairFile(path: String) throws -> UnverifiedSignedPublicSigningKeyPairData {
@@ -108,8 +101,7 @@ public class PublicKeysHelper {
             throw KeysError.cannotFindFileError
         }
         let data = try Data(contentsOf: resourceUrl)
-        let keyData = try JSONDecoder().decode(UnverifiedSignedPublicSigningKeyPairData.self, from: data)
-        return keyData
+        return try JSONDecoder().decode(UnverifiedSignedPublicSigningKeyPairData.self, from: data)
     }
 
     public static func readLocalKeypairKeyOnlyFile(path: String) throws
@@ -120,8 +112,7 @@ public class PublicKeysHelper {
             throw KeysError.cannotFindFileError
         }
         let data = try Data(contentsOf: resourceUrl)
-        let keyData = try JSONDecoder().decode(UnverifiedSignedPublicSigningKeyPairDataKeyOnly.self, from: data)
-        return keyData
+        return try JSONDecoder().decode(UnverifiedSignedPublicSigningKeyPairDataKeyOnly.self, from: data)
     }
 
     public static func readLocalGeneratedAtFile() throws -> Date? {

@@ -120,15 +120,13 @@ final class StatusRepositoryTests: XCTestCase {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = suppliedMockData
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 
     func mockApiResponseFailure() -> URLSession {
         let urlSessionConfig = URLSessionConfiguration.ephemeral
         URLProtocolMock.mockURLs = [:]
         urlSessionConfig.protocolClasses = [URLProtocolMock.self]
-        let urlSession = URLSession(configuration: urlSessionConfig)
-        return urlSession
+        return URLSession(configuration: urlSessionConfig)
     }
 }

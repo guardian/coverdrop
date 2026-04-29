@@ -176,7 +176,7 @@ class AboutCoverDropViewModel: ObservableObject {
 
     @MainActor @Published var state: State = .loading
 
-    public init(lib: CoverDropLibrary) {
+    init(lib: CoverDropLibrary) {
         self.lib = lib
     }
 

@@ -40,7 +40,7 @@ public class EncryptedStorage {
     let xchacha20poly1305KeySize = 32
     let file = CoverDropFiles.encryptedStorage
 
-    fileprivate init() {}
+    private init() {}
 
     /// To be called on every app start. If no storage exists, a new one is created with an undisclosed passphrase. If
     /// one already exists, its last-modified date is updated.

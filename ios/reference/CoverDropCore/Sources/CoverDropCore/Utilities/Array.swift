@@ -1,8 +1,8 @@
 import Foundation
 
 extension Array {
-    // Safely lookup an index that might be out of bounds,
-    // returning nil if it does not exist
+    /// Safely lookup an index that might be out of bounds,
+    /// returning nil if it does not exist
     func get<T>(index: Int) -> T? {
         if index >= 0, index < count {
             return self[index] as? T

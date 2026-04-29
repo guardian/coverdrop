@@ -16,7 +16,6 @@ final class SelectRecipientUITests: XCTestCase {
     /// Given    user visits the recipient selection screen
     /// When    loaded
     /// Then    all desks are shown
-
     func testDesksShown() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         let state = Navigation.navigateToPassphraseAfterOnboarding(in: app, with: timeout)
@@ -31,7 +30,6 @@ final class SelectRecipientUITests: XCTestCase {
     /// Given   user visits the recipient selection screen
     /// When    journalist tab is clicked
     /// Then    all journalists are shown
-
     func testJournalistsShow() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         let state = Navigation.navigateToPassphraseAfterOnboarding(in: app, with: timeout)
@@ -48,7 +46,6 @@ final class SelectRecipientUITests: XCTestCase {
     /// Given   user visits the recipient selection screen
     /// When    a desk item is clicked
     /// Then    the desk confirmation screen is shown
-
     func testDeskDetailScreenShown() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         let state = Navigation.navigateToPassphraseAfterOnboarding(in: app, with: timeout)
@@ -69,7 +66,6 @@ final class SelectRecipientUITests: XCTestCase {
     /// Given   user visits the recipient selection screen
     /// When    a desk item is clicked and then "Select desk" is clicked
     /// Then    the desk is returned as confirmed id
-
     func testDeskSelected() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         let state = Navigation.navigateToPassphraseAfterOnboarding(in: app, with: timeout)
@@ -89,7 +85,6 @@ final class SelectRecipientUITests: XCTestCase {
     /// Given   user visits the recipient selection screen
     /// When    the "Select" button next to a journalist is clicked
     /// Then    the journalist is returned as confirmed id
-
     func testJournalistSelected() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         let state = Navigation.navigateToPassphraseAfterOnboarding(in: app, with: timeout)

@@ -29,12 +29,10 @@ struct InboxView: View {
         }
     }
 
-    @ViewBuilder
     private func messagingTitle() -> Text {
         Text("Messaging with")
     }
 
-    @ViewBuilder
     func activeConversationView(for activeConversation: ActiveConversation) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Button(action: {
@@ -89,7 +87,6 @@ struct InboxView: View {
         )
     }
 
-    @ViewBuilder
     func inactiveConversationsView(for inactiveConversations: [InactiveConversation]) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Previous messages").textStyle(InlineButtonTextStyle())
@@ -103,7 +100,6 @@ struct InboxView: View {
         .padding(Padding.large)
     }
 
-    @ViewBuilder
     func inactiveConversationsRow(for inactiveConversation: InactiveConversation) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             messagingTitle()

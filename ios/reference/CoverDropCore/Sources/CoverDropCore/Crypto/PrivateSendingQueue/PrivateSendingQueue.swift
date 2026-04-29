@@ -23,9 +23,9 @@ enum PrivateSendingQueueError: Error {
     case unexpectedEndOfStream
 }
 
-// This is a Hmac of the encrypted message ciphertext
-// and is used internally within the application to idetify if a message
-// is still in the queue, without needed to decrypt the enqueued message to check the value.
+/// This is a Hmac of the encrypted message ciphertext
+/// and is used internally within the application to idetify if a message
+/// is still in the queue, without needed to decrypt the enqueued message to check the value.
 public struct HintHmac: Codable, Equatable, Hashable {
     public let hint: [UInt8]
 
@@ -342,8 +342,7 @@ public enum PrivateSendingQueueHmac {
     public static func hmac(secretKey: [UInt8], message: [UInt8]) -> [UInt8] {
         let key = SymmetricKey(data: Data(secretKey))
         let hashInt = HMAC<SHA256>.authenticationCode(for: Data(message), using: key)
-        let byteArray = Array(withUnsafeBytes(of: hashInt) { Data($0) })
-        return byteArray
+        return Array(withUnsafeBytes(of: hashInt) { Data($0) })
     }
 }
 

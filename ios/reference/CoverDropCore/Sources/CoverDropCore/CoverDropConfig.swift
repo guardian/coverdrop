@@ -7,9 +7,9 @@ public protocol CoverDropConfig {
     var messageBaseUrl: String { get }
     var cacheEnabled: Bool { get }
     var passphraseWordCount: Int { get }
-    // This is the duration between background message sending
+    /// This is the duration between background message sending
     var minDurationBetweenBackgroundRunsInSecs: Int { get }
-    // This is the longest duration you can have the app in the background before you are logged out
+    /// This is the longest duration you can have the app in the background before you are logged out
     var maxBackgroundDurationInSeconds: Int { get }
     var numMessagesPerBackgroundRun: Int { get }
     var withSecureDns: Bool { get }

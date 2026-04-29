@@ -16,9 +16,7 @@ public enum MessageComposeError: Error {
     @Published var message = ""
     @Published var state = State.initial
 
-    public init(
-        lib: CoverDropLibrary
-    ) {
+    init(lib: CoverDropLibrary) {
         // We will always set messageRecipient to the supplied one
         // but set it with the defaul journalist if we can get any message reciepients from the keys
         // and the supplied recipient is nil
@@ -98,8 +96,8 @@ public enum MessageComposeError: Error {
         }
     }
 
-    // This sends a message to the selected message recipient using the covernode public key
-    // This handles any errors and updates the view state.
+    /// This sends a message to the selected message recipient using the covernode public key
+    /// This handles any errors and updates the view state.
     @MainActor
     func sendMessage() async throws {
         guard let messageRecipient else {
@@ -120,8 +118,8 @@ public enum MessageComposeError: Error {
         }
     }
 
-    // We want to disable the send button when the message box is empty,
-    // too long, no recipient is selected, or we are in the sending state
+    /// We want to disable the send button when the message box is empty,
+    /// too long, no recipient is selected, or we are in the sending state
     var sendButtonDisabled: Bool {
         switch state {
         case .sending:
@@ -175,18 +173,18 @@ public enum MessageComposeError: Error {
         }
     }
 
-    // This clears the value of `message`
-    // Used to clear the TextEditor input box when a message is sent
-    // Or when the users first focuses on the input
+    /// This clears the value of `message`
+    /// Used to clear the TextEditor input box when a message is sent
+    /// Or when the users first focuses on the input
     func clearMessage() {
         message = ""
         state = .ready
     }
 
-    // This clears the value of `message`, removes the current recipient and locks the secret data.
-    // These are coupled to avoid developer error in doing them seperatly.
-    // This is called in the various places the user can logout or delete messages.
-    public func clearModelDataAndLock() async {
+    /// This clears the value of `message`, removes the current recipient and locks the secret data.
+    /// These are coupled to avoid developer error in doing them seperatly.
+    /// This is called in the various places the user can logout or delete messages.
+    func clearModelDataAndLock() async {
         messageRecipient = nil
         clearMessage()
         try? await lib.secretDataRepository.lock()
@@ -220,5 +218,4 @@ public enum MessageComposeError: Error {
         guard let recentMessage = currentConversationForUi.last else { return false }
         return recentMessage?.isMessagePending ?? false
     }
-
 }

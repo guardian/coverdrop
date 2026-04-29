@@ -8,7 +8,7 @@ enum BackgroundMessageScheduleService {
     /// If there is no work pending (note this is a rare occurrence,
     /// and the app should usually schedule work when backgrounded)
     /// we will schedule a cleanup background task
-    public static func onAppForeground(
+    static func onAppForeground(
         bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared,
         publicDataRepository: PublicDataRepositoryProtocol,
         config: CoverDropConfig
@@ -38,7 +38,7 @@ enum BackgroundMessageScheduleService {
 
     /// This should be called when the app enters the background from `applicationDidEnterBackground` in app delegate
     /// This will overwrite any previously scheduled background tasks with this most recent one
-    public static func onEnterBackground(bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared) async {
+    static func onEnterBackground(bgTaskScheduler: TaskScheduler = BGTaskScheduler.shared) async {
         BackgroundTaskService.scheduleBackgroundSendJob(bgTaskScheduler: bgTaskScheduler)
         BackgroundMessageSendState.writeBackgroundWorkPending(true)
     }

@@ -73,12 +73,11 @@ public enum UserToCoverNodeMessage {
                 message: message
             )
         let keys = verifiedPublicKeys.mostRecentCoverNodeMessagingKeysFromAllHierarchies()
-        let message = try UserToCoverNodeMessage.encryptRealMessageFromUserToCovernode(
+        return try UserToCoverNodeMessage.encryptRealMessageFromUserToCovernode(
             verifiedPublicKeys: keys,
             userToJournalistMessage: innerMessage,
             recipientIdenitfierTag: tag
         )
-        return message
     }
 
     /// The outer covernode message, See the [user to covernode message documentation for more

@@ -99,8 +99,7 @@ public extension MultiAnonymousBox {
         nonce: [UInt8],
         message: [UInt8]
     ) -> [UInt8]? {
-        let ciphertext = Sodium().secretBox.seal(message: message, secretKey: key, nonce: nonce)
-        return ciphertext
+        return Sodium().secretBox.seal(message: message, secretKey: key, nonce: nonce)
     }
 
     static func findKey<R: Role>(

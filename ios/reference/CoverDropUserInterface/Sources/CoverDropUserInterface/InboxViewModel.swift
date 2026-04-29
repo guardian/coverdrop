@@ -155,7 +155,7 @@ class InboxViewModel: ObservableObject {
         } ?? Set()
     }
 
-    public func deleteAllMessagesAndCurrentSession(conversationViewModel: ConversationViewModel) async throws {
+    func deleteAllMessagesAndCurrentSession(conversationViewModel: ConversationViewModel) async throws {
         try await lib.secretDataRepository.deleteVault()
         await conversationViewModel.clearModelDataAndLock()
     }

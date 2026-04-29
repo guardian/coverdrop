@@ -27,10 +27,10 @@ enum UnlockedSecretDataDestination {
     case inbox, newConversation, login
 }
 
-// This view chooses the view to display when the user is logged in.
-// This exta level of indirection is needed to allow us to observe changes in a value that is wrapped in
-// an enum state, so we first need to establish we are in the `.unlockedSecretData` enum variant, and then pass
-// this `UnlockedSecretData` into a new view so that we can observe changes to the mailbox
+/// This view chooses the view to display when the user is logged in.
+/// This exta level of indirection is needed to allow us to observe changes in a value that is wrapped in
+/// an enum state, so we first need to establish we are in the `.unlockedSecretData` enum variant, and then pass
+/// this `UnlockedSecretData` into a new view so that we can observe changes to the mailbox
 struct UnlockedSecretDataStateSwitcher: View {
     @Binding var loggedInNavPath: NavigationPath
     @ObservedObject var unlockedSecretData: UnlockedSecretData

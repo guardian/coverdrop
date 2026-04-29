@@ -15,7 +15,7 @@ final class LogoutUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    func testLogoutAfterMessagesSendAndLoginAgainShowsInbox() throws {
+    func testLogoutAfterMessagesSendAndLoginAgainShowsInbox() {
         let app = XCUIApplicationLauncher.launch()
 
         Navigation.navigateToOnboarding(in: app, with: timeout)

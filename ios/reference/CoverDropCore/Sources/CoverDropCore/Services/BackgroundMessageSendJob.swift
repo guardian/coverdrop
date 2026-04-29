@@ -11,7 +11,6 @@ import Foundation
 /// If any of the message sends fail, we will store this fact, and retry on the next run regardless of the time passed
 /// since last run.
 /// Note that this is also triggered by the `BackgroundTaskService`
-
 public enum BackgroundMessageSendServiceError: Error {
     case failedToSendAllMessages
     case skippedRun
@@ -33,7 +32,6 @@ public enum BackgroundMessageSendServiceError: Error {
 /// `_simulateLaunchForTaskWithIdentifier:@"com.theguardian.coverdrop.reference.refresh"]`
 /// 6. Check the background task logs, you should see an succesful run
 /// https://developer.apple.com/documentation/backgroundtasks/starting-and-terminating-tasks-during-development
-
 public enum BackgroundMessageSendJob {
     public static func run(
         publicDataRepository: any PublicDataRepositoryProtocol,

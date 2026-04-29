@@ -10,8 +10,7 @@ public enum DeadDropDateError: Error {
 public class DeadDropDataHelper {
     public func readLocalDataFile() throws -> DeadDropData {
         let data = try readLoadDeadDropJson()
-        let decodedData = try JSONDecoder().decode(DeadDropData.self, from: data)
-        return decodedData
+        return try JSONDecoder().decode(DeadDropData.self, from: data)
     }
 
     public func readLoadDeadDropJson() throws -> Data {

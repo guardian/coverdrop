@@ -16,7 +16,7 @@ struct JournalistMessageView: View {
 
     @Binding var navPath: NavigationPath
 
-    // by default we want to make the user have to choose to send another message
+    /// by default we want to make the user have to choose to send another message
     @State var alreadySentMessage: Bool = false
 
     var journalist: JournalistData

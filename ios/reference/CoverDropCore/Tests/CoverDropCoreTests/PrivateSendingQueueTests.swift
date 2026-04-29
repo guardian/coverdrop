@@ -17,14 +17,13 @@ final class PrivateSendingQueueTests: XCTestCase {
         let recipientPublicKey = try publicDataRepository
             .getVerifiedKeys().getLatestMessagingKey(journalistId: "static_test_journalist")!
 
-        let encryptedMessage = try UserToCoverNodeMessage.createMessage(
+        return try UserToCoverNodeMessage.createMessage(
             message: message,
             recipientPublicKey: recipientPublicKey,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
             userPublicKey: userKeyPair.publicKey,
             tag: RecipientTag(tag: [2, 3, 3, 3])
         )
-        return encryptedMessage
     }
 
     private func emptyCoverdropQueue() throws -> PrivateSendingQueue {
@@ -41,36 +40,36 @@ final class PrivateSendingQueueTests: XCTestCase {
 
     func testEnqueueWhenAddingMessageThenFillLevelIncreases() async throws {
         var queue = try emptyCoverdropQueue()
-        XCTAssertTrue(queue.getFillLevel(secret: secret!) == 0)
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(secret)) == 0)
 
-        _ = try await queue.enqueue(secret: secret!, message: message("message1"))
-        XCTAssertTrue(queue.getFillLevel(secret: secret!) == 1)
+        _ = try await queue.enqueue(secret: XCTUnwrap(secret), message: message("message1"))
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(secret)) == 1)
 
-        _ = try await queue.enqueue(secret: secret!, message: message("message2"))
-        XCTAssertTrue(queue.getFillLevel(secret: secret!) == 2)
+        _ = try await queue.enqueue(secret: XCTUnwrap(secret), message: message("message2"))
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(secret)) == 2)
     }
 
     func testEnqueueWhenCheckingFillLevelWithWrongSecretThenReturnsEmpty() async throws {
         let wrongSecret = PrivateSendingQueueSecret(bytes: "__terces__terces".asBytes())
 
         var queue = try emptyCoverdropQueue()
-        XCTAssertTrue(queue.getFillLevel(secret: secret!) == 0)
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(secret)) == 0)
 
-        _ = try await queue.enqueue(secret: secret!, message: message("message1"))
-        XCTAssertTrue(queue.getFillLevel(secret: wrongSecret!) == 0)
+        _ = try await queue.enqueue(secret: XCTUnwrap(secret), message: message("message1"))
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(wrongSecret)) == 0)
 
-        _ = try await queue.enqueue(secret: secret!, message: message("message2"))
-        XCTAssertTrue(queue.getFillLevel(secret: wrongSecret!) == 0)
+        _ = try await queue.enqueue(secret: XCTUnwrap(secret), message: message("message2"))
+        XCTAssertTrue(try queue.getFillLevel(secret: XCTUnwrap(wrongSecret)) == 0)
     }
 
     func testEnqueueWhenAddingMessagesBeyondCapacityThenSpaceThenThrows() async throws {
         let message1 = try await message("message1")
         var queue = try emptyCoverdropQueue()
         for _ in 0 ..< PrivateSendingQueueConfiguration.default.totalQueueSize {
-            _ = try queue.enqueue(secret: secret!, message: message1)
+            _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message1)
         }
 
-        XCTAssertThrowsError(_ = try queue.enqueue(secret: secret!, message: message1)) { error in
+        XCTAssertThrowsError(_ = try queue.enqueue(secret: XCTUnwrap(secret), message: message1)) { error in
             XCTAssertEqual(error as! PrivateSendingQueueError, PrivateSendingQueueError.queueIsFull)
         }
     }
@@ -83,9 +82,9 @@ final class PrivateSendingQueueTests: XCTestCase {
         let differentSecret = PrivateSendingQueueSecret(bytes: "__terces__terces".asBytes())
 
         var queue = try emptyCoverdropQueue()
-        _ = try queue.enqueue(secret: secret!, message: message1)
-        _ = try queue.enqueue(secret: secret!, message: message2)
-        _ = try queue.enqueue(secret: differentSecret!, message: message3)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message1)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message2)
+        _ = try queue.enqueue(secret: XCTUnwrap(differentSecret), message: message3)
 
         // we would have otherwise expected message1 due to the FIFO nature of the queue
         XCTAssertEqual(
@@ -99,8 +98,8 @@ final class PrivateSendingQueueTests: XCTestCase {
         let message2 = try await message("message2")
 
         var queue = try emptyCoverdropQueue()
-        _ = try queue.enqueue(secret: secret!, message: message1)
-        _ = try queue.enqueue(secret: secret!, message: message2)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message1)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message2)
 
         XCTAssertEqual(
             try queue.sendHeadMessageAndPushNewCoverMessage(publicDataRepository.getCoverMessageFactory()),
@@ -117,8 +116,8 @@ final class PrivateSendingQueueTests: XCTestCase {
         let message2 = try await message("message2")
 
         var queue = try emptyCoverdropQueue()
-        _ = try queue.enqueue(secret: secret!, message: message1)
-        _ = try queue.enqueue(secret: secret!, message: message2)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message1)
+        _ = try queue.enqueue(secret: XCTUnwrap(secret), message: message2)
 
         XCTAssertEqual(
             try queue.sendHeadMessageAndPushNewCoverMessage(publicDataRepository.getCoverMessageFactory()),
@@ -161,14 +160,14 @@ final class PrivateSendingQueueTests: XCTestCase {
         let message2 = try await message("message2")
 
         var original = try emptyCoverdropQueue()
-        _ = try original.enqueue(secret: secret!, message: message1)
-        _ = try original.enqueue(secret: secret!, message: message2)
+        _ = try original.enqueue(secret: XCTUnwrap(secret), message: message1)
+        _ = try original.enqueue(secret: XCTUnwrap(secret), message: message2)
 
         let serialized = try original.serialize()
 
         var copy = try PrivateSendingQueue.fromBytes(bytes: serialized)
 
-        let fillLevel = copy.getFillLevel(secret: secret!)
+        let fillLevel = try copy.getFillLevel(secret: XCTUnwrap(secret))
         XCTAssertEqual(fillLevel, 2)
 
         let actualMessage1 = try copy
@@ -191,7 +190,7 @@ final class PrivateSendingQueueTests: XCTestCase {
         let message1 = try await message("message1")
 
         var original = try emptyCoverdropQueue()
-        let hint1 = try original.enqueue(secret: secret!, message: message1)
+        let hint1 = try original.enqueue(secret: XCTUnwrap(secret), message: message1)
 
         let isInQueue = original.isMessageStillInQueue(hint: hint1)
 
@@ -213,8 +212,8 @@ final class PrivateSendingQueueTests: XCTestCase {
 
         XCTAssertTrue(original.mStorage.count == Set(original.mStorage).count)
 
-        _ = try original.enqueue(secret: secret!, message: message1)
-        _ = try original.enqueue(secret: secret!, message: message2)
+        _ = try original.enqueue(secret: XCTUnwrap(secret), message: message1)
+        _ = try original.enqueue(secret: XCTUnwrap(secret), message: message2)
 
         XCTAssertTrue(original.mStorage.count == Set(original.mStorage).count)
 

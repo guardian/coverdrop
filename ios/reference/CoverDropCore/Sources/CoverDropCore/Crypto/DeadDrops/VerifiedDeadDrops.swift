@@ -103,9 +103,8 @@ public struct VerifiedDeadDrop {
             if unverifiedDeadDrop.count != Constants.journalistToUserEncryptedMessageLen {
                 throw VerificationDeadDropError.deadDropDataWrongSize
             }
-            let journalistToUserMessage: JournalistToUserMessage = TwoPartyBox<PaddedCompressedString>
+            return TwoPartyBox<PaddedCompressedString>
                 .fromVecUnchecked(bytes: unverifiedDeadDrop)
-            return journalistToUserMessage
         }
     }
 

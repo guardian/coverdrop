@@ -2,7 +2,7 @@
 import XCTest
 
 final class SecretDataTests: XCTestCase {
-    func testGetJournalistKeyDataForJournalistId() async throws {
+    func testGetJournalistKeyDataForJournalistId() throws {
         let context = IntegrationTestScenarioContext(scenario: .minimal)
         let verifiedPublicKeys = try context.loadKeysVerified()
 

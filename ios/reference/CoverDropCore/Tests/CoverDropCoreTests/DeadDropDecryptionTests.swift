@@ -3,11 +3,11 @@ import Sodium
 import XCTest
 
 final class DeadDropDecryptionTests: XCTestCase {
-    func testDecryptMessageParsesTextMessage() async throws {
+    func testDecryptMessageParsesTextMessage() throws {
         let initalMessage = "This is a test message"
         let textMessage = try PaddedCompressedString.fromString(text: initalMessage).asUnencryptedBytes()
 
-        let journalistData = PublicKeysHelper.shared.testDefaultJournalist!
+        let journalistData = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
 
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: textMessage,
@@ -23,7 +23,7 @@ final class DeadDropDecryptionTests: XCTestCase {
         }
     }
 
-    func testDecryptMessageParsesHandoverMessage() async throws {
+    func testDecryptMessageParsesHandoverMessage() throws {
         let journalistId = "static_test_journalist"
         let journalistIdBytes: [UInt8] = Array(journalistId.utf8)
 
@@ -33,7 +33,7 @@ final class DeadDropDecryptionTests: XCTestCase {
         let padding: [UInt8] = Array(repeating: 0x00, count: Constants.messagePaddingLen - handoverMessage.count)
         handoverMessage.append(contentsOf: padding)
 
-        let journalistKey = PublicKeysHelper.shared.testDefaultJournalist!
+        let journalistKey = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
 
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: handoverMessage,
@@ -49,9 +49,9 @@ final class DeadDropDecryptionTests: XCTestCase {
         }
     }
 
-    func testDecryptMessageFailsOnEmptyMessage() async throws {
+    func testDecryptMessageFailsOnEmptyMessage() throws {
         let handoverMessage: [UInt8] = []
-        let journalistData = PublicKeysHelper.shared.testDefaultJournalist!
+        let journalistData = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
 
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: handoverMessage,

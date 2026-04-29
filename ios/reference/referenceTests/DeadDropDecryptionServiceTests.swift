@@ -30,7 +30,7 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
         let passphrase = ValidPassword(password: "external jersey squeeze luckiness collector")
         try await secretDataRepository.createOrReset(passphrase: passphrase)
 
-        let recipient = PublicKeysHelper.shared.testDefaultJournalist!
+        let recipient = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
 
         // add the user test vector keys to the secret data repository, with an empty mailbox
         let userSecretMessageKey = try PublicKeysHelper.shared.getTestUserMessageSecretKey()

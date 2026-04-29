@@ -13,6 +13,9 @@ android {
         // Disable performance/UI lints that are not important for the reference app
         disable("VectorPath", "MonochromeLauncherIcon")
 
+        // We are tracking another app and follow their target API version
+        disable("OldTargetApi")
+
         // This prevents the linter to fail if there are incompatible with extra lint rules
         // provided by the library which target an incompatible lint API version
         // See: https://issuetracker.google.com/issues/311218673 (different versions, same problem)

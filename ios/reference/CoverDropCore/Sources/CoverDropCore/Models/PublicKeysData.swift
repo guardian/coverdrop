@@ -6,12 +6,6 @@ enum PublicKeysError: Error {
 }
 
 public struct PublicKeysData: Codable, Equatable {
-    public static func == (lhs: PublicKeysData, rhs: PublicKeysData) -> Bool {
-        return lhs.keys == rhs.keys &&
-            lhs.defaultJournalistId == rhs.defaultJournalistId &&
-            lhs.journalistProfiles == rhs.journalistProfiles
-    }
-
     public var journalistProfiles: [JournalistProfile]
     public var keys: [KeyHierarchy]
     public let defaultJournalistId: String?
@@ -33,12 +27,6 @@ public struct KeyHierarchy: Codable, Equatable {
         case journalists
         case coverNodes = "covernodes"
     }
-
-    public static func == (lhs: KeyHierarchy, rhs: KeyHierarchy) -> Bool {
-        return lhs.organizationPublicKey == rhs.organizationPublicKey &&
-            lhs.journalists == rhs.journalists &&
-            lhs.coverNodes == rhs.coverNodes
-    }
 }
 
 public struct CoverNodesKeyHierarchy: Codable, Equatable {
@@ -48,11 +36,6 @@ public struct CoverNodesKeyHierarchy: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case provisioningPublicKey = "provisioning_pk"
         case covernodes
-    }
-
-    public static func == (lhs: CoverNodesKeyHierarchy, rhs: CoverNodesKeyHierarchy) -> Bool {
-        return lhs.provisioningPublicKey == rhs.provisioningPublicKey &&
-            lhs.covernodes == rhs.covernodes
     }
 }
 
@@ -64,19 +47,9 @@ public struct JournalistKeyHierarchy: Codable, Equatable {
         case provisioningPublicKey = "provisioning_pk"
         case journalists
     }
-
-    public static func == (lhs: JournalistKeyHierarchy, rhs: JournalistKeyHierarchy) -> Bool {
-        return lhs.provisioningPublicKey == rhs.provisioningPublicKey &&
-            lhs.journalists == rhs.journalists
-    }
 }
 
 public struct PublicKeysFamily: Codable, Equatable {
-    public static func == (lhs: PublicKeysFamily, rhs: PublicKeysFamily) -> Bool {
-        return lhs.idPk == rhs.idPk &&
-            lhs.msgPks == rhs.msgPks
-    }
-
     public var idPk: UnverifiedSignedPublicSigningKeyData
     public var msgPks: [UnverifiedSignedPublicEncryptionKeyData]
 
@@ -152,13 +125,6 @@ public struct UnverifiedSignedPublicEncryptionKeyData: Codable, Equatable {
 }
 
 public struct UnverifiedSignedPublicSigningKeyData: Codable, Equatable {
-    public static func == (lhs: UnverifiedSignedPublicSigningKeyData,
-                           rhs: UnverifiedSignedPublicSigningKeyData) -> Bool {
-        return lhs.key == rhs.key &&
-            lhs.certificate == rhs.certificate &&
-            lhs.notValidAfter == rhs.notValidAfter
-    }
-
     public init(key: HexEncodedString, certificate: HexEncodedString, notValidAfter: RFC3339DateTimeString) {
         self.key = key
         self.certificate = certificate

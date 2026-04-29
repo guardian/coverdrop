@@ -24,9 +24,8 @@ public struct MessageRecipients {
         try setupMessageRecipients(with: verifiedPublicKeys, excludingDefaultRecipient: excludingDefaultRecipient)
     }
 
-    private mutating
-    func setupMessageRecipients(with verifiedPublicKeys: VerifiedPublicKeys?,
-                                excludingDefaultRecipient: Bool = true) throws {
+    private mutating func setupMessageRecipients(with verifiedPublicKeys: VerifiedPublicKeys?,
+                                                 excludingDefaultRecipient: Bool = true) throws {
         guard let verifiedPublicKeys else {
             throw RecipientsError.recipientsUnavailable
         }
@@ -85,9 +84,8 @@ public struct MessageRecipients {
         }
     }
 
-    // This is just for testing
-    public mutating
-    func removeDesks() {
+    /// This is just for testing
+    public mutating func removeDesks() {
         desks = []
     }
 }

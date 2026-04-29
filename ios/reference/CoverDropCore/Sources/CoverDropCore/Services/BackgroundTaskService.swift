@@ -118,7 +118,7 @@ public enum BackgroundTaskService {
     }
 
     public static func manuallyTriggerBackgroundMessageSendTask(config: CoverDropConfig) async
-    -> Result<Void, BackgroundMessageSendServiceError> {
+        -> Result<Void, BackgroundMessageSendServiceError> {
         await handleBackgroundMessasgeSendTask(config: config)
     }
 

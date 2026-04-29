@@ -6,7 +6,7 @@ final class Base64Test: XCTestCase {
     func testBase64EncodeDecodeWithEmptyString() throws {
         let bytes: [UInt8] = []
 
-        let encoded = bytes.base64Encode()!
+        let encoded = try XCTUnwrap(bytes.base64Encode())
         XCTAssertEqual(encoded, "")
 
         let decoded = encoded.base64Decode()
@@ -16,7 +16,7 @@ final class Base64Test: XCTestCase {
     func testBase64EncodeDecodeWithString() throws {
         let bytes = "hello".asUnencryptedBytes()
 
-        let encoded = bytes.base64Encode()!
+        let encoded = try XCTUnwrap(bytes.base64Encode())
         XCTAssertFalse(encoded.isEmpty)
 
         let decoded = encoded.base64Decode()

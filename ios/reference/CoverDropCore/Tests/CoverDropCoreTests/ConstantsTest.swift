@@ -3,7 +3,7 @@ import Sodium
 import XCTest
 
 final class ConstantsTest: XCTestCase {
-    func testConstantsPresent() throws {
+    func testConstantsPresent() {
         XCTAssertGreaterThan(Constants.userToCovernodeEncryptedMessageLen, Constants.messagePaddingLen)
     }
 }

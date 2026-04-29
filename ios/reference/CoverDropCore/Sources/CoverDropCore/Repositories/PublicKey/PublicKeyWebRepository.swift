@@ -8,8 +8,7 @@ struct PublicKeyWebRepository: CacheableWebRepository {
     typealias T = PublicKeysData
 
     func get(params _: [String: String]? = [:]) async throws -> PublicKeysData {
-        let result: PublicKeysData = try await call(endpoint: API.allKeys)
-        return result
+        return try await call(endpoint: API.allKeys)
     }
 
     let urlSession: URLSession

@@ -519,8 +519,8 @@ private struct RecipientListItemStyle: ViewModifier {
 
 // MARK: Segmented control styling
 
-// Native segmented controls do not support much styling, but we can override their appearance proxy to make some
-// adjustments.
+/// Native segmented controls do not support much styling, but we can override their appearance proxy to make some
+/// adjustments.
 enum SegmentedControlAppearance {
     static func setup() {
         UISegmentedControl.appearance()

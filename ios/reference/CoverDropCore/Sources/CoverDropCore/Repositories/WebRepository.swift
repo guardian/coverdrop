@@ -6,8 +6,7 @@ protocol WebRepository {
 }
 
 extension WebRepository {
-    func call<Value>(endpoint: APICall, httpCodes _: HTTPCodes = .success) async throws -> Value
-        where Value: Decodable {
+    func call<Value: Decodable>(endpoint: APICall, httpCodes _: HTTPCodes = .success) async throws -> Value {
         do {
             let request = try endpoint.urlRequest(baseURL: baseUrl)
             let (data, response) = try await urlSession.data(for: request)
@@ -15,8 +14,7 @@ extension WebRepository {
                   HTTPCodes.success.contains(httpResponse.statusCode) else {
                 throw URLError(.badServerResponse)
             }
-            let decoded = try JSONDecoder().decode(Value.self, from: data)
-            return decoded
+            return try JSONDecoder().decode(Value.self, from: data)
         } catch {
             throw URLError(.badServerResponse)
         }

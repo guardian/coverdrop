@@ -5,10 +5,6 @@ import SwiftUI
 struct BetaBannerView: View {
     var showBetaBannerAlert: Binding<Bool>
 
-    init(showBetaBannerAlert: Binding<Bool>) {
-        self.showBetaBannerAlert = showBetaBannerAlert
-    }
-
     var body: some View {
         BannerView(
             action: { showBetaBannerAlert.wrappedValue = true },

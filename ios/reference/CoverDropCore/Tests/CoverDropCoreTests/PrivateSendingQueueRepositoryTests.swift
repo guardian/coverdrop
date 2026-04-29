@@ -27,14 +27,13 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
         let recipientPublicKey = try publicDataRepository
             .getVerifiedKeys().getLatestMessagingKey(journalistId: "static_test_journalist")!
 
-        let encryptedMessage = try UserToCoverNodeMessage.createMessage(
+        return try UserToCoverNodeMessage.createMessage(
             message: message,
             recipientPublicKey: recipientPublicKey,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
             userPublicKey: userKeyPair.publicKey,
             tag: RecipientTag(tag: [2, 3, 3, 3])
         )
-        return encryptedMessage
     }
 
     func testRoundTrip() async throws {
@@ -52,7 +51,7 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
         let testableRepo = PrivateSendingQueueRepository.shared
         let initialQueue = try await testableRepo.loadOrInitialiseQueue(publicDataRepository.getCoverMessageFactory())
 
-        _ = try await testableRepo.enqueue(secret: secret!, message: encryptedMessage)
+        _ = try await testableRepo.enqueue(secret: XCTUnwrap(secret), message: encryptedMessage)
 
         let newQueueState = try await testableRepo.loadOrInitialiseQueue(publicDataRepository.getCoverMessageFactory())
 
@@ -202,7 +201,7 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
         _ = try await testableRepo.loadOrInitialiseQueue(coverMessageFactory)
 
         // WHEN a message is enqueue, then the queue is wiped
-        let hmac = try await testableRepo.enqueue(secret: secret!, message: encryptedMessage)
+        let hmac = try await testableRepo.enqueue(secret: XCTUnwrap(secret), message: encryptedMessage)
 
         let inQueue = try await testableRepo.isMessageInQueue(hint: hmac)
 

@@ -2,8 +2,8 @@ import CoverDropCore
 import XCTest
 
 enum Navigation {
-    public class NavigationState {
-        public init(password: [String]? = nil) {
+    class NavigationState {
+        init(password: [String]? = nil) {
             self.password = password
         }
 
@@ -37,8 +37,7 @@ enum Navigation {
             .map {
                 app.staticTexts.matching(identifier: "Word \($0)").allElementsBoundByIndex.first!.label
             }
-        let state = NavigationState(password: password)
-        return state
+        return NavigationState(password: password)
     }
 
     static func navigateToPassphraseAfterOnboarding(in app: XCUIApplication,
@@ -53,8 +52,7 @@ enum Navigation {
             .map {
                 app.staticTexts.matching(identifier: "Word \($0)").allElementsBoundByIndex.first!.label
             }
-        let state = NavigationState(password: password)
-        return state
+        return NavigationState(password: password)
     }
 
     static func startEnteringPassphrase(in app: XCUIApplication, state: NavigationState,

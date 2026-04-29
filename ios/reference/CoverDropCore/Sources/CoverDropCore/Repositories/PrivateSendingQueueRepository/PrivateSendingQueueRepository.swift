@@ -81,8 +81,7 @@ public actor PrivateSendingQueueRepository: ObservableObject {
         guard var queue = try await loadQueue() else {
             throw PrivateSendingQueueRepositoryError.queueNotAvailable
         }
-        let message = try queue.peek()
-        return message
+        return try queue.peek()
     }
 
     /// Checks a message in still in the outbound queue using `PrivateSendingQueue`'s `isMessageStillInQueue(..)`
@@ -91,8 +90,7 @@ public actor PrivateSendingQueueRepository: ObservableObject {
         guard let queue = try await loadQueue() else {
             throw PrivateSendingQueueRepositoryError.queueNotAvailable
         }
-        let message = queue.isMessageStillInQueue(hint: hint)
-        return message
+        return queue.isMessageStillInQueue(hint: hint)
     }
 
     public func loadQueue() async throws -> PrivateSendingQueue? {

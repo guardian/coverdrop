@@ -33,8 +33,7 @@ public enum TestingBridge {
             }
 
             let remoteEnabled = defaults?.bool(forKey: "coverDropEnabledRemotely") ?? false
-            let disabled = !remoteEnabled
-            return disabled
+            return !remoteEnabled
 
         default:
             return processInfo.arguments.contains(flag.rawValue)
@@ -47,8 +46,8 @@ public enum TestingBridge {
         }
     }
 
-    // As we want time to advance while the app is running, we store a time offset
-    // rather than an absolute date.
+    /// As we want time to advance while the app is running, we store a time offset
+    /// rather than an absolute date.
     static var currentTimeOffset: TimeInterval?
 
     static func setCurrentTimeOverride(override: Date) {

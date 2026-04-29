@@ -29,7 +29,7 @@ public struct VerifiedPublicKeys {
         currentTime: Date
     ) throws {
         let verifiedHierarchies: [VerifiedPublicKeysHierarchy] = try publicKeysData.keys.compactMap { keyHierarchy in
-           try VerifiedPublicKeysHierarchy(
+            try VerifiedPublicKeysHierarchy(
                 keyHierarchy: keyHierarchy,
                 trustedOrganizationPublicKeys: trustedOrganizationPublicKeys,
                 currentTime: currentTime
@@ -126,10 +126,9 @@ public struct VerifiedPublicKeys {
         guard let journalistPublicKeyData = allPublicKeysForJournalistId(journalistId: journalistId) else {
             return []
         }
-        let allMessagingKeys: [JournalistMessagingPublicKey] = journalistPublicKeyData.flatMap { keyData in
+        return journalistPublicKeyData.flatMap { keyData in
             keyData.msg
         }
-        return allMessagingKeys
     }
 
     /// This gets all the coverNode Id keys for each CoverNode instance regardless of the key hierarchy the keys are in.
@@ -198,7 +197,7 @@ public struct VerifiedPublicKeysHierarchy {
     ///   - currentTime: currentTime: the current time the app is running in
     /// - Returns: Returns a VerifiedPublicKeysHierarchy if successfully verified, or fails if it could not verify.
     init?(keyHierarchy: KeyHierarchy, trustedOrganizationPublicKeys: [TrustedOrganizationPublicKey],
-          currentTime: Date)  throws {
+          currentTime: Date) throws {
         let unverifiedOrganizationPublicKey = SelfSignedPublicSigningKey<Organization>(
             key: Sign.KeyPair.PublicKey(keyHierarchy.organizationPublicKey.key.bytes),
             certificate: Signature<Organization>.fromBytes(
@@ -216,11 +215,10 @@ public struct VerifiedPublicKeysHierarchy {
         // It is important that we do not continue if we are failing to trust the root key of a hierarchy
         // as this might cause us to process dead-drops without being able to decrypt them.
         guard let trustedOrganizationPublicKey: TrustedOrganizationPublicKey = VerifiedPublicKeysHierarchy
-              .verifyOrganizationPublicKey(
-                  orgPk: orgPublicKey,
-                  trustedOrgPks: trustedOrganizationPublicKeys
-              )
-        else {
+            .verifyOrganizationPublicKey(
+                orgPk: orgPublicKey,
+                trustedOrgPks: trustedOrganizationPublicKeys
+            ) else {
             throw VerificationError.missingTrustAnchor
         }
 
@@ -264,7 +262,6 @@ public struct VerifiedPublicKeysHierarchy {
         currentTime: Date
     ) throws -> [VerifiedCoverNodeKeyHierarchy] {
         return try keyHierarchy.coverNodes.map { coverNodeHierarchy in
-
             let coverNodeProvisioningKey = coverNodeHierarchy.provisioningPublicKey
 
             let verifiedCoverNodeProvisioningKey: CoverNodeProvisioningKey = try CoverNodeProvisioningKey
@@ -292,11 +289,10 @@ public struct VerifiedPublicKeysHierarchy {
                 }
                 coverNodeInstances.updateValue(coverNodeKeys, forKey: coverNodeId)
             }
-            let verifiedCoverNodeKeyHierarchy: VerifiedCoverNodeKeyHierarchy = .init(
+            return .init(
                 idPublicKeys: coverNodeInstances,
                 provisioningKey: verifiedCoverNodeProvisioningKey
             )
-            return verifiedCoverNodeKeyHierarchy
         }
     }
 
@@ -313,7 +309,6 @@ public struct VerifiedPublicKeysHierarchy {
         currentTime: Date
     ) throws -> [VerifiedJournalistPublicKeyHierarchy] {
         try keyHierarchy.journalists.map { journalistHierarchy in
-
             let journalistProvisioningKey = journalistHierarchy.provisioningPublicKey
 
             let verifiedJournalistProvisioningKey: JournalistProvisioningKey = try JournalistProvisioningKey
@@ -402,12 +397,11 @@ public struct VerifiedPublicKeysHierarchy {
         now: Date
     ) throws -> [JournalistMessagingPublicKey] {
         return try keysGroup.map { messageKey in
-            let verifiedMessageKey: JournalistMessagingPublicKey = try JournalistMessagingPublicKey.fromUnverified(
+            try JournalistMessagingPublicKey.fromUnverified(
                 unverifiedMessageKey: messageKey,
                 signingKey: verifiedJournalistIdPublicKey,
                 now: now
             )
-            return verifiedMessageKey
         }
     }
 
@@ -423,12 +417,11 @@ public struct VerifiedPublicKeysHierarchy {
         now: Date
     ) throws -> [CoverNodeMessagingPublicKey] {
         return try keysGroup.map { messageKey in
-            let verifiedMessageKey: CoverNodeMessagingPublicKey = try CoverNodeMessagingPublicKey.fromUnverified(
+            try CoverNodeMessagingPublicKey.fromUnverified(
                 unverifiedMessageKey: messageKey,
                 signingKey: verifiedCoverNodeIdKey,
                 now: now
             )
-            return verifiedMessageKey
         }
     }
 }

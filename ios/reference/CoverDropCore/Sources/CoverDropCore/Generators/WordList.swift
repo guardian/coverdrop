@@ -10,7 +10,7 @@ public struct WordList {
 
 public extension WordList {
     static func parseEffLargeWordlist(text: String) throws -> [String] {
-        let words: [String] = try text.split(separator: "\n")
+        return try text.split(separator: "\n")
             // Filter empty lines
             .filter { line in
                 !line.isEmpty
@@ -24,8 +24,6 @@ public extension WordList {
                     throw WordListError.invalidWordListLine
                 }
             }
-
-        return words
     }
 
     /// Create a new password generator based of the EFF large wordlist.

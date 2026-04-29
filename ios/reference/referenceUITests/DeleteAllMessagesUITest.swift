@@ -15,9 +15,9 @@ final class DeletedAllMessagesUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    // checks all memory state is removed after delete messages action is
-    // taken and a new session is created
-    func testDeleteMessagesInInbox() throws {
+    /// checks all memory state is removed after delete messages action is
+    /// taken and a new session is created
+    func testDeleteMessagesInInbox() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [.startWithNonEmptyStorage])
         let state = navigateToInboxWithExistingStorage(app: app)
 
@@ -48,9 +48,9 @@ final class DeletedAllMessagesUITest: XCTestCase {
         assertRecipientIsDefault(app: app, state: newState)
     }
 
-    // This tests the leave inbox button from the inbox page clears items in memory
-    // and logs the user out
-    func testLeaveInboxDeletesMemoryInInboxTest() throws {
+    /// This tests the leave inbox button from the inbox page clears items in memory
+    /// and logs the user out
+    func testLeaveInboxDeletesMemoryInInboxTest() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [.startWithNonEmptyStorage])
         _ = navigateToInboxWithExistingStorage(app: app)
 

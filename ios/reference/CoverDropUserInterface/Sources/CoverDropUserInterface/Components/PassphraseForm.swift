@@ -21,23 +21,23 @@ struct PassphraseFormView: View {
                 }
             }
         }.padding(.bottom, Padding.small)
-        .onChange(of: $words.wrappedValue) { _, newValue in
-            // This fixes an issue with autocorrect that always adds a space at the end of a corrected word
-            $words.wrappedValue = newValue.map { value in
-                value.trimmingCharacters(in: .whitespaces)
+            .onChange(of: $words.wrappedValue) { _, newValue in
+                // This fixes an issue with autocorrect that always adds a space at the end of a corrected word
+                $words.wrappedValue = newValue.map { value in
+                    value.trimmingCharacters(in: .whitespaces)
+                }
             }
-        }
-        .onSubmit {
-            // This focuses on the next text field when the user presses the enter key
-            switch passwordFieldFocus.wrappedValue {
-            case .password1:
-                passwordFieldFocus.wrappedValue = .password2
-            case .password2:
-                passwordFieldFocus.wrappedValue = .password3
-            default:
-                passwordFieldFocus.wrappedValue = nil
+            .onSubmit {
+                // This focuses on the next text field when the user presses the enter key
+                switch passwordFieldFocus.wrappedValue {
+                case .password1:
+                    passwordFieldFocus.wrappedValue = .password2
+                case .password2:
+                    passwordFieldFocus.wrappedValue = .password3
+                default:
+                    passwordFieldFocus.wrappedValue = nil
+                }
             }
-        }
     }
 
     func clearTextPassphaseInput(id: Int, passwordFieldFocusValue: PasswordField) -> some View {

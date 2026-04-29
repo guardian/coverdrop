@@ -1,7 +1,7 @@
 import Foundation
 
 class FileHelper {
-    public func bytesFromFile(filePath: String) throws -> [UInt8]? {
+    func bytesFromFile(filePath: String) throws -> [UInt8]? {
         // If you see the error `Bundle.module not available` it means you've not copied the test
         // vectors into the `Resources` folder, check `Resources/README.md for details
         guard let resourceUrl = Bundle.module.url(forResource: filePath, withExtension: nil) else { return nil }
@@ -10,7 +10,7 @@ class FileHelper {
         return [UInt8](data)
     }
 
-    public static func dataFromFile(filePath: String, fileExtension: String) throws -> Data? {
+    static func dataFromFile(filePath: String, fileExtension: String) throws -> Data? {
         // If you see the error `Bundle.module not available` it means you've not copied the test
         // vectors into the `Resources` folder, check `Resources/README.md for details
         guard let resourceUrl = Bundle.module.url(forResource: filePath, withExtension: fileExtension) else {

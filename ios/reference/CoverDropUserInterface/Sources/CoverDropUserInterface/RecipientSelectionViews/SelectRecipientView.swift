@@ -7,9 +7,9 @@ struct SelectRecipientView: View {
     let recipients: MessageRecipients
     @Binding var isSelectRecipientViewOpen: Bool
 
-    public init(isSelectRecipientViewOpen: Binding<Bool>,
-                selectedRecipient: Binding<JournalistData?>,
-                recipients: MessageRecipients) {
+    init(isSelectRecipientViewOpen: Binding<Bool>,
+         selectedRecipient: Binding<JournalistData?>,
+         recipients: MessageRecipients) {
         SegmentedControlAppearance.setup()
 
         _isSelectRecipientViewOpen = isSelectRecipientViewOpen

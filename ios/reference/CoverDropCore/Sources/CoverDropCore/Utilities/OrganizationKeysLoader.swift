@@ -2,7 +2,7 @@ import Foundation
 import Sodium
 
 enum OrganizationKeysLoader {
-    public static func loadTrustedOrganizationPublicKeys(
+    static func loadTrustedOrganizationPublicKeys(
         envType: EnvType,
         now: Date
     ) throws -> [TrustedOrganizationPublicKey] {
@@ -12,7 +12,7 @@ enum OrganizationKeysLoader {
             inDirectory: "organization_keys/\(subpath)/"
         )
 
-        let keys: [TrustedOrganizationPublicKey] = try resourcePaths.compactMap { fullPath in
+        return try resourcePaths.compactMap { fullPath in
             // As `Bundle.module.paths` returns the full path, we just want to get the filename
             let fileName = URL(fileURLWithPath: fullPath).lastPathComponent
             let fileNameWithoutExtension = (fileName as NSString).deletingPathExtension
@@ -33,7 +33,5 @@ enum OrganizationKeysLoader {
             }
             return nil
         }
-
-        return keys
     }
 }

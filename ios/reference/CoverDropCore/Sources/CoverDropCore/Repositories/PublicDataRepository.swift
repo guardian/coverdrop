@@ -75,12 +75,10 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
             throw PublicDataRepositoryError.failedToLoadDeadDrops
         }
 
-        let verifiedDeadDropData = try VerifiedDeadDrops.fromAllDeadDropData(
+        return try VerifiedDeadDrops.fromAllDeadDropData(
             deadDrops: deadDrops,
             verifiedKeys: getVerifiedKeys()
         )
-
-        return verifiedDeadDropData
     }
 
     /// This loads and verifies the public key and dead drops from the API.
@@ -178,11 +176,10 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
         }
 
         // encrypt outer message to CoverNode
-        let outerEncryptedMessage = try MultiAnonymousBox<UserToCoverNodeMessageData>.encrypt(
+        return try MultiAnonymousBox<UserToCoverNodeMessageData>.encrypt(
             recipientPks: coverNodeKeys,
             data: payloadForOuter
         )
-        return outerEncryptedMessage
     }
 
     public func getCoverMessageFactory() throws -> CoverMessageFactory {

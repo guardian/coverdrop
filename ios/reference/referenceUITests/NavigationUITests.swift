@@ -16,22 +16,21 @@ final class NavigationUITest: XCTestCase {
         captureScreenshotOnFailure()
     }
 
-    //    Given I'm a logged out user
-    //    When I press the Get started button
-    //    And create a new session
-    //    Then I see the new conversation window
-
-    //    Given I'm a logged in user
-    //    When I send my first message from the new conversation screen
-    //    Then I see the journalist chat view
-
-    //    Given I'm a logged in user
-    //    When I send my first message from the new conversation screen
-    //    And then view the conversation from the inbox
-    //    And I navigate back
-    //    Then I should be on the inbox view
-
-    func testNewConversationFlowWithBackNavigation() throws {
+    /// Given I'm a logged out user
+    /// When I press the Get started button
+    /// And create a new session
+    /// Then I see the new conversation window
+    ///
+    /// Given I'm a logged in user
+    /// When I send my first message from the new conversation screen
+    /// Then I see the journalist chat view
+    ///
+    /// Given I'm a logged in user
+    /// When I send my first message from the new conversation screen
+    /// And then view the conversation from the inbox
+    /// And I navigate back
+    /// Then I should be on the inbox view
+    func testNewConversationFlowWithBackNavigation() {
         let app = XCUIApplicationLauncher.launch()
 
         Navigation.navigateToOnboarding(in: app, with: timeout)
@@ -58,9 +57,9 @@ final class NavigationUITest: XCTestCase {
         XCTAssertTrue(app.staticTexts["Messaging with"].exists)
     }
 
-    // GIVEN there is only one journalist available
-    // WHEN I navigate to the new conversation screen
-    // THEN the journalist should be pre-selected and cannot be changed
+    /// Given there is only one journalist available
+    /// When I navigate to the new conversation screen
+    /// Then the journalist should be pre-selected and cannot be changed
     func testNewConversationWithForcedSingleRecipient() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [.forceSingleRecipient])
 
@@ -71,16 +70,15 @@ final class NavigationUITest: XCTestCase {
         Navigation.assertForcedSingleRecpient(in: app)
     }
 
-    //    Given I'm a logged out user
-    //    When I abandon the new conversation screen before sending a message
-    //    And log in again
-    //    Then I should see the new conversation screen with a warning message
-
-    //    Given I'm a logged out user
-    //    When I abandon the new conversation screen before sending a message
-    //    And log in again
-    //    Then I should see the new conversation screen with a warning message
-
+    /// Given I'm a logged out user
+    /// When I abandon the new conversation screen before sending a message
+    /// And log in again
+    /// Then I should see the new conversation screen with a warning message
+    ///
+    /// Given I'm a logged out user
+    /// When I abandon the new conversation screen before sending a message
+    /// And log in again
+    /// Then I should see the new conversation screen with a warning message
     func skipping_testNewConversationAbandonFlowWithNewLogin() throws {
         let app = XCUIApplicationLauncher.launch()
 
@@ -108,12 +106,11 @@ final class NavigationUITest: XCTestCase {
         XCTAssertTrue(messageText.exists)
     }
 
-    //    Given I'm a logged out user
-    //    When I abandon the new conversation screen before sending a message
-    //    And create a new session
-    //    Then I should not see my previous recipient
-
-    func testNewConversationAbandonFlowWithNewSession() throws {
+    /// Given I'm a logged out user
+    /// When I abandon the new conversation screen before sending a message
+    /// And create a new session
+    /// Then I should not see my previous recipient
+    func testNewConversationAbandonFlowWithNewSession() {
         let app = XCUIApplicationLauncher.launch()
 
         Navigation.navigateToOnboarding(in: app, with: timeout)
@@ -139,15 +136,14 @@ final class NavigationUITest: XCTestCase {
         XCTAssertTrue(app.staticTexts["No recipient selected"].exists)
     }
 
-    //    Given I’m a logged out user who has previously send a message
-    //    When I log in
-    //    Then I should see the inbox view
-
-    //
-    //    Given I am a logged in user who has previously sent a message
-    //    When I’m on the inbox view and choose a conversation
-    //    Then I should see the conversation view
-    func testLogingWithExistingMessageCanViewCoversationFlow() throws {
+    /// Given I’m a logged out user who has previously send a message
+    /// When I log in
+    /// Then I should see the inbox view
+    ///
+    /// Given I am a logged in user who has previously sent a message
+    /// When I’m on the inbox view and choose a conversation
+    /// Then I should see the conversation view
+    func testLogingWithExistingMessageCanViewCoversationFlow() {
         let app = XCUIApplicationLauncher.launch()
 
         Navigation.navigateToOnboarding(in: app, with: timeout)
@@ -166,7 +162,7 @@ final class NavigationUITest: XCTestCase {
         XCTAssertTrue(app.staticTexts["Hey!"].exists)
     }
 
-    func testNewConversationWithoutRecipientError() throws {
+    func testNewConversationWithoutRecipientError() {
         let app = XCUIApplicationLauncher.launch(testingFlags: [.mockedDataNoDefaultJournalist])
 
         Navigation.navigateToOnboarding(in: app, with: timeout)

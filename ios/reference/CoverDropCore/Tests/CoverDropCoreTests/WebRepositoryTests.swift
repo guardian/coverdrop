@@ -13,7 +13,7 @@ final class WebRepositoryTests: XCTestCase {
         webRepository = PublicKeyWebRepository(config: StaticConfig.devConfig, urlSession: urlSession)
     }
 
-    func testTextJsonDecoding() async throws {
+    func testTextJsonDecoding() throws {
         let results = try PublicKeysHelper.readLocalKeysFile()
         XCTAssertTrue(results.keys.first?.journalists.first?.journalists.keys
             .firstIndex(of: "static_test_journalist") != nil)

@@ -9,8 +9,8 @@ struct NewMessageView: View {
     @State private var showingForcedSelectionAlert = false
     @FocusState private var focusedField: Field?
 
-    // In practice, this view model's optionals should never be nil if accessed when state == .ready. Force unwrapping
-    // will allow us to fail fast in the case of developer error.
+    /// In practice, this view model's optionals should never be nil if accessed when state == .ready. Force unwrapping
+    /// will allow us to fail fast in the case of developer error.
     @ObservedObject var conversationViewModel: ConversationViewModel
 
     private enum Field: Int, CaseIterable {

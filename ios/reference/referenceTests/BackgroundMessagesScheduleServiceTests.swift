@@ -1,7 +1,6 @@
 import BackgroundTasks
-import Foundation
-
 @testable import CoverDropCore
+import Foundation
 import XCTest
 
 // Step 1: Define a protocol for BGTaskScheduler
@@ -80,7 +79,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
         )
         pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertFalse(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
 
         try await BackgroundMessageScheduleService.onAppForeground(
             bgTaskScheduler: taskScheduler,
@@ -90,7 +89,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
         pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertFalse(pendingTasks.isEmpty)
 
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
     }
 
     func testOnAppStartCalledThenScheduleBackgroundTaskIsCalled() async throws {
@@ -116,7 +115,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
         )
         pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertFalse(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
 
         await BackgroundMessageScheduleService.onEnterBackground(
             bgTaskScheduler: taskScheduler
@@ -124,7 +123,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
 
         pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertFalse(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
     }
 
     func testWhenScheduleCalledWithoutRegisterThenDoesNotCrash() async throws {
@@ -163,7 +162,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
 
         let pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertTrue(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
     }
 
     func testBackgroundTaskEnabledStillCallsCleanupMessageSendingTaskAndScheduleBackgroundJob() async throws {
@@ -206,7 +205,7 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
 
         let pendingTasks = await taskScheduler.pendingTaskRequests()
         XCTAssertFalse(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
 
         try await BackgroundMessageScheduleService.onAppForeground(
             bgTaskScheduler: taskScheduler,
@@ -215,6 +214,6 @@ final class BackgroundMessageScheduleServiceTests: XCTestCase {
         )
 
         XCTAssertFalse(pendingTasks.isEmpty)
-        XCTAssertTrue(BackgroundMessageSendState.readBackgroundWorkPending()!)
+        XCTAssertTrue(try XCTUnwrap(BackgroundMessageSendState.readBackgroundWorkPending()))
     }
 }

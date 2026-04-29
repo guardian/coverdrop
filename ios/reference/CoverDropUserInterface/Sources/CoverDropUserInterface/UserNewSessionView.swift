@@ -11,7 +11,7 @@ enum NewSessionError: Error {
 }
 
 extension NewSessionError: LocalizedError {
-    public var errorDescription: String? {
+    var errorDescription: String? {
         switch self {
         case .wrongPassphrase:
             return "The passphrase you entered does not match the generated one from the previous screen."
@@ -267,7 +267,7 @@ class UserNewSessionViewModel: ObservableObject {
         enteredWords.map { word in !word.isEmpty && !validPrefixes.contains(word) }
     }
 
-    public init(lib: CoverDropLibrary) {
+    init(lib: CoverDropLibrary) {
         self.lib = lib
     }
 

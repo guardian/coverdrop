@@ -16,10 +16,6 @@ public struct ValidPassword: Codable, Equatable {
     public var words: [String] {
         password.split(separator: " ").map { String($0) }
     }
-
-    public static func == (lhs: ValidPassword, rhs: ValidPassword) -> Bool {
-        lhs.password == rhs.password
-    }
 }
 
 /// A password generator to create and verify passwords and their checksums from the EFF word list

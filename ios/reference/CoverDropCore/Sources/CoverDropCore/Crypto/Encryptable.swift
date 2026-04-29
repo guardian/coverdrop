@@ -4,7 +4,6 @@ import Sodium
 ///
 /// This is useful when you don't want to incur some kind of serializion costs, such as
 /// increased message size or performance penalties.
-
 public protocol Encryptable {
     associatedtype ObjectType = Self
 

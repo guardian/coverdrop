@@ -10,8 +10,7 @@ struct StatusWebRepository: CacheableWebRepository {
     let baseUrl: String
 
     func get(params _: [String: String]?) async throws -> StatusData {
-        let response: StatusData = try await call(endpoint: API.status)
-        return response
+        return try await call(endpoint: API.status)
     }
 }
 

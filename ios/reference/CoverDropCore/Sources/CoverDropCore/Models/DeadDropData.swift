@@ -8,7 +8,7 @@ public struct DeadDropData: Codable {
     }
 }
 
-// This is used to store the most recent succesufully loaded dead drop Id
+/// This is used to store the most recent succesufully loaded dead drop Id
 public struct DeadDropId: Codable, Comparable {
     public static func < (lhs: DeadDropId, rhs: DeadDropId) -> Bool {
         return lhs.id < rhs.id

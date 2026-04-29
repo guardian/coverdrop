@@ -22,7 +22,6 @@ final class OnboardingViewUITests: XCTestCase {
     /// Given   the user visits the how this works screen
     /// When    the user clicks "Continue"
     /// Then    they are shown the remember passphrase screen
-
     func testContinueButton() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
 
@@ -36,7 +35,6 @@ final class OnboardingViewUITests: XCTestCase {
     /// Given   the user visits the how this works screen
     /// When    the user clicks the back button
     /// Then    they are taken back to the start screen
-
     func testNavigateBack() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
 

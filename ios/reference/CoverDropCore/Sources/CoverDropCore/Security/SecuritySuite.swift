@@ -51,7 +51,6 @@ public class SecuritySuite: ObservableObject {
     /// Checks whether the device might be jailbroken. A jailbroken device comes with less guarantees about
     /// the overall device software state.
     /// See: https://mas.owasp.org/MASTG/tests/ios/MASVS-RESILIENCE/MASTG-TEST-0088/
-
     public func checkForJailbreak() async {
         if IOSSecuritySuite.amIJailbroken() {
             await addViolation(violation: .deviceJailbroken)
@@ -61,7 +60,6 @@ public class SecuritySuite: ObservableObject {
     /// Checks whether the app is debuggable or there is an active debugger. This should never be
     /// true for the release app and can be indicative of a patched version.
     /// https://mas.owasp.org/MASTG/tests/ios/MASVS-RESILIENCE/MASTG-TEST-0089/
-
     public func checkForDebuggable() async {
         if IOSSecuritySuite.amIDebugged() {
             await addViolation(violation: .debuggerDetected)
@@ -70,7 +68,6 @@ public class SecuritySuite: ObservableObject {
 
     /// Checks if the user has set a passphrase. Users device is more secure if they have set a passphrase.
     /// We want to remind them of this before they use CoverDrop
-
     public func checkForPassphrase() async {
         if !LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) {
             await addViolation(violation: .passcodeNotSet)

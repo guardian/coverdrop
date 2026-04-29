@@ -2,7 +2,7 @@
 import XCTest
 
 final class HumanKeyDigestTests: XCTestCase {
-    func testSuccessfullVerification() throws {
+    func testSuccessfullVerification() {
         let orgKey = "c941a9beed1c8c945c27b150b5aa725a6366f71900a5e93607ba93254fe8d585".hexStringToBytes()!
 
         let actual = getHumanReadableDigest(key: orgKey)

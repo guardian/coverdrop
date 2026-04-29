@@ -20,14 +20,6 @@ public struct UnverifiedSignedPublicSigningKeyPairData: Codable, Equatable {
 
 // swiftlint:disable type_name
 public struct UnverifiedSignedPublicSigningKeyPairDataKeyOnly: Codable, Equatable {
-    public static func == (
-        lhs: UnverifiedSignedPublicSigningKeyPairDataKeyOnly,
-        rhs: UnverifiedSignedPublicSigningKeyPairDataKeyOnly
-    ) -> Bool {
-        return lhs.secretKey == rhs.secretKey &&
-            lhs.publicKey == rhs.publicKey
-    }
-
     public init(publicKey: KeyPairDataKeyOnly, secretKey: HexEncodedString) {
         self.publicKey = publicKey
         self.secretKey = secretKey

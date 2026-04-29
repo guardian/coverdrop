@@ -1,8 +1,8 @@
 import Foundation
 import XCTest
 
-// This was lifted from :
-// https://gist.github.com/ryanpato/f9b2a44b76045c8a97e64f716103a735#file-xcuielement-wait01-swift
+/// This was lifted from :
+/// https://gist.github.com/ryanpato/f9b2a44b76045c8a97e64f716103a735#file-xcuielement-wait01-swift
 extension XCUIElement {
     @discardableResult
     func wait(

@@ -2,9 +2,9 @@
 import Sodium
 import XCTest
 
-// This tests the 3 expiry statuses for messages
+/// These tests the 3 expiry statuses for messages
 final class ExpiryDateTests: XCTestCase {
-    func testExpiry() async throws {
+    func testExpiry() throws {
         let now = DateFunction.currentTime()
 
         let messageSend1DayAgo = try now.minusSeconds(1 * 24 * 3600)

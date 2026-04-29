@@ -5,15 +5,15 @@ final class CoverDropLifeCycleTests: XCTestCase {
     let config: StaticConfig = .devConfig
     let fileManager = FileManager.default
 
-    // When running these tests in context of a running app, initialisation has already happened at this point
-    // So we reset the state and reinitialise again.
+    /// When running these tests in context of a running app, initialisation has already happened at this point
+    /// So we reset the state and reinitialise again.
     func testInitialization_whenStoragePreviouslyEmpty_thenAppSupportDirExists() async throws {
         let baseUrl = try StorageManager.shared.getBaseDirectoryUrl()
 
         // delete all files in base directory
         if fileManager.fileExists(atPath: baseUrl.path) {
-            for file in fileManager.enumerator(atPath: baseUrl.path)! {
-                let filePath = baseUrl.appendingPathComponent(file as! String)
+            for file in try XCTUnwrap(fileManager.enumerator(atPath: baseUrl.path)) {
+                let filePath = try baseUrl.appendingPathComponent(XCTUnwrap(file as? String))
                 try fileManager.removeItem(at: filePath)
             }
 
@@ -42,7 +42,7 @@ final class CoverDropLifeCycleTests: XCTestCase {
         XCTAssertTrue(fileManager.fileExists(atPath: baseUrl.path))
     }
 
-    func testInitialization_whenFailedToStart_thenRecoversInReinitialiization() async throws {
+    func testInitialization_whenFailedToStart_thenRecoversInReinitialiization() async {
         // Check our initial state is correct
         guard case .notInitialized = CoverDropService.shared.state else {
             XCTFail("Not in correct state, expected .notInitialized")

@@ -7,7 +7,7 @@ final class BackgroundMessageSendServiceTests: XCTestCase {
         BackgroundMessageSendState.clearAllState()
     }
 
-    func testShouldExecute() async throws {
+    func testShouldExecute() throws {
         func runTest(
             lastRun: Date,
             minimumDurationBetweenRuns: TimeInterval,

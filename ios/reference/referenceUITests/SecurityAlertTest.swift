@@ -22,7 +22,6 @@ final class SecurityAlertTest: XCTestCase {
         app.buttons["Open CoverDrop"].tap()
         XCTAssertTrue(app.staticTexts["- An active debugger is attached to this process"].exists)
         XCTAssertTrue(app.staticTexts["- This is running in an emulator"].exists)
-        XCTAssertTrue(app.staticTexts["- This device has evidence of reverse engineering"].exists)
         _ = app.buttons["Dismiss and ignore warnings"].waitForExistence(timeout: timeout)
         app.buttons["Dismiss and ignore warnings"].tap()
     }

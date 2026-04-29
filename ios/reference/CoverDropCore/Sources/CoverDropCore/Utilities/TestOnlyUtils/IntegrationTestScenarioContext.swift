@@ -46,8 +46,7 @@ public class IntegrationTestScenarioContext {
             subdirectory: "vectors/\(scenario.rawValue)/published_keys"
         ) else { throw IntegrationTestError.cannotFindFile }
         let data = try Data(contentsOf: resourceUrl)
-        let keys = try JSONDecoder().decode(PublicKeysData.self, from: data)
-        return keys
+        return try JSONDecoder().decode(PublicKeysData.self, from: data)
     }
 
     public func loadKeysVerified(step: String = "001_default") throws -> VerifiedPublicKeys {
@@ -68,8 +67,7 @@ public class IntegrationTestScenarioContext {
             subdirectory: "vectors/\(scenario.rawValue)/user_dead_drops"
         ) else { throw IntegrationTestError.cannotFindFile }
         let data = try Data(contentsOf: resourceUrl)
-        let deadDropData = try JSONDecoder().decode(DeadDropData.self, from: data)
-        return deadDropData
+        return try JSONDecoder().decode(DeadDropData.self, from: data)
     }
 
     func readTrustedOrganizationKeys(now: Date) throws -> [TrustedOrganizationPublicKey] {
@@ -78,7 +76,7 @@ public class IntegrationTestScenarioContext {
             inDirectory: "organization_keys/dev/"
         )
 
-        let keys: [TrustedOrganizationPublicKey] = try resourcePaths.compactMap { fullPath in
+        return try resourcePaths.compactMap { fullPath in
             // As `Bundle.module.paths` returns the full path, we just want to get the filename
             let fileName = URL(fileURLWithPath: fullPath).lastPathComponent
             let fileNameWithoutExtension = (fileName as NSString).deletingPathExtension
@@ -100,8 +98,6 @@ public class IntegrationTestScenarioContext {
             }
             return nil
         }
-
-        return keys
     }
 
     public func readGeneratedAtFile() throws -> Date {

@@ -19,7 +19,6 @@ final class NewPassphraseUITest: XCTestCase {
     /// Given   the user visits the remember passphrase screen
     /// When   the user clicks show passphrase button
     /// Then    they are shown the passphrase text
-
     func testShowPassphraseButtonThenTheyAreShownThePassphraseText() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         app.buttons["Continue"].tap()
@@ -34,7 +33,6 @@ final class NewPassphraseUITest: XCTestCase {
     /// Given    the user visits the remember passphrase screen
     /// When    it is the first interaction
     /// Then     the passphrase is hidden
-
     func testPassphraseIsHidden() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         app.buttons["Continue"].tap()
@@ -59,7 +57,6 @@ final class NewPassphraseUITest: XCTestCase {
     /// Given    the user visits the remember passphrase screen and the passphrase is shown
     /// When    the user clicks the hide password button
     /// Then    the passphrase is hidden
-
     func testHidePassphraseButton() {
         Navigation.navigateToOnboarding(in: app, with: timeout)
         app.buttons["Continue"].tap()

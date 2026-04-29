@@ -61,7 +61,7 @@ final class StorageManagerTests: XCTestCase {
         let url = try storageManager.getFullUrl(file: testFilePublic)
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
 
-        /// Check that file permissions are set to `0x644 (rw-r--r--)` (defaults)
+        // Check that file permissions are set to `0x644 (rw-r--r--)` (defaults)
         let permissions = attributes[.posixPermissions] as? NSNumber
         XCTAssertEqual(permissions?.intValue, 0o644)
 
@@ -69,7 +69,7 @@ final class StorageManagerTests: XCTestCase {
 
         // Check that it is excluded from backups
         let resourceValues = try url.resourceValues(forKeys: [.isExcludedFromBackupKey])
-        XCTAssertTrue(resourceValues.isExcludedFromBackup!)
+        XCTAssertTrue(try XCTUnwrap(resourceValues.isExcludedFromBackup))
     }
 
     func testFilePermissions_forSecretFile() throws {
@@ -77,7 +77,7 @@ final class StorageManagerTests: XCTestCase {
         let url = try storageManager.getFullUrl(file: testFileSecret)
         let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
 
-        /// Check that file permissions are set to `0x644 (rw-r--r--)` (defaults)
+        // Check that file permissions are set to `0x644 (rw-r--r--)` (defaults)
         let permissions = attributes[.posixPermissions] as? NSNumber
         XCTAssertEqual(permissions?.intValue, 0o644)
 
@@ -85,6 +85,6 @@ final class StorageManagerTests: XCTestCase {
 
         // Check that it is excluded from backups
         let resourceValues = try url.resourceValues(forKeys: [.isExcludedFromBackupKey])
-        XCTAssertTrue(resourceValues.isExcludedFromBackup!)
+        XCTAssertTrue(try XCTUnwrap(resourceValues.isExcludedFromBackup))
     }
 }

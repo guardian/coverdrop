@@ -12,9 +12,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     let coverProvider = CoverdropCoverProvider()
     let secureMessageTracking = SecureMessagingTracking()
 
-    public let coverDropService = CoverDropService.shared
+    let coverDropService = CoverDropService.shared
 
-    public var config: CoverDropConfig {
+    var config: CoverDropConfig {
         var config: StaticConfig = .prodConfig
 
         #if DEBUG

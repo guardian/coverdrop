@@ -14,7 +14,7 @@ class StorageManager {
     /// To be called on app start. Ensures that the base directory exists.
     /// Also ensures that the permissions are correct.
     /// In later version this might also execute some migrations if needed.
-    public func onAppStart() throws {
+    func onAppStart() throws {
         try ensureBaseDirectoryExists()
 
         for file in CoverDropFiles.allCases {
@@ -28,13 +28,13 @@ class StorageManager {
 
     /// This touches the file to update its created and last-modified date. Throws `StorageManagerError.fileNotFound`
     /// if the file does not exist.
-    public func touchFile(file: CoverDropFiles) throws {
+    func touchFile(file: CoverDropFiles) throws {
         try setCreatedAtDate(file: file, now: Date())
         try setLastModifiedDate(file: file, now: Date())
     }
 
     /// Returns `true` if the file exists, `false` otherwise.
-    public func doesFileExist(file: CoverDropFiles) -> Bool {
+    func doesFileExist(file: CoverDropFiles) -> Bool {
         guard let url = try? getFullUrl(file: file) else {
             return false
         }
@@ -43,7 +43,7 @@ class StorageManager {
 
     /// Returns the age of the file as a `TimeInterval`. If the file does not exist, it throws
     /// `StorageManagerError.fileNotFound`.
-    public func getFileAge(file: CoverDropFiles, nowOverride: Date? = nil) throws -> TimeInterval {
+    func getFileAge(file: CoverDropFiles, nowOverride: Date? = nil) throws -> TimeInterval {
         let lastModifiedDate = try getLastModifiedDate(file: file)
         let now = nowOverride ?? DateFunction.currentTime()
         return now.timeIntervalSince(lastModifiedDate)
@@ -51,7 +51,7 @@ class StorageManager {
 
     /// Returns the content of the given file.
     /// If the file does not exist, it throws `StorageManagerError.fileNotFound`.
-    public func readFile(file: CoverDropFiles) throws -> [UInt8] {
+    func readFile(file: CoverDropFiles) throws -> [UInt8] {
         let url = try getFullUrl(file: file)
 
         if !FileManager.default.fileExists(atPath: url.path) {
@@ -63,7 +63,7 @@ class StorageManager {
     }
 
     /// Writes the given data to the file. If the file does not exist, it will be created.
-    public func writeFile(file: CoverDropFiles, data: [UInt8]) throws {
+    func writeFile(file: CoverDropFiles, data: [UInt8]) throws {
         let url = try getFullUrl(file: file)
 
         var options: Data.WritingOptions = []
@@ -150,11 +150,10 @@ class StorageManager {
 
     func getFullUrl(file: CoverDropFiles) throws -> URL {
         let baseUrl = try getBaseDirectoryUrl()
-        let url = baseUrl.appending(
+        return baseUrl.appending(
             path: file.rawValue,
             directoryHint: .notDirectory
         )
-        return url
     }
 
     func setCreatedAtDate(file: CoverDropFiles, now: Date) throws {

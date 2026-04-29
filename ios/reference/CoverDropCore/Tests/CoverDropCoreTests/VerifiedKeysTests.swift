@@ -3,7 +3,7 @@ import Sodium
 import XCTest
 
 final class VerifiedKeysTests: XCTestCase {
-    func testGetCoverNodeKeys() async throws {
+    func testGetCoverNodeKeys() throws {
         let context = IntegrationTestScenarioContext(scenario: .messaging)
         let verifiedPublicKeys = try context.loadKeysVerified(step: "004_dead_drop_expired_and_no_longer_displayed")
 
@@ -14,7 +14,7 @@ final class VerifiedKeysTests: XCTestCase {
         )
     }
 
-    func testGetJounalistMessagingKeys() async throws {
+    func testGetJounalistMessagingKeys() throws {
         // this scenario and step combination offers multiple journalist msg keys
         let context = IntegrationTestScenarioContext(scenario: .messaging)
         let verifiedPublicKeys = try context.loadKeysVerified(step: "003_journalist_replied_and_processed")

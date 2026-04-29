@@ -30,7 +30,7 @@ final class EncryptedStorageTests: XCTestCase {
             caughtError = error
         }
         XCTAssertNotNil(caughtError)
-        XCTAssertEqual(caughtError as! EncryptedStorageError, EncryptedStorageError.storageFileMissing)
+        XCTAssertEqual(caughtError as? EncryptedStorageError, EncryptedStorageError.storageFileMissing)
     }
 
     func testOnAppStartCreatesStorage() async throws {
@@ -78,7 +78,7 @@ final class EncryptedStorageTests: XCTestCase {
             caughtError = error
         }
         XCTAssertNotNil(caughtError)
-        XCTAssertEqual(caughtError as! EncryptedStorageError, EncryptedStorageError.decryptionFailed)
+        XCTAssertEqual(caughtError as? EncryptedStorageError, EncryptedStorageError.decryptionFailed)
     }
 
     func testOnAppStartUpdatesStorageTimestamps() async throws {
@@ -91,8 +91,8 @@ final class EncryptedStorageTests: XCTestCase {
 
         guard let storage1 = storage1 else { throw "storage1 was nil" }
         guard let storage1b = storage1b else { throw "storage1b was nil" }
-        XCTAssertEqual(storage1.createdTimestamp!, storage1b.createdTimestamp!)
-        XCTAssertEqual(storage1.lastModifiedTimestamp!, storage1b.lastModifiedTimestamp!)
+        XCTAssertEqual(storage1.createdTimestamp, storage1b.createdTimestamp)
+        XCTAssertEqual(storage1.lastModifiedTimestamp, storage1b.lastModifiedTimestamp)
 
         // reading after the next onAppStart yields new timestamps
         sleep(1)
@@ -100,8 +100,11 @@ final class EncryptedStorageTests: XCTestCase {
         let storage2 = try readTestStorageState()
 
         guard let storage2 = storage2 else { throw "storage was nil" }
-        XCTAssertGreaterThan(storage2.createdTimestamp!, storage1.createdTimestamp!)
-        XCTAssertGreaterThan(storage2.lastModifiedTimestamp!, storage1.lastModifiedTimestamp!)
+        XCTAssertGreaterThan(try XCTUnwrap(storage2.createdTimestamp), try XCTUnwrap(storage1.createdTimestamp))
+        XCTAssertGreaterThan(
+            try XCTUnwrap(storage2.lastModifiedTimestamp),
+            try XCTUnwrap(storage1.lastModifiedTimestamp)
+        )
     }
 
     func testOnAppStartDoesNotChangeStorageContent() async throws {
@@ -111,8 +114,8 @@ final class EncryptedStorageTests: XCTestCase {
         try await instance.onAppStart(config: config)
         let storage2 = try readTestStorageState()
 
-        XCTAssertEqual(storage1!.storage.blobData, storage2!.storage.blobData)
-        XCTAssertEqual(storage1!.storage.salt, storage2!.storage.salt)
+        XCTAssertEqual(storage1?.storage.blobData, storage2?.storage.blobData)
+        XCTAssertEqual(storage1?.storage.salt, storage2?.storage.salt)
     }
 
     func testSecondStoreOverwritesContents() async throws {
@@ -140,19 +143,19 @@ final class EncryptedStorageTests: XCTestCase {
     func testStoredFileAlwaysSameSize() async throws {
         // Check after initial onAppStart call
         try await instance.onAppStart(config: config)
-        let size1 = try readTestStorageState()!.blobLength
+        let size1 = try XCTUnwrap(try readTestStorageState()?.blobLength)
 
         // Check after resetting the storage
         let passphrase = PasswordGenerator.shared.generate(wordCount: config.passphraseWordCount)
         let session = try await instance.createOrResetStorageWithPassphrase(passphrase: passphrase)
-        let size2 = try readTestStorageState()!.blobLength
+        let size2 = try XCTUnwrap(try readTestStorageState()?.blobLength)
 
         // Check after updating the storage
         try await instance.updateStorageOnDisk(
             session: session,
             state: UnlockedSecretData.createEmpty()
         )
-        let size3 = try readTestStorageState()!.blobLength
+        let size3 = try XCTUnwrap(try readTestStorageState()?.blobLength)
 
         XCTAssertEqual(size1, size2)
         XCTAssertEqual(size1, size3)

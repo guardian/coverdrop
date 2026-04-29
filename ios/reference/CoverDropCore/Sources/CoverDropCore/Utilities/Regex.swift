@@ -1,7 +1,7 @@
 import Foundation
 
-// This is a helper to make working with Swift Regex's less painful!
-// https://stackoverflow.com/questions/42789953/swift-3-how-do-i-extract-captured-groups-in-regular-expressions
+/// This is a helper to make working with Swift Regex's less painful!
+/// https://stackoverflow.com/questions/42789953/swift-3-how-do-i-extract-captured-groups-in-regular-expressions
 extension String {
     func groups(for regexPattern: String) -> [[String]] {
         do {

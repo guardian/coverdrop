@@ -10,8 +10,7 @@ public enum StatusError: Error {
 public class StatusDataHelper {
     public func readLocalDataFile() throws -> DeadDropData {
         let data = try readAvailableStatusJson()
-        let decodedData = try JSONDecoder().decode(DeadDropData.self, from: data)
-        return decodedData
+        return try JSONDecoder().decode(DeadDropData.self, from: data)
     }
 
     public func readInitalStatusJson() throws -> Data {

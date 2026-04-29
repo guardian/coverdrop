@@ -13,7 +13,7 @@ final class MessageStatusUITest: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testNewMessagesHavePendingStateThenSendState() throws {
+    func testNewMessagesHavePendingStateThenSendState() {
         app = XCUIApplication()
 
         XCUIApplicationLauncher.launch(with: app)
@@ -52,7 +52,7 @@ final class MessageStatusUITest: XCTestCase {
         XCTAssertTrue(app.staticTexts["Sent"].exists)
     }
 
-    func testNewMessagesHavePendingStateThenSendAfterAppRestart() throws {
+    func testNewMessagesHavePendingStateThenSendAfterAppRestart() {
         app = XCUIApplication()
 
         XCUIApplicationLauncher.launch(with: app)
