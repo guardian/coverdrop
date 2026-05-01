@@ -33,9 +33,13 @@ tower-http.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 
+aws-config = { workspace = true}
+aws-sdk-secretsmanager.workspace = true
+
 common = { path = "../../common" }
 delivery-service-lib = { path = "../delivery-service-lib" }
 trust-anchors = { path = "../../trust-anchors" }
+lambda_http = "1.0.2"
 
 [dev-dependencies]
 http-body-util.workspace = true

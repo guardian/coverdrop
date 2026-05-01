@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script connects to the CODE Postgres database.
+# This script connects to the STAGING Postgres database.
 # Janus credentials are required.
 
 set -o errexit
@@ -8,8 +8,8 @@ set -o pipefail
 
 DB_ARN=$(aws resourcegroupstaggingapi get-resources \
   --resource-type-filters rds:db                    \
-  --tag-filters Key=Stage,Values=CODE               \
-                Key=App,Values=coverdrop            \
+  --tag-filters Key=Stage,Values=STAGING               \
+                Key=App,Values=delivery-service            \
   --region eu-west-1                                \
   --profile secure-collaboration |                  \
   jq -r '.ResourceTagMappingList[0].ResourceARN')
@@ -29,9 +29,8 @@ DB_SECRET_ARN=$(aws resourcegroupstaggingapi get-resources  \
   --profile secure-collaboration                            \
   --region eu-west-1 |                                      \
   jq -r  '.ResourceTagMappingList[] |
-  select (.ResourceARN | contains ("DatabaseSecret")) |
-  select (.Tags[].Key=="Stage" and .Tags[].Value=="CODE") |
-  select (.Tags[].Key=="App" and .Tags[].Value=="coverdrop") |
+  select (.Tags[].Key=="Stage" and .Tags[].Value=="STAGING") |
+  select (.Tags[].Key=="App" and .Tags[].Value=="delivery-service") |
   .ResourceARN')
 
 DB_PASSWORD=$(aws secretsmanager get-secret-value \
@@ -41,7 +40,7 @@ DB_PASSWORD=$(aws secretsmanager get-secret-value \
     --profile secure-collaboration                \
     --region eu-west-1 | jq -r '.password')
 
-SSH_COMMAND=$(ssm ssh --raw -t secure-collaboration,api,CODE --oldest --profile secure-collaboration)
+SSH_COMMAND=$(ssm ssh --raw -t secure-collaboration,api,STAGING --oldest --profile secure-collaboration)
 
 # -f to run in background
 # sleep 10 to give time for tunnel to be established before psql connects.
@@ -51,5 +50,6 @@ eval "${SSH_COMMAND}" -L 15432:"$DB_HOSTNAME":5432 -o ExitOnForwardFailure=yes -
 
 # For some reason the terminal gets messed up after running the SSH command
 reset
+
 
 PGPASSWORD=$DB_PASSWORD psql -h localhost -p 15432 -U "$DB_USERNAME" -d "$DB_NAME" "$@"

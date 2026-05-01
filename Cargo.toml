@@ -90,7 +90,7 @@ libsqlite3-sys = { version = "0.30", optional = false, default-features = false,
 ] }
 log = "0.4.17"
 notify = "6.1.1"
-metrics = "0.24.1"
+metrics = "0.24.5"
 axum-metrics = "0.2.0"
 metrics_cloudwatch = "4.0.0"
 

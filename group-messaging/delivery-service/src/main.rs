@@ -2,6 +2,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use clap::Parser;
 use common::api::api_client::ApiClient;
+use common::clap::Stage;
 use common::metrics::{init_metrics, DELIVERY_SERVICE_NAMESPACE};
 use common::time;
 use common::tracing::init_tracing;
@@ -12,6 +13,7 @@ use delivery_service::controllers::clients::{
 };
 use delivery_service::controllers::general::get_healthcheck;
 use delivery_service::controllers::messages::{add_members, receive_messages, send_message};
+use delivery_service::helpers::fetch_and_parse_db_url_secret;
 use delivery_service::services::database::Database;
 use delivery_service::DEFAULT_PORT;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
@@ -30,10 +32,39 @@ async fn main() {
 async fn start(cli: Cli) -> anyhow::Result<()> {
     init_metrics(DELIVERY_SERVICE_NAMESPACE, &cli.stage).await?;
 
-    init_tracing("info");
+    //
+    // Initialize tracing
+    //
+    if cli.stage == Stage::Development {
+        init_tracing("info");
+    } else {
+        // required to enable CloudWatch error logging by the runtime
+        lambda_http::tracing::init_default_subscriber();
+    }
+
     tracing::info!("Cli args: {cli:?}");
 
-    let db = Database::new(&cli.db_url).await?;
+    //
+    // Set up services
+    //
+
+    let db_url: &String = match (&cli.db_url, &cli.db_secret_arn) {
+        (Some(db_url), _) => {
+            tracing::info!("Using database URL from COVERDROP_DELIVERY_SERVICE_DB_URL");
+            db_url
+        }
+        (None, Some(secret_arn)) => {
+            tracing::info!("Resolving database URL from secret ARN");
+            &fetch_and_parse_db_url_secret(secret_arn, "coverdrop_delivery_service_db").await?
+        }
+        (None, None) => {
+            anyhow::bail!(
+                "Either COVERDROP_DELIVERY_SERVICE_DB_URL or COVERDROP_DELIVERY_SERVICE_DB_SECRET_ARN must be set"
+            );
+        }
+    };
+
+    let db = Database::new(db_url).await?;
 
     tracing::info!("Database initialization complete");
 
@@ -64,12 +95,20 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
 
     tracing::info!("Router built successfully");
 
-    let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
+    if cli.stage == Stage::Development {
+        tracing::info!("In DEV mode - running without lambda runtime");
+        let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
 
-    tracing::info!("Starting server on http://{:?}", socket_addr);
-    let listener = TcpListener::bind(&socket_addr).await?;
+        tracing::info!("Starting server on http://{:?}", socket_addr);
+        let listener = TcpListener::bind(&socket_addr).await?;
 
-    axum::serve(listener, app).await?;
+        axum::serve(listener, app).await?;
+    } else {
+        tracing::info!("Starting Lambda server");
+        lambda_http::run(app)
+            .await
+            .map_err(|e| anyhow::anyhow!("Lambda runtime error: {}", e))?;
+    }
 
     Ok(())
 }
