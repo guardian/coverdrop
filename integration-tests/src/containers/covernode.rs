@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use common::api::models::covernode_id::CoverNodeIdentity;
 use common::task::RunnerMode;
 use testcontainers::runners::AsyncRunner;
-use testcontainers::{ContainerAsync, RunnableImage};
+use testcontainers::{ContainerAsync, ImageExt};
 
 const CONTAINER_KEYS_DIR: &str = "/var/keys";
 const CONTAINER_CHECKPOINTS_DIR: &str = "/var/checkpoints";
@@ -49,9 +49,8 @@ pub async fn start_covernode(
         runner_mode,
     );
 
-    let covernode_image = RunnableImage::from((covernode_image, covernode_image_args));
-
     let covernode = covernode_image
+        .with_cmd(covernode_image_args.into_cmd())
         .with_mount(keys_volume)
         .with_mount(checkpoints_volume)
         .with_network(network)

@@ -130,6 +130,11 @@ criteria = "safe-to-deploy"
 delta = "0.20.1 -> 0.20.3"
 notes = "Simply bumps a transitive dependency."
 
+[[audits.der]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "0.7.10 -> 0.7.9"
+
 [[audits.deranged]]
 who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
@@ -167,6 +172,11 @@ version = "0.1.2"
 who = "Mario Savarese <mario.savarese@guardian.co.uk>"
 criteria = "safe-to-deploy"
 version = "1.0.1"
+
+[[audits.etcetera]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-run"
+version = "0.11.0"
 
 [[audits.fastrand]]
 who = "Mario Savarese <mario.savarese@guardian.co.uk>"
@@ -423,6 +433,11 @@ who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
 version = "0.12.5"
 
+[[audits.r-efi]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-run"
+version = "6.0.0"
+
 [[audits.radix_trie]]
 who = "zekehuntergreen <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
@@ -432,6 +447,11 @@ version = "0.2.1"
 who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
 criteria = "safe-to-deploy"
 delta = "0.9.0 -> 0.10.0"
+
+[[audits.rand_core]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-run"
+version = "0.10.1"
 
 [[audits.rand_core]]
 who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
@@ -497,6 +517,11 @@ who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
 criteria = "safe-to-deploy"
 version = "1.7.0"
 notes = "https://sourcegraph.com/crates/rustls-pki-types@v1.7.0/-/blob/src/server_name.rs looks good"
+
+[[audits.rustls-pki-types]]
+who = "Zeke Hunter-Green <zeke.huntergreen@theguardian.com>"
+criteria = "safe-to-deploy"
+delta = "1.11.0 -> 1.14.0"
 
 [[audits.rustls-webpki]]
 who = "Dominic Kendrick <dom@dominickendrick.co.uk>"
@@ -632,6 +657,12 @@ criteria = "safe-to-deploy"
 delta = "0.22.1 -> 0.22.2"
 notes = "Adding a budget to prevent DOS during path building"
 
+[[trusted.aead]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-05"
+end = "2027-04-23"
+
 [[trusted.aes]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -654,31 +685,43 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-16"
-end = "2024-11-29"
+end = "2027-04-23"
 
 [[trusted.anstyle]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-05-18"
-end = "2024-11-29"
+end = "2027-04-23"
 
 [[trusted.anstyle-parse]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-08"
-end = "2024-11-29"
+end = "2027-04-23"
 
 [[trusted.anstyle-query]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-04-13"
-end = "2024-11-29"
+end = "2027-04-23"
 
 [[trusted.anstyle-wincon]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-08"
-end = "2024-11-29"
+end = "2027-04-23"
+
+[[trusted.anyhow]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-05"
+end = "2027-04-23"
+
+[[trusted.argon2]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-01-29"
+end = "2027-04-23"
 
 [[trusted.async-std]]
 criteria = "safe-to-deploy"
@@ -714,169 +757,199 @@ end = "2025-10-16"
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-credential-types]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-12-29"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-runtime]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2023-04-06"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-autoscaling]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-11-14"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-cloudwatch]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-10-07"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-ec2]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-11-14"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-kinesis]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-rds]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-11-14"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-s3]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-12-09"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-secretsmanager]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-11-14"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-ses]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-ssm]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-23"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-sso]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-ssooidc]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-23"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sdk-sts]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-sigv4]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-async]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
+
+[[trusted.aws-smithy-cbor]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-checksums]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-07-20"
-end = "2025-11-27"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-compression]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2024-05-21"
-end = "2025-10-07"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-eventstream]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-11-27"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-http]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
+
+[[trusted.aws-smithy-http-client]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2025-03-10"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-json]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
+
+[[trusted.aws-smithy-observability]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2025-02-15"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-query]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-runtime]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2023-04-06"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-runtime-api]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2023-04-06"
-end = "2025-09-03"
+end = "2027-04-23"
+
+[[trusted.aws-smithy-runtime-api-macros]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2026-04-15"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-types]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
+
+[[trusted.aws-smithy-types-convert]]
+criteria = "safe-to-deploy"
+user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
+start = "2022-06-22"
+end = "2027-04-23"
 
 [[trusted.aws-smithy-xml]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.aws-types]]
 criteria = "safe-to-deploy"
 user-id = 160111 # AWS SDK Rust Bot (aws-sdk-rust-ci)
 start = "2022-06-22"
-end = "2025-09-03"
+end = "2027-04-23"
 
 [[trusted.backtrace]]
 criteria = "safe-to-deploy"
@@ -890,11 +963,47 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2022-01-13"
 end = "2027-03-31"
 
+[[trusted.base64ct]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-01-21"
+end = "2027-04-23"
+
 [[trusted.bincode]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-08"
 end = "2025-10-16"
+
+[[trusted.blake2]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-10"
+end = "2027-04-23"
+
+[[trusted.block-buffer]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-04"
+end = "2027-04-23"
+
+[[trusted.bollard]]
+criteria = "safe-to-deploy"
+user-id = 24879 # Niel Drummond (fussybeaver)
+start = "2019-03-07"
+end = "2027-04-23"
+
+[[trusted.bollard-buildkit-proto]]
+criteria = "safe-to-deploy"
+user-id = 24879 # Niel Drummond (fussybeaver)
+start = "2022-12-10"
+end = "2027-04-23"
+
+[[trusted.bollard-stubs]]
+criteria = "safe-to-deploy"
+user-id = 24879 # Niel Drummond (fussybeaver)
+start = "2020-06-11"
+end = "2027-04-23"
 
 [[trusted.bstr]]
 criteria = "safe-to-deploy"
@@ -926,6 +1035,18 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-01"
 end = "2024-07-17"
 
+[[trusted.chacha20]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-06-24"
+end = "2027-04-23"
+
+[[trusted.chacha20poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-08-30"
+end = "2027-04-23"
+
 [[trusted.clap]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -936,7 +1057,7 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-28"
-end = "2024-11-29"
+end = "2027-04-23"
 
 [[trusted.clap_derive]]
 criteria = "safe-to-deploy"
@@ -948,7 +1069,25 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-04-15"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.cmov]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-02-27"
+end = "2027-04-23"
+
+[[trusted.colorchoice]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-04-13"
+end = "2027-04-23"
+
+[[trusted.const-oid]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-08-04"
+end = "2027-04-23"
 
 [[trusted.core-models]]
 criteria = "safe-to-deploy"
@@ -962,6 +1101,24 @@ user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
 start = "2025-11-05"
 end = "2027-03-31"
 
+[[trusted.cpufeatures]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-04-26"
+end = "2027-04-23"
+
+[[trusted.crypto-bigint]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-04-30"
+end = "2027-04-23"
+
+[[trusted.crypto-common]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-04-28"
+end = "2027-04-23"
+
 [[trusted.ctr]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -973,6 +1130,36 @@ criteria = "safe-to-deploy"
 user-id = 5059 # Artyom Pavlov (newpavlov)
 start = "2019-03-11"
 end = "2027-03-31"
+
+[[trusted.ctutils]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2025-12-18"
+end = "2027-04-23"
+
+[[trusted.der]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-12-17"
+end = "2027-04-23"
+
+[[trusted.derive_more]]
+criteria = "safe-to-deploy"
+user-id = 3797 # Jelte Fennema-Nio (JelteF)
+start = "2019-05-25"
+end = "2027-04-23"
+
+[[trusted.derive_more-impl]]
+criteria = "safe-to-deploy"
+user-id = 3797 # Jelte Fennema-Nio (JelteF)
+start = "2023-07-23"
+end = "2027-04-23"
+
+[[trusted.digest]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-10"
+end = "2027-04-23"
 
 [[trusted.dtoa]]
 criteria = "safe-to-deploy"
@@ -991,6 +1178,12 @@ criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-10-29"
 end = "2027-03-31"
+
+[[trusted.ed25519]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-08-10"
+end = "2027-04-23"
 
 [[trusted.elliptic-curve]]
 criteria = "safe-to-deploy"
@@ -1052,6 +1245,12 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-04-02"
 end = "2025-10-16"
 
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2025-04-30"
+end = "2027-04-23"
+
 [[trusted.hax-lib]]
 criteria = "safe-to-deploy"
 user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
@@ -1100,6 +1299,18 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-06-11"
 end = "2025-10-16"
 
+[[trusted.hkdf]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-10-19"
+end = "2027-04-23"
+
+[[trusted.hmac]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-10"
+end = "2027-04-23"
+
 [[trusted.hpke-rs]]
 criteria = "safe-to-deploy"
 user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
@@ -1128,7 +1339,7 @@ end = "2027-03-31"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-04-05"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.http-body]]
 criteria = "safe-to-deploy"
@@ -1146,13 +1357,19 @@ end = "2025-06-13"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-07-03"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.hybrid-array]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-05-07"
+end = "2027-04-23"
 
 [[trusted.hyper]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-01"
-end = "2025-10-18"
+end = "2027-04-23"
 
 [[trusted.hyper-tls]]
 criteria = "safe-to-deploy"
@@ -1164,7 +1381,55 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2022-01-15"
-end = "2025-06-13"
+end = "2027-04-23"
+
+[[trusted.icu_collections]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-09-27"
+end = "2027-04-23"
+
+[[trusted.icu_locale_core]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2025-02-26"
+end = "2027-04-23"
+
+[[trusted.icu_normalizer]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-04-29"
+end = "2027-04-23"
+
+[[trusted.icu_normalizer_data]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2023-10-03"
+end = "2027-04-23"
+
+[[trusted.icu_properties]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-01-31"
+end = "2027-04-23"
+
+[[trusted.icu_properties_data]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2023-10-03"
+end = "2027-04-23"
+
+[[trusted.icu_provider]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-01-31"
+end = "2027-04-23"
+
+[[trusted.id-arena]]
+criteria = "safe-to-deploy"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2026-01-14"
+end = "2027-04-23"
 
 [[trusted.id-arena]]
 criteria = "safe-to-deploy"
@@ -1206,7 +1471,7 @@ end = "2026-01-09"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.js-sys]]
 criteria = "safe-to-deploy"
@@ -1237,6 +1502,12 @@ criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2021-01-27"
 end = "2025-10-16"
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2024-08-15"
+end = "2027-04-23"
 
 [[trusted.libcrux-aead]]
 criteria = "safe-to-deploy"
@@ -1454,17 +1725,35 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2022-02-06"
 end = "2025-10-16"
 
+[[trusted.libm]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2024-10-26"
+end = "2027-04-23"
+
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-06-12"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.litemap]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-23"
+end = "2027-04-23"
 
 [[trusted.lock_api]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-05-04"
 end = "2024-07-17"
+
+[[trusted.md-5]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-10"
+end = "2027-04-23"
 
 [[trusted.memchr]]
 criteria = "safe-to-deploy"
@@ -1490,11 +1779,35 @@ user-id = 51017
 start = "2020-01-07"
 end = "2025-10-16"
 
+[[trusted.num]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2020-01-10"
+end = "2027-04-23"
+
+[[trusted.num-bigint]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-09-04"
+end = "2027-04-23"
+
+[[trusted.num-complex]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-10"
+end = "2027-04-23"
+
 [[trusted.num_cpus]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-06-10"
 end = "2024-07-17"
+
+[[trusted.once_cell_polyfill]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-05-22"
+end = "2027-04-23"
 
 [[trusted.openmls]]
 criteria = "safe-to-deploy"
@@ -1536,7 +1849,7 @@ end = "2027-03-31"
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-02-25"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.ordered-float]]
 criteria = "safe-to-deploy"
@@ -1568,17 +1881,47 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-05-04"
 end = "2024-07-17"
 
+[[trusted.password-hash]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2021-01-29"
+end = "2027-04-23"
+
 [[trusted.paste]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-19"
 end = "2024-07-17"
 
+[[trusted.pkcs1]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-12"
+end = "2027-04-23"
+
+[[trusted.pkcs8]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-12"
+end = "2027-04-23"
+
+[[trusted.poly1305]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-08-15"
+end = "2027-04-23"
+
 [[trusted.polyval]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-08-13"
 end = "2027-03-31"
+
+[[trusted.potential_utf]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2024-11-23"
+end = "2027-04-23"
 
 [[trusted.pretty_env_logger]]
 criteria = "safe-to-deploy"
@@ -1602,7 +1945,43 @@ end = "2027-03-31"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-23"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.prost]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2021-07-08"
+end = "2027-04-23"
+
+[[trusted.prost-derive]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2021-07-08"
+end = "2027-04-23"
+
+[[trusted.prost-types]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2021-07-08"
+end = "2027-04-23"
+
+[[trusted.quote]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-09"
+end = "2027-04-23"
+
+[[trusted.ref-cast]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-05"
+end = "2027-04-23"
+
+[[trusted.ref-cast-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-05"
+end = "2027-04-23"
 
 [[trusted.regex]]
 criteria = "safe-to-deploy"
@@ -1632,7 +2011,7 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-04"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.rfc6979]]
 criteria = "safe-to-deploy"
@@ -1640,11 +2019,17 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2021-02-09"
 end = "2027-03-31"
 
+[[trusted.rsa]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-03-10"
+end = "2027-04-23"
+
 [[trusted.rustix]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-10-29"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
@@ -1656,7 +2041,7 @@ end = "2024-08-08"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.same-file]]
 criteria = "safe-to-deploy"
@@ -1710,7 +2095,7 @@ end = "2027-05-01"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-28"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.serde_path_to_error]]
 criteria = "safe-to-deploy"
@@ -1724,11 +2109,29 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-26"
 end = "2025-06-13"
 
+[[trusted.serde_spanned]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-01-20"
+end = "2027-04-23"
+
 [[trusted.serde_yaml]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
 end = "2025-10-16"
+
+[[trusted.sha2]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-05-24"
+end = "2027-04-23"
+
+[[trusted.signature]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-05-25"
+end = "2027-04-23"
 
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
@@ -1741,6 +2144,18 @@ criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-05-06"
 end = "2025-10-16"
+
+[[trusted.socket2]]
+criteria = "safe-to-deploy"
+user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
+start = "2020-09-09"
+end = "2027-04-23"
+
+[[trusted.spki]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-12-03"
+end = "2027-04-23"
 
 [[trusted.syn]]
 criteria = "safe-to-deploy"
@@ -1758,19 +2173,25 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-09"
-end = "2025-06-13"
+end = "2027-04-23"
 
 [[trusted.thiserror-impl]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-09"
-end = "2025-06-13"
+end = "2027-04-23"
 
 [[trusted.thread_local]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-09-07"
 end = "2024-07-17"
+
+[[trusted.tinystr]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-01-14"
+end = "2027-04-23"
 
 [[trusted.tls_codec]]
 criteria = "safe-to-deploy"
@@ -1794,13 +2215,19 @@ end = "2025-06-13"
 criteria = "safe-to-deploy"
 user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2020-12-25"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.tokio-macros]]
 criteria = "safe-to-deploy"
 user-id = 10
 start = "2019-04-24"
 end = "2024-07-17"
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2020-10-26"
+end = "2027-04-23"
 
 [[trusted.tokio-stream]]
 criteria = "safe-to-deploy"
@@ -1820,11 +2247,47 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-05-16"
 end = "2024-07-17"
 
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-12-14"
+end = "2027-04-23"
+
+[[trusted.toml_datetime]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-10-21"
+end = "2027-04-23"
+
 [[trusted.toml_edit]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2021-09-13"
-end = "2024-10-06"
+end = "2027-04-23"
+
+[[trusted.toml_parser]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-07-08"
+end = "2027-04-23"
+
+[[trusted.toml_writer]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-07-08"
+end = "2027-04-23"
+
+[[trusted.tonic]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2019-10-02"
+end = "2027-04-23"
+
+[[trusted.tonic-prost]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2025-07-28"
+end = "2027-04-23"
 
 [[trusted.tower]]
 criteria = "safe-to-deploy"
@@ -1850,6 +2313,18 @@ user-id = 10
 start = "2019-04-27"
 end = "2024-07-17"
 
+[[trusted.tower-layer]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2019-09-11"
+end = "2027-04-23"
+
+[[trusted.tower-service]]
+criteria = "safe-to-deploy"
+user-id = 3959 # Lucio Franco (LucioFranco)
+start = "2019-08-20"
+end = "2027-04-23"
+
 [[trusted.typeid]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1868,6 +2343,24 @@ user-id = 2017 # Matt Brubeck (mbrubeck)
 start = "2021-04-06"
 end = "2024-07-17"
 
+[[trusted.unicode-ident]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2021-10-02"
+end = "2027-04-23"
+
+[[trusted.unicode-properties]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2023-07-27"
+end = "2027-04-23"
+
+[[trusted.unicode-segmentation]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2019-05-15"
+end = "2027-04-23"
+
 [[trusted.unicode-width]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1879,6 +2372,30 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2022-07-03"
 end = "2025-10-16"
+
+[[trusted.ureq]]
+criteria = "safe-to-deploy"
+user-id = 5441 # Martin Algesten (algesten)
+start = "2019-03-30"
+end = "2027-04-23"
+
+[[trusted.ureq-proto]]
+criteria = "safe-to-run"
+user-id = 5441 # Martin Algesten (algesten)
+start = "2024-11-06"
+end = "2027-04-23"
+
+[[trusted.url]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-18"
+end = "2027-04-23"
+
+[[trusted.utf8-zero]]
+criteria = "safe-to-run"
+user-id = 5441 # Martin Algesten (algesten)
+start = "2026-02-28"
+end = "2027-04-23"
 
 [[trusted.walkdir]]
 criteria = "safe-to-deploy"
@@ -1986,13 +2503,25 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2021-01-15"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.windows-collections]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-02-06"
+end = "2027-04-23"
 
 [[trusted.windows-core]]
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2021-11-15"
 end = "2025-10-16"
+
+[[trusted.windows-future]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-02-10"
+end = "2027-04-23"
 
 [[trusted.windows-implement]]
 criteria = "safe-to-deploy"
@@ -2006,11 +2535,29 @@ user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2022-02-18"
 end = "2025-10-16"
 
+[[trusted.windows-numerics]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-05-15"
+end = "2027-04-23"
+
+[[trusted.windows-registry]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-02-15"
+end = "2027-04-23"
+
 [[trusted.windows-result]]
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2024-02-02"
 end = "2025-10-16"
+
+[[trusted.windows-strings]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-02-02"
+end = "2027-04-23"
 
 [[trusted.windows-sys]]
 criteria = "safe-to-deploy"
@@ -2022,13 +2569,25 @@ end = "2025-10-16"
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2022-09-09"
-end = "2024-07-17"
+end = "2027-04-23"
+
+[[trusted.windows-threading]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2025-04-29"
+end = "2027-04-23"
+
+[[trusted.windows-version]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2023-03-07"
+end = "2027-04-23"
 
 [[trusted.windows_aarch64_gnullvm]]
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2022-09-01"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.windows_aarch64_msvc]]
 criteria = "safe-to-deploy"
@@ -2064,7 +2623,7 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2022-09-01"
-end = "2024-07-17"
+end = "2027-04-23"
 
 [[trusted.windows_x86_64_msvc]]
 criteria = "safe-to-deploy"
@@ -2076,4 +2635,64 @@ end = "2024-07-17"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
-end = "2024-10-05"
+end = "2027-04-23"
+
+[[trusted.writeable]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-11-01"
+end = "2027-04-23"
+
+[[trusted.yoke]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-05-01"
+end = "2027-04-23"
+
+[[trusted.yoke-derive]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-07-02"
+end = "2027-04-23"
+
+[[trusted.zerofrom]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-04-06"
+end = "2027-04-23"
+
+[[trusted.zerofrom-derive]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-04-06"
+end = "2027-04-23"
+
+[[trusted.zeroize_derive]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2019-03-23"
+end = "2027-04-23"
+
+[[trusted.zerotrie]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2023-10-03"
+end = "2027-04-23"
+
+[[trusted.zerovec]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-04-19"
+end = "2027-04-23"
+
+[[trusted.zerovec-derive]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-12-11"
+end = "2027-04-23"
+
+[[trusted.zmij]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-12-18"
+end = "2027-04-23"

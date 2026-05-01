@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image};
 
 const NAME: &str = "varnish";
 const TAG: &str = "6.0";
@@ -20,11 +20,11 @@ impl Default for VarnishArgs {
     }
 }
 
-impl ImageArgs for VarnishArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl VarnishArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let command = "/usr/local/bin/docker-varnish-entrypoint".into();
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
@@ -42,21 +42,21 @@ impl Default for Varnish {
 }
 
 impl Image for Varnish {
-    type Args = VarnishArgs;
-
-    fn name(&self) -> String {
-        NAME.to_owned()
+    fn name(&self) -> &str {
+        NAME
     }
 
-    fn tag(&self) -> String {
-        TAG.to_owned()
+    fn tag(&self) -> &str {
+        TAG
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
         vec![WaitFor::message_on_stderr("said Child starts")]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

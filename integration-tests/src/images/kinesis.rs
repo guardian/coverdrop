@@ -1,18 +1,28 @@
 use std::env;
 use testcontainers::{core::WaitFor, Image};
 
-#[derive(Debug, Default)]
-pub struct Kinesis {}
+#[derive(Debug)]
+pub struct Kinesis {
+    name: String,
+    tag: String,
+}
+
+impl Default for Kinesis {
+    fn default() -> Self {
+        Self {
+            name: env::var("KINESIS_IMAGE_NAME").unwrap_or("test_coverdrop_kinesis".into()),
+            tag: env::var("KINESIS_IMAGE_TAG").unwrap_or("dev".into()),
+        }
+    }
+}
 
 impl Image for Kinesis {
-    type Args = ();
-
-    fn name(&self) -> String {
-        env::var("KINESIS_IMAGE_NAME").unwrap_or("test_coverdrop_kinesis".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("KINESIS_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {

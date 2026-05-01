@@ -2,8 +2,8 @@ use chrono::{DateTime, Duration, Utc};
 use common::api::models::covernode_id::CoverNodeIdentity;
 use common::task::RunnerMode;
 use covernode_app::mixing::mixing_strategy::MixingStrategyConfiguration;
-use std::{collections::HashMap, env, net::IpAddr};
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use std::{borrow::Cow, collections::HashMap, env, net::IpAddr};
+use testcontainers::{core::WaitFor, Image};
 
 use crate::constants::COVERNODE_DB_PASSWORD;
 use crate::{
@@ -73,8 +73,8 @@ impl CoverNodeArgs {
     }
 }
 
-impl ImageArgs for CoverNodeArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl CoverNodeArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let set_time_arg = date_time_to_set_faketime_command_string(self.base_time);
 
         let covernode_id = self.covernode_id;
@@ -135,12 +135,14 @@ impl ImageArgs for CoverNodeArgs {
 
         println!("Starting Covernode with: {command}");
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
 #[derive(Debug)]
 pub struct CoverNode {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -161,19 +163,21 @@ impl Default for CoverNode {
             COVERNODE_AWS_SECRET_ACCESS_KEY_SECRET.into(),
         );
 
-        Self { env_vars }
+        Self {
+            name: env::var("COVERNODE_IMAGE_NAME").unwrap_or("test_coverdrop_covernode".into()),
+            tag: env::var("COVERNODE_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for CoverNode {
-    type Args = CoverNodeArgs;
-
-    fn name(&self) -> String {
-        env::var("COVERNODE_IMAGE_NAME").unwrap_or("test_coverdrop_covernode".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("COVERNODE_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
@@ -182,7 +186,9 @@ impl Image for CoverNode {
         )]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

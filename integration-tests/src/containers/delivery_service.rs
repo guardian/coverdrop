@@ -2,7 +2,7 @@ use std::{env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
 use testcontainers::runners::AsyncRunner;
-use testcontainers::{ContainerAsync, RunnableImage};
+use testcontainers::{ContainerAsync, ImageExt};
 
 use crate::images::{DeliveryService, DeliveryServiceArgs};
 use crate::{constants::POSTGRES_PORT, panic_handler::register_container_panic_hook};
@@ -16,9 +16,9 @@ pub async fn start_delivery_service(
 ) -> ContainerAsync<DeliveryService> {
     let image = DeliveryService::default();
     let args = DeliveryServiceArgs::new(api_ip, api_port, postgres_ip, POSTGRES_PORT, base_time);
-    let delivery_service_image = RunnableImage::from((image, args));
 
-    let delivery_service = delivery_service_image
+    let delivery_service = image
+        .with_cmd(args.into_cmd())
         .with_network(network)
         .start()
         .await

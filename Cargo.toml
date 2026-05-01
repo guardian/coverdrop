@@ -120,7 +120,7 @@ sqlx = "0.8.6"
 snafu = "0.8.5"
 strum = { version = "0.25.0", features = ["derive"] }
 tempfile = "3.3.0"
-testcontainers = "0.17.0"
+testcontainers = "0.27.2"
 thiserror = "1.0.40"
 tokio = { version = "1.44.2", features = ["full"] }
 tokio-stream = "0.1"

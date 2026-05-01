@@ -1,6 +1,6 @@
 use std::{env, net::IpAddr};
 use testcontainers::runners::AsyncRunner;
-use testcontainers::{ContainerAsync, RunnableImage};
+use testcontainers::{ContainerAsync, ImageExt};
 
 use crate::images::{U2JAppender, U2JAppenderArgs};
 use crate::{constants::KINESIS_PORT, panic_handler::register_container_panic_hook};
@@ -8,9 +8,9 @@ use crate::{constants::KINESIS_PORT, panic_handler::register_container_panic_hoo
 pub async fn start_u2j_appender(network: &str, kinesis_ip: IpAddr) -> ContainerAsync<U2JAppender> {
     let image = U2JAppender::default();
     let args = U2JAppenderArgs::new(kinesis_ip, KINESIS_PORT);
-    let u2j_appender_image = RunnableImage::from((image, args));
 
-    let u2j_appender = u2j_appender_image
+    let u2j_appender = image
+        .with_cmd(args.into_cmd())
         .with_network(network)
         .start()
         .await

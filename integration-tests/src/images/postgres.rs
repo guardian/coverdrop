@@ -1,6 +1,6 @@
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image};
 
 use crate::constants::{POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER};
 
@@ -22,11 +22,11 @@ impl Default for PostgresArgs {
     }
 }
 
-impl ImageArgs for PostgresArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl PostgresArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let command = "docker-entrypoint.sh -c 'track_commit_timestamp=on'".into();
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
@@ -47,14 +47,12 @@ impl Default for Postgres {
 }
 
 impl Image for Postgres {
-    type Args = PostgresArgs;
-
-    fn name(&self) -> String {
-        NAME.to_owned()
+    fn name(&self) -> &str {
+        NAME
     }
 
-    fn tag(&self) -> String {
-        TAG.to_owned()
+    fn tag(&self) -> &str {
+        TAG
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
@@ -63,7 +61,9 @@ impl Image for Postgres {
         )]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

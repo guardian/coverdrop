@@ -3,7 +3,7 @@ use std::{env, net::IpAddr, path::Path};
 use chrono::{DateTime, Utc};
 use common::task::RunnerMode;
 use testcontainers::runners::AsyncRunner;
-use testcontainers::{ContainerAsync, RunnableImage};
+use testcontainers::{ContainerAsync, ImageExt};
 
 use crate::{
     constants::API_PORT,
@@ -24,9 +24,8 @@ pub async fn start_identity_api(
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
 
-    let identity_api_image = RunnableImage::from((identity_api_image, identity_api_image_args));
-
     let api = identity_api_image
+        .with_cmd(identity_api_image_args.into_cmd())
         .with_mount(keys_volume)
         .with_network(network)
         .start()

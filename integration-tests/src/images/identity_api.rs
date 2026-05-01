@@ -1,8 +1,8 @@
-use std::{collections::HashMap, env, net::IpAddr};
+use std::{borrow::Cow, collections::HashMap, env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
 use common::task::RunnerMode;
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image};
 
 use crate::{
     constants::IDENTITY_API_DB_PASSWORD,
@@ -34,8 +34,8 @@ impl IdentityApiArgs {
     }
 }
 
-impl ImageArgs for IdentityApiArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl IdentityApiArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let set_time_arg = date_time_to_set_faketime_command_string(self.base_time);
 
         let api_url_arg = format!("--api-url=http://{}:{}", self.api_ip, self.api_port);
@@ -49,12 +49,14 @@ impl ImageArgs for IdentityApiArgs {
 
         println!("Starting Identity API with: {command}");
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
 #[derive(Debug)]
 pub struct IdentityApi {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -73,26 +75,30 @@ impl Default for IdentityApi {
             IDENTITY_API_AWS_SECRET_ACCESS_KEY_SECRET.into(),
         );
 
-        Self { env_vars }
+        Self {
+            name: env::var("IAPI_IMAGE_NAME").unwrap_or("test_coverdrop_identity-api".into()),
+            tag: env::var("IAPI_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for IdentityApi {
-    type Args = IdentityApiArgs;
-
-    fn name(&self) -> String {
-        env::var("IAPI_IMAGE_NAME").unwrap_or("test_coverdrop_identity-api".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("IAPI_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
         vec![WaitFor::message_on_stdout("Starting identity API server")]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

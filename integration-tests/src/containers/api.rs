@@ -7,8 +7,8 @@ use crate::{
     panic_handler::register_container_panic_hook,
 };
 use chrono::{DateTime, Utc};
-use testcontainers::{core::Host, runners::AsyncRunner};
-use testcontainers::{ContainerAsync, RunnableImage};
+use testcontainers::ContainerAsync;
+use testcontainers::{core::Host, runners::AsyncRunner, ImageExt};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn start_api(
@@ -37,9 +37,8 @@ pub async fn start_api(
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
 
-    let api_image = RunnableImage::from((api_image, api_image_args));
-
     let api = api_image
+        .with_cmd(api_image_args.into_cmd())
         .with_mount(keys_volume)
         .with_network(network)
         // We want to be able to issue presigned urls from minio on the `localhost` domain,

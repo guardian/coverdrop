@@ -1,9 +1,9 @@
-use std::{collections::HashMap, env, net::IpAddr};
+use std::{borrow::Cow, collections::HashMap, env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
 use testcontainers::{
     core::{Host, WaitFor},
-    Image, ImageArgs,
+    Image,
 };
 
 use crate::{
@@ -53,8 +53,8 @@ impl ApiArgs {
     }
 }
 
-impl ImageArgs for ApiArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl ApiArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let set_time_arg = date_time_to_set_faketime_command_string(self.base_time);
 
         let postgres_arg = format!(
@@ -88,12 +88,14 @@ impl ImageArgs for ApiArgs {
 
         println!("Starting API with: {command}");
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
 #[derive(Debug)]
 pub struct Api {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -113,26 +115,30 @@ impl Default for Api {
             API_AWS_SECRET_ACCESS_KEY_SECRET.into(),
         );
 
-        Self { env_vars }
+        Self {
+            name: env::var("API_IMAGE_NAME").unwrap_or("test_coverdrop_api".into()),
+            tag: env::var("API_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for Api {
-    type Args = ApiArgs;
-
-    fn name(&self) -> String {
-        env::var("API_IMAGE_NAME").unwrap_or("test_coverdrop_api".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("API_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
         vec![WaitFor::message_on_stdout("Starting server on")]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

@@ -1,7 +1,7 @@
-use std::{collections::HashMap, env, net::IpAddr};
+use std::{borrow::Cow, collections::HashMap, env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image};
 
 use crate::{
     constants::{POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER},
@@ -35,8 +35,8 @@ impl DeliveryServiceArgs {
     }
 }
 
-impl ImageArgs for DeliveryServiceArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl DeliveryServiceArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let set_time_arg = date_time_to_set_faketime_command_string(self.base_time);
 
         let api_url_arg = format!("--api-url=http://{}:{}", self.api_ip, self.api_port);
@@ -52,12 +52,14 @@ impl ImageArgs for DeliveryServiceArgs {
 
         println!("Starting Delivery Service with: {command}");
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
 #[derive(Debug)]
 pub struct DeliveryService {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -66,26 +68,31 @@ impl Default for DeliveryService {
         let mut env_vars = HashMap::new();
         env_vars.insert("RUST_LOG".into(), "DEBUG".into());
         env_vars.insert("FAKETIME_TIMESTAMP_FILE".into(), "/faketime".into());
-        Self { env_vars }
+        Self {
+            name: env::var("DELIVERY_SERVICE_IMAGE_NAME")
+                .unwrap_or("test_coverdrop_delivery_service".into()),
+            tag: env::var("DELIVERY_SERVICE_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for DeliveryService {
-    type Args = DeliveryServiceArgs;
-
-    fn name(&self) -> String {
-        env::var("DELIVERY_SERVICE_IMAGE_NAME").unwrap_or("test_coverdrop_delivery_service".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("DELIVERY_SERVICE_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
         vec![WaitFor::message_on_stdout("Starting server on")]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }

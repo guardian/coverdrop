@@ -1,6 +1,6 @@
-use std::{collections::HashMap, env, net::IpAddr};
+use std::{borrow::Cow, collections::HashMap, env, net::IpAddr};
 
-use testcontainers::{core::WaitFor, Image, ImageArgs};
+use testcontainers::{core::WaitFor, Image};
 
 use crate::secrets::{API_AWS_ACCESS_KEY_ID_SECRET, API_AWS_SECRET_ACCESS_KEY_SECRET};
 
@@ -19,8 +19,8 @@ impl U2JAppenderArgs {
     }
 }
 
-impl ImageArgs for U2JAppenderArgs {
-    fn into_iterator(self) -> Box<dyn Iterator<Item = String>> {
+impl U2JAppenderArgs {
+    pub fn into_cmd(self) -> Vec<String> {
         let kinesis_flags = format!(
             "--kinesis-endpoint=http://{}:{} --kinesis-u2j-stream=user-messages ",
             self.kinesis_ip, self.kinesis_port
@@ -28,12 +28,14 @@ impl ImageArgs for U2JAppenderArgs {
 
         let command = format!("./u2j-appender --stage=dev {kinesis_flags}");
 
-        Box::new(vec!["/bin/bash".into(), "-c".into(), command].into_iter())
+        vec!["/bin/bash".into(), "-c".into(), command]
     }
 }
 
 #[derive(Debug)]
 pub struct U2JAppender {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -51,19 +53,22 @@ impl Default for U2JAppender {
             API_AWS_SECRET_ACCESS_KEY_SECRET.into(),
         );
 
-        Self { env_vars }
+        Self {
+            name: env::var("U2J_APPENDER_IMAGE_NAME")
+                .unwrap_or("test_coverdrop_u2j-appender".into()),
+            tag: env::var("U2J_APPENDER_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for U2JAppender {
-    type Args = U2JAppenderArgs;
-
-    fn name(&self) -> String {
-        env::var("U2J_APPENDER_IMAGE_NAME").unwrap_or("test_coverdrop_u2j-appender".into())
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn tag(&self) -> String {
-        env::var("U2J_APPENDER_IMAGE_TAG").unwrap_or("dev".into())
+    fn tag(&self) -> &str {
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
@@ -74,7 +79,9 @@ impl Image for U2JAppender {
         ]
     }
 
-    fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
-        Box::new(self.env_vars.iter())
+    fn env_vars(
+        &self,
+    ) -> impl IntoIterator<Item = (impl Into<Cow<'_, str>>, impl Into<Cow<'_, str>>)> {
+        self.env_vars.iter().map(|(k, v)| (k.as_str(), v.as_str()))
     }
 }
