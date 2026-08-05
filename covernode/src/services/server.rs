@@ -34,8 +34,10 @@ pub async fn serve(port: u16, key_state: KeyState) -> anyhow::Result<()> {
 
     let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
 
-    tracing::info!("Starting server on http://{:?}", socket_addr);
     let listener = TcpListener::bind(&socket_addr).await?;
+    tracing::info!("Server listening on http://{:?}", socket_addr);
+
+    tracing::info!("Started CoverNode service journalist->user");
 
     axum::serve(listener, app).await?;
 

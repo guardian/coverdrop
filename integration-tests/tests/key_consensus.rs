@@ -24,7 +24,7 @@ const SLEEP_DURATION: Duration = Duration::from_secs(5);
 #[tokio::test]
 #[allow(clippy::await_holding_refcell_ref)]
 async fn key_consensus() -> anyhow::Result<()> {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_delete_old_dead_drops_poll_duration(SLEEP_DURATION)

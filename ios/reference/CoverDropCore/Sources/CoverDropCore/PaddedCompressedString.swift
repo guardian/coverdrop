@@ -78,7 +78,7 @@ public struct PaddedCompressedString: Equatable, Encryptable {
         let hostEndianSize = Int(UInt16(bigEndian: compressedSize))
         let endOfCompressedBytes = hostEndianSize + headerSize
 
-        let compressedBytes = Array(bytes[headerSize ... endOfCompressedBytes])
+        let compressedBytes = Array(bytes[headerSize ..< endOfCompressedBytes])
 
         let decoded = try Data(compressedBytes).gunzipped()
         // The maximum compression ratio is ~1000:1. This is our (256 byte) messages would not

@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id       AS \"id: i64\",\n            message  AS \"bytes: Vec<u8>\",\n            deduplication_id AS \"deduplication_id: MessageId\"\n        FROM outbound_queue\n        ORDER BY id ASC\n        LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "bytes: Vec<u8>",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "deduplication_id: MessageId",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "97d6008bf9bbfe1eb3ffef55f1602bbf81649ee5160881cc2b98e0e7e2d6ccbb"
+}

@@ -7,7 +7,7 @@ use integration_tests::{save_test_vector, CoverDropStack, StackProfile};
 /// Additionally it also checks that journalist keys are correctly verified and expired.
 #[tokio::test]
 async fn set_system_status() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::new(StackProfile::CoverDropOnly).await;
 

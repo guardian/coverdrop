@@ -3,9 +3,13 @@ name = "journalist-vault"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+test-utils = []
+
 [dependencies]
 anyhow.workspace = true
 chrono.workspace = true
+thiserror.workspace = true
 hex.workspace = true
 libsqlite3-sys.workspace = true
 serde.workspace = true
@@ -14,16 +18,19 @@ sqlx = { workspace = true, features = [
     "sqlite",
     "runtime-tokio-rustls",
     "chrono",
+    "uuid",
 ] }
 strum.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 ts-rs.workspace = true
 itertools.workspace = true
+uuid.workspace = true
 
 common = { path = "../common" }
+trust-anchors = { path = "../trust-anchors" }
 
 [dev-dependencies]
 tempfile.workspace = true
 common = { path = "../common", features = ["test-utils"] }
-trust-anchors = { path = "../trust-anchors" }
+journalist-vault = { path = ".", features = ["test-utils"] }

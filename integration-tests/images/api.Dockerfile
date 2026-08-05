@@ -33,10 +33,8 @@ RUN cp target/debug/api target/release/api /dist 2>/dev/null | true;
 #
 FROM ubuntu:24.04
 
-RUN apt-get update
-
 RUN apt-get update && \
-    apt-get install -y ca-certificates && \
+    apt-get install -y ca-certificates curl && \
     update-ca-certificates
 
 WORKDIR /usr/src/app/
@@ -45,5 +43,7 @@ COPY --from=builder /dist/api ./api
 
 EXPOSE 3000
 EXPOSE 4444
+
+HEALTHCHECK --start-period=120s --interval=1s --timeout=5s --retries=3 CMD curl -f http://127.0.0.1:3000/v1/healthcheck && curl -f http://127.0.0.1:4444/tasks || exit 1
 
 CMD ["./api"]

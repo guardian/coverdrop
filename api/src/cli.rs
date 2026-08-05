@@ -46,6 +46,10 @@ pub struct Cli {
     /// Must be more than 1.
     #[clap(long)]
     pub delete_old_dead_drops_polling_period_seconds: Option<i64>,
+    /// The amount of time in seconds to wait between polling for old deduplication IDs to remove
+    /// Must be more than 1.
+    #[clap(long)]
+    pub delete_old_deduplication_ids_polling_period_seconds: Option<i64>,
     #[clap(long)]
     /// The maximum amount of database connections that pool can maintain.
     /// If not set, it will default to the sqlx default, which is 10.

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM j2c_deduplication_ids WHERE created_at < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d9c36fb0f8c6feb8d865da37dcf7325bd44185d6e05f2f59cac3f17e74f46f30"
+}

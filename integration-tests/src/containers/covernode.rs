@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{env, net::IpAddr, path::Path};
 
 use crate::images::{dev_j2u_mixing_config, dev_u2j_mixing_config};
@@ -49,11 +50,16 @@ pub async fn start_covernode(
         runner_mode,
     );
 
+    if runner_mode.triggerable() {
+        env::set_var("TASK_RUNNER_TRIGGERABLE", "true");
+    }
+
     let covernode = covernode_image
         .with_cmd(covernode_image_args.into_cmd())
         .with_mount(keys_volume)
         .with_mount(checkpoints_volume)
         .with_network(network)
+        .with_startup_timeout(Duration::from_secs(120))
         .start()
         .await;
 

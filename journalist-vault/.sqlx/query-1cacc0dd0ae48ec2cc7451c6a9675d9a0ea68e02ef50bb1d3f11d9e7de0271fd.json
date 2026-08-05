@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT OR IGNORE INTO sentinel_id_key_pairs\n                (provisioning_pk_id, key_pair_json, published_at, created_at, epoch)\n            VALUES\n                (?1, ?2, ?3, ?4, ?5)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "1cacc0dd0ae48ec2cc7451c6a9675d9a0ea68e02ef50bb1d3f11d9e7de0271fd"
+}

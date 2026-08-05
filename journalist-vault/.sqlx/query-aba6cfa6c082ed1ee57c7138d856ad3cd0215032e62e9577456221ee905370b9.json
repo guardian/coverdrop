@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                sentinel_id_key_pairs.id            AS \"id: i64\",\n                sentinel_id_key_pairs.key_pair_json AS \"key_pair_json: String\",\n                sentinel_id_key_pairs.published_at  AS \"published_at: DateTime<Utc>\",\n                sentinel_id_key_pairs.epoch         AS \"epoch: Epoch\",\n                journalist_provisioning_pks.pk_json AS \"provisioning_pk_json: String\"\n            FROM sentinel_id_key_pairs\n            JOIN journalist_provisioning_pks\n                ON journalist_provisioning_pks.id = sentinel_id_key_pairs.provisioning_pk_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: i64",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "key_pair_json: String",
+        "ordinal": 1,
+        "type_info": "Null"
+      },
+      {
+        "name": "published_at: DateTime<Utc>",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "epoch: Epoch",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "provisioning_pk_json: String",
+        "ordinal": 4,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "aba6cfa6c082ed1ee57c7138d856ad3cd0215032e62e9577456221ee905370b9"
+}

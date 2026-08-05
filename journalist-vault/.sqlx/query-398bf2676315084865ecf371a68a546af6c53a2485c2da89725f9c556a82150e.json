@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vault_info SET sentinel_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "398bf2676315084865ecf371a68a546af6c53a2485c2da89725f9c556a82150e"
+}

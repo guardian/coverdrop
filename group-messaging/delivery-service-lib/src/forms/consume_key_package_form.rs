@@ -1,16 +1,16 @@
 use chrono::{DateTime, Utc};
 
 use common::{
-    api::models::journalist_id::JournalistIdentity,
+    api::models::sentinel_id::SentinelIdentity,
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ConsumeKeyPackageFormBody {
-    pub target_client_id: JournalistIdentity,
+    pub target_client_id: SentinelIdentity,
 }
 
 /// Form for consuming a key package from a target client.
@@ -18,12 +18,12 @@ pub struct ConsumeKeyPackageFormBody {
 /// Key packages are single-use, so the delivery service marks the key package as consumed and prevents reuse.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ConsumeKeyPackageForm(Form<ConsumeKeyPackageFormBody, JournalistId>);
+pub struct ConsumeKeyPackageForm(Form<ConsumeKeyPackageFormBody, SentinelId>);
 
 impl ConsumeKeyPackageForm {
     pub fn new(
-        target_client_id: JournalistIdentity,
-        signing_key_pair: &JournalistIdKeyPair,
+        target_client_id: SentinelIdentity,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = ConsumeKeyPackageFormBody { target_client_id };
@@ -33,7 +33,7 @@ impl ConsumeKeyPackageForm {
 }
 
 impl std::ops::Deref for ConsumeKeyPackageForm {
-    type Target = Form<ConsumeKeyPackageFormBody, JournalistId>;
+    type Target = Form<ConsumeKeyPackageFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

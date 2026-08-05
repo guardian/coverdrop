@@ -263,7 +263,7 @@ impl JournalistQueries {
         let id_pk = id_pk.to_untrusted();
 
         // Using 2 CTEs we do an insert and a select for the provided journalist id key
-        // this is required because 'RETUNING epoch' does not return anything if the key already exists
+        // this is required because 'RETURNING epoch' does not return anything if the key already exists
         let row = sqlx::query!(
             r#"
                 WITH insert_query AS (

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use common::{
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use openmls::prelude::KeyPackageIn;
 use serde::{Deserialize, Serialize};
@@ -17,15 +17,12 @@ pub struct RegisterClientFormBody {
 /// Used during initial client setup to establish the client's identity and provide initial key packages.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-// TODO change to SentinelId https://github.com/guardian/coverdrop-internal/issues/3888
-pub struct RegisterClientForm(Form<RegisterClientFormBody, JournalistId>);
+pub struct RegisterClientForm(Form<RegisterClientFormBody, SentinelId>);
 
 impl RegisterClientForm {
     pub fn new(
         key_packages: Vec<KeyPackageIn>,
-        // TODO change this to SentinelIdKeyPair
-        // https://github.com/guardian/coverdrop-internal/issues/3888
-        signing_key_pair: &JournalistIdKeyPair,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = RegisterClientFormBody { key_packages };
@@ -35,7 +32,7 @@ impl RegisterClientForm {
 }
 
 impl std::ops::Deref for RegisterClientForm {
-    type Target = Form<RegisterClientFormBody, JournalistId>;
+    type Target = Form<RegisterClientFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

@@ -1,4 +1,5 @@
 use chrono::Duration;
+use common::clap::Stage;
 use common::form::DEFAULT_FORM_TTL;
 use common::protocol::constants::JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER;
 use common::{
@@ -34,7 +35,7 @@ async fn id_key_rotation_form_expires() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
+        None,
         None,
     )
     .await;
@@ -43,14 +44,14 @@ async fn id_key_rotation_form_expires() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load journalist vault");
 
     // post new id key form to API
     let service = JournalistCoverDropService::new(stack.api_client_uncached(), &vault);
     service
-        .rotate_id_key(stack.now())
+        .rotate_journalist_id_key(stack.now())
         .await
         .expect("rotate id key pair");
 
@@ -98,7 +99,7 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
+        None,
         None,
     )
     .await;
@@ -205,7 +206,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
+        None,
         None,
     )
     .await;
@@ -224,12 +225,12 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load journalist vault");
 
     let journalist_id_key_pair_1 = vault
-        .latest_id_key_pair(stack.now())
+        .latest_journalist_id_key_pair(stack.now())
         .await
         .unwrap()
         .unwrap();

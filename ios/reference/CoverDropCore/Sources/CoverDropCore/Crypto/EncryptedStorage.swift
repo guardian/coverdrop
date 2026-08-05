@@ -217,7 +217,7 @@ public class EncryptedStorage {
         let storage: Storage = try JSONDecoder().decode(Storage.self, from: Data(readData))
 
         // Try decrypting... this will fail both when the passphrase is wrong or the file has been tampered with.
-        guard var plaintext: Bytes = Sodium().aead.xchacha20poly1305ietf.decrypt(
+        guard let plaintext: Bytes = Sodium().aead.xchacha20poly1305ietf.decrypt(
             nonceAndAuthenticatedCipherText: storage.blobData,
             secretKey: [UInt8](session.cachedKey)
         ) else { throw EncryptedStorageError.decryptionFailed }

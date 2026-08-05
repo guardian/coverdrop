@@ -1,3 +1,6 @@
+use common::api::constants::{
+    HEADER_SENTINEL_APP_NAME, HEADER_SENTINEL_BUILT_AT, HEADER_SENTINEL_GIT_SHA,
+};
 use common::{
     api::api_client::ApiClient,
     clap::Stage,
@@ -6,19 +9,21 @@ use common::{
     task::{RunnerMode, TaskRunner},
     time,
 };
-use journalist_vault::JournalistVault;
+use group_messaging_service::GroupMessagingService;
+use http::HeaderMap;
+use journalist_vault::{JournalistVault, OpenVaultError};
 use reqwest::Url;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use tauri::AppHandle;
+use tauri::{http, AppHandle};
 use tokio::{
     sync::{RwLock, RwLockReadGuard},
     task::JoinHandle,
 };
-use trust_anchors::get_trust_anchors;
 
+use crate::tasks::PollDeliveryService;
 use crate::{
     logging::LogReceiver,
     model::VaultState,
@@ -46,6 +51,10 @@ pub enum AppState {
         api_client: ApiClient,
         is_soft_locked: bool,
         coverdrop_service: Arc<JournalistCoverDropService>,
+        // TODO make GroupMessagingService non-optional after all vaults have SentinelIdentities https://github.com/guardian/coverdrop-internal/issues/3885
+        /// The group messaging service, used to handle all group messaging functionality.
+        /// Concurrent MLS state access is serialized internally by GroupMessagingService.
+        group_messaging_service: Option<Arc<GroupMessagingService>>,
     },
 }
 
@@ -96,25 +105,76 @@ impl AppStateHandle {
         &self,
         stage: Stage,
         api_url: &Url,
+        delivery_service_url: &Url,
         path: impl AsRef<Path>,
         password: &str,
-    ) -> anyhow::Result<(JournalistVault, ApiClient)> {
+    ) -> Result<(JournalistVault, ApiClient), OpenVaultError> {
         tracing::debug!("Attempting to open vault: {}", path.as_ref().display());
         tracing::debug!("Using API URL: {}", api_url);
 
-        let trust_anchors = get_trust_anchors(&stage, time::now())?;
-        let vault = JournalistVault::open(&path, password, trust_anchors).await?;
+        let vault = JournalistVault::open(&path, password, stage).await?;
         let path = path.as_ref().to_path_buf();
 
         tracing::debug!("Vault successfully opened!");
 
-        let api_client = ApiClient::new(api_url.clone());
+        let api_client = ApiClient::new_with_default_headers(api_url.clone(), {
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                HEADER_SENTINEL_APP_NAME,
+                self.app_handle
+                    .package_info()
+                    .name
+                    .parse()
+                    .map_err(anyhow::Error::from)?,
+            );
+            headers.insert(
+                HEADER_SENTINEL_GIT_SHA,
+                option_env!("VITE_GIT_SHA") // retrieves at compile time, not runtime
+                    .unwrap_or_else(|| "UNKNOWN")
+                    .parse()
+                    .map_err(anyhow::Error::from)?,
+            );
+            headers.insert(
+                HEADER_SENTINEL_BUILT_AT,
+                option_env!("VITE_BUILD_DATE") // retrieves at compile time, not runtime
+                    .unwrap_or_else(|| "UNKNOWN")
+                    .parse()
+                    .map_err(anyhow::Error::from)?,
+            );
+            headers
+        });
 
         tracing::debug!("Processing setup bundle");
         let service = JournalistCoverDropService::new(&api_client, &vault);
         service.process_vault_setup_bundle(time::now()).await?;
 
         let coverdrop_service = Arc::new(service);
+
+        // TODO make GroupMessagingService non-optional after all vaults have SentinelIdentities https://github.com/guardian/coverdrop-internal/issues/3885
+        let group_messaging_service =
+            match GroupMessagingService::new(delivery_service_url.clone(), &vault, time::now())
+                .await
+            {
+                Ok(service) => {
+                    // Register the client with the Delivery Service. If they are already registered, this will be a no-op.
+                    // TODO can happen in "process_vault_setup_bundle" once all vaults have been migrated to include the sentinel identity.
+                    // https://github.com/guardian/coverdrop-internal/issues/3884
+                    service.register(5).await?;
+
+                    // Create and publish some key packages so that this client can be added to groups.
+                    // TODO this should be in a scheduled task
+                    // https://github.com/guardian/coverdrop-internal/issues/3919
+                    service.publish_key_packages(10).await?;
+
+                    Some(Arc::new(service))
+                }
+                Err(e) => {
+                    tracing::info!(
+                        "GroupMessagingService unavailable, group messaging will be disabled: {e}"
+                    );
+                    None
+                }
+            };
 
         let runner_join_handle = if self.no_background_tasks {
             tracing::info!("Background tasks disabled via --no-background-tasks flag");
@@ -135,6 +195,11 @@ impl AppStateHandle {
                     &coverdrop_service,
                     &self.notifications,
                     &self.public_info,
+                );
+                let maybe_poll_delivery_service_task = PollDeliveryService::new(
+                    &group_messaging_service,
+                    &self.public_info,
+                    &self.app_handle,
                 );
                 let send_journalist_messages_task = SendJournalistMessages::new(
                     &coverdrop_service,
@@ -165,6 +230,9 @@ impl AppStateHandle {
                     runner.add_task(refresh_public_info_task).await;
                     runner.add_task(sync_public_keys_task).await;
                     runner.add_task(pull_dead_drops_task).await;
+                    if let Some(poll_delivery_service_task) = maybe_poll_delivery_service_task {
+                        runner.add_task(poll_delivery_service_task).await;
+                    }
                     runner.add_task(send_journalist_messages_task).await;
                     // Clean and vacuum vault before rotating keys (which might perform a backup) and backup task
                     runner.add_task(clean_up_vault_task).await;
@@ -189,6 +257,7 @@ impl AppStateHandle {
             api_client: api_client.clone(),
             is_soft_locked: false,
             coverdrop_service: coverdrop_service.clone(),
+            group_messaging_service: group_messaging_service.clone(),
         };
 
         Ok((vault, api_client))
@@ -204,8 +273,15 @@ impl AppStateHandle {
             ..
         } = &*guard
         {
+            let sentinel_id = if self.app_handle.package_info().name == "Sentinel" {
+                // in PROD we don't want the UI to know we have a sentinel ID so it doesn't display any MLS UI
+                None
+            } else {
+                vault.sentinel_id().await?.map(|id| id.to_string())
+            };
             Ok(Some(VaultState {
-                id: vault.journalist_id().await?.to_string(),
+                journalist_id: vault.journalist_id().await?.to_string(),
+                sentinel_id,
                 path: path.clone(),
                 is_soft_locked: *is_soft_locked,
             }))
@@ -284,6 +360,18 @@ impl AppStateHandle {
             AppState::LoggedIn {
                 coverdrop_service, ..
             } => Some(coverdrop_service.clone()),
+        }
+    }
+
+    pub async fn group_messaging_service(&self) -> Option<Arc<GroupMessagingService>> {
+        let guard = self.inner.read().await;
+
+        match &*guard {
+            AppState::LoggedOut => None,
+            AppState::LoggedIn {
+                group_messaging_service,
+                ..
+            } => group_messaging_service.clone(),
         }
     }
 }

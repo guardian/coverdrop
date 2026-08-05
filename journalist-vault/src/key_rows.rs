@@ -9,13 +9,18 @@
 
 use chrono::{DateTime, Utc};
 use common::{
-    api::forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
+    api::forms::{
+        PostJournalistForm, PostJournalistIdPublicKeyForm, PostSentinelIdPublicKeyForm,
+        PostSentinelProfileForm,
+    },
     epoch::Epoch,
     protocol::keys::{
         JournalistIdKeyPair, JournalistMessagingKeyPair, JournalistProvisioningPublicKey,
-        UnregisteredJournalistIdKeyPair, UntrustedAnchorOrganizationPublicKey,
-        UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
-        UntrustedJournalistProvisioningPublicKey, UntrustedUnregisteredJournalistIdKeyPair,
+        SentinelIdKeyPair, UnregisteredJournalistIdKeyPair, UnregisteredSentinelIdKeyPair,
+        UntrustedAnchorOrganizationPublicKey, UntrustedJournalistIdKeyPair,
+        UntrustedJournalistMessagingKeyPair, UntrustedJournalistProvisioningPublicKey,
+        UntrustedSentinelIdKeyPair, UntrustedUnregisteredJournalistIdKeyPair,
+        UntrustedUnregisteredSentinelIdKeyPair,
     },
 };
 use serde::{ser::SerializeStruct as _, Serialize};
@@ -127,21 +132,26 @@ impl<T> PublishedKeyPairRow<T> {
     }
 }
 
+pub(crate) type CandidateSentinelIdKeyPairRow = CandidateKeyPairRow<UnregisteredSentinelIdKeyPair>;
 pub(crate) type CandidateJournalistIdKeyPairRow =
     CandidateKeyPairRow<UnregisteredJournalistIdKeyPair>;
 pub(crate) type CandidateJournalistMessagingKeyPairRow =
     CandidateKeyPairRow<JournalistMessagingKeyPair>;
 
+pub(crate) type PublishedSentinelIdKeyPairRow = PublishedKeyPairRow<SentinelIdKeyPair>;
 pub(crate) type PublishedJournalistIdKeyPairRow = PublishedKeyPairRow<JournalistIdKeyPair>;
 pub(crate) type PublishedJournalistMessagingKeyPairRow =
     PublishedKeyPairRow<JournalistMessagingKeyPair>;
 
 // Unverified
+pub type UntrustedCandidateSentinelIdKeyPairRow =
+    CandidateKeyPairRow<UntrustedUnregisteredSentinelIdKeyPair>;
 pub type UntrustedCandidateJournalistIdKeyPairRow =
     CandidateKeyPairRow<UntrustedUnregisteredJournalistIdKeyPair>;
 pub type UntrustedCandidateJournalistMessagingKeyPairRow =
     CandidateKeyPairRow<UntrustedJournalistMessagingKeyPair>;
 
+pub type UntrustedPublishedSentinelIdKeyPairRow = PublishedKeyPairRow<UntrustedSentinelIdKeyPair>;
 pub type UntrustedPublishedJournalistIdKeyPairRow =
     PublishedKeyPairRow<UntrustedJournalistIdKeyPair>;
 pub type UntrustedPublishedJournalistMessagingKeyPairRow =
@@ -149,23 +159,32 @@ pub type UntrustedPublishedJournalistMessagingKeyPairRow =
 
 pub struct SeedInfoRow {
     pub provisioning_pk_id: i64,
-    pub pk_upload_form: PostJournalistIdPublicKeyForm,
-    pub key_pair: JournalistIdKeyPair,
+    pub journalist_id_pk_upload_form: PostJournalistIdPublicKeyForm,
+    pub journalist_id_key_pair: JournalistIdKeyPair,
     pub register_journalist_form: Option<PostJournalistForm>,
+    pub sentinel_id_pk_upload_form: Option<PostSentinelIdPublicKeyForm>,
+    pub sentinel_id_key_pair: Option<SentinelIdKeyPair>,
+    pub register_sentinel_profile_form: Option<PostSentinelProfileForm>,
 }
 
 impl SeedInfoRow {
     pub fn new(
         provisioning_pk_id: i64,
-        pk_upload_form: PostJournalistIdPublicKeyForm,
-        key_pair: JournalistIdKeyPair,
+        journalist_id_pk_upload_form: PostJournalistIdPublicKeyForm,
+        journalist_id_key_pair: JournalistIdKeyPair,
         register_journalist_form: Option<PostJournalistForm>,
+        sentinel_id_pk_upload_form: Option<PostSentinelIdPublicKeyForm>,
+        sentinel_id_key_pair: Option<SentinelIdKeyPair>,
+        register_sentinel_profile_form: Option<PostSentinelProfileForm>,
     ) -> Self {
         Self {
             provisioning_pk_id,
-            pk_upload_form,
-            key_pair,
+            journalist_id_pk_upload_form,
+            journalist_id_key_pair,
             register_journalist_form,
+            sentinel_id_pk_upload_form,
+            sentinel_id_key_pair,
+            register_sentinel_profile_form,
         }
     }
 }
@@ -175,9 +194,11 @@ pub struct AllVaultKeys {
     pub org_pks: Vec<UntrustedAnchorOrganizationPublicKey>,
     pub journalist_provisioning_pks: Vec<UntrustedJournalistProvisioningPublicKeyRow>,
 
-    pub candidate_id_key_pair: Option<UntrustedCandidateJournalistIdKeyPairRow>,
+    pub candidate_sentinel_id_key_pair: Option<UntrustedCandidateSentinelIdKeyPairRow>,
+    pub candidate_journalist_id_key_pair: Option<UntrustedCandidateJournalistIdKeyPairRow>,
     pub candidate_msg_key_pair: Option<UntrustedCandidateJournalistMessagingKeyPairRow>,
 
-    pub published_id_key_pairs: Vec<UntrustedPublishedJournalistIdKeyPairRow>,
+    pub published_sentinel_id_key_pairs: Vec<UntrustedPublishedSentinelIdKeyPairRow>,
+    pub published_journalist_id_key_pairs: Vec<UntrustedPublishedJournalistIdKeyPairRow>,
     pub published_msg_key_pairs: Vec<UntrustedPublishedJournalistMessagingKeyPairRow>,
 }

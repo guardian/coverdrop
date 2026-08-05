@@ -1,8 +1,8 @@
+use crate::model::backup::BackupAttemptFailureReason;
+use journalist_vault::GroupId;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use ts_rs::TS;
-
-use crate::model::backup::BackupAttemptFailureReason;
 
 #[derive(TS)]
 #[ts(export, rename_all = "snake_case")]
@@ -12,6 +12,7 @@ enum EventType {
     JournalistKeysRotated,
     AutomatedBackup,
     ManualBackupRequired,
+    GroupChange,
     // a generic alert / notification event
     Alert,
 }
@@ -24,6 +25,7 @@ impl EventType {
             EventType::JournalistKeysRotated => "journalist_keys_rotated",
             EventType::AutomatedBackup => "automated_backup",
             EventType::ManualBackupRequired => "manual_backup_required",
+            EventType::GroupChange => "group_change",
             EventType::Alert => "notification",
         }
     }
@@ -57,6 +59,7 @@ pub trait BackendToFrontendEvent {
         &self,
         required: Option<BackupAttemptFailureReason>,
     ) -> anyhow::Result<()>;
+    fn emit_group_change(&self, group_id: GroupId) -> anyhow::Result<()>;
 
     fn emit_alert_event(&self, level: AlertLevel, message: &str) -> anyhow::Result<()>;
 }
@@ -97,6 +100,11 @@ impl BackendToFrontendEvent for AppHandle {
         required: Option<BackupAttemptFailureReason>,
     ) -> anyhow::Result<()> {
         self.emit(EventType::ManualBackupRequired.as_str(), required)?;
+        Ok(())
+    }
+
+    fn emit_group_change(&self, group_id: GroupId) -> anyhow::Result<()> {
+        self.emit(EventType::GroupChange.as_str(), group_id)?;
         Ok(())
     }
 

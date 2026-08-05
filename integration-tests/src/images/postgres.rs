@@ -1,11 +1,8 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, env};
 
 use testcontainers::{core::WaitFor, Image};
 
 use crate::constants::{POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER};
-
-const NAME: &str = "postgres";
-const TAG: &str = "14.5";
 
 #[derive(Debug, Clone)]
 pub struct PostgresArgs {}
@@ -32,6 +29,8 @@ impl PostgresArgs {
 
 #[derive(Debug)]
 pub struct Postgres {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -42,23 +41,25 @@ impl Default for Postgres {
         env_vars.insert("POSTGRES_PASSWORD".to_owned(), POSTGRES_PASSWORD.into());
         env_vars.insert("POSTGRES_DB".to_owned(), POSTGRES_DB.into());
 
-        Self { env_vars }
+        Self {
+            name: env::var("POSTGRES_IMAGE_NAME").unwrap_or("test_coverdrop_postgres".into()),
+            tag: env::var("POSTGRES_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for Postgres {
     fn name(&self) -> &str {
-        NAME
+        &self.name
     }
 
     fn tag(&self) -> &str {
-        TAG
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stdout(
-            "database system is ready to accept connections",
-        )]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

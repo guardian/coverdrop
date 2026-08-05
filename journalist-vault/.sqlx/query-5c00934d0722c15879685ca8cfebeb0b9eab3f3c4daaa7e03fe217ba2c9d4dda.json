@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM sentinel_id_key_pairs\n            WHERE key_pair_json->'public_key'->>'not_valid_after' < $1;\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "5c00934d0722c15879685ca8cfebeb0b9eab3f3c4daaa7e03fe217ba2c9d4dda"
+}

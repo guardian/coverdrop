@@ -31,8 +31,8 @@ use crate::{
 
 use super::roles::{
     AnchorOrganization, CoverNodeId, CoverNodeMessaging, CoverNodeProvisioning, JournalistId,
-    JournalistMessaging, JournalistProvisioning, Mailbox, Organization, UnregisteredCoverNodeId,
-    UnregisteredJournalistId, User,
+    JournalistMessaging, JournalistProvisioning, Mailbox, Organization, SentinelId,
+    UnregisteredCoverNodeId, UnregisteredJournalistId, UnregisteredSentinelId, User,
 };
 pub use generation::*;
 pub use hierarchy::*;
@@ -107,6 +107,14 @@ pub type UntrustedBackupIdKeyPair = UntrustedSignedSigningKeyPair<BackupId>;
 
 pub type UntrustedBackupMessagingPublicKey = UntrustedSignedPublicEncryptionKey<BackupMsg>;
 pub type UntrustedBackupMessagingKeyPair = UntrustedSignedEncryptionKeyPair<BackupMsg>;
+
+pub type UntrustedSentinelIdPublicKey = UntrustedSignedPublicSigningKey<SentinelId>;
+pub type UntrustedSentinelIdKeyPair = UntrustedSignedSigningKeyPair<SentinelId>;
+
+pub type UntrustedUnregisteredSentinelIdPublicKey =
+    UntrustedPublicSigningKey<UnregisteredSentinelId>;
+pub type UntrustedUnregisteredSentinelIdKeyPair =
+    UntrustedUnsignedSigningKeyPair<UnregisteredSentinelId>;
 
 // The user public keys are unsigned so can never truly be verified
 // but having an untrusted version makes them follow the same patterns
@@ -203,6 +211,13 @@ pub type JournalistMessagingKeyPair = SignedEncryptionKeyPair<JournalistMessagin
 // A journalist ID pk that has not yet been signed by a provisioning key
 pub type UnregisteredJournalistIdPublicKey = PublicSigningKey<UnregisteredJournalistId>;
 pub type UnregisteredJournalistIdKeyPair = UnsignedSigningKeyPair<UnregisteredJournalistId>;
+
+pub type SentinelIdPublicKey = SignedPublicSigningKey<SentinelId>;
+pub type SentinelIdKeyPair = SignedSigningKeyPair<SentinelId>;
+
+// A sentinel ID pk that has not yet been signed by a provisioning key
+pub type UnregisteredSentinelIdPublicKey = PublicSigningKey<UnregisteredSentinelId>;
+pub type UnregisteredSentinelIdKeyPair = UnsignedSigningKeyPair<UnregisteredSentinelId>;
 
 pub type UserPublicKey = PublicEncryptionKey<User>;
 pub type UserKeyPair = UnsignedEncryptionKeyPair<User>;

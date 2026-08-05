@@ -43,15 +43,15 @@ argon2 = "0.5.3"
 async-tar = "0.5.0"
 async-trait = "0.1.68"
 aws-config = { version = "1.5.5", features = ["behavior-version-latest"] }
-aws-sdk-autoscaling = "1.53.0"
-aws-sdk-cloudwatch = "1.48.0"
-aws-sdk-kinesis = "1.41.0"
-aws-sdk-ses = "1.41.0"
-aws-sdk-ssm = "1.41.0"
-aws-sdk-ec2 = "1.86.0"
-aws-sdk-rds = "1.65.0"
-aws-sdk-s3 = "1.63.0"
-aws-sdk-secretsmanager = "1.53.0"
+aws-sdk-autoscaling = { version = "1.53.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-cloudwatch = { version = "1.48.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-kinesis = { version = "1.41.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-ses = { version = "1.41.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-ssm = { version = "1.41.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-ec2 = { version = "1.86.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-rds = { version = "1.65.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-s3 = { version = "1.63.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
+aws-sdk-secretsmanager = { version = "1.53.0", default-features = false, features = ["default-https-client", "rt-tokio"] }
 axum = { version = "0.8.3", features = ["macros"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 base64 = "0.21.0"
@@ -78,9 +78,7 @@ http = "1.1.0"
 http-body-util = "0.1.2"
 hyper = "1.5.0"
 hyper-util = "0.1.9"
-identicon-rs = "3.1.4"
 itertools = "0.10.5"
-jsonrpsee = { version = "0.19.0", features = ["macros", "async-client"] }
 k8s-openapi = { version = "0.23.0", features = ["latest"] }
 kube = { version = "0.96.0", features = ["client", "runtime", "ws"] }
 lazy_static = "1.4.0"
@@ -90,16 +88,17 @@ libsqlite3-sys = { version = "0.30", optional = false, default-features = false,
 ] }
 log = "0.4.17"
 notify = "6.1.1"
-metrics = "0.24.5"
+metrics = "0.24.6"
 axum-metrics = "0.2.0"
-metrics_cloudwatch = "4.0.0"
+metrics_cloudwatch = "4.1.0"
 
 num-bigint = "0.4.4"
 openmls = "0.8.0"
 openmls_basic_credential = "0.5.0"
 openmls_rust_crypto = "0.5.0"
+openmls_sqlx_storage = "0.2.0"
 openmls_traits = "0.5.0"
-openssl = { version = "0.10.72", features = ["vendored"] }
+openssl = { version = "0.10.80", features = ["vendored"] }
 paste = "1.0.15"
 pretty_env_logger = "0.5.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
@@ -113,7 +112,6 @@ serde_cbor = "0.11.2"
 serde_json = { version = "1", features = ["raw_value"] }
 serde_with = { version = "3.1.0", features = ["base64"] }
 serde_bytes = "0.11.19"
-serial_test = "3.1.1"
 sha2 = "0.10"
 sodiumoxide = "0.2.7"
 sqlx = "0.8.6"
@@ -123,7 +121,6 @@ tempfile = "3.3.0"
 testcontainers = "0.27.2"
 thiserror = "1.0.40"
 tokio = { version = "1.44.2", features = ["full"] }
-tokio-stream = "0.1"
 tokio-util = { version = "0.7.12", features = ["compat"] }
 tower = "0.4.13"
 tower-http = { version = "0.6.1", features = ["trace"] }

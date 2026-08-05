@@ -26,6 +26,6 @@ impl Image for Kinesis {
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stdout("Listening at")]
+        vec![WaitFor::healthcheck()]
     }
 }

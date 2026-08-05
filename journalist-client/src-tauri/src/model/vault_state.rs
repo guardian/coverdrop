@@ -8,7 +8,10 @@ use ts_rs::TS;
 #[serde(rename_all = "camelCase", tag = "type")]
 #[ts(export)]
 pub struct VaultState {
-    pub id: String,
+    // This will eventually be removed once sentinel id to journalist id
+    // is one-to-many.
+    pub journalist_id: String,
+    pub sentinel_id: Option<String>,
     pub path: PathBuf,
     pub is_soft_locked: bool,
 }

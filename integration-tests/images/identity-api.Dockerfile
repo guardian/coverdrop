@@ -38,12 +38,15 @@ FROM ubuntu:24.04
 WORKDIR /usr/src/app/
 
 RUN apt-get update && \
-    apt-get install -y ca-certificates && \
+    apt-get install -y ca-certificates curl && \
     update-ca-certificates
 
 COPY --from=builder /usr/src/app/exec/ .
 
 EXPOSE 3010
 EXPOSE 4444
+
+HEALTHCHECK --start-period=120s --interval=1s --timeout=5s --retries=3 CMD curl -f http://127.0.0.1:3010/v1/healthcheck && \
+    if [ "$TASK_RUNNER_TRIGGERABLE" = "true" ]; then curl -f http://127.0.0.1:4444/tasks; fi || exit 1
 
 CMD ["./identity-api"]

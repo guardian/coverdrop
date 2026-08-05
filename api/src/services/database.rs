@@ -11,8 +11,10 @@ pub struct Database {
     pub covernode_key_queries: CoverNodeKeyQueries,
     pub dead_drop_queries: DeadDropQueries,
     pub hierarchy_queries: HierarchyQueries,
+    pub j2c_deduplication_id_queries: J2cDeduplicationQueries,
     pub journalist_queries: JournalistQueries,
     pub organization_key_queries: OrganizationKeyQueries,
+    pub sentinel_queries: SentinelQueries,
     pub system_key_queries: SystemKeyQueries,
     pub system_queries: SystemQueries,
 }
@@ -34,8 +36,10 @@ impl Database {
             covernode_key_queries: CoverNodeKeyQueries::new(pool.clone()),
             dead_drop_queries: DeadDropQueries::new(pool.clone()),
             hierarchy_queries: HierarchyQueries::new(pool.clone()),
+            j2c_deduplication_id_queries: J2cDeduplicationQueries::new(pool.clone()),
             journalist_queries: JournalistQueries::new(pool.clone()),
             organization_key_queries: OrganizationKeyQueries::new(pool.clone()),
+            sentinel_queries: SentinelQueries::new(pool.clone()),
             system_key_queries: SystemKeyQueries::new(pool.clone()),
             system_queries: SystemQueries::new(pool),
         })

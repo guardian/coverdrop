@@ -5,6 +5,7 @@ use std::path::Path;
 
 use admin::generate_journalist;
 use chrono::{DateTime, Utc};
+use common::clap::Stage;
 use common::{
     api::{
         api_client::ApiClient,
@@ -59,15 +60,19 @@ pub async fn generate_test_journalist(
     keys_dir: impl AsRef<Path>,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
     display_name: Option<String>,
+    sentinel_id: Option<String>,
 ) {
     let display_name = display_name.unwrap_or_else(|| "Generated Test Journalist".into());
-    let id = display_name.to_lowercase().replace(' ', "_");
+    let journalist_id = display_name.to_lowercase().replace(' ', "_");
+    let sentinel_display_name = format!("{} Sentinel", display_name);
+    let sentinel_id = sentinel_id.unwrap_or_else(|| format!("{}_sentinel", journalist_id));
     generate_journalist(
         keys_dir,
         display_name,
-        Some(id.clone()),
+        Some(journalist_id.clone()),
+        sentinel_display_name,
+        sentinel_id,
         Some("journalist generated test".into()),
         "This is a test journalist".into(),
         false,
@@ -75,14 +80,14 @@ pub async fn generate_test_journalist(
         JournalistStatus::Visible,
         &vault_path,
         now,
-        trust_anchors.clone(),
+        Stage::Development,
     )
     .await
     .expect("Create journalist");
 
-    let vault_path = vault_path.as_ref().join(format!("{}.vault", id));
+    let vault_path = vault_path.as_ref().join(format!("{}.vault", journalist_id));
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, trust_anchors)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load desk vault");
 
@@ -98,12 +103,13 @@ pub async fn generate_test_desk(
     keys_dir: impl AsRef<Path>,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) {
     generate_journalist(
         keys_dir,
         "Generated Test Desk".into(),
         None,
+        "Generated Test Desk Sentinel".into(),
+        "generated_test_desk_sentinel".to_string(),
         Some("desk generated test".into()),
         "This is a test desk".into(),
         true,
@@ -111,14 +117,14 @@ pub async fn generate_test_desk(
         JournalistStatus::Visible,
         &vault_path,
         now,
-        trust_anchors.clone(),
+        Stage::Development,
     )
     .await
     .expect("Create desk");
 
     let desk_vault_path = vault_path.as_ref().join("generated_test_desk.vault");
 
-    let desk_vault = JournalistVault::open(&desk_vault_path, MAILBOX_PASSWORD, trust_anchors)
+    let desk_vault = JournalistVault::open(&desk_vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load desk vault");
 

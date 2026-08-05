@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    DELETE FROM sentinel_id_pk_rotation_queue\n                    WHERE sentinel_id = $1\n                        AND decode(\n                                (convert_from(\n                                    decode(form_json #>>'{body}', 'base64'),\n                                    'utf8'\n                                )::jsonb #>>'{new_pk,key}'),\n                                'hex'\n                            ) = $2\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6d5207dc404af6173c7689f2a9ab7bb7d25e03f85f73c8aadd71fa41ce67f353"
+}

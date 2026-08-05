@@ -2,8 +2,9 @@ use app_state::AppStateHandle;
 use clap::Parser as _;
 use commands::{
     admin::{
-        force_rotate_id_pk, force_rotate_msg_pk, get_logging_sessions_timeline, get_logs,
-        get_public_info, get_trust_anchor_digests, get_vault_keys,
+        force_rotate_journalist_id_pk, force_rotate_msg_pk, force_rotate_sentinel_id_pk,
+        get_logging_sessions_timeline, get_logs, get_public_info, get_trust_anchor_digests,
+        get_vault_keys,
     },
     backup::{eject_backup_volume, get_backup_checks, perform_backup},
     chats::{
@@ -20,9 +21,8 @@ use commands::{
 use logging::JournalistClientLogLayer;
 use model::Profiles;
 use notifications::start_notification_service;
-use reqwest::Url;
 use std::process::{Child, Command};
-use std::{fs::File, path::Path, str::FromStr, thread};
+use std::{fs::File, path::Path, thread};
 use tauri::{App, Manager as _};
 use tauri_plugin_dialog::{DialogExt as _, MessageDialogKind};
 use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
@@ -34,6 +34,10 @@ use crate::commands::{
     backup::{
         get_backup_contacts, get_backup_history, set_backup_contacts, unwrap_backup_secret_share,
     },
+    group_messaging::{
+        create_group, get_group_with_messages, get_groups_and_messages, modify_group,
+        send_group_message, update_group_messages_read_status, user_typing,
+    },
 };
 
 mod app_state;
@@ -42,7 +46,6 @@ mod commands;
 mod error;
 mod logging;
 mod model;
-mod multipass;
 mod notifications;
 mod tasks;
 
@@ -57,44 +60,14 @@ fn fail_setup_with_message(app: &mut App, message: &str) -> Result<(), Box<dyn s
 }
 
 fn handle_profiles(profiles_path: impl AsRef<Path>) -> anyhow::Result<Profiles> {
-    let mut profiles = if profiles_path.as_ref().exists() {
+    // If profile env variable is set (in the case of Prod an Beta builds), prefer these.
+    let profiles = if let Some(profiles_env) = option_env!("BUILT_IN_PROFILES") {
+        serde_json::from_str::<Profiles>(profiles_env)?
+    } else {
+        // In dev environments, rely on profiles from local filesystem.
         let profiles_file = File::open(profiles_path.as_ref())?;
         serde_json::from_reader::<File, Profiles>(profiles_file)?
-    } else {
-        Profiles::default()
     };
-
-    // Update any existing profiles
-    if let Some(profiles_env) = option_env!("BUILT_IN_PROFILES") {
-        for profile_pair in profiles_env.split(',') {
-            if let Some((stage, url)) = profile_pair.split_once('=') {
-                let url = Url::from_str(url)?;
-                profiles.insert(stage, url);
-            }
-        }
-    }
-
-    #[cfg(debug_assertions)]
-    {
-        if let Ok(multipass_nodes) = multipass::list_coverdrop_nodes() {
-            if let Some(node) = multipass_nodes.first() {
-                if let Some(local_ip) = node.local_ip() {
-                    let url = format!("http://{local_ip}:30000/");
-                    let url = Url::from_str(&url)?;
-                    profiles.insert("DEV-AUTO", url);
-                } else {
-                    tracing::warn!(
-                        "Unable to get IP address from multipass node in 192.168.0.0/16 subnet"
-                    );
-                }
-            }
-        } else {
-            tracing::warn!("Unable to list multipass nodes, is multipass cli installed?");
-        }
-    }
-
-    let json = serde_json::to_string_pretty(&profiles)?;
-    std::fs::write(profiles_path.as_ref(), json)?;
 
     Ok(profiles)
 }
@@ -228,8 +201,9 @@ fn run_tauri(cli: Cli) {
             get_colocated_password,
             get_profiles,
             submit_message,
-            force_rotate_id_pk,
+            force_rotate_journalist_id_pk,
             force_rotate_msg_pk,
+            force_rotate_sentinel_id_pk,
             get_public_info,
             update_journalist_status,
             check_message_length,
@@ -248,6 +222,14 @@ fn run_tauri(cli: Cli) {
             soft_lock_vault,
             unlock_soft_locked_vault,
             fully_exit_app,
+            // Group messaging
+            send_group_message,
+            user_typing,
+            create_group,
+            modify_group,
+            get_group_with_messages,
+            get_groups_and_messages,
+            update_group_messages_read_status,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

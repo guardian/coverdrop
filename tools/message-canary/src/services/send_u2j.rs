@@ -29,13 +29,14 @@ pub async fn send_u2j(canary_state: CanaryState, mph_u2j: u32) -> anyhow::Result
                 anyhow::bail!("No journalist to randomly select");
             };
 
+            let message = Uuid::new_v4().to_string();
+
             tracing::info!(
-                "sending u2j message from user {} to journalist {}",
+                "sending u2j message {} from user {} to journalist {}",
+                message,
                 user.user_id,
                 journalist
             );
-
-            let message = Uuid::new_v4().to_string();
 
             let u2j_msg = encrypt_real_message_from_user_to_journalist_via_covernode(
                 &keys,

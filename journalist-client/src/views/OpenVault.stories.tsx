@@ -13,13 +13,17 @@ export default meta;
 
 const vaultState = {
   type: "VaultState",
-  id: "test",
+  journalistId: "test",
   path: "fake/vault/to/path.vault",
   isSoftLocked: false,
+  sentinelId: null,
 } satisfies VaultState;
 
 const profiles = {
-  DEV: { apiUrl: "https://mock-secure-messaging-api.com" },
+  DEV: {
+    apiUrl: "https://mock-secure-messaging-api.com",
+    deliveryServiceUrl: "https://mock-delivery-service.com",
+  },
 } satisfies Profiles;
 
 type Story = StoryObj<typeof meta>;

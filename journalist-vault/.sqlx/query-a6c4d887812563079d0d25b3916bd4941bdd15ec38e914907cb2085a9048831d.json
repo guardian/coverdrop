@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO j2j_messages (id, group_id, sender_id, message, published_at, read)\n        VALUES (?1, ?2, ?3, ?4, ?5, ?6)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "a6c4d887812563079d0d25b3916bd4941bdd15ec38e914907cb2085a9048831d"
+}

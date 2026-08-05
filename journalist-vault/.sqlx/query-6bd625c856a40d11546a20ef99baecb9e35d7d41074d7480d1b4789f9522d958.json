@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                stage\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "stage",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "6bd625c856a40d11546a20ef99baecb9e35d7d41074d7480d1b4789f9522d958"
+}

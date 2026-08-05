@@ -69,7 +69,7 @@ impl CanaryState {
 
                 let password = std::fs::read_to_string(&password_path)?;
 
-                let vault = JournalistVault::open(&path, &password, trust_anchors.clone()).await?;
+                let vault = JournalistVault::open(&path, &password, stage).await?;
 
                 let service = JournalistCoverDropService::new(&api_client, &vault);
                 let process_vault_setup_bundle_result =

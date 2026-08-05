@@ -1190,8 +1190,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/1024jp/GzipSwift";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 5.2.0;
+				kind = exactVersion;
+				version = 7.0.0;
 			};
 		};
 		A0B883AC28FF3314001353BC /* XCRemoteSwiftPackageReference "swift-sodium" */ = {

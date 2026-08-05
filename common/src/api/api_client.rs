@@ -1,22 +1,29 @@
 use chrono::{DateTime, Utc};
+use http::HeaderMap;
 use reqwest::Url;
 
-use crate::api::forms::{PatchJournalistStatusForm, PostBackupIdKeyForm, PostBackupMsgKeyForm};
+use crate::api::forms::{
+    PatchJournalistStatusForm, PostBackupIdKeyForm, PostBackupMsgKeyForm,
+    PostJournalistToCoverNodeMessageForm,
+};
 use crate::api::models::dead_drops::{
     UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
     UnverifiedUserToJournalistDeadDropsList,
 };
 
+use crate::api::models::message_id::MessageId;
 use crate::backup::forms::retrieve_upload_url::RetrieveUploadUrlWithMetadataForm;
 use crate::client::JournalistStatus;
 use crate::crypto::keys::public_key::PublicKey;
 use crate::epoch::Epoch;
 use crate::healthcheck::HealthCheck;
 use crate::identity_api::models::UntrustedJournalistIdPublicKeyWithEpoch;
+use crate::identity_api::models::UntrustedSentinelIdPublicKeyWithEpoch;
 use crate::protocol::keys::{
     CoverNodeIdKeyPair, CoverNodeIdPublicKey, CoverNodeMessagingPublicKey,
     CoverNodeProvisioningKeyPair, JournalistIdKeyPair, JournalistMessagingPublicKey,
     JournalistProvisioningKeyPair, UnregisteredJournalistIdPublicKey,
+    UnregisteredSentinelIdPublicKey,
 };
 
 use crate::api::models::{
@@ -25,17 +32,22 @@ use crate::api::models::{
 };
 use crate::clients::{
     handle_response, handle_response_json, handle_response_text, new_reqwest_client,
+    new_reqwest_client_with_default_headers,
 };
 use crate::system::keys::AdminKeyPair;
 
+#[allow(deprecated)]
+use super::forms::PostJournalistToCoverNodeMessageFormDeprecated;
 use super::forms::{
     DeleteJournalistForm, PatchJournalistForm, PostAdminPublicKeyForm,
     PostCoverNodeIdPublicKeyForm, PostCoverNodeMessagingPublicKeyForm,
     PostCoverNodeProvisioningPublicKeyForm, PostJournalistIdPublicKeyForm,
-    PostJournalistMessagingPublicKeyForm, PostJournalistToCoverNodeMessageForm,
-    PostSystemStatusEventForm, RotateJournalistIdPublicKeyFormForm,
+    PostJournalistMessagingPublicKeyForm, PostSentinelIdPublicKeyForm, PostSystemStatusEventForm,
+    RotateJournalistIdPublicKeyFormForm, RotateSentinelIdPublicKeyFormForm,
 };
-use super::forms::{PostJournalistForm, PostJournalistProvisioningPublicKeyForm};
+use super::forms::{
+    PostJournalistForm, PostJournalistProvisioningPublicKeyForm, PostSentinelProfileForm,
+};
 use super::models::covernode_id::CoverNodeIdentity;
 use super::models::dead_drop_summary::DeadDropSummary;
 use super::models::dead_drops::UnverifiedUserToJournalistDeadDrop;
@@ -43,6 +55,7 @@ use super::models::general::{PublishedStatusEvent, StatusEvent};
 use super::models::journalist_id::JournalistIdentity;
 use super::models::journalist_id_and_id_pk_rotation_form::JournalistIdAndPublicKeyRotationForm;
 use super::models::messages::journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage;
+use super::models::sentinel_id_and_id_pk_rotation_form::SentinelIdAndPublicKeyRotationForm;
 use super::models::untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles;
 
 #[derive(Clone)]
@@ -54,6 +67,11 @@ pub struct ApiClient {
 impl ApiClient {
     pub fn new(base_url: Url) -> Self {
         let client = new_reqwest_client();
+        Self { client, base_url }
+    }
+
+    pub fn new_with_default_headers(base_url: Url, default_headers: HeaderMap) -> Self {
+        let client = new_reqwest_client_with_default_headers(default_headers);
         Self { client, base_url }
     }
 
@@ -489,11 +507,123 @@ impl ApiClient {
             .push("v1")
             .push("journalist-messages");
 
-        let form = PostJournalistToCoverNodeMessageForm::new(j2c_msg, id_key_pair, now)?;
+        #[allow(deprecated)]
+        let form = PostJournalistToCoverNodeMessageFormDeprecated::new(j2c_msg, id_key_pair, now)?;
 
         let resp = self.client.post(url).json(&form).send().await?;
 
         handle_response(resp).await
+    }
+
+    pub async fn post_journalist_msg_with_deduplication_token(
+        &self,
+        j2c_msg: EncryptedJournalistToCoverNodeMessage,
+        deduplication_id: MessageId,
+        id_key_pair: &JournalistIdKeyPair,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("journalist-to-covernode-messages");
+
+        let form =
+            PostJournalistToCoverNodeMessageForm::new(j2c_msg, deduplication_id, id_key_pair, now)?;
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn post_sentinel_profile_form(
+        &self,
+        form: PostSentinelProfileForm,
+    ) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("sentinel-profiles");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn post_sentinel_id_pk_form(
+        &self,
+        form: PostSentinelIdPublicKeyForm,
+    ) -> anyhow::Result<Epoch> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("sentinel")
+            .push("identity-public-key");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        let epoch = handle_response_json(resp).await?;
+
+        Ok(epoch)
+    }
+
+    pub async fn get_sentinel_id_pk_forms(
+        &self,
+    ) -> anyhow::Result<Vec<SentinelIdAndPublicKeyRotationForm>> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("sentinel")
+            .push("identity-public-key-form");
+
+        let resp = self.client.get(url).send().await?;
+
+        let forms = handle_response_json(resp).await?;
+
+        Ok(forms)
+    }
+
+    pub async fn post_rotate_sentinel_id_pk_form(
+        &self,
+        form: RotateSentinelIdPublicKeyFormForm,
+    ) -> anyhow::Result<()> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("sentinel")
+            .push("identity-public-key-form");
+
+        let resp = self.client.post(url).json(&form).send().await?;
+
+        handle_response(resp).await
+    }
+
+    pub async fn get_sentinel_id_pk_with_epoch(
+        &self,
+        candidate_sentinel_id_pk: &UnregisteredSentinelIdPublicKey,
+    ) -> anyhow::Result<Option<UntrustedSentinelIdPublicKeyWithEpoch>> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("public-keys")
+            .push("sentinel")
+            .push("identity-public-key")
+            .push(&candidate_sentinel_id_pk.public_key_hex());
+
+        let resp = self.client.get(url).send().await?;
+
+        let epoch = handle_response_json(resp).await?;
+
+        Ok(epoch)
     }
 
     pub async fn delete_journalist(&self, form: &DeleteJournalistForm) -> anyhow::Result<()> {

@@ -51,7 +51,6 @@ use common::tracing::init_tracing;
 use journalist_vault::JournalistVault;
 use journalist_vault::PASSWORD_EXTENSION;
 use tokio::fs;
-use trust_anchors::get_trust_anchors;
 
 #[cfg(feature = "integration-tests")]
 mod integration_tests;
@@ -181,8 +180,10 @@ async fn main() -> anyhow::Result<()> {
             output_directory,
         } => admin::generate_public_key_forms_bundle(keys_path, output_directory, time::now()),
         Commands::GenerateJournalist {
-            display_name,
-            id,
+            journalist_display_name,
+            journalist_id,
+            sentinel_display_name,
+            sentinel_id,
             description,
             password,
             status,
@@ -197,11 +198,12 @@ async fn main() -> anyhow::Result<()> {
                 anyhow::Ok(password_generator.generate(DEFAULT_PASSPHRASE_WORDS))
             })?;
 
-            let trust_anchors = get_trust_anchors(&stage, time::now())?;
             generate_journalist(
                 keys_path,
-                display_name,
-                id,
+                journalist_display_name,
+                journalist_id,
+                sentinel_display_name,
+                sentinel_id,
                 sort_name,
                 description,
                 is_desk,
@@ -209,7 +211,7 @@ async fn main() -> anyhow::Result<()> {
                 status,
                 vault_path,
                 time::now(),
-                trust_anchors,
+                stage,
             )
             .await?;
 
@@ -232,9 +234,8 @@ async fn main() -> anyhow::Result<()> {
             let password_generator = PasswordGenerator::from_eff_large_wordlist()?;
             let new_password = password_generator.generate(DEFAULT_PASSPHRASE_WORDS);
 
-            let trust_anchors = get_trust_anchors(&stage, time::now())?;
             let journalist_vault =
-                JournalistVault::open(&vault_path, &current_password, trust_anchors).await?;
+                JournalistVault::open(&vault_path, &current_password, stage).await?;
 
             journalist_vault.change_password(&new_password).await?;
 
@@ -275,8 +276,7 @@ async fn main() -> anyhow::Result<()> {
             stage,
         } => {
             let password = validate_password_from_args(password, password_path)?;
-            let trust_anchors = get_trust_anchors(&stage, time::now())?;
-            let vault = JournalistVault::open(&vault_path, &password, trust_anchors).await?;
+            let vault = JournalistVault::open(&vault_path, &password, stage).await?;
 
             let now = time::now();
 

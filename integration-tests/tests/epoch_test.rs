@@ -26,7 +26,7 @@ use tokio::task::JoinHandle;
 
 #[tokio::test]
 async fn epoch_test() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_additional_journalists(1)
@@ -62,7 +62,7 @@ async fn epoch_test() {
 
         tracing::debug!("Current epoch is: {:?}", public_keys.max_epoch);
 
-        assert_eq!(public_keys.max_epoch, Epoch(10));
+        assert_eq!(public_keys.max_epoch, Epoch(12));
     }
 
     let queries = OrganizationKeyQueries::new(pool.clone());

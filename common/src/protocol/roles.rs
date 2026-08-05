@@ -8,6 +8,7 @@ use crate::{
         JOURNALIST_MSG_KEY_ROTATE_AFTER, JOURNALIST_MSG_KEY_VALID_DURATION,
         JOURNALIST_PROVISIONING_KEY_ROTATE_AFTER, JOURNALIST_PROVISIONING_KEY_VALID_DURATION,
         ORGANIZATION_KEY_ROTATE_AFTER, ORGANIZATION_KEY_VALID_DURATION,
+        SENTINEL_ID_KEY_ROTATE_AFTER, SENTINEL_ID_KEY_VALID_DURATION,
     },
 };
 
@@ -80,12 +81,12 @@ define_role!(
     Some(COVERNODE_MSG_KEY_ROTATE_AFTER)
 );
 
-////////////////
-// Journalist //
-////////////////
+///////////////////////////
+// Journalist & Sentinel //
+///////////////////////////
 
-// Journalist provisioning keys are used to issue new journalist identity keys
-// without having to access the organization root key
+// Journalist provisioning keys are used to issue new journalist identity and
+// Sentinel identity keys without having to access the organization root key
 define_role!(
     JournalistProvisioning,
     "journalist provisioning",
@@ -122,6 +123,25 @@ define_role!(
     "journalist_msg",
     Some(JOURNALIST_MSG_KEY_VALID_DURATION),
     Some(JOURNALIST_MSG_KEY_ROTATE_AFTER)
+);
+
+// Sentinel identity keys are used for authenticating a user of Sentinel.
+define_role!(
+    SentinelId,
+    "sentinel identity",
+    "sentinel_id",
+    Some(SENTINEL_ID_KEY_VALID_DURATION),
+    Some(SENTINEL_ID_KEY_ROTATE_AFTER)
+);
+
+// Unsigned sentinel identity keys are used when rotating keys. They are submitted
+// to the API which verifies and signs them
+define_role!(
+    UnregisteredSentinelId,
+    "unsigned sentinel identity",
+    "unsigned_sentinel_id",
+    Some(SENTINEL_ID_KEY_VALID_DURATION),
+    Some(SENTINEL_ID_KEY_ROTATE_AFTER)
 );
 
 ///////////

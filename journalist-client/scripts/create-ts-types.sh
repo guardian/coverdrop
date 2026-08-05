@@ -13,8 +13,9 @@ rm -r "$SCRIPT_PATH"/../src/model/bindings/
 
 cargo test export_bindings
 
-mv "$SCRIPT_PATH"/../src-tauri/bindings "$SCRIPT_PATH"/../src/model/
-mv "$SCRIPT_PATH"/../../common/bindings/* "$SCRIPT_PATH"/../src/model/bindings/
-mv "$SCRIPT_PATH"/../../journalist-vault/bindings/* "$SCRIPT_PATH"/../src/model/bindings/
+mv "$SCRIPT_PATH"/../src-tauri/bindings												"$SCRIPT_PATH"/../src/model/
+mv "$SCRIPT_PATH"/../../common/bindings/*											"$SCRIPT_PATH"/../src/model/bindings/
+mv "$SCRIPT_PATH"/../../journalist-vault/bindings/* 								"$SCRIPT_PATH"/../src/model/bindings/
+mv "$SCRIPT_PATH"/../../journalist-services/group-messaging-service/bindings/*		"$SCRIPT_PATH"/../src/model/bindings/
 
 npx prettier --write "$SCRIPT_PATH/../src/model/bindings/*.ts"

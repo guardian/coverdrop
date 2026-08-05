@@ -10,7 +10,7 @@ use tauri::State;
 
 use crate::{
     app_state::AppStateHandle,
-    error::{CommandError, GenericSnafu, MissingProfileSnafu, VaultSnafu},
+    error::{CommandError, GenericSnafu, MissingProfileSnafu, OpenVaultSnafu, VaultSnafu},
     model::{OpenVaultOutcome, Profiles, VaultState},
 };
 
@@ -34,20 +34,21 @@ pub async fn unlock_vault(
     let profiles = profiles.inner();
 
     let api_url = profiles.api_url(&stage).context(MissingProfileSnafu)?;
+    let delivery_service_url = profiles
+        .delivery_service_url(&stage)
+        .context(MissingProfileSnafu)?;
 
     let stage = Stage::from_guardian_str(stage.as_str())
         .ok()
         .context(GenericSnafu {
-            ctx: "No trust anchors exist for stage provide",
+            ctx: "No trust anchors exist for stage provided",
         })?;
 
     let (vault, api_client) = app
         .inner()
-        .unlock_vault(stage, api_url, path, password)
+        .unlock_vault(stage, api_url, delivery_service_url, path, password)
         .await
-        .context(VaultSnafu {
-            failed_to: "unlock vault, is your password correct?",
-        })?;
+        .context(OpenVaultSnafu)?;
 
     let Ok(keys) = api_client.get_public_keys().await else {
         // If we're not able to get the public key hierarchy we can't

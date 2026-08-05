@@ -1,9 +1,6 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, env};
 
 use testcontainers::{core::WaitFor, Image};
-
-const NAME: &str = "varnish";
-const TAG: &str = "6.0";
 
 #[derive(Debug, Clone)]
 pub struct VarnishArgs {}
@@ -30,6 +27,8 @@ impl VarnishArgs {
 
 #[derive(Debug)]
 pub struct Varnish {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -37,21 +36,25 @@ impl Default for Varnish {
     fn default() -> Self {
         let mut env_vars = HashMap::new();
         env_vars.insert("VARNISH_SIZE".to_owned(), "2G".into());
-        Self { env_vars }
+        Self {
+            name: env::var("VARNISH_IMAGE_NAME").unwrap_or("test_coverdrop_varnish".into()),
+            tag: env::var("VARNISH_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for Varnish {
     fn name(&self) -> &str {
-        NAME
+        &self.name
     }
 
     fn tag(&self) -> &str {
-        TAG
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stderr("said Child starts")]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

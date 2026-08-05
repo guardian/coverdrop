@@ -7,6 +7,7 @@ mod identity_public_key_family;
 mod identity_public_key_family_list;
 mod journalist;
 mod organization;
+mod sentinel;
 mod untrusted_identity_public_key_family;
 mod untrusted_identity_public_key_family_list;
 
@@ -21,6 +22,7 @@ pub use identity_public_key_family::IdentityPublicKeyFamily;
 pub use identity_public_key_family_list::IdentityPublicKeyFamilyList;
 pub use journalist::*;
 pub use organization::*;
+pub use sentinel::*;
 pub use untrusted_identity_public_key_family::UntrustedIdentityPublicKeyFamily;
 pub use untrusted_identity_public_key_family_list::UntrustedIdentityPublicKeyFamilyList;
 

@@ -18,7 +18,10 @@ use identity_api::{
         public_keys::get_public_keys,
     },
     identity_api_state::IdentityApiState,
-    tasks::{CheckFileSystemForKeysTask, DeleteExpiredKeysTask, RotateJournalistIdPublicKeysTask},
+    tasks::{
+        CheckFileSystemForKeysTask, DeleteExpiredKeysTask, JournalistIdKeyRotation,
+        RotateIdPublicKeysTask, SentinelIdKeyRotation,
+    },
     DEFAULT_PORT,
 };
 use identity_api_database::Database;
@@ -64,7 +67,13 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
     // Make sure any keys in the file system are loaded before doing anything else
     check_file_system_for_keys_task.run().await?;
 
-    let rotate_journalist_id_pk_task = RotateJournalistIdPublicKeysTask::new(
+    let rotate_journalist_id_pk_task = RotateIdPublicKeysTask::<JournalistIdKeyRotation>::new(
+        Duration::seconds(15),
+        api_client.clone(),
+        database.clone(),
+    );
+
+    let rotate_sentinel_id_pk_task = RotateIdPublicKeysTask::<SentinelIdKeyRotation>::new(
         Duration::seconds(15),
         api_client.clone(),
         database.clone(),
@@ -80,6 +89,7 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
 
         runner.add_task(check_file_system_for_keys_task).await;
         runner.add_task(rotate_journalist_id_pk_task).await;
+        runner.add_task(rotate_sentinel_id_pk_task).await;
         runner.add_task(delete_expired_keys_task).await;
         runner.add_task(heartbeat_task).await;
 
@@ -106,8 +116,8 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
 
         let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
 
-        tracing::info!("Starting identity API server on http://{:?}", socket_addr);
         let listener = TcpListener::bind(&socket_addr).await?;
+        tracing::info!("Server listening on http://{:?}", socket_addr);
 
         axum::serve(listener, app).await
     });

@@ -87,7 +87,7 @@ impl Image for DeliveryService {
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stdout("Starting server on")]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

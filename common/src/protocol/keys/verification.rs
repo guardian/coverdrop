@@ -84,3 +84,11 @@ pub fn verify_journalist_messaging_pk(
 ) -> Result<JournalistMessagingPublicKey, UntrustedKeyError> {
     untrusted.to_trusted(journalist_id_pk, now)
 }
+
+pub fn verify_sentinel_id_pk(
+    untrusted: &UntrustedSentinelIdPublicKey,
+    journalist_provisioning_pk: &JournalistProvisioningPublicKey,
+    now: DateTime<Utc>,
+) -> anyhow::Result<SentinelIdPublicKey> {
+    untrusted.to_trusted(journalist_provisioning_pk, now)
+}

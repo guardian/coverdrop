@@ -41,6 +41,8 @@ pub enum DeliveryServiceError {
     SignatureVerificationFailed,
     #[error("deserialization error: {0}")]
     DeserializationError(String),
+    #[error("message too large: {size} bytes exceeds maximum of {max} bytes")]
+    MessageTooLarge { size: usize, max: usize },
 }
 
 impl IntoResponse for DeliveryServiceError {
@@ -127,6 +129,20 @@ impl IntoResponse for DeliveryServiceError {
                 (
                     StatusCode::BAD_REQUEST,
                     format!("Deserialisation error: {}", msg),
+                )
+            }
+            DeliveryServiceError::MessageTooLarge { size, max } => {
+                tracing::warn!(
+                    "Message too large: {} bytes exceeds maximum of {} bytes",
+                    size,
+                    max
+                );
+                (
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    format!(
+                        "Message too large: {} bytes exceeds maximum of {} bytes",
+                        size, max
+                    ),
                 )
             }
         };

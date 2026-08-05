@@ -5,7 +5,7 @@ use crate::{
     protocol::constants::{
         COVERNODE_ID_KEY_VALID_DURATION, COVERNODE_PROVISIONING_KEY_VALID_DURATION,
         JOURNALIST_ID_KEY_VALID_DURATION, JOURNALIST_PROVISIONING_KEY_VALID_DURATION,
-        ORGANIZATION_KEY_VALID_DURATION,
+        ORGANIZATION_KEY_VALID_DURATION, SENTINEL_ID_KEY_VALID_DURATION,
     },
 };
 
@@ -88,6 +88,20 @@ pub fn generate_journalist_messaging_key_pair(
         .to_signed_key_pair(journalist_id_key_pair, not_valid_after)
 }
 
+pub fn generate_sentinel_id_key_pair(
+    journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
+    now: DateTime<Utc>,
+) -> SentinelIdKeyPair {
+    let not_valid_after = generate_child_expiry_not_valid_after(
+        SENTINEL_ID_KEY_VALID_DURATION,
+        journalist_provisioning_key_pair,
+        now,
+    );
+
+    UnsignedSigningKeyPair::generate()
+        .to_signed_key_pair(journalist_provisioning_key_pair, not_valid_after)
+}
+
 /// Create a new signing key pair for the creation of new CoverNodes
 pub fn generate_covernode_provisioning_key_pair(
     org_key_pair: &OrganizationKeyPair,
@@ -147,8 +161,9 @@ pub mod test {
         generate_covernode_id_key_pair, generate_covernode_messaging_key_pair,
         generate_covernode_provisioning_key_pair, generate_journalist_id_key_pair,
         generate_journalist_messaging_key_pair, generate_journalist_provisioning_key_pair,
-        generate_organization_key_pair,
+        generate_organization_key_pair, generate_sentinel_id_key_pair,
     };
+    use crate::api::models::sentinel_id::SentinelIdentity;
     use crate::backup::keys::{
         generate_backup_id_key_pair, generate_backup_msg_key_pair, BackupIdKeyPair,
         BackupMsgKeyPair,
@@ -169,7 +184,8 @@ pub mod test {
                 JournalistMessagingPublicKey, JournalistProvisioningKeyPair,
                 JournalistProvisioningPublicKey, JournalistProvisioningPublicKeyFamily,
                 JournalistProvisioningPublicKeyFamilyList, OrganizationKeyPair,
-                OrganizationPublicKey, OrganizationPublicKeyFamily, UserKeyPair, UserPublicKey,
+                OrganizationPublicKey, OrganizationPublicKeyFamily, SentinelIdPublicKeyList,
+                UserKeyPair, UserPublicKey,
             },
             roles::User,
         },
@@ -269,6 +285,10 @@ pub mod test {
         let journalist_msg_key_pair =
             generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
 
+        // Sentinel
+        let sentinel_id_key_pair =
+            generate_sentinel_id_key_pair(&journalist_provisioning_key_pair, now);
+
         // Backups
         let backup_id_key_pair = generate_backup_id_key_pair(&org_key_pair, now);
         let backup_msg_key_pair = generate_backup_msg_key_pair(&backup_id_key_pair, now);
@@ -305,6 +325,12 @@ pub mod test {
                                 vec![journalist_msg_key_pair.public_key().clone()],
                             ),
                         ]),
+                    )]),
+                    HashMap::from([(
+                        SentinelIdentity::new("sentinel_0").unwrap(),
+                        SentinelIdPublicKeyList::new(vec![sentinel_id_key_pair
+                            .public_key()
+                            .clone()]),
                     )]),
                 ),
             ]),

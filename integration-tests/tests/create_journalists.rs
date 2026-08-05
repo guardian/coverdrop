@@ -1,6 +1,9 @@
 use admin::{delete_journalist_form, submit_delete_journalist_form};
 use chrono::Duration;
 
+use common::api::models::sentinel_id::SentinelIdentity;
+use common::clap::Stage;
+use common::crypto::keys::public_key::PublicKey;
 use common::protocol::constants::JOURNALIST_MSG_KEY_VALID_DURATION;
 use coverdrop_service::{JournalistCoverDropService, ProcessVaultSetupBundleResult};
 use integration_tests::{
@@ -17,10 +20,11 @@ use journalist_vault::JournalistVault;
 /// This tests that we have the correct initial state when we create a stack, and that
 /// adding journalists works as expected.
 ///
-/// Additionally it also checks that journalist keys are correctly verified and expired.
+/// It also checks that journalist and sentinel keys are correctly verified,
+/// stored in the vault, published to the API, and expired.
 #[tokio::test]
 async fn create_journalists() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let default_journalist_id = "generated_test_desk";
 
@@ -53,7 +57,7 @@ async fn create_journalists() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
+        None,
         None,
     )
     .await;
@@ -63,7 +67,6 @@ async fn create_journalists() {
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
     )
     .await;
 
@@ -71,7 +74,7 @@ async fn create_journalists() {
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load journalist vault");
 
@@ -114,10 +117,47 @@ async fn create_journalists() {
         1
     );
 
+    // Confirm sentinel profile was registered in the API
+    let expected_sentinel_id = SentinelIdentity::new("generated_test_journalist_sentinel").unwrap();
+    assert!(
+        keys_and_profiles
+            .sentinel_profiles
+            .iter()
+            .any(|sp| sp.id == expected_sentinel_id),
+        "Expected sentinel profile for generated_test_journalist_sentinel"
+    );
+
+    // Confirm sentinel ID key was registered in the API
+    let (_, api_sentinel_id_pk) = keys_and_profiles
+        .keys
+        .sentinel_id_pk_iter()
+        .find(|(sid, _)| *sid == &expected_sentinel_id)
+        .expect("Sentinel ID public key should exist in API");
+
+    // Confirm sentinel identity and key pair are stored in the vault
+    let vault_sentinel_id = vault
+        .sentinel_id()
+        .await
+        .expect("Get sentinel ID from vault");
+    assert_eq!(vault_sentinel_id.as_ref(), Some(&expected_sentinel_id));
+
+    let vault_sentinel_id_key_pair = vault
+        .latest_sentinel_id_key_pair(stack.now())
+        .await
+        .expect("Get sentinel ID key pair from vault")
+        .expect("Sentinel ID key pair should exist in vault");
+
+    // Confirm the public key from the API matches the one in the vault
+    assert_eq!(
+        api_sentinel_id_pk.public_key_hex(),
+        vault_sentinel_id_key_pair.public_key_hex(),
+        "Sentinel ID public key in API should match the one in the vault"
+    );
+
     // After cleaning up the vault, keys should still exist
     vault.clean_up(stack.now()).await.expect("Clean up vault");
 
-    let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
+    let journalist_id_keys = vault.journalist_id_key_pairs(stack.now()).await.unwrap();
     assert_eq!(journalist_id_keys.count(), 1);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
@@ -194,7 +234,7 @@ async fn create_journalists() {
     vault.clean_up(stack.now()).await.expect("Clean up vault");
 
     // expired msg keys should have been deleted, id key still exists
-    let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
+    let journalist_id_keys = vault.journalist_id_key_pairs(stack.now()).await.unwrap();
     assert_eq!(journalist_id_keys.count(), 1);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
@@ -226,13 +266,23 @@ async fn create_journalists() {
     vault.clean_up(stack.now()).await.expect("Clean up vault");
 
     // all keys deleted
-    let journalist_id_keys = vault.id_key_pairs(stack.now()).await.unwrap();
+    let journalist_id_keys = vault.journalist_id_key_pairs(stack.now()).await.unwrap();
     assert_eq!(journalist_id_keys.count(), 0);
     let journalist_msg_keys = vault
         .msg_key_pairs_for_decryption(stack.now())
         .await
         .unwrap();
     assert_eq!(journalist_msg_keys.count(), 0);
+
+    // sentinel id key should also be expired and deleted
+    let sentinel_id_key_pair = vault
+        .latest_sentinel_id_key_pair(stack.now())
+        .await
+        .expect("Get sentinel ID key pair from vault");
+    assert!(
+        sentinel_id_key_pair.is_none(),
+        "Sentinel ID key pair should be expired and deleted after 8+ weeks"
+    );
 
     //
     // Delete journalist

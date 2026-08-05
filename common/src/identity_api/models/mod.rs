@@ -1,7 +1,9 @@
 mod covernode_id_pk_with_epoch;
 mod identity_api_public_keys;
 mod journalist_id_pk_with_epoch;
+mod sentinel_id_pk_with_epoch;
 
 pub use covernode_id_pk_with_epoch::UntrustedCoverNodeIdPublicKeyWithEpoch;
 pub use identity_api_public_keys::IdentityApiPublicKeys;
 pub use journalist_id_pk_with_epoch::UntrustedJournalistIdPublicKeyWithEpoch;
+pub use sentinel_id_pk_with_epoch::UntrustedSentinelIdPublicKeyWithEpoch;

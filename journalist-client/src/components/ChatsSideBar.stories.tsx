@@ -8,6 +8,8 @@ import { User } from "../model/bindings/User";
 import { ReactNode } from "react";
 import { sizes } from "../styles/sizes";
 import moment from "moment";
+import { GroupWithComputed } from "../state/groups.ts";
+import { GroupMessage } from "../model/bindings/GroupMessage.ts";
 
 type NarrowWidthWrapperProps = {
   children: ReactNode;
@@ -100,15 +102,19 @@ const messages = [
 
 const commonArgs = {
   journalistId: "Test journalist",
+  sentinelId: null, // null here so we don't see the MLS tab on most of the stories
   setChat: () => {},
   markChatAsUnread: () => {},
   openBackupModal: () => {},
+  openCreateGroupModal: () => {},
   setMaybeEditModalForReplyKey: () => {},
   setMaybeMuteModalForReplyKey: () => {},
   setMaybeCopyToClipboardModalForReplyKey: () => {},
   setMaybeJournalistStatusForModal: () => {},
   addCustomToast: () => {},
   removeCustomToast: () => {},
+  maybeGroups: [],
+  groupsUnreadCount: 0,
 } satisfies Partial<ChatsSideBarProps>;
 
 const meta = {
@@ -122,7 +128,8 @@ type Story = StoryObj<typeof meta>;
 export const VisibleJournalist: Story = {
   args: {
     ...commonArgs,
-    currentUserReplyKey: userPk1,
+    maybeCurrentUserReplyKey: userPk1,
+    maybeSelectedGroup: null,
     journalistStatus: "VISIBLE",
   },
   decorators: [
@@ -145,7 +152,8 @@ export const VisibleJournalist: Story = {
 export const HiddenJournalist: Story = {
   args: {
     ...commonArgs,
-    currentUserReplyKey: userPk2,
+    maybeCurrentUserReplyKey: userPk2,
+    maybeSelectedGroup: null,
     journalistStatus: "HIDDEN_FROM_UI",
   },
   decorators: [
@@ -168,7 +176,8 @@ export const HiddenJournalist: Story = {
 export const NoMessages: Story = {
   args: {
     ...commonArgs,
-    currentUserReplyKey: userPk1,
+    maybeCurrentUserReplyKey: userPk1,
+    maybeSelectedGroup: null,
     journalistStatus: "VISIBLE",
   },
   decorators: [
@@ -191,7 +200,8 @@ export const NoMessages: Story = {
 export const MessagesExpiringSoon: Story = {
   args: {
     ...commonArgs,
-    currentUserReplyKey: userPk1,
+    maybeCurrentUserReplyKey: userPk1,
+    maybeSelectedGroup: null,
     journalistStatus: "VISIBLE",
   },
   decorators: [
@@ -222,4 +232,58 @@ export const MessagesExpiringSoon: Story = {
       );
     },
   ],
+};
+
+const exampleGroupMessage: GroupMessage = {
+  id: "first",
+  sender: "foo",
+  group_id: "bar",
+  published_at: "05 October 2011 14:48 UTC",
+  read: false,
+  content: {
+    Text: "omg, that tip-off is incredible, we should pick that up right away",
+  },
+};
+
+const exampleMlsGroups: GroupWithComputed[] = [
+  {
+    id: "foo",
+    display_name: "Foo",
+    description: "foo foo foo",
+    members: ["foo", "bar"],
+    messages: [],
+    unreadCount: 0,
+    otherIdsWhoAreTyping: [],
+    mostRecentMessage: undefined,
+    lastUpdatedTimestamp: "",
+    totalItemCount: 0,
+  },
+  {
+    id: "bar",
+    display_name: "Bar Bar Bar Bar Bar",
+    description: "bar bar bar bar",
+    members: ["foo", "bar", "baz"],
+    messages: [exampleGroupMessage],
+    unreadCount: 1,
+    otherIdsWhoAreTyping: [],
+    mostRecentMessage: exampleGroupMessage,
+    lastUpdatedTimestamp: exampleGroupMessage.published_at,
+    totalItemCount: 1,
+  },
+  // TODO add a group where someone is typing
+];
+
+export const MLSTab: Story = {
+  args: {
+    ...commonArgs,
+    maybeCurrentUserReplyKey: null,
+    maybeSelectedGroup: exampleMlsGroups[0],
+    journalistStatus: "VISIBLE",
+    sentinelId: "foo",
+    maybeGroups: exampleMlsGroups,
+    groupsUnreadCount: exampleMlsGroups.reduce(
+      (acc, group) => acc + group.unreadCount,
+      0,
+    ),
+  },
 };

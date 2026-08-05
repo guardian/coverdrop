@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use common::{throttle::Throttle, time};
+use common::{crypto::keys::public_key::PublicKey, throttle::Throttle, time};
 use coverdrop_service::JournalistCoverDropService;
 
 use crate::canary_state::CanaryState;
@@ -46,10 +46,10 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                 let message = decrypted_message.u2j_message.message.to_string()?;
 
                 tracing::info!(
-                    "journalist {} received message {} from user_id {:?} in dead drop {}",
+                    "journalist {} received message {} from user_id {} in dead drop {}",
                     journalist_id,
                     message,
-                    decrypted_message.u2j_message.reply_key,
+                    decrypted_message.u2j_message.reply_key.public_key_hex(),
                     decrypted_message.dead_drop_id
                 );
 
@@ -68,10 +68,10 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                         .record(delivery_duration.num_seconds() as f64);
                 } else {
                     tracing::warn!(
-                        "journalist {} received duplicate message {} from user_id {:?} in dead drop {}",
+                        "journalist {} received duplicate message {} from user_id {} in dead drop {}",
                         journalist_id,
                         message,
-                        decrypted_message.u2j_message.reply_key,
+                        decrypted_message.u2j_message.reply_key.public_key_hex(),
                         decrypted_message.dead_drop_id
                     );
                     metrics::counter!("DuplicateU2JMessage").increment(1);

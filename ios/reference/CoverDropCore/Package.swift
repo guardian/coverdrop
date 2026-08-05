@@ -20,9 +20,10 @@ let package = Package(
             url: "https://github.com/jedisct1/swift-sodium.git",
             revision: "63240810df971557fe9badc557257bdfbfeb90a3"
         ),
-        .package(url: "https://github.com/1024jp/GzipSwift", from: "5.2.0"),
+        .package(url: "https://github.com/1024jp/GzipSwift", from: "7.0.0"),
         .package(url: "https://github.com/lambdapioneer/sloth-ios.git", from: "0.3.0"),
-        .package(url: "https://github.com/securing/IOSSecuritySuite.git", from: "1.5.0")
+        .package(url: "https://github.com/securing/IOSSecuritySuite.git",
+                 from: "1.9.11") // DO NOT UPDATE: no longer BSD licensed from 2.0.0
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

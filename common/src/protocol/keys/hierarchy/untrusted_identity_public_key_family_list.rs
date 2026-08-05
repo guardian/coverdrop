@@ -11,9 +11,9 @@ use crate::crypto::keys::{
 
 use super::UntrustedIdentityPublicKeyFamily;
 
-/// A list of [`StoredPublicKeyFamily`].
+/// A list of [`UntrustedIdentityPublicKeyFamily`].
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(transparent, deny_unknown_fields)]
+#[serde(transparent)]
 pub struct UntrustedIdentityPublicKeyFamilyList<
     VerifyingRole: Role,
     IdentityRole: Role,

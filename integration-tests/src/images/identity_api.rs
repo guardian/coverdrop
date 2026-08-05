@@ -93,7 +93,7 @@ impl Image for IdentityApi {
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stdout("Starting identity API server")]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

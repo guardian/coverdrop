@@ -12,7 +12,7 @@ pub enum CommandError {
     VaultLocked,
     #[snafu(display("Public keys and profiles not available"))]
     PublicInfoUnavailable,
-    #[snafu(display("Could not find profile"))]
+    #[snafu(display("Could not find environment"))]
     MissingProfile,
     #[snafu(display("Failed to serialize JSON"))]
     JsonSerialize {
@@ -24,6 +24,12 @@ pub enum CommandError {
     Vault {
         failed_to: &'static str,
         source: anyhow::Error,
+        #[snafu(implicit)]
+        location: Location,
+    },
+    #[snafu(display("{source}"))]
+    OpenVault {
+        source: journalist_vault::OpenVaultError,
         #[snafu(implicit)]
         location: Location,
     },
@@ -54,6 +60,13 @@ pub enum CommandError {
     #[snafu(display("{ctx}"))]
     Generic {
         ctx: &'static str,
+        #[snafu(implicit)]
+        location: Location,
+    },
+    #[snafu(display("Failed to {failed_to}"))]
+    GroupMessaging {
+        failed_to: &'static str,
+        source: anyhow::Error,
         #[snafu(implicit)]
         location: Location,
     },

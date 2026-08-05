@@ -33,7 +33,7 @@ static JOURNALIST2_MESSAGE: &str = "This is a test message from the journalist 2
 // ergonomically written integration tests
 #[allow(clippy::await_holding_refcell_ref)]
 async fn multiple_journalists_messaging_scenario() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_additional_journalists(1)

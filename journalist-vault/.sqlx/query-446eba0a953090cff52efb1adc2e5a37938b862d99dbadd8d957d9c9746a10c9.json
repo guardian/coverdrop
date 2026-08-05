@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id              AS \"id: MessageId\",\n            group_id        AS \"group_id: GroupId\",\n            sender_id       AS \"sender_id: SentinelIdentity\",\n            message         AS \"message: GroupMessageContent\",\n            published_at    AS \"published_at: DateTime<Utc>\",\n            read            AS \"read: bool\"\n        FROM j2j_messages\n        WHERE group_id = ?1\n        ORDER BY published_at ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: MessageId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "group_id: GroupId",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "sender_id: SentinelIdentity",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "message: GroupMessageContent",
+        "ordinal": 3,
+        "type_info": "Null"
+      },
+      {
+        "name": "published_at: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Null"
+      },
+      {
+        "name": "read: bool",
+        "ordinal": 5,
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "446eba0a953090cff52efb1adc2e5a37938b862d99dbadd8d957d9c9746a10c9"
+}

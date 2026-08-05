@@ -47,7 +47,7 @@ serde_with.workspace = true
 sha2.workspace = true
 shamirsecretsharing = "0.1.7"
 sodiumoxide.workspace = true
-sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite"] }
+sqlx = { workspace = true, features = ["runtime-tokio-rustls", "sqlite", "postgres", "uuid"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["json"] }
 ts-rs = { workspace = true, features = ["no-serde-warnings"] }

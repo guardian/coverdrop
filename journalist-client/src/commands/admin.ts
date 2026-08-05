@@ -1,10 +1,10 @@
+import { ask } from "@tauri-apps/plugin-dialog";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
+import { LogEntry } from "../model/bindings/LogEntry.ts";
+import { LoggingSession } from "../model/bindings/LoggingSession.ts";
 import { TrustedOrganizationPublicKeyAndDigest } from "../model/bindings/TrustedOrganizationPublicKeyAndDigest";
 import { UntrustedKeysAndJournalistProfiles } from "../model/bindings/UntrustedKeysAndJournalistProfiles";
 import { invokeWithErrorMessage } from "./invokeWithErrorMessage";
-import { LoggingSession } from "../model/bindings/LoggingSession.ts";
-import { LogEntry } from "../model/bindings/LogEntry.ts";
-import { ask } from "@tauri-apps/plugin-dialog";
 
 export const updateJournalistStatus = (
   newStatus: JournalistStatus,
@@ -12,8 +12,12 @@ export const updateJournalistStatus = (
   return invokeWithErrorMessage("update_journalist_status", { newStatus });
 };
 
-export const forceRotateIdPk = (): Promise<void> => {
-  return invokeWithErrorMessage("force_rotate_id_pk");
+export const forceRotateSentinelIdPk = (): Promise<void> => {
+  return invokeWithErrorMessage("force_rotate_sentinel_id_pk");
+};
+
+export const forceRotateJournalistIdPk = (): Promise<void> => {
+  return invokeWithErrorMessage("force_rotate_journalist_id_pk");
 };
 
 export const forceRotateMsgPk = (): Promise<void> => {

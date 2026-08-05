@@ -1,5 +1,6 @@
 use common::api::models::journalist_id::JournalistIdentity;
 use common::backup::get_backup_data_s3::get_latest_journalist_backup_from_s3;
+use common::clap::Stage;
 use common::clap::Stage::Development;
 use common::crypto::keys::serde::StorableKeyMaterial;
 use common::protocol::backup::{coverup_finish_restore_step, coverup_initiate_restore_step};
@@ -31,7 +32,7 @@ use std::{fs, slice};
 
 #[tokio::test]
 async fn backup_scenario() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     // generated_test_desk in the identity which we are backing up the vault for
     let default_journalist_id = "generated_test_desk";
@@ -124,7 +125,7 @@ async fn backup_scenario() {
     let journalist_identity = journalist_vault.journalist_id().await.unwrap();
 
     let journalist_signing_pair = journalist_vault
-        .latest_id_key_pair(stack.now())
+        .latest_journalist_id_key_pair(stack.now())
         .await
         .unwrap()
         .unwrap();
@@ -398,7 +399,7 @@ async fn create_recovery_contact_vault_and_return_messaging_keys(
         stack.keys_path(),
         stack.temp_dir_path(),
         stack.now(),
-        stack.trust_anchors(),
+        None,
         None,
     )
     .await;
@@ -407,7 +408,7 @@ async fn create_recovery_contact_vault_and_return_messaging_keys(
         .temp_dir_path()
         .join("generated_test_journalist.vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, stack.trust_anchors())
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load journalist vault");
 

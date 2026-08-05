@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO outbound_queue\n            (message, deduplication_id)\n        VALUES (?1, ?2)\n        RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "99057a462efb9a7ad763509d5b6e4fb3e858e5b5a1314e193a223ff71f67b219"
+}

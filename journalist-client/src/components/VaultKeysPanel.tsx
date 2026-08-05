@@ -20,6 +20,7 @@ export const VaultKeysPanel = ({
         <EuiButtonIcon
           iconType="refresh"
           onClick={refreshClicked}
+          aria-label="refresh"
         ></EuiButtonIcon>
       </EuiFlyoutHeader>
 

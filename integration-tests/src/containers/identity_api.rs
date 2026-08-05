@@ -1,4 +1,4 @@
-use std::{env, net::IpAddr, path::Path};
+use std::{env, net::IpAddr, path::Path, time::Duration};
 
 use chrono::{DateTime, Utc};
 use common::task::RunnerMode;
@@ -20,14 +20,20 @@ pub async fn start_identity_api(
     base_time: DateTime<Utc>,
 ) -> ContainerAsync<IdentityApi> {
     let identity_api_image = IdentityApi::default();
+
     let identity_api_image_args = IdentityApiArgs::new(api_ip, API_PORT, runner_mode, base_time);
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
+
+    if runner_mode.triggerable() {
+        env::set_var("TASK_RUNNER_TRIGGERABLE", "true");
+    }
 
     let api = identity_api_image
         .with_cmd(identity_api_image_args.into_cmd())
         .with_mount(keys_volume)
         .with_network(network)
+        .with_startup_timeout(Duration::from_secs(120))
         .start()
         .await
         .expect("Start identity api container");

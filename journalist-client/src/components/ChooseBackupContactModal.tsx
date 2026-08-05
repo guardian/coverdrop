@@ -44,7 +44,8 @@ export const ChooseBackupContactModal = ({
   const refreshIsSettingBackupContactRequired = () =>
     getBackupContacts().then((backupContacts: JournalistIdentity[]) => {
       setShouldRequireSettingBackupContact((prev) => {
-        const needToSetContact = backupContacts.length < SECRET_SHARING_N_VALUE;
+        const needToSetContact =
+          backupContacts && backupContacts.length < SECRET_SHARING_N_VALUE;
         if (needToSetContact && !prev) {
           const toastId = `backup-contact-${Date.now()}`;
           addCustomToast({
@@ -64,7 +65,7 @@ export const ChooseBackupContactModal = ({
         return needToSetContact;
       });
 
-      if (backupContacts.length > 0) {
+      if (backupContacts && backupContacts.length > 0) {
         setSelectedBackupContact(backupContacts[0]);
       }
     });

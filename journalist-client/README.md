@@ -14,12 +14,13 @@ Add the following content for staging
 ```
 {
   "STAGING": {
-    "apiUrl": "<staging-url>"
+    "apiUrl": "<staging-api-url>",
+    "deliveryServiceUrl": "<staging-delivery-service-url>"
   }
 }
 ```
 
-And replace `<staging-url>` with the domain for the keys api (including `https://` and trailing `/`)
+And replace `<staging-api-url>` with the url for the public API, and `<staging-delivery-service-url>` with the url for the MLS Delivery Service (both including `https://` and trailing `/`).
 
 #### Create a journalist on staging
 

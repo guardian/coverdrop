@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO j2c_deduplication_ids (deduplication_id, created_at)\n            VALUES ($1, $2)\n            ON CONFLICT (deduplication_id) DO NOTHING\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1d64ddc4ed6b26547d550a0e6b48fd72430cf000b4b722da800698b7ddd8fe06"
+}

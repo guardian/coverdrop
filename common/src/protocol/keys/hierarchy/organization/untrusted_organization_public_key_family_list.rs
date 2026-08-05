@@ -6,7 +6,6 @@ use crate::protocol::keys::UntrustedOrganizationPublicKey;
 use super::UntrustedOrganizationPublicKeyFamily;
 
 #[derive(Clone, Serialize, Deserialize, TS)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedOrganizationPublicKeyFamilyList(pub Vec<UntrustedOrganizationPublicKeyFamily>);
 
 impl UntrustedOrganizationPublicKeyFamilyList {

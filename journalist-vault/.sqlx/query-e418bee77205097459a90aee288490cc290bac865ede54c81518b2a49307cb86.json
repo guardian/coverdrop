@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                sentinel_id AS \"sentinel_id: SentinelIdentity\"\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "sentinel_id: SentinelIdentity",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "e418bee77205097459a90aee288490cc290bac865ede54c81518b2a49307cb86"
+}

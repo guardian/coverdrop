@@ -20,7 +20,7 @@ import { BurstCoverMessageModal } from "./BurstMessageModal";
 import { VaultKeysPanel } from "./VaultKeysPanel";
 import { TrustedKeyDigestsModal } from "./TrustedKeyDigestsModal";
 import { JournalistStatus } from "../model/bindings/JournalistStatus";
-import { ForceRotateKeyModal } from "./ForceRotateKeyModal";
+import { ForceRotateKeyModal, KeyType } from "./ForceRotateKeyModal";
 import { ChooseBackupContactModal } from "./ChooseBackupContactModal";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { VersionInfo } from "./VersionInfo.tsx";
@@ -79,9 +79,9 @@ export const SettingsPopover = ({
   const [trustedKeyDigestModalVisible, setTrustedKeyDigestModalVisible] =
     useState(false);
 
-  const [forceRotateKeyType, setForceRotateKeyType] = useState<
-    "msg" | "id" | null
-  >(null);
+  const [forceRotateKeyType, setForceRotateKeyType] = useState<KeyType | null>(
+    null,
+  );
 
   const [chooseBackupContactModalVisible, setChooseBackupContactModalVisible] =
     useState(false);
@@ -279,6 +279,7 @@ export const SettingsPopover = ({
           <EuiButtonIcon
             iconType="menu"
             onClick={() => setIsPopoverOpen(!isPopoverOpen)}
+            aria-label={"main menu"}
           ></EuiButtonIcon>
         }
         isOpen={isPopoverOpen}
@@ -356,11 +357,20 @@ export const SettingsPopover = ({
           <EuiContextMenuItem
             icon="timeRefresh"
             onClick={() => {
-              setForceRotateKeyType("id");
+              setForceRotateKeyType("sentinel-id");
               setIsPopoverOpen(false);
             }}
           >
-            Force identity key rotation
+            Force sentinel identity key rotation
+          </EuiContextMenuItem>
+          <EuiContextMenuItem
+            icon="timeRefresh"
+            onClick={() => {
+              setForceRotateKeyType("journalist-id");
+              setIsPopoverOpen(false);
+            }}
+          >
+            Force journalist identity key rotation
           </EuiContextMenuItem>
           <EuiContextMenuItem
             icon="timeRefresh"

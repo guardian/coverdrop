@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{env, net::IpAddr, path::Path};
 
 use crate::{
@@ -45,6 +46,7 @@ pub async fn start_api(
         // This means we need to able to call minio on the localhost domain from the s3 client in the api
         // This is why we have setup a local hosts entry to map localhost to the minio IP address.
         .with_host("localhost", minio_host)
+        .with_startup_timeout(Duration::from_secs(120))
         .start()
         .await
         .expect("Start container");

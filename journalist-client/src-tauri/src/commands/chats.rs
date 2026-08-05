@@ -7,7 +7,7 @@ use common::{
     },
     time, Error as CommonError, FixedSizeMessageText,
 };
-use journalist_vault::VaultMessage;
+use journalist_vault::{MessageId, VaultMessage};
 use snafu::{OptionExt as _, ResultExt};
 use tauri::State;
 
@@ -203,8 +203,16 @@ pub async fn submit_message(
     let public_info = app.public_info().await;
     let public_info = public_info.as_ref().context(PublicInfoUnavailableSnafu)?;
 
+    let deduplication_id = MessageId::new();
+
     let queue_length = coverdrop_service
-        .enqueue_j2u_message(public_info, &user_pk, &message, time::now())
+        .enqueue_j2u_message(
+            public_info,
+            &user_pk,
+            &message,
+            deduplication_id,
+            time::now(),
+        )
         .await
         .context(AnyhowSnafu {
             failed_to: "enqueue message",
@@ -239,7 +247,7 @@ pub async fn burst_cover_messages(
 
     let now = time::now();
     let latest_id_key_pair = vault
-        .latest_id_key_pair(now)
+        .latest_journalist_id_key_pair(now)
         .await
         // Deal with failure to read the vault
         .context(VaultSnafu {

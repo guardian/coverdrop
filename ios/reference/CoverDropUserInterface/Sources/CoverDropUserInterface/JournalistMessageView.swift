@@ -209,7 +209,7 @@ struct JournalistMessageView: View {
 
     private func scrollToLastMessage(scrollViewProxy: ScrollViewProxy, count: Int) {
         switch lib.secretDataRepository.getSecretData() {
-        case let .unlockedSecretData(unlockedData: unlockedData):
+        case .unlockedSecretData:
             let unwrappedId = count - 1
             withAnimation {
                 scrollViewProxy.scrollTo(unwrappedId, anchor: .bottom)

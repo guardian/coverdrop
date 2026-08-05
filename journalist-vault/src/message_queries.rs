@@ -5,7 +5,7 @@ use crate::{
 use chrono::{DateTime, Duration, Utc};
 use common::{
     api::models::{
-        dead_drops::DeadDropId,
+        dead_drops::DeadDropId, message_id::MessageId,
         messages::journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage,
     },
     crypto::keys::encryption::traits::PublicEncryptionKey,
@@ -233,16 +233,18 @@ pub(crate) async fn get_queue_length(conn: &mut SqliteConnection) -> anyhow::Res
 pub(crate) async fn enqueue_message(
     conn: &mut SqliteConnection,
     message: EncryptedJournalistToCoverNodeMessage,
+    deduplication_id: MessageId,
 ) -> anyhow::Result<i64> {
     let message = message.as_bytes();
 
     let queue_id = sqlx::query_scalar!(
         r#"
         INSERT INTO outbound_queue
-            (message)
-        VALUES (?1)
+            (message, deduplication_id)
+        VALUES (?1, ?2)
         RETURNING id"#,
-        message
+        message,
+        deduplication_id
     )
     .fetch_one(conn)
     .await?;
@@ -258,7 +260,8 @@ pub(crate) async fn peek_head_queue_message(
         r#"
         SELECT
             id       AS "id: i64",
-            message  AS "bytes: Vec<u8>"
+            message  AS "bytes: Vec<u8>",
+            deduplication_id AS "deduplication_id: MessageId"
         FROM outbound_queue
         ORDER BY id ASC
         LIMIT 1"#
@@ -268,6 +271,11 @@ pub(crate) async fn peek_head_queue_message(
     .map(|row| EncryptedJournalistToCoverNodeMessageWithId {
         id: row.id,
         message: EncryptedJournalistToCoverNodeMessage::from_vec_unchecked(row.bytes),
+        // The migration adding deduplication_id might be executed with items in the queue, so
+        // we need to add a default.
+        // TODO make column non-null, remove this.
+        // https://github.com/guardian/coverdrop-internal/issues/4087
+        deduplication_id: row.deduplication_id.unwrap_or_else(MessageId::new),
     });
 
     Ok(maybe_message)
@@ -324,6 +332,7 @@ mod test {
     use crate::user_queries::add_user;
     use crate::VaultMessage;
     use chrono::{DateTime, Utc};
+    use common::api::models::message_id::MessageId;
     use common::api::models::messages::journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage;
     use common::crypto::keys::encryption::UnsignedEncryptionKeyPair;
     use common::protocol::constants::JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
@@ -338,14 +347,14 @@ mod test {
         let message_1 = EncryptedJournalistToCoverNodeMessage::from_vec_unchecked(
             [1; JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN].to_vec(),
         );
-        enqueue_message(&mut conn, message_1.clone())
+        enqueue_message(&mut conn, message_1.clone(), MessageId::new())
             .await
             .expect("Add first message");
 
         let message_2 = EncryptedJournalistToCoverNodeMessage::from_vec_unchecked(
             [2; JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN].to_vec(),
         );
-        enqueue_message(&mut conn, message_2.clone())
+        enqueue_message(&mut conn, message_2.clone(), MessageId::new())
             .await
             .expect("Add second message");
 

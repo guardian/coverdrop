@@ -209,10 +209,17 @@ pub enum Commands {
     GenerateJournalist {
         /// The name this journalist or desk
         #[clap(long)]
-        display_name: String,
+        journalist_display_name: String,
         /// Optionally, override the identity of the journalist. Useful when the journalist has non-ascii characters in their name.
         #[clap(long)]
-        id: Option<String>,
+        journalist_id: Option<String>,
+        /// Sentinel profile display name. Human-readable name identifying
+        /// the user of Sentinel / owner of the journalist vault.
+        #[clap(long)]
+        sentinel_display_name: String,
+        /// Sentinel ID identifying the user of Sentinel / owner of the journalist vault.
+        #[clap(long)]
+        sentinel_id: String,
         /// A description for the journalist. If the journalist is a desk they can
         /// have a long description, if it's an individual reporter the description
         /// must be short.

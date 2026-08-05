@@ -5,15 +5,16 @@ use std::{
 
 use admin::generate_journalist;
 use chrono::{DateTime, Utc};
+use common::clap::Stage;
 use common::{
     api::{api_client::ApiClient, models::journalist_id::JournalistIdentity},
     client::{mailbox::user_mailbox::UserMailbox, JournalistStatus},
     crypto::keys::{serde::StorableKeyMaterial, signing::traits},
     protocol::{
         keys::{
-            load_anchor_org_pks, AnchorOrganizationPublicKey, JournalistIdKeyPair,
-            JournalistMessagingKeyPair, UntrustedJournalistIdKeyPair,
-            UntrustedJournalistMessagingKeyPair, UntrustedUserKeyPair, UserKeyPair,
+            load_anchor_org_pks, JournalistIdKeyPair, JournalistMessagingKeyPair,
+            UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
+            UntrustedUserKeyPair, UserKeyPair,
         },
         roles::{JournalistId, JournalistProvisioning},
     },
@@ -56,7 +57,6 @@ pub async fn load_mailboxes(
     additional_journalists: u8,
     user_key_pair: &UserKeyPair,
     keys_generated_at: DateTime<Utc>,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) -> StackMailboxes {
     //
     // Load the fixed vault using statically provided keys
@@ -73,7 +73,6 @@ pub async fn load_mailboxes(
         temp_dir,
         &keys_path,
         keys_generated_at,
-        trust_anchors.clone(),
     )
     .await;
 
@@ -99,7 +98,6 @@ pub async fn load_mailboxes(
             temp_dir,
             &keys_path,
             keys_generated_at,
-            trust_anchors.clone(),
         )
         .await;
         additional_journalist_vaults.push(vault);
@@ -135,17 +133,21 @@ pub async fn create_journalist_vault(
     temp_dir: &TempDir,
     keys_path: impl AsRef<Path>,
     keys_generated_at: DateTime<Utc>,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 ) -> JournalistVault {
     let vault_path = temp_dir
         .path()
         .join(journalist_id.as_ref())
         .with_extension(VAULT_EXTENSION);
 
+    let sentinel_display_name = format!("{} Sentinel", display_name);
+    let sentinel_id = format!("{}_sentinel", journalist_id);
+
     generate_journalist(
         keys_path,
         display_name,
         None,
+        sentinel_display_name,
+        sentinel_id,
         Some(sort_name),
         description,
         false, // is_desk
@@ -153,12 +155,12 @@ pub async fn create_journalist_vault(
         JournalistStatus::Visible,
         &vault_path,
         keys_generated_at,
-        trust_anchors.clone(),
+        Stage::Development,
     )
     .await
     .expect("Generate vault");
 
-    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, trust_anchors)
+    let vault = JournalistVault::open(&vault_path, MAILBOX_PASSWORD, Stage::Development)
         .await
         .expect("Load desk vault");
 

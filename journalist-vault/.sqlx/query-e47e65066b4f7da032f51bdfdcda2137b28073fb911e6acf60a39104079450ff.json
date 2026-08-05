@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vault_info SET max_delivery_service_message_id = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e47e65066b4f7da032f51bdfdcda2137b28073fb911e6acf60a39104079450ff"
+}

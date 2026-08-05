@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use common::{
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use openmls::prelude::KeyPackageIn;
 use serde::{Deserialize, Serialize};
@@ -17,12 +17,12 @@ pub struct PublishKeyPackagesFormBody {
 /// Used by clients to replenish their supply of key packages so others can start conversations with them.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct PublishKeyPackagesForm(Form<PublishKeyPackagesFormBody, JournalistId>);
+pub struct PublishKeyPackagesForm(Form<PublishKeyPackagesFormBody, SentinelId>);
 
 impl PublishKeyPackagesForm {
     pub fn new(
         key_packages: Vec<KeyPackageIn>,
-        signing_key_pair: &JournalistIdKeyPair,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = PublishKeyPackagesFormBody { key_packages };
@@ -32,7 +32,7 @@ impl PublishKeyPackagesForm {
 }
 
 impl std::ops::Deref for PublishKeyPackagesForm {
-    type Target = Form<PublishKeyPackagesFormBody, JournalistId>;
+    type Target = Form<PublishKeyPackagesFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

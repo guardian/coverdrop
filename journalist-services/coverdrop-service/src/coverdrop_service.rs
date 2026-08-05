@@ -1,28 +1,30 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use common::api::models::message_id::MessageId;
 use common::{
     api::{
-        api_client::ApiClient, forms::RotateJournalistIdPublicKeyFormForm,
+        api_client::ApiClient,
         models::messages::user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
     },
     client::VerifiedKeysAndJournalistProfiles,
     epoch::Epoch,
-    identity_api::forms::post_rotate_journalist_id::RotateJournalistIdPublicKeyForm,
     protocol::{
-        constants::{JOURNALIST_ID_KEY_ROTATE_AFTER, JOURNALIST_MSG_KEY_ROTATE_AFTER},
+        constants::JOURNALIST_MSG_KEY_ROTATE_AFTER,
         covernode::verify_user_to_journalist_dead_drop_list,
         journalist::{
             encrypt_real_message_from_journalist_to_user_via_covernode,
             get_decrypted_journalist_dead_drop_message,
             new_encrypted_cover_message_from_journalist_via_covernode,
         },
-        keys::{OrganizationPublicKeyFamilyList, UserPublicKey},
+        keys::{
+            JournalistIdKeyPair, OrganizationPublicKeyFamilyList, SentinelIdKeyPair, UserPublicKey,
+        },
     },
     FixedSizeMessageText,
 };
 use journalist_vault::{JournalistVault, User};
 
-use crate::constants::{JOURNALIST_ID_KEY_POLL_ITERATIONS, JOURNALIST_ID_KEY_POLL_SLEEP_DURATION};
+use crate::rotatable_id_key_pair::RotatableIdKeyPair;
 
 pub enum ProcessVaultSetupBundleResult {
     AlreadyRegistered,
@@ -158,127 +160,105 @@ impl JournalistCoverDropService {
         Ok(decrypted_messages)
     }
 
-    /// Unconditionally rotate the journalist's identity key pair.
+    /// Generic rotation of an identity key pair (journalist or sentinel).
     /// Get or create a candidate key pair, upload it to the API, and promote to published if successful.
     /// The caller is responsible for checking if rotation is needed.
     ///
-    /// This function will poll the API for up to 60 seconds to see if the key has been
-    /// rotated. Returns Some(epoch) if rotation succeeded, None if it timed out.
-    pub async fn rotate_id_key(&self, now: DateTime<Utc>) -> Result<Option<Epoch>> {
-        let Some(latest_id_key_pair) = self.vault.latest_id_key_pair(now).await? else {
+    /// This function will poll the API to see if the key has been signed.
+    /// Returns Some(epoch) if rotation succeeded, None if it timed out.
+    async fn rotate_id_key<K: RotatableIdKeyPair>(
+        &self,
+        now: DateTime<Utc>,
+    ) -> Result<Option<Epoch>> {
+        let Some(latest_key_pair) = self.vault.latest_id_key_pair::<K>(now).await? else {
             anyhow::bail!(
-                "No ID key pairs present in vault, cannot rotate to a new ID key pair. Use a journalist provisioning key pair to create a new seed ID key pair."
+                "No {} key pairs present in vault, cannot rotate to a new key pair.",
+                K::key_type_name()
             )
         };
 
-        let journalist_id = self.vault.journalist_id().await?;
-
         // Get or create candidate key pair
-        tracing::debug!("Getting or creating candidate id key pair");
-        let (candidate_id_key_pair, candidate_key_pair_added_at) =
-            self.vault.get_or_create_candidate_id_key_pair(now).await?;
+        tracing::debug!(
+            "Getting or creating candidate {} key pair",
+            K::key_type_name()
+        );
+        let (candidate, candidate_added_at) = self
+            .vault
+            .get_or_create_candidate_id_key_pair::<K>(now)
+            .await?;
 
         // Check if the candidate key was successfully published in a previous attempt
-        // to rotate the key
-        if let Some(signed_id_pk_with_epoch) = self
-            .api_client
-            .get_journalist_id_pk_with_epoch(candidate_id_key_pair.public_key())
-            .await?
-        {
+        if let Some(signed_with_epoch) = K::get_pk_with_epoch(&self.api_client, &candidate).await? {
             tracing::info!(
-                "Candidate key appears to have been rotated already, promoting vault key from candidate to published."
+                "Candidate {} key appears to have been rotated already, promoting vault key from candidate to published.",
+                K::key_type_name()
             );
-            let epoch = signed_id_pk_with_epoch.epoch;
+            let epoch = K::get_epoch(&signed_with_epoch);
 
-            // Promote to published
             self.vault
-                .promote_candidate_id_key_pair_to_published(
-                    candidate_id_key_pair,
-                    candidate_key_pair_added_at,
-                    signed_id_pk_with_epoch,
+                .promote_candidate_id_key_pair::<K>(
+                    candidate,
+                    candidate_added_at,
+                    signed_with_epoch,
                     now,
                 )
                 .await?;
 
-            tracing::info!("Rotated identity keys");
+            tracing::info!("Rotated {} keys", K::key_type_name());
             return Ok(Some(epoch));
         }
 
-        let candidate_id_pk = candidate_id_key_pair.public_key();
+        // The key was not already rotated — check if we need to (re)upload the form
+        K::check_and_upload_form_if_needed(
+            &self.api_client,
+            &self.vault,
+            &candidate,
+            &latest_key_pair,
+            now,
+        )
+        .await?;
 
-        //
-        // The key did not successfully rotate on a previous iteration
-        // we need to check if we need to reupload the form
-        //
+        let mut maybe_signed_with_epoch = None;
 
-        tracing::debug!("Fetching journalist ID key pair forms");
-        let current_queued_candidate_pks = self.api_client.get_journalist_id_pk_forms().await?;
+        // Poll the API to see if the key has been signed...
+        for _ in 0..K::poll_iterations() {
+            tokio::time::sleep(K::poll_sleep_duration()).await;
 
-        let maybe_our_candidate_pk = current_queued_candidate_pks
-            .iter()
-            .find(|f| f.journalist_id == journalist_id);
-
-        // If there's no existing form in the API, or that form is expired
-        // then (re)create the form and upload it
-        let should_upload_form = maybe_our_candidate_pk.is_none()
-            || maybe_our_candidate_pk
-                .map(|form| form.form.not_valid_after() < now)
-                .unwrap_or(false);
-
-        // We haven't yet uploaded a candidate key to the queue, upload one now
-        if should_upload_form {
-            tracing::debug!("Uploading new form");
-            let form_for_identity_api =
-                RotateJournalistIdPublicKeyForm::new(candidate_id_pk, &latest_id_key_pair, now)?;
-
-            // Form to submit the inner form to the api
-            let form_for_api = RotateJournalistIdPublicKeyFormForm::new(
-                form_for_identity_api,
-                &latest_id_key_pair,
-                now,
-            )?;
-
-            self.api_client
-                .post_rotate_journalist_id_pk_form(form_for_api)
-                .await?;
-        }
-
-        let mut maybe_signed_id_pk_with_epoch = None;
-
-        // Poll the API to see if the ID key has been given an epoch...
-        for _ in 0..JOURNALIST_ID_KEY_POLL_ITERATIONS {
-            tokio::time::sleep(JOURNALIST_ID_KEY_POLL_SLEEP_DURATION).await;
-
-            let polled_signed_id_pk_with_epoch = self
-                .api_client
-                .get_journalist_id_pk_with_epoch(candidate_id_pk)
-                .await?;
-
-            if polled_signed_id_pk_with_epoch.is_some() {
-                maybe_signed_id_pk_with_epoch = polled_signed_id_pk_with_epoch;
+            let polled = K::get_pk_with_epoch(&self.api_client, &candidate).await?;
+            if polled.is_some() {
+                maybe_signed_with_epoch = polled;
                 break;
             }
         }
 
-        if let Some(signed_id_pk_with_epoch) = maybe_signed_id_pk_with_epoch {
-            let epoch = signed_id_pk_with_epoch.epoch;
+        if let Some(signed_with_epoch) = maybe_signed_with_epoch {
+            let epoch = K::get_epoch(&signed_with_epoch);
 
-            // Promote to published
             self.vault
-                .promote_candidate_id_key_pair_to_published(
-                    candidate_id_key_pair,
-                    candidate_key_pair_added_at,
-                    signed_id_pk_with_epoch,
+                .promote_candidate_id_key_pair::<K>(
+                    candidate,
+                    candidate_added_at,
+                    signed_with_epoch,
                     now,
                 )
                 .await?;
 
-            tracing::info!("Rotated identity keys");
+            tracing::info!("Rotated {} keys", K::key_type_name());
             return Ok(Some(epoch));
         }
 
-        tracing::info!("No signed journalist identity public key after 60 seconds of polling");
+        tracing::info!("No signed {} public key after polling", K::key_type_name());
         Ok(None)
+    }
+
+    /// Unconditionally rotate the journalist's identity key pair.
+    pub async fn rotate_journalist_id_key(&self, now: DateTime<Utc>) -> Result<Option<Epoch>> {
+        self.rotate_id_key::<JournalistIdKeyPair>(now).await
+    }
+
+    /// Unconditionally rotate the sentinel identity key pair.
+    pub async fn rotate_sentinel_id_key(&self, now: DateTime<Utc>) -> Result<Option<Epoch>> {
+        self.rotate_id_key::<SentinelIdKeyPair>(now).await
     }
 
     /// Unconditionally rotate the journalist's messaging key pair.
@@ -288,7 +268,7 @@ impl JournalistCoverDropService {
         let candidate_msg_key_pair = self.vault.get_or_create_candidate_msg_key_pair(now).await?;
 
         // Get the latest ID key pair for signing the upload
-        let Some(latest_id_key_pair) = self.vault.latest_id_key_pair(now).await? else {
+        let Some(latest_id_key_pair) = self.vault.latest_journalist_id_key_pair(now).await? else {
             anyhow::bail!("No ID key pairs present in vault, cannot rotate messaging key pair")
         };
 
@@ -313,27 +293,50 @@ impl JournalistCoverDropService {
 
     /// Check if identity key rotation is needed, and rotate if so.
     /// Returns true if rotation was performed, false if not needed.
-    async fn check_and_rotate_id_key(&self, now: DateTime<Utc>) -> Result<bool> {
-        if self.vault.latest_id_key_pair(now).await?.is_none() {
-            anyhow::bail!(
-                "No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded"
+    async fn check_and_rotate_journalist_id_key(&self, now: DateTime<Utc>) -> Result<bool> {
+        self.check_and_rotate_id_key::<JournalistIdKeyPair>(now)
+            .await
+    }
+
+    /// Check if sentinel identity key rotation is needed, and rotate if so.
+    /// Returns true if rotation was performed, false if not needed.
+    /// Returns Ok(false) immediately if this vault has no sentinel identity.
+    async fn check_and_rotate_sentinel_id_key(&self, now: DateTime<Utc>) -> Result<bool> {
+        self.check_and_rotate_id_key::<SentinelIdKeyPair>(now).await
+    }
+
+    /// Generic check-and-rotate for identity key pairs.
+    async fn check_and_rotate_id_key<K: RotatableIdKeyPair>(
+        &self,
+        now: DateTime<Utc>,
+    ) -> Result<bool> {
+        if !K::should_attempt_rotation(&self.vault).await? {
+            return Ok(false);
+        }
+
+        if self.vault.latest_id_key_pair::<K>(now).await?.is_none() {
+            tracing::warn!(
+                "No valid {} keys found in vault, cannot rotate",
+                K::key_type_name()
             );
+            return Ok(false);
         }
 
         let last_update = self
             .vault
-            .last_published_id_key_pair_at()
+            .last_published_id_key_pair_at::<K>()
             .await?
-            .unwrap_or(DateTime::<Utc>::MIN_UTC); // shouldn't happen because of check above.
+            .unwrap_or(DateTime::<Utc>::MIN_UTC);
         let duration_since_last_update = (now - last_update).abs();
 
-        if duration_since_last_update > JOURNALIST_ID_KEY_ROTATE_AFTER {
-            self.rotate_id_key(now).await?;
+        if duration_since_last_update > K::rotate_after() {
+            self.rotate_id_key::<K>(now).await?;
             Ok(true)
         } else {
             let hours_elapsed = duration_since_last_update.num_hours();
             tracing::debug!(
-                "Not refreshing identity keys since only {} hours have elapsed since the last rotation",
+                "Not refreshing {} keys since only {} hours have elapsed since the last rotation",
+                K::key_type_name(),
                 hours_elapsed
             );
             Ok(false)
@@ -366,7 +369,12 @@ impl JournalistCoverDropService {
     /// Check if the journalist keys need to be rotated, if so, rotate them.
     /// Returns true if any keys were rotated, false if no rotation was needed.
     pub async fn check_and_rotate_keys(&self, now: DateTime<Utc>) -> Result<bool> {
-        if self.vault.latest_id_key_pair(now).await?.is_none() {
+        if self
+            .vault
+            .latest_id_key_pair::<JournalistIdKeyPair>(now)
+            .await?
+            .is_none()
+        {
             anyhow::bail!(
                 "No valid identity keys found in vault, cannot rotate any keys, this vault needs to be reseeded"
             );
@@ -375,10 +383,22 @@ impl JournalistCoverDropService {
         let mut did_rotate_some_keys = false;
 
         //
+        // Sentinel identity key rotation
+        //
+
+        match self.check_and_rotate_sentinel_id_key(now).await {
+            Ok(true) => {
+                did_rotate_some_keys = true;
+            }
+            Ok(false) => {}
+            Err(e) => tracing::error!("Failed to refresh sentinel identity key: {:?}", e),
+        }
+
+        //
         // Identity key rotation
         //
 
-        match self.check_and_rotate_id_key(now).await {
+        match self.check_and_rotate_journalist_id_key(now).await {
             Ok(true) => {
                 did_rotate_some_keys = true;
             }
@@ -408,6 +428,7 @@ impl JournalistCoverDropService {
         keys: &VerifiedKeysAndJournalistProfiles,
         user_pk: &UserPublicKey,
         message: &str,
+        deduplication_id: MessageId,
         now: DateTime<Utc>,
     ) -> Result<i64> {
         let unencrypted_message = FixedSizeMessageText::new(message)?;
@@ -431,6 +452,7 @@ impl JournalistCoverDropService {
                 user_pk,
                 &unencrypted_message,
                 encrypted_message,
+                deduplication_id,
                 now,
             )
             .await?;
@@ -446,15 +468,23 @@ impl JournalistCoverDropService {
         keys: &OrganizationPublicKeyFamilyList,
         now: DateTime<Utc>,
     ) -> Result<i64> {
-        let Some(id_key_pair) = self.vault.latest_id_key_pair(now).await? else {
+        let Some(id_key_pair) = self.vault.latest_journalist_id_key_pair(now).await? else {
             anyhow::bail!("No ID key pair found in vault");
         };
 
         if let Ok(Some(message)) = self.vault.head_queue_message().await {
             tracing::debug!("Found message in vault queue");
 
+            // NOTE: since cover traffic is not queued like real messages are, a retried message tells a network observer
+            // that the contents are a real message. We think this is acceptable since journalist anonymity is much less
+            // important than user anonymity.
             self.api_client
-                .post_journalist_msg(message.message, &id_key_pair, now)
+                .post_journalist_msg_with_deduplication_token(
+                    message.message,
+                    message.deduplication_id,
+                    &id_key_pair,
+                    now,
+                )
                 .await?;
             tracing::debug!("Posting message was successful, deleting message from queue");
 
@@ -468,7 +498,12 @@ impl JournalistCoverDropService {
             let message = new_encrypted_cover_message_from_journalist_via_covernode(keys)?;
 
             self.api_client
-                .post_journalist_msg(message, &id_key_pair, now)
+                .post_journalist_msg_with_deduplication_token(
+                    message,
+                    MessageId::new(),
+                    &id_key_pair,
+                    now,
+                )
                 .await?;
 
             tracing::debug!("Posting message was successful");
@@ -516,40 +551,73 @@ impl JournalistCoverDropService {
         }
 
         //
-        // Set up identity public key in API
+        // Set up sentinel profile
+        //
+
+        if let Some(register_sentinel_profile_form) =
+            vault_setup_bundle.register_sentinel_profile_form
+        {
+            tracing::debug!(
+                "Uploading sentinel profile registration form for {}",
+                journalist_id
+            );
+
+            self.api_client
+                .post_sentinel_profile_form(register_sentinel_profile_form)
+                .await?;
+        }
+
+        //
+        // Set up sentinel identity public key in API
+        //
+
+        if let Some(sentinel_id_pk_upload_form) = vault_setup_bundle.sentinel_id_pk_upload_form {
+            tracing::debug!(
+                "Uploading initial sentinel identity public key to API for {}",
+                journalist_id
+            );
+
+            self.api_client
+                .post_sentinel_id_pk_form(sentinel_id_pk_upload_form)
+                .await?;
+        }
+
+        //
+        // Set up journalist identity public key in API
         //
 
         tracing::debug!(
-            "Uploading initial journalist public key to API for {}",
+            "Uploading initial journalist identity public key to API for {}",
             journalist_id
         );
 
         let epoch = self
             .api_client
-            .post_journalist_id_pk_form(vault_setup_bundle.pk_upload_form)
+            .post_journalist_id_pk_form(vault_setup_bundle.journalist_id_pk_upload_form)
             .await?;
 
         //
-        // Set up identity public key in vault
+        // Set up journalist identity key pair in vault
         //
 
-        let vault_id_key_pairs = self
-            .vault
-            .id_key_pairs(now)
-            .await?
-            .find(|vault_id_key_pair| {
-                vault_id_key_pair.public_key() == vault_setup_bundle.key_pair.public_key()
-            });
+        let vault_journalist_id_key_pairs =
+            self.vault
+                .journalist_id_key_pairs(now)
+                .await?
+                .find(|vault_id_key_pair| {
+                    vault_id_key_pair.public_key()
+                        == vault_setup_bundle.journalist_id_key_pair.public_key()
+                });
 
-        if vault_id_key_pairs.is_none() {
+        if vault_journalist_id_key_pairs.is_none() {
             tracing::debug!(
-                "Inserting initial journalist public key into vault for {}",
+                "Inserting initial journalist key pair into vault for {}",
                 journalist_id
             );
             self.vault
-                .insert_registered_id_key_pair(
+                .insert_registered_journalist_id_key_pair(
                     vault_setup_bundle.provisioning_pk_id,
-                    &vault_setup_bundle.key_pair,
+                    &vault_setup_bundle.journalist_id_key_pair,
                     now,
                     now,
                     epoch,
@@ -557,8 +625,36 @@ impl JournalistCoverDropService {
                 .await?;
         } else {
             tracing::warn!(
-                "Journalist setup bundle is running but the key is already in the vault. This indicates a possible previous partial failure."
+                "Journalist setup bundle is running but the key pair is already in the vault. This indicates a possible previous partial failure."
             );
+        }
+
+        //
+        // Set up sentinel identity key pair in vault
+        //
+
+        if let Some(sentinel_id_key_pair) = &vault_setup_bundle.sentinel_id_key_pair {
+            let existing_sentinel_id_key_pair = self.vault.latest_sentinel_id_key_pair(now).await?;
+
+            if existing_sentinel_id_key_pair.is_none() {
+                tracing::debug!(
+                    "Inserting initial sentinel identity key pair into vault for {}",
+                    journalist_id
+                );
+                self.vault
+                    .insert_registered_sentinel_id_key_pair(
+                        vault_setup_bundle.provisioning_pk_id,
+                        sentinel_id_key_pair,
+                        now,
+                        now,
+                        epoch,
+                    )
+                    .await?;
+            } else {
+                tracing::warn!(
+                    "Journalist setup bundle is running but the sentinel key pair is already in the vault. This indicates a possible previous partial failure."
+                );
+            }
         }
 
         // Attempt to set the max dead drop id to the current max

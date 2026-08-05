@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                max_delivery_service_message_id\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "max_delivery_service_message_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bbb7fb8ae6b1ae1815aee128b23973e26c00bee8f08155aad065404bafd5795f"
+}

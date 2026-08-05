@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use common::aws::kinesis::client::KinesisClient;
 use common::{
+    api::models::message_id::MessageId,
     protocol::{
         self,
         journalist::encrypt_real_message_from_journalist_to_user_via_covernode,
@@ -37,7 +38,13 @@ pub async fn send_journalist_to_user_real_message(
         .await?;
 
     vault
-        .add_message_from_journalist_to_user_and_enqueue(user_pk, &message, msg, now)
+        .add_message_from_journalist_to_user_and_enqueue(
+            user_pk,
+            &message,
+            msg,
+            MessageId::new(),
+            now,
+        )
         .await?;
 
     Ok(())

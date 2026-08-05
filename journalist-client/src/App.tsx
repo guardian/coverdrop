@@ -12,9 +12,9 @@ import {
 } from "@elastic/eui";
 import { ChatsSideBar } from "./components/ChatsSideBar";
 import { OpenVault } from "./views/OpenVault";
-import { getVaultState } from "./commands/vaults";
+import { getVaultState, softLockVault } from "./commands/vaults";
 import { VaultState } from "./model/bindings/VaultState";
-import { Chat } from "./components/Chat";
+import { UserChat } from "./components/UserChat";
 import { Toast } from "@elastic/eui/src/components/toast/global_toast_list";
 import { useErrorStore } from "./state/errors";
 import { useMessageStore } from "./state/messages";
@@ -38,6 +38,9 @@ import { usePublicInfoStore } from "./state/publicInfo.ts";
 import { listen } from "@tauri-apps/api/event";
 import { AlertPayload } from "./model/bindings/AlertPayload.ts";
 import { getBackupHistory } from "./commands/backups.ts";
+import { CreateOrEditGroupModal } from "./components/CreateOrEditGroupModal.tsx";
+import { GroupChat } from "./components/GroupChat.tsx";
+import { GroupWithComputed, useGroups } from "./state/groups.ts";
 
 const App = ({
   panelled,
@@ -68,6 +71,10 @@ const App = ({
 
   const [vaultState, setVaultState] = useState<VaultState | null>(null);
 
+  const { maybeGroups, groupsUnreadCount } = useGroups(
+    vaultState?.sentinelId || null,
+  );
+
   const [isImportantStuffInProgress, setIsImportantStuffInProgress] =
     useState(false);
 
@@ -79,14 +86,38 @@ const App = ({
   );
 
   useTrayIcon({
-    maybeOpenVaultId: vaultState?.id,
+    maybeOpenVaultId: vaultState?.journalistId,
+    isSoftLocked: vaultState?.isSoftLocked ?? false,
     isImportantStuffInProgress,
     isHung: !!maybeHungAt,
+    sourceMessageUnreadCount: messageStore.messages.filter(
+      (msg) =>
+        msg.type === "userToJournalistMessage" &&
+        !msg.read &&
+        userStore.users.find((user) => user.userPk === msg.userPk)?.status ===
+          "ACTIVE",
+    ).length,
+    groupsUnreadCount,
+    lastBackupTime,
+    onLockNow: () => {
+      softLockVault().then(setVaultState);
+    },
   });
 
-  const [currentUserReplyKey, setCurrentUserReplyKey] = useState<string | null>(
-    null,
-  );
+  const [maybeCurrentUserKeyOrGroup, setMaybeCurrentUserKeyOrGroup] = useState<
+    string | GroupWithComputed | null
+  >(null);
+
+  const maybeCurrentUserReplyKey =
+    typeof maybeCurrentUserKeyOrGroup === "string"
+      ? maybeCurrentUserKeyOrGroup
+      : null;
+
+  const maybeSelectedGroup =
+    maybeCurrentUserKeyOrGroup && typeof maybeCurrentUserKeyOrGroup !== "string"
+      ? maybeCurrentUserKeyOrGroup
+      : null;
+
   const [journalistProfile, setJournalistProfile] =
     useState<JournalistProfile | null>(null);
 
@@ -134,7 +165,7 @@ const App = ({
       return;
     }
     const intervalId = setInterval(() => {
-      fetchPublicInfoAndSetJournalistProfile(vaultState.id);
+      fetchPublicInfoAndSetJournalistProfile(vaultState.journalistId);
     }, 1000);
     return () => clearInterval(intervalId);
   }, [vaultState, journalistProfile]);
@@ -177,6 +208,9 @@ const App = ({
     setMaybeCopyToClipboardModalForReplyKey,
   ] = useState<string | null>(null);
 
+  const [shouldShowCreateGroupModal, setShouldShowCreateGroupModal] =
+    useState(false);
+
   const errorsState = useErrorStore();
 
   // listen for generic alerts from the backend
@@ -213,7 +247,7 @@ const App = ({
 
   // Fetch initial messages and users and set interval to refresh them
   // every 5 seconds
-  const fetchUsersAndChats = async () => {
+  const refreshUsersAndChats = async () => {
     const [users, messages] = await Promise.all([getUsers(), getChats()]);
     userStore.setUsers(users);
     messageStore.setMessages(messages);
@@ -224,8 +258,8 @@ const App = ({
       return;
     }
 
-    fetchUsersAndChats();
-    const intervalId = setInterval(fetchUsersAndChats, 5000);
+    refreshUsersAndChats();
+    const intervalId = setInterval(refreshUsersAndChats, 5000);
 
     return () => clearInterval(intervalId);
   }, [vaultState]);
@@ -239,8 +273,8 @@ const App = ({
   }, []);
 
   const markChatAsUnread = async (replyKey: string) => {
-    if (replyKey === currentUserReplyKey) {
-      setCurrentUserReplyKey(null); // must clear before markAsUnread, so it doesn't get immediately marked as read elsewhere
+    if (replyKey === maybeCurrentUserReplyKey) {
+      setMaybeCurrentUserKeyOrGroup(null); // must clear before markAsUnread, so it doesn't get immediately marked as read elsewhere
     }
     await markAsUnread(replyKey);
     getUsers().then(userStore.setUsers);
@@ -248,15 +282,15 @@ const App = ({
 
   useEffect(() => {
     const unreadMessageHasArrivedForSelectedUser =
-      currentUserReplyKey &&
+      maybeCurrentUserReplyKey &&
       messageStore.messages.some(
         (msg) =>
-          msg.userPk === currentUserReplyKey &&
+          msg.userPk === maybeCurrentUserReplyKey &&
           msg.type === "userToJournalistMessage" &&
           !msg.read,
       );
     if (unreadMessageHasArrivedForSelectedUser) {
-      setCurrentUserReplyKey(null);
+      setMaybeCurrentUserKeyOrGroup(null);
     }
   }, [messageStore.messages.length]);
 
@@ -301,10 +335,7 @@ const App = ({
             )}
             <EuiPageTemplate.Sidebar
               style={{
-                position: "sticky",
-                top: "0",
                 height: sizes.chatsSideBar.height,
-                overflowY: "auto",
                 padding: size.s,
               }}
               minWidth={sizes.chatsSideBar.minWidth}
@@ -316,11 +347,13 @@ const App = ({
                 setMaybeHungAt={setMaybeHungAt}
               />
               <ChatsSideBar
-                journalistId={vaultState.id}
+                journalistId={vaultState.journalistId}
+                sentinelId={vaultState.sentinelId}
                 journalistStatus={journalistProfile?.status}
-                currentUserReplyKey={currentUserReplyKey}
+                maybeCurrentUserReplyKey={maybeCurrentUserReplyKey}
+                maybeSelectedGroup={maybeSelectedGroup}
                 lastBackupTime={lastBackupTime}
-                setChat={setCurrentUserReplyKey}
+                setChat={setMaybeCurrentUserKeyOrGroup}
                 markChatAsUnread={markChatAsUnread}
                 setMaybeEditModalForReplyKey={setMaybeEditModalForReplyKey}
                 setMaybeMuteModalForReplyKey={setMaybeMuteModalForReplyKey}
@@ -331,33 +364,45 @@ const App = ({
                   setMaybeJournalistStatusForModal
                 }
                 openBackupModal={() => setIsBackupModalOpen(true)}
+                openCreateGroupModal={() => setShouldShowCreateGroupModal(true)}
                 addCustomToast={addCustomToast}
                 removeCustomToast={removeCustomToast}
+                maybeGroups={maybeGroups}
+                groupsUnreadCount={groupsUnreadCount}
               />
             </EuiPageTemplate.Sidebar>
-            {currentUserReplyKey ? (
-              <Chat
+            {maybeCurrentUserReplyKey && (
+              <UserChat
                 messages={messageStore.messages}
-                userReplyKey={currentUserReplyKey}
+                userReplyKey={maybeCurrentUserReplyKey}
                 userAutogeneratedName={
-                  userInfo[currentUserReplyKey].displayName
+                  userInfo[maybeCurrentUserReplyKey].displayName
                 }
-                currentUserStatus={userInfo[currentUserReplyKey].status}
-                userAlias={userInfo[currentUserReplyKey].alias}
-                userDescription={userInfo[currentUserReplyKey].description}
-                markAsUnread={() => markChatAsUnread(currentUserReplyKey)}
+                currentUserStatus={userInfo[maybeCurrentUserReplyKey].status}
+                userAlias={userInfo[maybeCurrentUserReplyKey].alias}
+                userDescription={userInfo[maybeCurrentUserReplyKey].description}
+                markAsUnread={() => markChatAsUnread(maybeCurrentUserReplyKey)}
                 showEditModal={() =>
-                  setMaybeEditModalForReplyKey(currentUserReplyKey)
+                  setMaybeEditModalForReplyKey(maybeCurrentUserReplyKey)
                 }
                 showMuteModal={() =>
-                  setMaybeMuteModalForReplyKey(currentUserReplyKey)
+                  setMaybeMuteModalForReplyKey(maybeCurrentUserReplyKey)
                 }
                 showCopyToClipboardModal={() =>
-                  setMaybeCopyToClipboardModalForReplyKey(currentUserReplyKey)
+                  setMaybeCopyToClipboardModalForReplyKey(
+                    maybeCurrentUserReplyKey,
+                  )
                 }
               />
-            ) : null}
-
+            )}
+            {vaultState.sentinelId && maybeSelectedGroup && (
+              <GroupChat
+                key={maybeSelectedGroup.id}
+                group={maybeSelectedGroup}
+                sentinelId={vaultState.sentinelId}
+                close={() => setMaybeCurrentUserKeyOrGroup(null)}
+              />
+            )}
             {journalistProfile && (
               <ToggleJournalistStatusModal
                 journalistProfile={journalistProfile}
@@ -370,19 +415,19 @@ const App = ({
             <MuteToggleModal
               maybeReplyKey={maybeMuteModalForReplyKey}
               closeModal={() => setMaybeMuteModalForReplyKey(null)}
-              fetchUsersAndChats={fetchUsersAndChats}
+              fetchUsersAndChats={refreshUsersAndChats}
             />
 
             <EditUserModal
               maybeReplyKey={maybeEditModalForReplyKey}
               closeModal={() => setMaybeEditModalForReplyKey(null)}
-              fetchUsersAndChats={fetchUsersAndChats}
+              fetchUsersAndChats={refreshUsersAndChats}
             />
 
             <CopyToClipboardModal
               maybeReplyKey={maybeCopyToClipboardModalForReplyKey}
               closeModal={() => setMaybeCopyToClipboardModalForReplyKey(null)}
-              vaultId={vaultState.id}
+              vaultId={vaultState.journalistId}
             />
 
             <ManualBackupModal
@@ -392,6 +437,13 @@ const App = ({
               addCustomToast={addCustomToast}
               removeCustomToast={removeCustomToast}
             />
+
+            {vaultState.sentinelId && shouldShowCreateGroupModal && (
+              <CreateOrEditGroupModal
+                close={() => setShouldShowCreateGroupModal(false)}
+                sentinelId={vaultState.sentinelId}
+              />
+            )}
           </EuiPageTemplate>
         )}
 

@@ -40,17 +40,17 @@ identity-api.path = "../identity-api"
 integration-test-queries.path = "integration-test-queries"
 coverdrop-service.path = "../journalist-services/coverdrop-service"
 journalist-vault.path = "../journalist-vault"
-trust-anchors = { path = "../trust-anchors" }
 u2j-appender.path = "../u2j-appender"
 
 # Group messaging dependencies
 delivery-service = { path = "../group-messaging/delivery-service" }
 delivery-service-lib = { path = "../group-messaging/delivery-service-lib" }
+group-messaging-service = { path = "../journalist-services/group-messaging-service", features = ["integration-tests"] }
 base64.workspace = true
 openmls.workspace = true
 openmls_rust_crypto.workspace = true
 openmls_basic_credential.workspace = true
 openmls_traits.workspace = true
 
-[dev-dependencies]
+
 pretty_env_logger.workspace = true

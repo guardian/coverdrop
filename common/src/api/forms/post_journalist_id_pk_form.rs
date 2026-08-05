@@ -19,7 +19,9 @@ impl RotateJournalistIdPublicKeyFormBody {
     }
 }
 
-// Slightly deranged name. This form contains another form.
+// This form is created by Sentinel as part of the Journalist ID key rotation process.
+/// It is posted to the API which unwraps the inner RotateJournalistIdPublicKeyForm, and puts it on a queue
+/// to be picked up be the Identity API which signs the new Journalist ID public key.
 pub type RotateJournalistIdPublicKeyFormForm =
     Form<RotateJournalistIdPublicKeyFormBody, JournalistId>;
 

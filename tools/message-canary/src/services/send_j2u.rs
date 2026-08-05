@@ -1,6 +1,9 @@
 use std::{collections::HashSet, time::Duration};
 
-use common::{crypto::keys::public_key::PublicKey, throttle::Throttle, time};
+use common::{
+    api::models::message_id::MessageId, crypto::keys::public_key::PublicKey, throttle::Throttle,
+    time,
+};
 use coverdrop_service::JournalistCoverDropService;
 use journalist_vault::VaultMessage;
 use rand::seq::IteratorRandom as _;
@@ -59,13 +62,20 @@ pub async fn send_j2u(canary_state: CanaryState, mph_j2u: u32) -> anyhow::Result
         let j2u_message = Uuid::new_v4().to_string();
 
         tracing::info!(
-            "sending j2u message {} to user {}",
+            "sending j2u message {} from journalist {} to user {}",
             j2u_message,
+            journalist_id,
             user_pk.public_key_hex()
         );
 
         coverdrop_service
-            .enqueue_j2u_message(&keys_and_profiles, user_pk, j2u_message.as_str(), now)
+            .enqueue_j2u_message(
+                &keys_and_profiles,
+                user_pk,
+                j2u_message.as_str(),
+                MessageId::new(),
+                now,
+            )
             .await?;
         coverdrop_service
             .dequeue_and_send_j2u_message(&keys_and_profiles.keys, now)

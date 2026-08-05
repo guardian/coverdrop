@@ -6,4 +6,5 @@ export type EventType =
   | "journalist_keys_rotated"
   | "automated_backup"
   | "manual_backup_required"
+  | "group_message"
   | "alert";

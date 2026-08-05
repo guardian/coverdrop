@@ -1,11 +1,8 @@
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, env};
 
 use testcontainers::{core::WaitFor, Image};
 
 use crate::secrets::{API_AWS_ACCESS_KEY_ID_SECRET, API_AWS_SECRET_ACCESS_KEY_SECRET};
-
-const NAME: &str = "minio/minio";
-const TAG: &str = "RELEASE.2025-09-07T16-13-09Z";
 
 #[derive(Debug, Clone)]
 pub struct MinioArgs {}
@@ -30,6 +27,8 @@ impl MinioArgs {
 
 #[derive(Debug)]
 pub struct Minio {
+    name: String,
+    tag: String,
     env_vars: HashMap<String, String>,
 }
 
@@ -46,21 +45,25 @@ impl Default for Minio {
             API_AWS_SECRET_ACCESS_KEY_SECRET.into(),
         );
 
-        Self { env_vars }
+        Self {
+            name: env::var("MINIO_IMAGE_NAME").unwrap_or("test_coverdrop_minio".into()),
+            tag: env::var("MINIO_IMAGE_TAG").unwrap_or("dev".into()),
+            env_vars,
+        }
     }
 }
 
 impl Image for Minio {
     fn name(&self) -> &str {
-        NAME
+        &self.name
     }
 
     fn tag(&self) -> &str {
-        TAG
+        &self.tag
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stderr("MinIO Object Storage Server")]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

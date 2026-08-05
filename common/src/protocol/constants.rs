@@ -23,6 +23,12 @@ pub const JOURNALIST_ID_KEY_VALID_DURATION: Duration = Duration::weeks(8);
 /// The amount of time between key rotations for the journalist identity key
 pub const JOURNALIST_ID_KEY_ROTATE_AFTER: Duration = Duration::weeks(4);
 
+/// Sentinel ID keys are valid for the same duration as journalist ID keys
+pub const SENTINEL_ID_KEY_VALID_DURATION: Duration = Duration::weeks(8);
+
+/// The amount of time between key rotations for the Sentinel identity key
+pub const SENTINEL_ID_KEY_ROTATE_AFTER: Duration = Duration::weeks(4);
+
 /// The time that a journalist key is valid.
 ///
 /// In the key material this is represented as a `not_valid_after` created with the pseudocode

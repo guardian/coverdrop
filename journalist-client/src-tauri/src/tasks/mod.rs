@@ -1,5 +1,6 @@
 mod automated_backups;
 mod clean_up_vault;
+mod group_messaging;
 mod pull_dead_drops;
 mod refresh_public_info;
 mod rotate_journalist_keys;
@@ -8,6 +9,7 @@ mod sync_public_keys;
 
 pub use automated_backups::{AutomatedBackups, BackupManager};
 pub use clean_up_vault::CleanUpVault;
+pub use group_messaging::PollDeliveryService;
 pub use pull_dead_drops::PullDeadDrops;
 pub use refresh_public_info::RefreshPublicInfo;
 #[allow(unused)]

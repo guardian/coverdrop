@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use common::{
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use serde::{Deserialize, Serialize};
 
@@ -16,12 +16,12 @@ pub struct ReceiveMessagesFormBody {
 /// Used by clients to fetch messages with IDs greater than their last successfully-processed message ID.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct ReceiveMessagesForm(Form<ReceiveMessagesFormBody, JournalistId>);
+pub struct ReceiveMessagesForm(Form<ReceiveMessagesFormBody, SentinelId>);
 
 impl ReceiveMessagesForm {
     pub fn new(
         ids_greater_than: u32,
-        signing_key_pair: &JournalistIdKeyPair,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = ReceiveMessagesFormBody { ids_greater_than };
@@ -31,7 +31,7 @@ impl ReceiveMessagesForm {
 }
 
 impl std::ops::Deref for ReceiveMessagesForm {
-    type Target = Form<ReceiveMessagesFormBody, JournalistId>;
+    type Target = Form<ReceiveMessagesFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

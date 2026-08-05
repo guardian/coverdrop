@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vault_info SET stage = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "399598b2baa9988e1737496e05eec1513ea96a6775fcb35d8f220824ebf8f979"
+}

@@ -18,7 +18,7 @@ import { useMessageStore } from "../state/messages.ts";
 
 interface CustomExpiryModalProps {
   close: () => void;
-  maybeMessageToSetCustomExpiryFor: Message | null;
+  messageToSetCustomExpiryFor: Message;
 }
 
 const DATETIME_FORMAT = "YYYY-MM-DD h:mmA";
@@ -28,21 +28,18 @@ const roundUpToNextHour = (date: Moment): Moment =>
 
 export const CustomExpiryModal = ({
   close,
-  maybeMessageToSetCustomExpiryFor,
+  messageToSetCustomExpiryFor,
 }: CustomExpiryModalProps) => {
-  if (!maybeMessageToSetCustomExpiryFor) {
+  if (!messageToSetCustomExpiryFor) {
     return null;
   }
-  const message = maybeMessageToSetCustomExpiryFor;
+  const message = messageToSetCustomExpiryFor;
 
   const messageStore = useMessageStore();
 
   const setMaybeCustomExpiry = useCallback(
     async (maybeNewExpiryDate: string | null) => {
-      await setCustomExpiry(
-        maybeMessageToSetCustomExpiryFor,
-        maybeNewExpiryDate,
-      );
+      await setCustomExpiry(messageToSetCustomExpiryFor, maybeNewExpiryDate);
 
       messageStore.setMessages(
         await getChats(), // reload messages from vault after mutation
@@ -50,10 +47,10 @@ export const CustomExpiryModal = ({
 
       close(); // close the modal after setting the expiry
     },
-    [maybeMessageToSetCustomExpiryFor],
+    [messageToSetCustomExpiryFor],
   );
 
-  const nowMoment = useMemo(() => moment(), [maybeMessageToSetCustomExpiryFor]);
+  const nowMoment = useMemo(() => moment(), [messageToSetCustomExpiryFor]);
   const maxExpiryMoment = nowMoment.clone().add(90, "days");
 
   const normalExpiryMoment = moment(message.normalExpiry);

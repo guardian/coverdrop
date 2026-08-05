@@ -72,11 +72,7 @@ impl Image for U2JAppender {
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![
-            WaitFor::message_on_stdout("Starting server on"),
-            // TODO wait for health check
-            // Wait.ForUnixContainer().UntilContainerIsHealthy(),
-        ]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

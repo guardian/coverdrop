@@ -19,9 +19,14 @@ pub fn temp_dir_to_mount(dir_path: impl AsRef<Path>, volume_path: &str) -> Mount
     Mount::bind_mount(bind_mount, volume_path.to_owned())
 }
 
-/// Create a bash command to set the faketime of a container using a provided `DateTime`.
+/// Create a bash command to set the fake time of a container using a provided `DateTime`.
+/// We do this atomically by writing to a temp file and renaming, avoiding a race condition where a reader
+/// sees a truncated file.
 pub fn date_time_to_set_faketime_command_string(time: DateTime<Utc>) -> String {
-    format!("/bin/echo '{}' > /faketime", time.to_rfc3339())
+    format!(
+        "/bin/echo '{}' > /faketime.tmp && mv /faketime.tmp /faketime",
+        time.to_rfc3339()
+    )
 }
 
 /// Time travel a container to a specific point in time. Requires the package to be using the `common::time::now()` command to get the current time.

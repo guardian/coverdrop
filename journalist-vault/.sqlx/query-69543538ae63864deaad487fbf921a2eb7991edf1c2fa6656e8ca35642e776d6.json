@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                MAX(published_at) AS \"published_at: DateTime<Utc>\"\n            FROM sentinel_id_key_pairs\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "published_at: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "69543538ae63864deaad487fbf921a2eb7991edf1c2fa6656e8ca35642e776d6"
+}

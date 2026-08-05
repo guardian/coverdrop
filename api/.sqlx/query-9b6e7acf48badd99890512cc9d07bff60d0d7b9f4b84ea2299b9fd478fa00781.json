@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT EXISTS (\n                        SELECT 1\n                        FROM sentinel_id_pk_rotation_queue\n                        WHERE sentinel_id = $1\n                            AND decode(\n                                    (convert_from(\n                                        decode(form_json #>>'{body}', 'base64'),\n                                        'utf8'\n                                    )::jsonb #>>'{new_pk,key}'),\n                                    'hex'\n                                ) = $2\n                    ) AS \"matches_queued!: bool\"\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "matches_queued!: bool",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "9b6e7acf48badd99890512cc9d07bff60d0d7b9f4b84ea2299b9fd478fa00781"
+}

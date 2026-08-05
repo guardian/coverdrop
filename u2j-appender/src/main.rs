@@ -60,8 +60,8 @@ async fn start(cli: Cli) -> anyhow::Result<()> {
 
     let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
 
-    tracing::info!("Starting server on http://{:?}", socket_addr);
     let listener = TcpListener::bind(&socket_addr).await?;
+    tracing::info!("Server listening on http://{:?}", socket_addr);
 
     axum::serve(listener, app).await?;
 

@@ -11,7 +11,7 @@ use common::{
 use sqlx::SqliteConnection;
 
 use crate::{
-    id_key_queries,
+    journalist_id_key_queries,
     key_rows::{CandidateJournalistMessagingKeyPairRow, PublishedJournalistMessagingKeyPairRow},
 };
 
@@ -169,7 +169,7 @@ pub(crate) async fn insert_candidate_msg_key_pair(
 ) -> anyhow::Result<()> {
     let key_pair_json = serde_json::to_string(&msg_key_pair.to_untrusted())?;
 
-    let id_key_pair_id = id_key_queries::published_id_key_pairs(conn, now, org_pks)
+    let id_key_pair_id = journalist_id_key_queries::published_journalist_id_key_pairs(conn, now, org_pks)
         .await?
         .find(|key_pair_row| key_pair_row.key_pair.public_key() == id_pk)
         .map(|key_pair_row| key_pair_row.id)

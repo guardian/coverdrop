@@ -1,14 +1,13 @@
 use axum::extract::State;
 use axum::Json;
-use common::api::api_client::ApiClient;
-use common::api::models::journalist_id::JournalistIdentity;
+use common::api::{api_client::ApiClient, models::sentinel_id::SentinelIdentity};
 use common::protocol::keys::AnchorOrganizationPublicKey;
 use common::time;
 use openmls::prelude::KeyPackageIn;
 use std::sync::Arc;
 
 use crate::error::DeliveryServiceError;
-use crate::helpers::fetch_and_verify_journalist_key;
+use crate::helpers::fetch_and_verify_sentinel_key;
 use crate::services::database::Database;
 use delivery_service_lib::forms::{
     ConsumeKeyPackageForm, GetClientsForm, PublishKeyPackagesForm, RegisterClientForm,
@@ -23,7 +22,7 @@ pub async fn register_client(
     Json(form): Json<RegisterClientForm>,
 ) -> Result<(), DeliveryServiceError> {
     let (client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())
@@ -61,9 +60,9 @@ pub async fn get_clients(
     State(api_client): State<ApiClient>,
     State(trust_anchors): State<Arc<Vec<AnchorOrganizationPublicKey>>>,
     Json(form): Json<GetClientsForm>,
-) -> Result<Json<Vec<JournalistIdentity>>, DeliveryServiceError> {
+) -> Result<Json<Vec<SentinelIdentity>>, DeliveryServiceError> {
     let (_client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     // Verify the form
     let _body = form
@@ -87,7 +86,7 @@ pub async fn publish_key_packages(
     Json(form): Json<PublishKeyPackagesForm>,
 ) -> Result<(), DeliveryServiceError> {
     let (client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())
@@ -133,7 +132,7 @@ pub async fn consume_key_package(
     Json(form): Json<ConsumeKeyPackageForm>,
 ) -> Result<Json<KeyPackageIn>, DeliveryServiceError> {
     let (_client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())

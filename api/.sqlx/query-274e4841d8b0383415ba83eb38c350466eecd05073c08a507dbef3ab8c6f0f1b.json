@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT\n                    sentinel_id AS \"sentinel_id: SentinelIdentity\",\n                    form_json   AS \"form_json: Value\"\n                FROM sentinel_id_pk_rotation_queue\n                WHERE (form_json->>'not_valid_after')::TIMESTAMPTZ > $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sentinel_id: SentinelIdentity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "form_json: Value",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "274e4841d8b0383415ba83eb38c350466eecd05073c08a507dbef3ab8c6f0f1b"
+}

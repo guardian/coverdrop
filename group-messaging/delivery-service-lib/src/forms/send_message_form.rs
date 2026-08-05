@@ -1,9 +1,10 @@
 use crate::tls_serialized::TlsSerialized;
+use crate::MAX_MESSAGE_SIZE_BYTES;
 use chrono::{DateTime, Utc};
 use common::{
-    api::models::journalist_id::JournalistIdentity,
+    api::models::sentinel_id::SentinelIdentity,
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use serde::{Deserialize, Serialize};
 
@@ -12,22 +13,29 @@ use serde::{Deserialize, Serialize};
 pub struct SendMessageFormBody {
     /// TLS-serialized GroupMessage
     pub message: TlsSerialized,
-    pub recipients: Vec<JournalistIdentity>,
+    pub recipients: Vec<SentinelIdentity>,
 }
 
 /// Form for sending an encrypted MLS group message to specified recipients.
 /// Used by clients to post messages to the delivery service for distribution to group members.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct SendMessageForm(Form<SendMessageFormBody, JournalistId>);
+pub struct SendMessageForm(Form<SendMessageFormBody, SentinelId>);
 
 impl SendMessageForm {
     pub fn new(
         message: TlsSerialized,
-        recipients: Vec<JournalistIdentity>,
-        signing_key_pair: &JournalistIdKeyPair,
+        recipients: Vec<SentinelIdentity>,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
+        anyhow::ensure!(
+            message.len() <= MAX_MESSAGE_SIZE_BYTES,
+            "Message size {} bytes exceeds maximum of {} bytes",
+            message.len(),
+            MAX_MESSAGE_SIZE_BYTES
+        );
+
         let body = SendMessageFormBody {
             message,
             recipients,
@@ -38,7 +46,7 @@ impl SendMessageForm {
 }
 
 impl std::ops::Deref for SendMessageForm {
-    type Target = Form<SendMessageFormBody, JournalistId>;
+    type Target = Form<SendMessageFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

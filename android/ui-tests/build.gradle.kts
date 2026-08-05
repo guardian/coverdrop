@@ -1,8 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
 
@@ -40,10 +39,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = libs.versions.java.get()
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -58,13 +53,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
-    // work-around: https://issuetracker.google.com/issues/217593040#comment6
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-Xjvm-default=all"
-        )
-    }
 }
 
 dependencies {
@@ -78,9 +66,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.android)
 
-    kapt(libs.hilt.compiler)
-    kaptAndroidTest(libs.hilt.android.compiler)
-
     debugImplementation(libs.androidx.compose.uiTestManifest)
     debugImplementation(libs.androidx.compose.uiTooling)
 
@@ -92,8 +77,7 @@ dependencies {
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.truth)
-}
 
-kapt {
-    correctErrorTypes = true
+    add("ksp", libs.hilt.compiler)
+
 }

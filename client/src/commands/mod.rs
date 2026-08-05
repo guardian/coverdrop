@@ -8,10 +8,8 @@ use std::path::{Path, PathBuf};
 use common::{
     clap::{validate_password_from_args, Stage},
     client::mailbox::{mailbox_message::MailboxMessage, user_mailbox::UserMailbox},
-    time,
 };
 use journalist_vault::JournalistVault;
-use trust_anchors::get_trust_anchors;
 
 pub fn load_user_mailbox_from_args(
     mailbox_path: impl AsRef<Path>,
@@ -32,10 +30,10 @@ pub async fn load_journalist_vault_from_args(
     // Parse password
     let valid_password = validate_password_from_args(password, password_path)?;
 
-    let trust_anchors = get_trust_anchors(&stage, time::now())?;
-
     // Open mailbox
-    JournalistVault::open(&vault_path, &valid_password, trust_anchors).await
+    JournalistVault::open(&vault_path, &valid_password, stage)
+        .await
+        .map_err(Into::into)
 }
 
 pub fn print_mailbox_messages<'a>(

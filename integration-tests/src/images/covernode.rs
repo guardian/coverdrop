@@ -181,9 +181,7 @@ impl Image for CoverNode {
     }
 
     fn ready_conditions(&self) -> Vec<WaitFor> {
-        vec![WaitFor::message_on_stdout(
-            "Started CoverNode service journalist->user",
-        )]
+        vec![WaitFor::healthcheck()]
     }
 
     fn env_vars(

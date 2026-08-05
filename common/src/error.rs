@@ -45,6 +45,8 @@ pub enum Error {
     Argon2BadParameters,
     #[error("Journalist ID is invalid")]
     InvalidJournalistId,
+    #[error("Sentinel ID is invalid")]
+    InvalidSentinelId,
     #[error("Journalist '{0}' not found")]
     JournalistNotFound(JournalistIdentity),
     #[error("Journalist '{0}' messaging key not found")]

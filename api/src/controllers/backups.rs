@@ -12,65 +12,11 @@ use clap::ValueEnum;
 use common::api::forms::{PostBackupIdKeyForm, PostBackupMsgKeyForm};
 use common::aws::s3::client::S3Client;
 use common::backup::constants::{S3_META_BACKUP_DATA_SIGNATURE, S3_META_SIGNED_WITH};
-use common::backup::forms::retrieve_upload_url::{
-    RetrieveUploadUrlForm, RetrieveUploadUrlWithMetadataForm,
-};
+use common::backup::forms::retrieve_upload_url::RetrieveUploadUrlWithMetadataForm;
 use common::backup::keys::{verify_backup_id_pk, verify_backup_msg_pk};
 use common::clap::Stage;
 use common::protocol::backup::get_backup_bucket_name;
 use common::time;
-
-// TODO: remove this endpoint once there are no Sentinel versions which rely on it and move to
-// retrieve_upload_url_with_metadata
-#[deprecated(
-    note = "The upload of the bundled format is being deprecated. Use `retrieve_upload_url_with_metadata` instead."
-)]
-pub async fn retrieve_upload_url(
-    State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
-    State(db): State<Database>,
-    State(s3_client): State<S3Client>,
-    Json(form): Json<RetrieveUploadUrlForm>,
-) -> Result<String, AppError> {
-    let (keys, _max_epoch) = db
-        .hierarchy_queries
-        .key_hierarchy(&anchor_org_pks.get().await, time::now())
-        .await?;
-
-    let (signing_journalist_id, signing_journalist_id_pk) = keys
-        .find_journalist_id_pk_from_raw_ed25519_pk(form.signing_pk())
-        .ok_or(AppError::SigningKeyNotFound)?;
-
-    // Check the form is valid
-    form.to_verified_form_data(signing_journalist_id_pk, time::now())
-        .map_err(|e| {
-            tracing::error!("Failed to verify form {:?}", e);
-            AppError::SignatureVerificationFailed
-        })?;
-
-    let stage = get_env_or_error("STAGE")?;
-    let stage = Stage::from_str(&stage, true).map_err(|e| {
-        tracing::error!("Failed to convert STAGE to enum {:?}", &e);
-        AppError::IncorrectStageFound(e)
-    })?;
-
-    let url_expiry_in = Duration::hours(1);
-
-    let created_at = time::now().to_rfc3339();
-
-    // Full s3://journalist-vault-backups-prod/journalist_id_1/2025-11-20T16:00:24.381734+00:00.backup
-    let backup_bucket_name = get_backup_bucket_name(&stage);
-
-    let filepath = format!("{}/{}.backup", signing_journalist_id, created_at);
-
-    if let Ok(presigned_url) = s3_client
-        .create_presigned_put_object_url(&backup_bucket_name, &filepath, None, url_expiry_in)
-        .await
-    {
-        Ok(presigned_url)
-    } else {
-        Err(AppError::S3PresignedUrlError)
-    }
-}
 
 pub async fn retrieve_upload_url_with_metadata(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,

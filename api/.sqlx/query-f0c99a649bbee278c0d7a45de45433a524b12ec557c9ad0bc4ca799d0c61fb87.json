@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO sentinel_profiles (id, display_name, added_at)\n            VALUES ($1, $2, $3)\n            ON CONFLICT (id) DO UPDATE SET\n                display_name = EXCLUDED.display_name\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f0c99a649bbee278c0d7a45de45433a524b12ec557c9ad0bc4ca799d0c61fb87"
+}

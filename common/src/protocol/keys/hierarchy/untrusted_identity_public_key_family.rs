@@ -16,7 +16,6 @@ use crate::crypto::keys::{
 ///
 /// [`PublicKeyFamily`]: super::PublicKeyFamily
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedIdentityPublicKeyFamily<
     VerifyingRole: Role,
     IdentityRole: Role,

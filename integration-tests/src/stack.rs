@@ -3,9 +3,8 @@ use chrono::{DateTime, Utc};
 use client::commands::user::messages::send_user_to_journalist_cover_message;
 use common::api::models::covernode_id::CoverNodeIdentity;
 use common::aws::s3::client::S3Client;
-use common::clap::Stage::{self, Development};
+use common::clap::Stage::Development;
 use common::protocol::backup::get_backup_bucket_name;
-use common::protocol::keys::AnchorOrganizationPublicKey;
 use common::service;
 use common::task::{RunnerMode, TaskApiClient, TASK_RUNNER_API_PORT};
 use itertools::Itertools;
@@ -22,11 +21,9 @@ use std::{
 use testcontainers::core::Host::Addr;
 use testcontainers::core::{CmdWaitFor, ExecCommand};
 use testcontainers::ContainerAsync;
-use trust_anchors::get_trust_anchors;
 use uuid::Uuid;
 
 use common::clap::{AwsConfig, KinesisConfig};
-use common::time::now;
 use common::{
     api::api_client::ApiClient, aws::kinesis::client::KinesisClient,
     identity_api::client::IdentityApiClient, u2j_appender::messaging_client::MessagingClient,
@@ -118,7 +115,6 @@ pub struct CoverDropStack {
     s3_client: Option<S3Client>,
 
     covernode_id: CoverNodeIdentity,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
 }
 
 pub struct CoverDropStackBuilder {
@@ -208,9 +204,6 @@ impl CoverDropStackBuilder {
             std::fs::create_dir(key_dir).expect("Create key dir");
         }
 
-        let trust_anchors =
-            get_trust_anchors(&Stage::Development, now()).expect("loaded trust anchors");
-
         //Copy all static keys into the temp dir so that we can do more tests where new keys are added "manually"
         fs::read_dir(&source_keys_path)
             .expect("Read keys_path directory")
@@ -239,121 +232,125 @@ impl CoverDropStackBuilder {
             profile: None,
         };
 
-        // minio
-        let (minio, minio_client_url, minio_ip_address, s3_client) = if self.enable_minio {
-            let minio = start_minio(&self.network).await;
+        // ── Phase 1: Start independent containers in parallel ──
+        // Minio, Kinesis, and Postgres have no dependencies on each other.
 
-            let minio_port = minio
-                .get_host_port_ipv4(MINIO_PORT)
-                .await
-                .expect("Get minio port");
+        let minio_future = async {
+            if self.enable_minio {
+                let minio = start_minio(&self.network).await;
 
-            let minio_ip_address = minio
-                .get_bridge_ip_address()
-                .await
-                .expect("Get minio bridge ip address");
+                let minio_port = minio
+                    .get_host_port_ipv4(MINIO_PORT)
+                    .await
+                    .expect("Get minio port");
 
-            let minio_hostname = "localhost";
+                let minio_ip_address = minio
+                    .get_bridge_ip_address()
+                    .await
+                    .expect("Get minio bridge ip address");
 
-            let minio_client_url = format!("http://{}:{}", minio_hostname, minio_port);
+                let minio_hostname = "localhost";
+                let minio_client_url = format!("http://{}:{}", minio_hostname, minio_port);
 
-            // This is fine when communicating from the tests to s3, but for inter-container communication we need the ip address
-            let s3_client = S3Client::new(
-                aws_config.clone(),
-                Url::parse(&minio_client_url).expect("Parse minio URL"),
-            )
-            .await;
+                let s3_client = S3Client::new(
+                    aws_config.clone(),
+                    Url::parse(&minio_client_url).expect("Parse minio URL"),
+                )
+                .await;
 
-            // create a default bucket
-            let backup_bucket_name = get_backup_bucket_name(&Development);
-            s3_client
-                .create_bucket(&backup_bucket_name)
-                .await
-                .expect("Create default minio bucket");
+                let backup_bucket_name = get_backup_bucket_name(&Development);
+                s3_client
+                    .create_bucket(&backup_bucket_name)
+                    .await
+                    .expect("Create default minio bucket");
 
-            (
-                Some(minio),
-                Some(minio_client_url),
-                Some(minio_ip_address),
-                Some(s3_client),
-            )
-        } else {
-            (None, None, None, None)
+                (
+                    Some(minio),
+                    Some(minio_client_url),
+                    Some(minio_ip_address),
+                    Some(s3_client),
+                )
+            } else {
+                (None, None, None, None)
+            }
         };
 
-        //
-        // Fastly and messaging
-        //
+        let kinesis_future = async {
+            if self.enable_kinesis {
+                let kinesis = start_kinesis(&self.network).await;
 
-        let (kinesis, kinesis_client, kinesis_ip) = if self.enable_kinesis {
-            let kinesis = start_kinesis(&self.network).await;
+                let kinesis_config = KinesisConfig {
+                    endpoint: format!(
+                        "http://localhost:{}",
+                        kinesis
+                            .get_host_port_ipv4(KINESIS_PORT)
+                            .await
+                            .expect("Get host port for kinesis")
+                    ),
+                    user_stream: "user-messages".into(),
+                    journalist_stream: "journalist-messages".into(),
+                };
 
-            let kinesis_config = KinesisConfig {
-                endpoint: format!(
-                    "http://localhost:{}",
-                    kinesis
-                        .get_host_port_ipv4(KINESIS_PORT)
-                        .await
-                        .expect("Get host port for kinesis")
-                ),
-                user_stream: "user-messages".into(),
-                journalist_stream: "journalist-messages".into(),
-            };
+                let kinesis_client = KinesisClient::new(
+                    &kinesis_config,
+                    &aws_config,
+                    vec![
+                        kinesis_config.user_stream.clone(),
+                        kinesis_config.journalist_stream.clone(),
+                    ],
+                )
+                .await;
+                let kinesis_ip = kinesis
+                    .get_bridge_ip_address()
+                    .await
+                    .expect("Get kinesis bridge ip address");
 
-            let kinesis_client = KinesisClient::new(
-                &kinesis_config,
-                &aws_config,
-                vec![
-                    kinesis_config.user_stream.clone(),
-                    kinesis_config.journalist_stream.clone(),
-                ],
-            )
-            .await;
-            let kinesis_ip = kinesis
-                .get_bridge_ip_address()
-                .await
-                .expect("Get kinesis bridge ip address");
-
-            (Some(kinesis), Some(kinesis_client), Some(kinesis_ip))
-        } else {
-            (None, None, None)
+                (Some(kinesis), Some(kinesis_client), Some(kinesis_ip))
+            } else {
+                (None, None, None)
+            }
         };
 
-        let (u2j_appender, messaging_client) = if self.enable_u2j_appender {
-            let kinesis_ip_for_appender = kinesis
-                .as_ref()
-                .expect("Kinesis required for U2J Appender")
-                .get_bridge_ip_address()
-                .await
-                .expect("Get bridge ip address for u2j appender");
+        let postgres_future = start_postgres(&self.network);
 
-            let u2j_appender = start_u2j_appender(&self.network, kinesis_ip_for_appender).await;
-            let u2j_appender_port = u2j_appender
-                .get_host_port_ipv4(U2J_APPENDER_PORT)
-                .await
-                .expect("Get U2J Appender port port");
+        let (
+            (minio, minio_client_url, minio_ip_address, s3_client),
+            (kinesis, kinesis_client, kinesis_ip),
+            api_postgres,
+        ) = tokio::join!(minio_future, kinesis_future, postgres_future);
 
-            let messaging_url = Url::parse(&format!("http://localhost:{u2j_appender_port}"))
-                .expect("Parse U2J Appender URL");
+        // ── Phase 2: Start U2J Appender and API in parallel ──
+        // U2J Appender depends on Kinesis IP.
+        // API depends on Postgres IP, Kinesis IP, and Minio URL/IP.
 
-            (
-                Some(u2j_appender),
-                Some(MessagingClient::new(messaging_url)),
-            )
-        } else {
-            (None, None)
+        let u2j_future = async {
+            if self.enable_u2j_appender {
+                let kinesis_ip_for_appender = kinesis
+                    .as_ref()
+                    .expect("Kinesis required for U2J Appender")
+                    .get_bridge_ip_address()
+                    .await
+                    .expect("Get bridge ip address for u2j appender");
+
+                let u2j_appender = start_u2j_appender(&self.network, kinesis_ip_for_appender).await;
+                let u2j_appender_port = u2j_appender
+                    .get_host_port_ipv4(U2J_APPENDER_PORT)
+                    .await
+                    .expect("Get U2J Appender port port");
+
+                let messaging_url = Url::parse(&format!("http://localhost:{u2j_appender_port}"))
+                    .expect("Parse U2J Appender URL");
+
+                (
+                    Some(u2j_appender),
+                    Some(MessagingClient::new(messaging_url)),
+                )
+            } else {
+                (None, None)
+            }
         };
 
-        //
-        // API Database
-        //
-
-        let api_postgres = start_postgres(&self.network).await;
-
-        //
-        // API
-        //
-        let api = start_api(
+        let api_future = start_api(
             &self.network,
             &api_key_dir,
             api_postgres
@@ -366,8 +363,9 @@ impl CoverDropStackBuilder {
             kinesis_ip.expect("Kinesis IP required for API"),
             minio_client_url.expect("Minio URL required for API"),
             Addr(minio_ip_address.expect("Minio IP required for API")),
-        )
-        .await;
+        );
+
+        let ((u2j_appender, messaging_client), api) = tokio::join!(u2j_future, api_future);
 
         let api_port = api
             .get_host_port_ipv4(API_PORT)
@@ -390,12 +388,10 @@ impl CoverDropStackBuilder {
         )
         .expect("Create covernode task API client");
 
-        //
-        // API varnish cache
-        // create two versions of the vcl
-        //  - boot: respects cache headers
-        //  - nocache: forwards all requests to the API without caching
-        // nocache is active by default. opt in to caching using with_varnish_api_cache
+        // ── Phase 3: Start Varnish and Identity API in parallel ──
+        // Both depend only on API's bridge IP address.
+
+        // Prepare VCL files for Varnish (synchronous file I/O, fast)
         let vcl_path = temp_dir.path().to_path_buf();
 
         format_and_save_vcl(
@@ -412,30 +408,26 @@ impl CoverDropStackBuilder {
             API_PORT,
         );
 
-        let (varnish_cache, api_client_cached) = if self.enable_varnish {
-            let varnish_cache = start_varnish(&self.network, vcl_path).await;
-            let varnish_port = varnish_cache
-                .get_host_port_ipv4(VARNISH_PORT)
-                .await
-                .expect("Get varnish port");
+        let varnish_future = async {
+            if self.enable_varnish {
+                let varnish_cache = start_varnish(&self.network, vcl_path).await;
+                let varnish_port = varnish_cache
+                    .get_host_port_ipv4(VARNISH_PORT)
+                    .await
+                    .expect("Get varnish port");
 
-            // turn off caching for varnish during setup
-            exec_vcl_command(&varnish_cache, "varnish/use_nocache.sh").await;
+                // turn off caching for varnish during setup
+                exec_vcl_command(&varnish_cache, "varnish/use_nocache.sh").await;
 
-            let api_url = Url::parse(&format!("http://localhost:{varnish_port}")).unwrap();
-            (Some(varnish_cache), ApiClient::new(api_url))
-        } else {
-            let api_url_direct = Url::parse(&format!("http://localhost:{api_port}")).unwrap();
-            (None, ApiClient::new(api_url_direct))
+                let api_url = Url::parse(&format!("http://localhost:{varnish_port}")).unwrap();
+                (Some(varnish_cache), ApiClient::new(api_url))
+            } else {
+                let api_url_direct = Url::parse(&format!("http://localhost:{api_port}")).unwrap();
+                (None, ApiClient::new(api_url_direct))
+            }
         };
 
-        let api_url_uncached = Url::parse(&format!("http://localhost:{api_port}")).unwrap();
-        let api_client_uncached = ApiClient::new(api_url_uncached);
-
-        //
-        // identity api
-        //
-        let (identity_api, identity_api_client, identity_api_task_api_client) =
+        let identity_api_future = async {
             if self.enable_identity_api {
                 let identity_api = start_identity_api(
                     &self.network,
@@ -486,7 +478,16 @@ impl CoverDropStackBuilder {
                 )
             } else {
                 (None, None, None)
-            };
+            }
+        };
+
+        let (
+            (varnish_cache, api_client_cached),
+            (identity_api, identity_api_client, identity_api_task_api_client),
+        ) = tokio::join!(varnish_future, identity_api_future);
+
+        let api_url_uncached = Url::parse(&format!("http://localhost:{api_port}")).unwrap();
+        let api_client_uncached = ApiClient::new(api_url_uncached);
 
         //
         // Keys
@@ -523,17 +524,19 @@ impl CoverDropStackBuilder {
             .await
             .expect("Create covernode database");
 
-        let additional_journalists = self.additional_journalists.unwrap_or(0);
-        let mailboxes = load_mailboxes(
+        // ── Phase 4: Load mailboxes and start CoverNode in parallel ──
+        // Both depend on keys being added to the API (above).
+        // CoverNode also depends on Identity API IP and Kinesis IP.
+
+        let static_keys_path = get_static_keys_path();
+        let mailboxes_future = load_mailboxes(
             &api_client_cached,
-            &get_static_keys_path(),
+            &static_keys_path,
             &temp_dir,
-            additional_journalists,
+            self.additional_journalists.unwrap_or(0),
             &stack_keys.user_key_pair,
             stack_keys.keys_generated_at,
-            trust_anchors.clone(),
-        )
-        .await;
+        );
 
         let api_ip = match &varnish_cache {
             Some(varnish) => varnish
@@ -554,54 +557,59 @@ impl CoverDropStackBuilder {
         let checkpoints_dir =
             tempdir_in(std::env::current_dir().unwrap()).expect("Create temporary keys directory");
 
-        let (covernode, covernode_task_api_client) = if self.enable_covernode {
-            let identity_api_ip = identity_api
-                .as_ref()
-                .expect("Identity API required for CoverNode")
-                .get_bridge_ip_address()
-                .await
-                .expect("Get identity api bridge ip address");
-
-            let covernode = start_covernode(
-                covernode_id.clone(),
-                &self.network,
-                &covernode_key_dir,
-                &checkpoints_dir,
-                api_ip,
-                api_port,
-                identity_api_ip,
-                kinesis_ip.expect("Kinesis IP required for CoverNode"),
-                base_time,
-                self.covernode_task_runner_mode.unwrap_or(RunnerMode::Timer),
-            )
-            .await;
-
-            // We only create a task API for the CoverNode when it actually has a triggerable task runner; this hopefully prevents
-            // some otherwise hard-to-debug mistakes
-            let covernode_task_api_client = if self
-                .covernode_task_runner_mode
-                .is_some_and(|m| m.triggerable())
-            {
-                let covernode_task_api_port = covernode
-                    .get_host_port_ipv4(TASK_RUNNER_API_PORT)
+        let covernode_future = async {
+            if self.enable_covernode {
+                let identity_api_ip = identity_api
+                    .as_ref()
+                    .expect("Identity API required for CoverNode")
+                    .get_bridge_ip_address()
                     .await
-                    .expect("Get covernode task runner port");
+                    .expect("Get identity api bridge ip address");
 
-                Some(
-                    TaskApiClient::new(
-                        Url::parse(&format!("http://localhost:{covernode_task_api_port}"))
-                            .expect("Parse covernode task API url"),
-                    )
-                    .expect("Create covernode task API client"),
+                let covernode = start_covernode(
+                    covernode_id.clone(),
+                    &self.network,
+                    &covernode_key_dir,
+                    &checkpoints_dir,
+                    api_ip,
+                    api_port,
+                    identity_api_ip,
+                    kinesis_ip.expect("Kinesis IP required for CoverNode"),
+                    base_time,
+                    self.covernode_task_runner_mode.unwrap_or(RunnerMode::Timer),
                 )
-            } else {
-                None
-            };
+                .await;
 
-            (Some(covernode), covernode_task_api_client)
-        } else {
-            (None, None)
+                // We only create a task API for the CoverNode when it actually has a triggerable task runner; this hopefully prevents
+                // some otherwise hard-to-debug mistakes
+                let covernode_task_api_client = if self
+                    .covernode_task_runner_mode
+                    .is_some_and(|m| m.triggerable())
+                {
+                    let covernode_task_api_port = covernode
+                        .get_host_port_ipv4(TASK_RUNNER_API_PORT)
+                        .await
+                        .expect("Get covernode task runner port");
+
+                    Some(
+                        TaskApiClient::new(
+                            Url::parse(&format!("http://localhost:{covernode_task_api_port}"))
+                                .expect("Parse covernode task API url"),
+                        )
+                        .expect("Create covernode task API client"),
+                    )
+                } else {
+                    None
+                };
+
+                (Some(covernode), covernode_task_api_client)
+            } else {
+                (None, None)
+            }
         };
+
+        let (mailboxes, (covernode, covernode_task_api_client)) =
+            tokio::join!(mailboxes_future, covernode_future);
 
         // turn on caching for varnish for tests (opt-in only)
         if self.varnish_api_cache {
@@ -695,7 +703,6 @@ impl CoverDropStackBuilder {
             kinesis_client,
             s3_client,
             covernode_id,
-            trust_anchors,
         };
 
         // Move the infrastructure's time to be appropriate for the keys
@@ -845,7 +852,7 @@ impl CoverDropStack {
         // Time travel is async - let's wait a bit to give the docker instances time to catch up.
         sleep(Duration::from_secs(2)).await;
 
-        info!("Time traveled to: {}", now());
+        info!("Time traveled to: {}", self.now());
     }
 
     pub fn base_time(&self) -> DateTime<Utc> {
@@ -872,10 +879,6 @@ impl CoverDropStack {
 
     pub fn covernode_id(&self) -> &CoverNodeIdentity {
         &self.covernode_id
-    }
-
-    pub fn trust_anchors(&self) -> Vec<AnchorOrganizationPublicKey> {
-        self.trust_anchors.clone()
     }
 
     pub async fn delivery_service_url(&self) -> Url {
@@ -921,7 +924,7 @@ impl CoverDropStack {
         JournalistVault::open(
             self.temp_dir_path().join("static_test_journalist.vault"),
             MAILBOX_PASSWORD,
-            self.trust_anchors.clone(),
+            Development,
         )
         .await
         .expect("Load static journalist vault")
@@ -945,7 +948,7 @@ impl CoverDropStack {
             self.temp_dir_path()
                 .join(format!("additional_test_journalist_{index}.vault")),
             MAILBOX_PASSWORD,
-            self.trust_anchors.clone(),
+            Development,
         )
         .await
         .expect("Load additional journalist vault")

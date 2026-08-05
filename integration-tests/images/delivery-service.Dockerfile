@@ -33,10 +33,8 @@ RUN cp target/debug/delivery-service target/release/delivery-service /dist 2>/de
 #
 FROM ubuntu:24.04
 
-RUN apt-get update
-
 RUN apt-get update && \
-    apt-get install -y ca-certificates && \
+    apt-get install -y ca-certificates curl && \
     update-ca-certificates
 
 WORKDIR /usr/src/app/
@@ -44,5 +42,7 @@ WORKDIR /usr/src/app/
 COPY --from=builder /dist/delivery-service ./delivery-service
 
 EXPOSE 3001
+
+HEALTHCHECK --start-period=120s --interval=1s --timeout=5s --retries=3 CMD curl -f http://localhost:3001/v1/healthcheck || exit 1
 
 CMD ["./delivery-service"]

@@ -7,7 +7,7 @@ use tokio::time::sleep;
 #[tokio::test]
 #[allow(clippy::await_holding_refcell_ref)]
 async fn covernode_setup_bundle_test() -> anyhow::Result<()> {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_covernode_key_mode(CoverNodeKeyMode::SetupBundle)

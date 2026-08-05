@@ -1,9 +1,9 @@
 use crate::tls_serialized::TlsSerialized;
 use chrono::{DateTime, Utc};
 use common::{
-    api::models::journalist_id::JournalistIdentity,
+    api::models::sentinel_id::SentinelIdentity,
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use serde::{Deserialize, Serialize};
 
@@ -15,24 +15,24 @@ pub struct AddMembersFormBody {
     /// TLS-serialized Commit message for existing members
     pub commit_message: TlsSerialized,
     /// List of existing member client IDs who need the commit message
-    pub existing_members: Vec<JournalistIdentity>,
+    pub existing_members: Vec<SentinelIdentity>,
     /// List of new member client IDs who need the welcome message
-    pub new_members: Vec<JournalistIdentity>,
+    pub new_members: Vec<SentinelIdentity>,
 }
 
 /// Form for adding new members to an MLS group.
 /// Used to distribute Welcome messages to new members and Commit messages to existing members in a single request + transaction.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct AddMembersForm(Form<AddMembersFormBody, JournalistId>);
+pub struct AddMembersForm(Form<AddMembersFormBody, SentinelId>);
 
 impl AddMembersForm {
     pub fn new(
         welcome_message: TlsSerialized,
         commit_message: TlsSerialized,
-        existing_members: Vec<JournalistIdentity>,
-        new_members: Vec<JournalistIdentity>,
-        signing_key_pair: &JournalistIdKeyPair,
+        existing_members: Vec<SentinelIdentity>,
+        new_members: Vec<SentinelIdentity>,
+        signing_key_pair: &SentinelIdKeyPair,
         now: DateTime<Utc>,
     ) -> anyhow::Result<Self> {
         let body = AddMembersFormBody {
@@ -47,7 +47,7 @@ impl AddMembersForm {
 }
 
 impl std::ops::Deref for AddMembersForm {
-    type Target = Form<AddMembersFormBody, JournalistId>;
+    type Target = Form<AddMembersFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

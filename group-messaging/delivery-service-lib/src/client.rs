@@ -1,5 +1,5 @@
 use common::{
-    api::models::journalist_id::JournalistIdentity,
+    api::models::sentinel_id::SentinelIdentity,
     clients::{handle_response, handle_response_json, new_reqwest_client},
 };
 use reqwest::Url;
@@ -9,7 +9,7 @@ use crate::{
         AddMembersForm, ConsumeKeyPackageForm, GetClientsForm, PublishKeyPackagesForm,
         ReceiveMessagesForm, RegisterClientForm, SendMessageForm,
     },
-    models::GroupMessage,
+    models::{GroupMessage, SendMessageResponse},
 };
 use openmls::prelude::KeyPackageIn;
 
@@ -55,10 +55,7 @@ impl DeliveryServiceClient {
     }
 
     /// Get the list of registered clients
-    pub async fn get_clients(
-        &self,
-        form: GetClientsForm,
-    ) -> anyhow::Result<Vec<JournalistIdentity>> {
+    pub async fn get_clients(&self, form: GetClientsForm) -> anyhow::Result<Vec<SentinelIdentity>> {
         let mut url = self.base_url.clone();
         url.path_segments_mut()
             .unwrap()
@@ -108,7 +105,7 @@ impl DeliveryServiceClient {
     }
 
     /// Send a group message
-    pub async fn send_message(&self, form: SendMessageForm) -> anyhow::Result<()> {
+    pub async fn send_message(&self, form: SendMessageForm) -> anyhow::Result<SendMessageResponse> {
         let mut url = self.base_url.clone();
         url.path_segments_mut()
             .unwrap()
@@ -118,7 +115,7 @@ impl DeliveryServiceClient {
 
         let resp = self.client.post(url).json(&form).send().await?;
 
-        handle_response(resp).await
+        handle_response_json(resp).await
     }
 
     /// Receive messages for a client

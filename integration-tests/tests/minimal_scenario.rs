@@ -15,7 +15,7 @@ use integration_tests::{
 #[tokio::test]
 #[allow(clippy::await_holding_refcell_ref)]
 async fn minimal_scenario() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .build()

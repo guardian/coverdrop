@@ -34,7 +34,7 @@ RUN cp target/debug/u2j-appender target/release/u2j-appender /dist 2>/dev/null |
 FROM ubuntu:24.04
 
 RUN apt-get update && \
-    apt-get install -y ca-certificates && \
+    apt-get install -y ca-certificates curl && \
     update-ca-certificates
 
 WORKDIR /usr/src/app/
@@ -42,5 +42,7 @@ WORKDIR /usr/src/app/
 COPY --from=builder /dist/u2j-appender ./u2j-appender
 
 EXPOSE 3040
+
+HEALTHCHECK --start-period=30s --interval=1s --timeout=5s --retries=3 CMD curl -f http://localhost:3040/healthcheck || exit 1
 
 CMD ["./u2j-appender"]

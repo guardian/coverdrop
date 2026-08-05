@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO sentinel_id_pk_rotation_queue (sentinel_id, form_json)\n                    VALUES ($1, $2)\n                ON CONFLICT (sentinel_id) DO UPDATE SET\n                form_json = excluded.form_json\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "caef094843c43f72c9d8d4fe81fcbfd48b17582488b4056f8388373040591e62"
+}

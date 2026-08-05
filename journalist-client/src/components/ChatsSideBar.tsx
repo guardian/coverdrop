@@ -15,6 +15,9 @@ import {
   EuiSkeletonRectangle,
   EuiFieldSearch,
   EuiText,
+  EuiBetaBadge,
+  EuiButton,
+  EuiLoadingSpinner,
 } from "@elastic/eui";
 import { useMessageStore } from "../state/messages";
 import { SettingsPopover } from "./SettingsPopover";
@@ -35,6 +38,14 @@ import {
   URGENT_EXPIRY_HOURS,
 } from "./ExpiringMessageIcon";
 import { formatDateTime } from "../helpers";
+import { EuiSideNavItemType } from "@elastic/eui/src/components/side_nav/side_nav_types";
+import {
+  SentinelProfileDisplay,
+  SentinelProfilesDisplay,
+} from "./SentinelProfileDisplay.tsx";
+import { GroupWithComputed } from "../state/groups.ts";
+import { ToolTip } from "./ToolTip.tsx";
+import { UnreadIndicator } from "./UnreadIndicator.tsx";
 
 type Chat = {
   alias: string | null;
@@ -55,10 +66,12 @@ type Chat = {
 
 export type ChatsSideBarProps = {
   journalistId: string;
+  sentinelId: string | null; // TODO remove the null once everyone has a sentinelId
   journalistStatus?: JournalistStatus;
-  currentUserReplyKey: string | null;
+  maybeCurrentUserReplyKey: string | null;
+  maybeSelectedGroup: GroupWithComputed | null;
   lastBackupTime?: Date | null | undefined; // null = never backed up, undefined = not yet loaded
-  setChat: (userReplyKey: string) => void;
+  setChat: (userReplyKey: string | GroupWithComputed | null) => void;
   markChatAsUnread: (replyKey: string) => void;
   setMaybeEditModalForReplyKey: (maybeReplyKey: string | null) => void;
   setMaybeMuteModalForReplyKey: (maybeReplyKey: string | null) => void;
@@ -67,171 +80,19 @@ export type ChatsSideBarProps = {
     newStatus: JournalistStatus | null,
   ) => void;
   openBackupModal: () => void;
+  openCreateGroupModal: () => void;
   addCustomToast: (toast: Toast) => void;
   removeCustomToast: (toastId: string) => void;
-};
-
-const chatsToSideNav = (
-  id: string,
-  chats: Chat[],
-  setChat: (userReplyKey: string) => void,
-  currentUserReplyKey: string | null,
-  markChatAsUnread: (replyKey: string) => void,
-  setMaybeEditModalForReplyKey: (value: string | null) => void,
-  setMaybeMuteModalForReplyKey: (value: string | null) => void,
-  setMaybeCopyToClipboardModalForReplyKey: (replyKey: string | null) => void,
-) => {
-  const { euiTheme } = useEuiTheme();
-  const { font, size } = euiTheme;
-
-  const [maybeContextMenuOpenForReplyKey, setMaybeContextMenuOpenForReplyKey] =
-    useState<string | null>(null);
-
-  return chats.length > 0
-    ? chats.map((chat) => {
-        const lastMessageEpoch = new Date(chat.lastMessageTimestamp).getTime();
-        const lastMessage = chat.lastMessage;
-        const name = chat.alias || chat.displayName;
-        return {
-          id: htmlIdGenerator(id)(),
-          name,
-          isSelected: chat.replyKey === currentUserReplyKey,
-          style: {
-            marginTop: "0px", // remove default margin on euiSideNavItem
-            paddingTop: "0px", // remove default padding on euiSideNavItem
-          },
-          renderItem: () => (
-            <>
-              <div
-                className="euiSideNavItemButton__content"
-                dir="row"
-                onClick={() => setChat(chat.replyKey)}
-                style={{
-                  gap: size.s,
-                  borderRadius: size.xs,
-                  padding: size.xs,
-                  background:
-                    chat.replyKey === currentUserReplyKey
-                      ? palette("chat-sidebar-selected-chat-background")
-                      : palette("chat-sidebar-unselected-chat-background"),
-                  cursor: "pointer",
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  setMaybeContextMenuOpenForReplyKey(chat.replyKey);
-                }}
-              >
-                <EuiFlexGroup gutterSize="s" alignItems="center">
-                  <EuiFlexItem
-                    grow={true}
-                    style={{ fontWeight: font.weight.bold }}
-                    title={chat.description}
-                  >
-                    {name}
-                  </EuiFlexItem>
-                  {chat.hasMessagesWithCustomExpiry && (
-                    <EuiIcon
-                      type="clockCounter"
-                      color="primary"
-                      size="m"
-                      title="Some messages in this chat have custom expiries."
-                    />
-                  )}
-                  {chat.hasUnread && (
-                    <div>
-                      <EuiFlexItem
-                        style={{
-                          width: size.s,
-                          height: size.s,
-                          backgroundColor: palette(
-                            "chat-sidebar-unread-message-dot-background",
-                          ),
-                          borderRadius: "50%",
-                          marginBottom: "1px",
-                          display: "inline-block",
-                        }}
-                      />
-                    </div>
-                  )}
-                  <EuiFlexItem
-                    grow={false}
-                    style={{
-                      color: chat.hasUnread
-                        ? palette("chat-sidebar-unread-message-time-color")
-                        : "default",
-                    }}
-                  >
-                    {timeAgo(lastMessageEpoch)}
-                  </EuiFlexItem>
-                </EuiFlexGroup>
-                <EuiSpacer size="s" />
-                <EuiFlexGroup gutterSize="s" alignItems="center">
-                  <EuiFlexItem
-                    style={{
-                      height: size.base,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      bold: "true",
-                      color: palette("chat-sidebar-message-preview-color"),
-                    }}
-                    grow={true}
-                  >
-                    {lastMessage.messageType === "journalistToUserMessage" &&
-                      "You: "}
-                    {lastMessage.message}
-                  </EuiFlexItem>
-                  {chat.expiringMessageUrgency && (
-                    <EuiFlexItem grow={false}>
-                      <ExpiringMessageIcon
-                        expiringMessageUrgency={chat.expiringMessageUrgency}
-                        context="CHAT_SIDE_BAR"
-                      />
-                    </EuiFlexItem>
-                  )}
-                  <EuiFlexItem grow={false}>
-                    <PerChatMenu
-                      isOpen={chat.replyKey === maybeContextMenuOpenForReplyKey}
-                      setIsOpen={(isOpen) =>
-                        setMaybeContextMenuOpenForReplyKey(
-                          isOpen ? chat.replyKey : null,
-                        )
-                      }
-                      shouldShowLabel={false}
-                      hasUnread={chat.hasUnread}
-                      markAsUnread={() => markChatAsUnread(chat.replyKey)}
-                      isMuted={chat.userStatus === "MUTED"}
-                      showEditModal={() =>
-                        setMaybeEditModalForReplyKey(chat.replyKey)
-                      }
-                      showMuteModal={() =>
-                        setMaybeMuteModalForReplyKey(chat.replyKey)
-                      }
-                      showCopyToClipboardModal={() =>
-                        setMaybeCopyToClipboardModalForReplyKey(chat.replyKey)
-                      }
-                    />{" "}
-                    {/* TODO ideally only show when hovering over that menu item */}
-                  </EuiFlexItem>
-                </EuiFlexGroup>
-              </div>
-              <EuiHorizontalRule margin="xs" />
-            </>
-          ),
-        };
-      })
-    : [
-        {
-          id: htmlIdGenerator(id)(),
-          name: "No messages",
-        },
-      ];
+  maybeGroups: GroupWithComputed[] | undefined;
+  groupsUnreadCount: number;
 };
 
 export const ChatsSideBar = ({
   journalistId,
+  sentinelId,
   journalistStatus,
-  currentUserReplyKey,
+  maybeCurrentUserReplyKey,
+  maybeSelectedGroup,
   lastBackupTime,
   setChat,
   markChatAsUnread,
@@ -240,8 +101,11 @@ export const ChatsSideBar = ({
   setMaybeCopyToClipboardModalForReplyKey,
   setMaybeJournalistStatusForModal,
   openBackupModal,
+  openCreateGroupModal,
   addCustomToast,
   removeCustomToast,
+  maybeGroups,
+  groupsUnreadCount,
 }: ChatsSideBarProps) => {
   const [searchText, setSearchText] = useState("");
   const [isSideNavOpenOnMobile, setIsSideNavOpenOnMobile] = useState(false);
@@ -252,6 +116,14 @@ export const ChatsSideBar = ({
 
   const messageStore = useMessageStore();
   const userStore = useUserStore();
+
+  useEffect(() => {
+    if (maybeGroups && maybeSelectedGroup) {
+      setChat(
+        maybeGroups.find((group) => group.id === maybeSelectedGroup.id) || null,
+      );
+    }
+  }, [maybeGroups, maybeSelectedGroup, setChat]);
 
   const { euiTheme } = useEuiTheme();
   const { font, size } = euiTheme;
@@ -370,26 +242,344 @@ export const ChatsSideBar = ({
   const inboxChats = chats.filter((c) => c.userStatus == "ACTIVE");
   const mutedChats = chats.filter((c) => c.userStatus == "MUTED");
 
-  const inboxItems = chatsToSideNav(
-    "inboxItems",
-    inboxChats,
-    setChat,
-    currentUserReplyKey,
-    markChatAsUnread,
-    setMaybeEditModalForReplyKey,
-    setMaybeMuteModalForReplyKey,
-    setMaybeCopyToClipboardModalForReplyKey,
-  );
-  const mutedItems = chatsToSideNav(
-    "mutedItems",
-    mutedChats,
-    setChat,
-    currentUserReplyKey,
-    markChatAsUnread,
-    setMaybeEditModalForReplyKey,
-    setMaybeMuteModalForReplyKey,
-    setMaybeCopyToClipboardModalForReplyKey,
-  );
+  const chatsToSideNav = (id: string, chats: Chat[]) => {
+    const { euiTheme } = useEuiTheme();
+    const { font, size } = euiTheme;
+
+    const [
+      maybeContextMenuOpenForReplyKey,
+      setMaybeContextMenuOpenForReplyKey,
+    ] = useState<string | null>(null);
+
+    return chats.length > 0
+      ? chats.map((chat) => {
+          const lastMessageEpoch = new Date(
+            chat.lastMessageTimestamp,
+          ).getTime();
+          const lastMessage = chat.lastMessage;
+          const name = chat.alias || chat.displayName;
+          return {
+            id: htmlIdGenerator(id)(),
+            name,
+            isSelected: chat.replyKey === maybeCurrentUserReplyKey,
+            style: {
+              marginTop: "0px", // remove default margin on euiSideNavItem
+              paddingTop: "0px", // remove default padding on euiSideNavItem
+            },
+            renderItem: () => (
+              <>
+                <div
+                  className="euiSideNavItemButton__content"
+                  dir="row"
+                  onClick={() => setChat(chat.replyKey)}
+                  style={{
+                    gap: size.s,
+                    borderRadius: size.xs,
+                    padding: size.xs,
+                    background:
+                      chat.replyKey === maybeCurrentUserReplyKey
+                        ? palette("chat-sidebar-selected-chat-background")
+                        : palette("chat-sidebar-unselected-chat-background"),
+                    cursor: "pointer",
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setMaybeContextMenuOpenForReplyKey(chat.replyKey);
+                  }}
+                >
+                  <EuiFlexGroup gutterSize="s" alignItems="center">
+                    <EuiFlexItem
+                      grow={true}
+                      style={{ fontWeight: font.weight.bold }}
+                      title={chat.description}
+                    >
+                      {name}
+                    </EuiFlexItem>
+                    {chat.hasMessagesWithCustomExpiry && (
+                      <EuiIcon
+                        type="clockCounter"
+                        color="primary"
+                        size="m"
+                        title="Some messages in this chat have custom expiries."
+                      />
+                    )}
+                    {chat.hasUnread && (
+                      <div>
+                        <EuiFlexItem
+                          style={{
+                            width: size.s,
+                            height: size.s,
+                            backgroundColor: palette(
+                              "chat-sidebar-unread-message-dot-background",
+                            ),
+                            borderRadius: "50%",
+                            marginBottom: "1px",
+                            display: "inline-block",
+                          }}
+                        />
+                      </div>
+                    )}
+                    <EuiFlexItem
+                      grow={false}
+                      style={{
+                        color: chat.hasUnread
+                          ? palette("chat-sidebar-unread-message-time-color")
+                          : "default",
+                      }}
+                    >
+                      {timeAgo(lastMessageEpoch)}
+                    </EuiFlexItem>
+                  </EuiFlexGroup>
+                  <EuiSpacer size="s" />
+                  <EuiFlexGroup gutterSize="s" alignItems="center">
+                    <EuiFlexItem
+                      style={{
+                        height: size.base,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        bold: "true",
+                        color: palette("chat-sidebar-message-preview-color"),
+                      }}
+                      grow={true}
+                    >
+                      {lastMessage.messageType === "journalistToUserMessage" &&
+                        "You: "}
+                      {lastMessage.message}
+                    </EuiFlexItem>
+                    {chat.expiringMessageUrgency && (
+                      <EuiFlexItem grow={false}>
+                        <ExpiringMessageIcon
+                          expiringMessageUrgency={chat.expiringMessageUrgency}
+                          context="CHAT_SIDE_BAR"
+                        />
+                      </EuiFlexItem>
+                    )}
+                    <EuiFlexItem grow={false}>
+                      <PerChatMenu
+                        isOpen={
+                          chat.replyKey === maybeContextMenuOpenForReplyKey
+                        }
+                        setIsOpen={(isOpen) =>
+                          setMaybeContextMenuOpenForReplyKey(
+                            isOpen ? chat.replyKey : null,
+                          )
+                        }
+                        shouldShowLabel={false}
+                        hasUnread={chat.hasUnread}
+                        markAsUnread={() => markChatAsUnread(chat.replyKey)}
+                        isMuted={chat.userStatus === "MUTED"}
+                        showEditModal={() =>
+                          setMaybeEditModalForReplyKey(chat.replyKey)
+                        }
+                        showMuteModal={() =>
+                          setMaybeMuteModalForReplyKey(chat.replyKey)
+                        }
+                        showCopyToClipboardModal={() =>
+                          setMaybeCopyToClipboardModalForReplyKey(chat.replyKey)
+                        }
+                      />{" "}
+                      {/* TODO ideally only show when hovering over that menu item */}
+                    </EuiFlexItem>
+                  </EuiFlexGroup>
+                </div>
+                <EuiHorizontalRule margin="xs" />
+              </>
+            ),
+          };
+        })
+      : [
+          {
+            id: htmlIdGenerator(id)(),
+            name: "No messages",
+          },
+        ];
+  };
+
+  const inboxItems = chatsToSideNav("inboxItems", inboxChats);
+  const mutedItems = chatsToSideNav("mutedItems", mutedChats);
+
+  const mlsItems = [
+    {
+      id: "mls-create-group-button",
+      name: "Create MLS Group",
+      renderItem: () => (
+        <div key={"mls-create-group-button"}>
+          <EuiButton onClick={openCreateGroupModal} fullWidth>
+            Create MLS Group
+          </EuiButton>
+        </div>
+      ),
+    },
+    ...(maybeGroups
+      ? maybeGroups
+          .sort((a, b) =>
+            a.lastUpdatedTimestamp > b.lastUpdatedTimestamp ? -1 : 1,
+          )
+          .map((group) => ({
+            id: group.id,
+            name: group.display_name,
+            isSelected: maybeSelectedGroup?.id === group.id,
+            style: {
+              marginTop: "0px", // remove default margin on euiSideNavItem
+              paddingTop: "0px", // remove default padding on euiSideNavItem
+            },
+            renderItem: () => (
+              <>
+                <ToolTip
+                  position="right"
+                  content={
+                    <>
+                      <strong>Description</strong> <br />
+                      {group.description || <em>No description</em>}
+                      <br />
+                      <br />
+                      <strong>Members</strong> <br />
+                      <SentinelProfilesDisplay ids={group.members} />
+                      <br />
+                      <br />
+                      <strong>Total Item Count</strong> <br />
+                      {group.totalItemCount.toLocaleString()}
+                    </>
+                  }
+                  display={"block"}
+                >
+                  <div
+                    className="euiSideNavItemButton__content"
+                    dir="row"
+                    onClick={() => setChat(group)}
+                    style={{
+                      gap: size.s,
+                      borderRadius: size.xs,
+                      padding: size.xs,
+                      background:
+                        maybeSelectedGroup?.id === group.id
+                          ? palette("chat-sidebar-selected-chat-background")
+                          : palette("chat-sidebar-unselected-chat-background"),
+                      cursor: "pointer",
+                    }}
+                  >
+                    <EuiFlexGroup gutterSize="s" alignItems="center">
+                      <EuiFlexItem
+                        grow={true}
+                        style={{ fontWeight: font.weight.bold }}
+                      >
+                        {group.display_name}
+                      </EuiFlexItem>
+                      {group.mostRecentMessage && (
+                        <div
+                          style={{
+                            color:
+                              group.unreadCount > 0
+                                ? palette(
+                                    "chat-sidebar-unread-message-time-color",
+                                  )
+                                : "default",
+                          }}
+                        >
+                          {timeAgo(
+                            new Date(
+                              group.mostRecentMessage.published_at,
+                            ).getTime(),
+                          )}
+                        </div>
+                      )}
+                      <UnreadIndicator unread={group.unreadCount} />
+                    </EuiFlexGroup>
+                    <EuiSpacer size="s" />
+                    <EuiFlexGroup gutterSize="s" alignItems="center">
+                      <EuiFlexItem
+                        style={{
+                          height: size.base,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          bold: "true",
+                          color: palette("chat-sidebar-message-preview-color"),
+                        }}
+                        grow={true}
+                      >
+                        {group.otherIdsWhoAreTyping.length > 0 ? (
+                          <em>
+                            <strong
+                              style={{ color: euiTheme.colors.subduedText }}
+                            >
+                              <SentinelProfilesDisplay
+                                ids={group.otherIdsWhoAreTyping}
+                              />{" "}
+                              {group.otherIdsWhoAreTyping.length > 1
+                                ? "are"
+                                : "is"}{" "}
+                              typing...
+                            </strong>
+                          </em>
+                        ) : group.mostRecentMessage ? (
+                          <span>
+                            <span
+                              style={{ color: euiTheme.colors.subduedText }}
+                            >
+                              {group.mostRecentMessage.sender === sentinelId ? (
+                                "You"
+                              ) : (
+                                <SentinelProfileDisplay
+                                  id={group.mostRecentMessage.sender}
+                                />
+                              )}
+                              {": "}
+                            </span>
+                            {"Text" in group.mostRecentMessage.content &&
+                              group.mostRecentMessage.content.Text}
+                            <em>
+                              {"GroupDescriptionChanged" in
+                                group.mostRecentMessage.content &&
+                                "changed the group description"}
+                              {"GroupNameChanged" in
+                                group.mostRecentMessage.content &&
+                                "changed the group name"}
+                              {"UsersAdded" in
+                                group.mostRecentMessage.content && (
+                                <>
+                                  added{" "}
+                                  <SentinelProfilesDisplay
+                                    ids={
+                                      group.mostRecentMessage.content.UsersAdded
+                                    }
+                                  />
+                                </>
+                              )}
+                              {"UsersRemoved" in
+                                group.mostRecentMessage.content && (
+                                <>
+                                  removed{" "}
+                                  <SentinelProfilesDisplay
+                                    ids={
+                                      group.mostRecentMessage.content
+                                        .UsersRemoved
+                                    }
+                                  />
+                                </>
+                              )}
+                            </em>
+                          </span>
+                        ) : (
+                          <em>No messages yet</em>
+                        )}
+                      </EuiFlexItem>
+                    </EuiFlexGroup>
+                  </div>
+                </ToolTip>
+                <EuiHorizontalRule margin="xs" />
+              </>
+            ),
+          }))
+      : [
+          {
+            id: "loading",
+            name: "Loading groups",
+            renderItem: () => <EuiLoadingSpinner />,
+          },
+        ]),
+  ] satisfies Array<EuiSideNavItemType<unknown>>;
 
   const tabs = [
     {
@@ -418,6 +608,29 @@ export const ChatsSideBar = ({
         />
       ),
     },
+    ...(sentinelId
+      ? [
+          {
+            id: "MLS",
+            name: (
+              <EuiFlexGroup gutterSize="s" alignItems="center">
+                MLS
+                <UnreadIndicator unread={groupsUnreadCount} />
+                <EuiBetaBadge label="BETA" size="s" color="subdued" />
+              </EuiFlexGroup>
+            ),
+            content: (
+              <EuiSideNav
+                aria-label={"MLS"}
+                mobileTitle={"MLS"}
+                toggleOpenOnMobile={() => toggleOpenOnMobile()}
+                isOpenOnMobile={isSideNavOpenOnMobile}
+                items={mlsItems}
+              />
+            ),
+          },
+        ]
+      : []),
   ];
 
   const [selectedTabId, setSelectedTabId] = useState("inbox");
@@ -462,71 +675,75 @@ export const ChatsSideBar = ({
   };
 
   return (
-    <>
-      <EuiFlexGroup
-        style={{
-          fontSize: `calc(${size.base} + 2)`,
-          fontWeight: font.weight.bold,
-          padding: size.s,
-          gap: size.m,
-          paddingBottom: size.m,
-          borderBottom: `1px solid ${palette("chat-sidebar-journalist-name-border-color")}`,
-        }}
-        alignItems="center"
-      >
-        <EuiFlexItem grow={false}>
-          <SettingsPopover
-            journalistId={journalistId}
-            journalistStatus={journalistStatus}
-            setMaybeJournalistStatusForModal={setMaybeJournalistStatusForModal}
-            openBackupModal={openBackupModal}
-            addCustomToast={addCustomToast}
-            removeCustomToast={removeCustomToast}
-            devMode={devMode}
-          />
-        </EuiFlexItem>
-        <EuiFlexItem grow={true}>
-          <div
-            onClick={handleJournalistIdClick}
-            style={{
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
-              cursor: "pointer",
-            }}
-          >
-            {journalistId}
-          </div>
-        </EuiFlexItem>
-        {/* Dev mode badge */}
-        {devMode && (
+    <EuiFlexGroup direction="column" gutterSize="s" style={{ height: "100%" }}>
+      <EuiFlexItem grow={false}>
+        <EuiFlexGroup
+          style={{
+            fontSize: `calc(${size.base} + 2)`,
+            fontWeight: font.weight.bold,
+            padding: size.s,
+            gap: size.m,
+            paddingBottom: size.m,
+            borderBottom: `1px solid ${palette("chat-sidebar-journalist-name-border-color")}`,
+          }}
+          alignItems="center"
+        >
           <EuiFlexItem grow={false}>
-            <EuiBadge color="primary">Dev Mode</EuiBadge>
+            <SettingsPopover
+              journalistId={journalistId}
+              journalistStatus={journalistStatus}
+              setMaybeJournalistStatusForModal={
+                setMaybeJournalistStatusForModal
+              }
+              openBackupModal={openBackupModal}
+              addCustomToast={addCustomToast}
+              removeCustomToast={removeCustomToast}
+              devMode={devMode}
+            />
           </EuiFlexItem>
-        )}
-        {/* Journalist status skeleton or badge */}
-        {(journalistStatus == "HIDDEN_FROM_UI" ||
-          journalistStatus === undefined) && (
-          <EuiFlexItem grow={false}>
-            <EuiSkeletonRectangle
-              width="54.16px"
-              height="20px"
-              isLoading={journalistStatus === undefined}
-              contentAriaLabel="Status pending"
-              title="Status pending"
+          <EuiFlexItem grow={true}>
+            <div
+              onClick={handleJournalistIdClick}
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                MozUserSelect: "none",
+                msUserSelect: "none",
+                cursor: "pointer",
+              }}
             >
-              <EuiBadge
-                color={palette("chat-sidebar-hidden-from-ui-color")}
-                title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
-              >
-                Hidden
-              </EuiBadge>
-            </EuiSkeletonRectangle>
+              {journalistId}
+            </div>
           </EuiFlexItem>
-        )}
-      </EuiFlexGroup>
-      <EuiSpacer size="s" />
+          {/* Dev mode badge */}
+          {devMode && (
+            <EuiFlexItem grow={false}>
+              <EuiBadge color="primary">Dev Mode</EuiBadge>
+            </EuiFlexItem>
+          )}
+          {/* Journalist status skeleton or badge */}
+          {(journalistStatus == "HIDDEN_FROM_UI" ||
+            journalistStatus === undefined) && (
+            <EuiFlexItem grow={false}>
+              <EuiSkeletonRectangle
+                width="54.16px"
+                height="20px"
+                isLoading={journalistStatus === undefined}
+                contentAriaLabel="Status pending"
+                title="Status pending"
+              >
+                <EuiBadge
+                  color={palette("chat-sidebar-hidden-from-ui-color")}
+                  title="Your profile is hidden in the app. Sources will not be able to start new conversations with you. Conversations that have already started can continue normally."
+                >
+                  Hidden
+                </EuiBadge>
+              </EuiSkeletonRectangle>
+            </EuiFlexItem>
+          )}
+        </EuiFlexGroup>
+      </EuiFlexItem>
+
       <EuiFieldSearch
         placeholder="Search vault"
         value={searchText}
@@ -539,26 +756,22 @@ export const ChatsSideBar = ({
         spellCheck="false"
         aria-label="Search vault"
       />
-      <EuiSpacer size="s" />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>
-      <EuiSpacer size="m" />
-      {selectedTabContent}
-      {/* most recent backup info */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          padding: "5px",
-        }}
-      >
-        {lastBackupTime !== undefined && (
-          <EuiText size="s" color="subdued">
-            Last backup:{" "}
-            {lastBackupTime ? formatDateTime(lastBackupTime) : "never"}
-          </EuiText>
-        )}
-      </div>
-    </>
+      <EuiFlexItem grow style={{ overflowY: "scroll", maxHeight: "100%" }}>
+        {selectedTabContent}
+      </EuiFlexItem>
+      {lastBackupTime !== undefined && (
+        <EuiText
+          size="s"
+          color="subdued"
+          style={{
+            padding: "5px",
+          }}
+        >
+          Last backup:{" "}
+          {lastBackupTime ? formatDateTime(lastBackupTime) : "never"}
+        </EuiText>
+      )}
+    </EuiFlexGroup>
   );
 };

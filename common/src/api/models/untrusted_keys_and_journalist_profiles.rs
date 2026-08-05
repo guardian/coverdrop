@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::{
-    client::{JournalistProfile, VerifiedKeysAndJournalistProfiles},
+    client::{JournalistProfile, SentinelProfile, VerifiedKeysAndJournalistProfiles},
     epoch::Epoch,
     protocol::keys::{
         AnchorOrganizationPublicKey, UntrustedOrganizationPublicKey,
@@ -18,12 +18,13 @@ use super::journalist_id::JournalistIdentity;
 /// pulling them both down together a bit wasteful.
 #[derive(Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedKeysAndJournalistProfiles {
     pub journalist_profiles: Vec<JournalistProfile>,
+    // TODO "sentinel_profiles" goes here
     pub default_journalist_id: Option<JournalistIdentity>,
     pub keys: UntrustedOrganizationPublicKeyFamilyList,
     pub max_epoch: Epoch,
+    pub sentinel_profiles: Vec<SentinelProfile>,
 }
 
 impl UntrustedKeysAndJournalistProfiles {
@@ -32,12 +33,14 @@ impl UntrustedKeysAndJournalistProfiles {
         default_journalist_id: Option<JournalistIdentity>,
         keys: UntrustedOrganizationPublicKeyFamilyList,
         max_epoch: Epoch,
+        sentinel_profiles: Vec<SentinelProfile>,
     ) -> Self {
         Self {
             journalist_profiles,
             default_journalist_id,
             keys,
             max_epoch,
+            sentinel_profiles,
         }
     }
 

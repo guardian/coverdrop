@@ -3,17 +3,18 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 use common::{
     api::{
-        forms::{PostJournalistForm, PostJournalistIdPublicKeyForm},
-        models::journalist_id::JournalistIdentity,
+        forms::{
+            PostJournalistForm, PostJournalistIdPublicKeyForm, PostSentinelIdPublicKeyForm,
+            PostSentinelProfileForm,
+        },
+        models::{journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity},
     },
+    clap::Stage,
     client::JournalistStatus,
     crypto::keys::role::Role,
     protocol::{
         self,
-        keys::{
-            load_anchor_org_pks, load_journalist_provisioning_key_pairs,
-            AnchorOrganizationPublicKey,
-        },
+        keys::{load_anchor_org_pks, load_journalist_provisioning_key_pairs},
         roles::JournalistProvisioning,
     },
     Error,
@@ -30,8 +31,10 @@ pub struct JournalistVaultPaths {
 #[allow(clippy::too_many_arguments)]
 pub async fn generate_journalist(
     keys_path: impl AsRef<Path>,
-    display_name: String,
-    id: Option<String>,
+    journalist_display_name: String,
+    journalist_id: Option<String>,
+    sentinel_display_name: String,
+    sentinel_id: String,
     sort_name: Option<String>,
     description: String,
     is_desk: bool,
@@ -39,7 +42,7 @@ pub async fn generate_journalist(
     status: JournalistStatus,
     vault_path: impl AsRef<Path>,
     now: DateTime<Utc>,
-    trust_anchors: Vec<AnchorOrganizationPublicKey>,
+    stage: Stage,
 ) -> anyhow::Result<JournalistVaultPaths> {
     let org_pks = load_anchor_org_pks(&keys_path, now)?;
 
@@ -57,10 +60,13 @@ pub async fn generate_journalist(
         .map(|journalist_provisioning_key_pair| journalist_provisioning_key_pair.to_public_key())
         .collect::<Vec<_>>();
 
-    let journalist_id = id.unwrap_or_else(|| display_name.to_lowercase().replace(' ', "_"));
+    let sentinel_id = SentinelIdentity::new(&sentinel_id)?;
+
+    let journalist_id =
+        journalist_id.unwrap_or_else(|| journalist_display_name.to_lowercase().replace(' ', "_"));
     let journalist_id = JournalistIdentity::new(&journalist_id)?;
 
-    let sort_name = sort_name_from_display_name(sort_name, &display_name)?;
+    let sort_name = sort_name_from_display_name(sort_name, &journalist_display_name)?;
 
     //
     // Create vault
@@ -80,9 +86,10 @@ pub async fn generate_journalist(
         &vault_path,
         password,
         &journalist_id,
+        &sentinel_id,
         &journalist_provisioning_pks,
         now,
-        trust_anchors,
+        stage,
     )
     .await?;
 
@@ -90,14 +97,26 @@ pub async fn generate_journalist(
     // Create seed forms for upload once there's an internet connection
     //
 
+    let sentinel_id_key_pair = protocol::keys::generate_sentinel_id_key_pair(
+        &latest_journalist_provisioning_key_pair,
+        now,
+    );
+
     let journalist_id_key_pair = protocol::keys::generate_journalist_id_key_pair(
         &latest_journalist_provisioning_key_pair,
         now,
     );
 
+    let register_sentinel_profile_form = PostSentinelProfileForm::new(
+        sentinel_id.clone(),
+        sentinel_display_name,
+        &latest_journalist_provisioning_key_pair,
+        now,
+    )?;
+
     let register_journalist_form = PostJournalistForm::new(
         journalist_id.clone(),
-        display_name,
+        journalist_display_name,
         sort_name,
         description,
         is_desk,
@@ -106,9 +125,17 @@ pub async fn generate_journalist(
         now,
     )?;
 
-    let pk_upload_form = PostJournalistIdPublicKeyForm::new(
+    let journalist_id_pk_upload_form = PostJournalistIdPublicKeyForm::new(
         journalist_id,
         journalist_id_key_pair.public_key().to_untrusted(),
+        false,
+        &latest_journalist_provisioning_key_pair,
+        now,
+    )?;
+
+    let sentinel_id_pk_upload_form = PostSentinelIdPublicKeyForm::new(
+        sentinel_id.clone(),
+        sentinel_id_key_pair.public_key().to_untrusted(),
         false,
         &latest_journalist_provisioning_key_pair,
         now,
@@ -118,8 +145,11 @@ pub async fn generate_journalist(
         .add_vault_setup_bundle(
             latest_journalist_provisioning_key_pair.public_key(),
             journalist_id_key_pair,
-            pk_upload_form,
+            journalist_id_pk_upload_form,
             Some(register_journalist_form),
+            Some(sentinel_id_pk_upload_form),
+            Some(&sentinel_id_key_pair),
+            Some(register_sentinel_profile_form),
             ReplacementStrategy::Keep,
         )
         .await?;

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT MAX(added_at) AS \"added_at: DateTime<Utc>\"\n                FROM sentinel_id_pks\n                WHERE sentinel_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "added_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "d9ca716179e88393dc03b892fa40475388f858f7d6f676fa4c7b33ecc578baef"
+}

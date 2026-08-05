@@ -10,7 +10,6 @@ use crate::{
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedCoverNodeProvisioningPublicKeyFamily {
     pub provisioning_pk: UntrustedCoverNodeProvisioningPublicKey,
     pub covernodes: HashMap<CoverNodeIdentity, PublishedCoverNodeIdPublicKeyFamilyList>,

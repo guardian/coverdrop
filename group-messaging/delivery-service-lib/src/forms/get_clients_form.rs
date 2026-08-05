@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 
 use common::{
     form::Form,
-    protocol::{keys::JournalistIdKeyPair, roles::JournalistId},
+    protocol::{keys::SentinelIdKeyPair, roles::SentinelId},
 };
 use serde::{Deserialize, Serialize};
 
@@ -16,10 +16,10 @@ pub struct GetClientsFormBody {
 /// The form body is empty as its only used for authentication.
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
-pub struct GetClientsForm(Form<GetClientsFormBody, JournalistId>);
+pub struct GetClientsForm(Form<GetClientsFormBody, SentinelId>);
 
 impl GetClientsForm {
-    pub fn new(signing_key_pair: &JournalistIdKeyPair, now: DateTime<Utc>) -> anyhow::Result<Self> {
+    pub fn new(signing_key_pair: &SentinelIdKeyPair, now: DateTime<Utc>) -> anyhow::Result<Self> {
         let body = GetClientsFormBody {};
         let form = Form::new_from_form_data(body, signing_key_pair, now)?;
         Ok(Self(form))
@@ -27,7 +27,7 @@ impl GetClientsForm {
 }
 
 impl std::ops::Deref for GetClientsForm {
-    type Target = Form<GetClientsFormBody, JournalistId>;
+    type Target = Form<GetClientsFormBody, SentinelId>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

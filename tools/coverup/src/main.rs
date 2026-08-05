@@ -31,7 +31,6 @@ use journalist_vault::JournalistVault;
 use multipass::list_coverdrop_nodes;
 use rpassword::prompt_password;
 use ssh_scp::{command_over_ssh, tunnel_and_port_forward};
-use trust_anchors::get_trust_anchors;
 
 use std::fs::File;
 use std::io::Write;
@@ -449,8 +448,7 @@ async fn main() -> anyhow::Result<()> {
                 stage,
             } => {
                 let password = validate_password_from_args(password, password_path)?;
-                let trust_anchors = get_trust_anchors(&stage, time::now())?;
-                let vault = JournalistVault::open(&vault_path, &password, trust_anchors).await?;
+                let vault = JournalistVault::open(&vault_path, &password, stage).await?;
 
                 let now = time::now();
 

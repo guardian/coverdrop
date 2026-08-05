@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT into candidate_sentinel_id_key_pair\n            (key_pair_json, added_at)\n            VALUES (?1, ?2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "acc75ad79ce93b491031a4d0aec5aa75d12e59131e5877580426bd02095a1639"
+}

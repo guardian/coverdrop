@@ -4,13 +4,17 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     crypto::keys::key_certificate_data::KeyCertificateData,
-    protocol::constants::{COVERNODE_ID_KEY_VALID_DURATION, JOURNALIST_ID_KEY_VALID_DURATION},
+    protocol::constants::{
+        COVERNODE_ID_KEY_VALID_DURATION, JOURNALIST_ID_KEY_VALID_DURATION,
+        SENTINEL_ID_KEY_VALID_DURATION,
+    },
 };
 
 use super::{
     generate_child_expiry_not_valid_after, CoverNodeIdPublicKey, CoverNodeProvisioningKeyPair,
-    JournalistIdPublicKey, JournalistProvisioningKeyPair, UnregisteredCoverNodeIdPublicKey,
-    UnregisteredJournalistIdPublicKey,
+    JournalistIdPublicKey, JournalistProvisioningKeyPair, SentinelIdPublicKey,
+    UnregisteredCoverNodeIdPublicKey, UnregisteredJournalistIdPublicKey,
+    UnregisteredSentinelIdPublicKey,
 };
 
 pub fn sign_covernode_id_pk(
@@ -47,4 +51,22 @@ pub fn sign_journalist_id_pk(
     let certificate = journalist_provisioning_key_pair.sign(&certificate_data);
 
     JournalistIdPublicKey::new(unsigned_pk.key, certificate, not_valid_after)
+}
+
+pub fn sign_sentinel_id_pk(
+    unsigned_pk: UnregisteredSentinelIdPublicKey,
+    journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
+    now: DateTime<Utc>,
+) -> SentinelIdPublicKey {
+    let not_valid_after = generate_child_expiry_not_valid_after(
+        SENTINEL_ID_KEY_VALID_DURATION,
+        journalist_provisioning_key_pair,
+        now,
+    );
+
+    let certificate_data =
+        KeyCertificateData::new_for_signing_key(&unsigned_pk.key, not_valid_after);
+    let certificate = journalist_provisioning_key_pair.sign(&certificate_data);
+
+    SentinelIdPublicKey::new(unsigned_pk.key, certificate, not_valid_after)
 }

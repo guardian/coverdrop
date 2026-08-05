@@ -14,7 +14,6 @@ use crate::{
 };
 
 #[derive(Clone, Serialize, Deserialize, TS)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedOrganizationPublicKeyFamily {
     #[ts(type = "unknown")]
     pub org_pk: UntrustedOrganizationPublicKey,

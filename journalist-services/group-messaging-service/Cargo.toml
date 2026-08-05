@@ -1,0 +1,28 @@
+[package]
+name = "group-messaging-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow.workspace = true
+chrono.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_cbor.workspace = true
+sqlx = { workspace = true, features = ["sqlite", "runtime-tokio-rustls"] }
+tokio = { workspace = true, features = ["sync"] }
+tracing.workspace = true
+ts-rs.workspace = true
+uuid.workspace = true
+
+common = { path = "../../common" }
+delivery-service-lib = { path = "../../group-messaging/delivery-service-lib" }
+journalist-vault = { path = "../../journalist-vault" }
+openmls.workspace = true
+openmls_basic_credential.workspace = true
+openmls_rust_crypto.workspace = true
+openmls_sqlx_storage.workspace = true
+openmls_traits.workspace = true
+
+[features]
+integration-tests = []

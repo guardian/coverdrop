@@ -36,3 +36,6 @@ RUN (/usr/local/bin/kinesalite --path /opt/kinesis/ &) && \
     sleep 5 # Wait for the stream to be created 
 
 CMD ["/usr/local/bin/kinesalite", "--path", "/opt/kinesis/"]
+
+HEALTHCHECK --start-period=30s --interval=1s --timeout=5s --retries=3 CMD nc -z localhost 4567 || exit 1
+

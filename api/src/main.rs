@@ -3,8 +3,7 @@ use api::api_state::ApiState;
 use api::cli::Cli;
 #[allow(deprecated)]
 use api::controllers::backups::{
-    post_backup_encryption_pk, post_backup_signing_pk, retrieve_upload_url,
-    retrieve_upload_url_with_metadata,
+    post_backup_encryption_pk, post_backup_signing_pk, retrieve_upload_url_with_metadata,
 };
 use api::controllers::dead_drops::{
     get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
@@ -13,18 +12,25 @@ use api::controllers::dead_drops::{
 use api::controllers::general::{
     get_healthcheck, get_latest_status, post_reload_tracing, post_status_event,
 };
-use api::controllers::journalist_message::post_forward_journalist_to_covernode_msg;
+#[allow(deprecated)]
+use api::controllers::journalist_message::{
+    post_forward_journalist_to_covernode_msg,
+    post_forward_journalist_to_covernode_msg_with_deduplication_token,
+};
 use api::controllers::journalist_status::patch_journalist_status;
 use api::controllers::keys::{
     delete_journalist, get_journalist_id_pk_rotation_forms, get_journalist_id_pk_with_epoch,
-    get_public_keys, patch_journalist, post_admin_key, post_covernode_id_key,
-    post_covernode_msg_key, post_covernode_provisioning_key, post_journalist,
-    post_journalist_id_key, post_journalist_id_pk_rotation_form, post_journalist_msg_key,
-    post_journalist_provisioning_key,
+    get_public_keys, get_sentinel_id_pk_rotation_forms, get_sentinel_id_pk_with_epoch,
+    patch_journalist, post_admin_key, post_covernode_id_key, post_covernode_msg_key,
+    post_covernode_provisioning_key, post_journalist, post_journalist_id_key,
+    post_journalist_id_pk_rotation_form, post_journalist_msg_key, post_journalist_provisioning_key,
+    post_sentinel_id_key, post_sentinel_id_pk_rotation_form, post_sentinel_profile,
 };
 use api::dead_drop_limits::DeadDropLimits;
 use api::services::database::Database;
-use api::services::tasks::{AnchorOrganizationPublicKeyPollTask, DeleteOldDeadDropsTask};
+use api::services::tasks::{
+    AnchorOrganizationPublicKeyPollTask, DeleteOldDeadDropsTask, DeleteOldDeduplicationIdsTask,
+};
 use api::DEFAULT_PORT;
 use axum::routing::{delete, get, patch, post};
 use axum::Router;
@@ -74,6 +80,11 @@ async fn main() -> anyhow::Result<()> {
         Duration::minutes(30),
     );
 
+    let delete_old_deduplication_ids_polling_period = polling_seconds_to_duration(
+        cli.delete_old_deduplication_ids_polling_period_seconds,
+        Duration::minutes(30),
+    );
+
     let anchor_organisation_public_key_polling_period = polling_seconds_to_duration(
         cli.anchor_organization_public_key_polling_period_seconds,
         Duration::minutes(1),
@@ -103,6 +114,10 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn({
         let delete_old_dead_drops_task =
             DeleteOldDeadDropsTask::new(delete_old_dead_drops_polling_period, db.clone());
+        let delete_old_deduplication_ids_task = DeleteOldDeduplicationIdsTask::new(
+            delete_old_deduplication_ids_polling_period,
+            db.clone(),
+        );
         let anchor_org_pk_poll_task = AnchorOrganizationPublicKeyPollTask::new(
             anchor_organisation_public_key_polling_period,
             cli.key_location,
@@ -112,6 +127,7 @@ async fn main() -> anyhow::Result<()> {
 
         let mut runner = TaskRunner::new(cli.task_runner_mode);
         runner.add_task(delete_old_dead_drops_task).await;
+        runner.add_task(delete_old_deduplication_ids_task).await;
         runner.add_task(anchor_org_pk_poll_task).await;
 
         async move {
@@ -149,6 +165,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/public-keys", get(get_public_keys))
         .route("/public-keys/journalists", post(post_journalist))
         .route("/public-keys/journalists/delete", delete(delete_journalist))
+        .route(
+            "/public-keys/sentinel-profiles",
+            post(post_sentinel_profile),
+        )
         .route(
             "/public-keys/journalists/update-profile",
             patch(patch_journalist),
@@ -189,6 +209,18 @@ async fn main() -> anyhow::Result<()> {
             "/public-keys/journalists/messaging-public-key",
             post(post_journalist_msg_key),
         )
+        .route(
+            "/public-keys/sentinel/identity-public-key-form",
+            get(get_sentinel_id_pk_rotation_forms).post(post_sentinel_id_pk_rotation_form),
+        )
+        .route(
+            "/public-keys/sentinel/identity-public-key",
+            post(post_sentinel_id_key),
+        )
+        .route(
+            "/public-keys/sentinel/identity-public-key/{pk_hex}",
+            get(get_sentinel_id_pk_with_epoch),
+        )
         // Dead drops
         .route(
             "/user/dead-drops",
@@ -206,9 +238,15 @@ async fn main() -> anyhow::Result<()> {
             "/journalist/dead-drops/recent-summary",
             get(get_journalist_recent_dead_drop_summary),
         )
+        // deprecating this endpoint in favor of the one with deduplication token
+        // TODO remove https://github.com/guardian/coverdrop-internal/issues/4087
         .route(
             "/journalist-messages",
             post(post_forward_journalist_to_covernode_msg),
+        )
+        .route(
+            "/journalist-to-covernode-messages",
+            post(post_forward_journalist_to_covernode_msg_with_deduplication_token),
         )
         // Backups
         .route("/backups/signing-public-key", post(post_backup_signing_pk))
@@ -216,10 +254,6 @@ async fn main() -> anyhow::Result<()> {
             "/backups/encryption-public-key",
             post(post_backup_encryption_pk),
         )
-        // deprecated endpoint which does not include metadata in the presigned URL
-        // TODO: remove this endpoint once there are no Sentinel versions which rely on it
-        .route("/backups/retrieve-upload-url", post(retrieve_upload_url))
-        // new endpoint which includes metadata in the presigned URL response
         .route(
             "/backups/retrieve-upload-url-with-metadata",
             post(retrieve_upload_url_with_metadata),
@@ -233,8 +267,8 @@ async fn main() -> anyhow::Result<()> {
 
     let socket_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), DEFAULT_PORT);
 
-    tracing::info!("Starting server on http://{:?}", socket_addr);
     let listener = TcpListener::bind(&socket_addr).await?;
+    tracing::info!("Server listening on http://{:?}", socket_addr);
 
     axum::serve(listener, app).await?;
 

@@ -2,10 +2,9 @@ import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
     alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
     id("signing")
     id("maven-publish")
 }
@@ -55,10 +54,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = libs.versions.java.get()
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -72,13 +67,6 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-    }
-
-    // work-around: https://issuetracker.google.com/issues/217593040#comment6
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-Xjvm-default=all"
-        )
     }
 
     publishing {
@@ -95,8 +83,6 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(platform(libs.androidx.compose.bom))
-
-    kapt(libs.hilt.compiler)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material)
@@ -115,12 +101,9 @@ dependencies {
     implementation(libs.accompanist.pager.indicators)
     implementation(libs.accompanist.pager)
     implementation(libs.hilt.android)
+    add("ksp", libs.hilt.compiler)
 
     debugImplementation(libs.androidx.compose.uiToolingPreview)
-}
-
-kapt {
-    correctErrorTypes = true
 }
 
 publishing {

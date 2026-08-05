@@ -1,4 +1,4 @@
-use common::api::models::journalist_id::JournalistIdentity;
+use common::api::models::sentinel_id::SentinelIdentity;
 use common::time;
 use delivery_service_lib::PROTOCOL_VERSION;
 use openmls::prelude::tls_codec::Serialize as TlsSerialize;
@@ -22,7 +22,7 @@ impl ClientQueries {
     /// Each key package should be paired with its hash
     pub async fn register_client(
         &self,
-        client_id: &JournalistIdentity,
+        client_id: &SentinelIdentity,
         key_packages: Vec<KeyPackageIn>,
     ) -> anyhow::Result<()> {
         let mut tx = self.pool.begin().await?;
@@ -43,7 +43,7 @@ impl ClientQueries {
     }
 
     /// Check if a client exists
-    pub async fn client_exists(&self, client_id: &JournalistIdentity) -> anyhow::Result<bool> {
+    pub async fn client_exists(&self, client_id: &SentinelIdentity) -> anyhow::Result<bool> {
         let mut connection = self.pool.acquire().await?;
 
         let result = sqlx::query!(
@@ -60,7 +60,7 @@ impl ClientQueries {
     /// Each key package should be paired with its hash
     pub async fn insert_key_packages(
         &self,
-        client_id: &JournalistIdentity,
+        client_id: &SentinelIdentity,
         key_packages: Vec<KeyPackageIn>,
     ) -> anyhow::Result<()> {
         let mut tx = self.pool.begin().await?;
@@ -71,7 +71,7 @@ impl ClientQueries {
 
     async fn insert_key_packages_in_tx(
         tx: &mut Transaction<'_, Postgres>,
-        client_id: &JournalistIdentity,
+        client_id: &SentinelIdentity,
         key_packages: Vec<KeyPackageIn>,
     ) -> anyhow::Result<()> {
         let published_at = time::now();
@@ -102,12 +102,12 @@ impl ClientQueries {
     }
 
     /// Get all client IDs
-    pub async fn get_all_client_ids(&self) -> anyhow::Result<Vec<JournalistIdentity>> {
+    pub async fn get_all_client_ids(&self) -> anyhow::Result<Vec<SentinelIdentity>> {
         let mut connection = self.pool.acquire().await?;
 
         let rows = sqlx::query!(
             r#"
-                SELECT client_id AS "client_id: JournalistIdentity" FROM clients
+                SELECT client_id AS "client_id: SentinelIdentity" FROM clients
             "#
         )
         .fetch_all(&mut *connection)
@@ -122,11 +122,11 @@ impl ClientQueries {
     /// Consume a key package for the given client ID, returning one if available
     pub async fn consume_key_package(
         &self,
-        client_id: &JournalistIdentity,
+        client_id: &SentinelIdentity,
     ) -> anyhow::Result<Option<KeyPackageIn>> {
         let mut tx = self.pool.begin().await?;
 
-        // Lock and select the oldest unconsumed key package
+        // Lock and select the newest unconsumed key package
         // SKIP LOCKED ensures concurrent requests get different packages
         let row = sqlx::query!(
             r#"
@@ -136,7 +136,7 @@ impl ClientQueries {
                 FROM key_packages
                 WHERE client_id = $1
                 AND consumed_at IS NULL
-                ORDER BY published_at ASC
+                ORDER BY published_at DESC
                 LIMIT 1
                 FOR UPDATE SKIP LOCKED
             "#,

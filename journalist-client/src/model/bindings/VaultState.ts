@@ -5,7 +5,8 @@
  */
 export type VaultState = {
   type: "VaultState";
-  id: string;
+  journalistId: string;
+  sentinelId: string | null;
   path: string;
   isSoftLocked: boolean;
 };

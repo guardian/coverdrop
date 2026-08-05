@@ -2,26 +2,31 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use chrono::{DateTime, Utc};
 use common::{
-    api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
+    api::models::{
+        covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity,
+        sentinel_id::SentinelIdentity,
+    },
     backup::keys::{
         verify_backup_id_pk, verify_backup_msg_pk, BackupIdPublicKey, UntrustedBackupIdPublicKey,
     },
     protocol::keys::{
         verify_covernode_id_pk, verify_covernode_messaging_pk, verify_covernode_provisioning_pk,
         verify_journalist_id_pk, verify_journalist_messaging_pk, verify_journalist_provisioning_pk,
-        verify_organization_pk, AnchorOrganizationPublicKey, BackupIdPublicKeyFamily,
-        BackupIdPublicKeyFamilyList, BackupMessagingPublicKey, CoverDropPublicKeyHierarchy,
-        CoverNodeIdPublicKey, CoverNodeIdPublicKeyFamily, CoverNodeIdPublicKeyFamilyList,
-        CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey,
-        CoverNodeProvisioningPublicKeyFamily, CoverNodeProvisioningPublicKeyFamilyList,
-        JournalistIdPublicKey, JournalistIdPublicKeyFamily, JournalistIdPublicKeyFamilyList,
-        JournalistMessagingPublicKey, JournalistProvisioningPublicKey,
-        JournalistProvisioningPublicKeyFamily, JournalistProvisioningPublicKeyFamilyList,
-        OrganizationPublicKey, OrganizationPublicKeyFamily, OrganizationPublicKeyFamilyList,
-        UntrustedBackupMessagingPublicKey, UntrustedCoverNodeIdPublicKey,
+        verify_organization_pk, verify_sentinel_id_pk, AnchorOrganizationPublicKey,
+        BackupIdPublicKeyFamily, BackupIdPublicKeyFamilyList, BackupMessagingPublicKey,
+        CoverDropPublicKeyHierarchy, CoverNodeIdPublicKey, CoverNodeIdPublicKeyFamily,
+        CoverNodeIdPublicKeyFamilyList, CoverNodeMessagingPublicKey,
+        CoverNodeProvisioningPublicKey, CoverNodeProvisioningPublicKeyFamily,
+        CoverNodeProvisioningPublicKeyFamilyList, JournalistIdPublicKey,
+        JournalistIdPublicKeyFamily, JournalistIdPublicKeyFamilyList, JournalistMessagingPublicKey,
+        JournalistProvisioningPublicKey, JournalistProvisioningPublicKeyFamily,
+        JournalistProvisioningPublicKeyFamilyList, OrganizationPublicKey,
+        OrganizationPublicKeyFamily, OrganizationPublicKeyFamilyList, SentinelIdPublicKey,
+        SentinelIdPublicKeyList, UntrustedBackupMessagingPublicKey, UntrustedCoverNodeIdPublicKey,
         UntrustedCoverNodeMessagingPublicKey, UntrustedCoverNodeProvisioningPublicKey,
         UntrustedJournalistIdPublicKey, UntrustedJournalistMessagingPublicKey,
         UntrustedJournalistProvisioningPublicKey, UntrustedOrganizationPublicKey,
+        UntrustedSentinelIdPublicKey,
     },
 };
 use serde_json::Value;
@@ -63,6 +68,9 @@ impl HierarchyQueries {
                 journalist_id_pk_json AS "journalist_id_pk_json?: Value",
                 journalist_msg_pk_id AS "journalist_msg_pk_id?: i32",
                 journalist_msg_pk_json AS "journalist_msg_pk_json?: Value",
+                sentinel_id AS "sentinel_id?: SentinelIdentity",
+                sentinel_id_pk_id AS "sentinel_id_pk_id?: i32",
+                sentinel_id_pk_json AS "sentinel_id_pk_json?: Value",
                 backup_id_pk_id AS "backup_id_pk_id?: i32",
                 backup_id_pk_json AS "backup_id_pk_json?: Value",
                 backup_msg_pk_id AS "backup_msg_pk_id?: i32",
@@ -86,6 +94,8 @@ impl HierarchyQueries {
                             SELECT MAX(epoch) AS epoch FROM journalist_id_pks
                             UNION
                             SELECT MAX(epoch) AS epoch FROM journalist_msg_pks
+                            UNION
+                            SELECT MAX(epoch) AS epoch FROM sentinel_id_pks
                         ) max
                 ) AS "max_epoch: i32"
             FROM
@@ -110,6 +120,9 @@ impl HierarchyQueries {
                             NULL AS journalist_id_pk_json,
                             NULL AS journalist_msg_pk_id,
                             NULL AS journalist_msg_pk_json,
+                            NULL AS sentinel_id,
+                            NULL AS sentinel_id_pk_id,
+                            NULL AS sentinel_id_pk_json,
                             NULL AS backup_id_pk_id,
                             NULL AS backup_id_pk_json,
                             NULL AS backup_msg_pk_id,
@@ -150,6 +163,9 @@ impl HierarchyQueries {
                             journalist_id_pks.pk_json AS journalist_id_pk_json,
                             journalist_msg_pks.id AS journalist_msg_pk_id,
                             journalist_msg_pks.pk_json AS journalist_msg_pk_json,
+                            sentinel_id_pks.sentinel_id AS sentinel_id,
+                            sentinel_id_pks.id AS sentinel_id_pk_id,
+                            sentinel_id_pks.pk_json AS sentinel_id_pk_json,
                             backup_id_pks.id AS backup_id_pk_id,
                             backup_id_pks.pk_json AS backup_id_pk_json,
                             backup_msg_pks.id AS backup_msg_pk_id,
@@ -167,6 +183,10 @@ impl HierarchyQueries {
                             LEFT JOIN journalist_msg_pks ON (
                                 journalist_msg_pks.id_pk_id = journalist_id_pks.id
                                 AND journalist_msg_pks.not_valid_after > $1
+                            )
+                            LEFT JOIN sentinel_id_pks ON (
+                                sentinel_id_pks.provisioning_pk_id = journalist_provisioning_pks.id
+                                AND sentinel_id_pks.not_valid_after > $1
                             )
                             LEFT JOIN backup_id_pks ON (
                                 backup_id_pks.org_pk_id = organization_pks.id
@@ -203,6 +223,9 @@ impl HierarchyQueries {
         let mut journalist_id_pks: ChildKeyMap<JournalistIdPublicKey> = HashMap::new();
         let mut journalist_msg_pks: ChildKeyMap<JournalistMessagingPublicKey> = HashMap::new();
         let mut journalist_ids: ChildKeyMap<JournalistIdentity> = HashMap::new();
+
+        let mut sentinel_id_pks: ChildKeyMap<SentinelIdPublicKey> = HashMap::new();
+        let mut sentinel_ids: ChildKeyMap<SentinelIdentity> = HashMap::new();
 
         let mut backup_id_pks: ChildKeyMap<BackupIdPublicKey> = HashMap::new();
         let mut backup_msg_pks: ChildKeyMap<BackupMessagingPublicKey> = HashMap::new();
@@ -386,6 +409,32 @@ impl HierarchyQueries {
                         }
                     }
                 }
+
+                if let Some(sentinel_id_pk_id) = row.sentinel_id_pk_id {
+                    if let Some(sentinel_id) = row.sentinel_id {
+                        if let Entry::Vacant(e) = sentinel_ids.entry(sentinel_id_pk_id) {
+                            e.insert((sentinel_id_pk_id, sentinel_id));
+                        }
+                    }
+
+                    if let Some(sentinel_id_pk_json) = row.sentinel_id_pk_json {
+                        if let Entry::Vacant(e) = sentinel_id_pks.entry(sentinel_id_pk_id) {
+                            let sentinel_id_pk = serde_json::from_value::<
+                                UntrustedSentinelIdPublicKey,
+                            >(sentinel_id_pk_json)?;
+
+                            if let Some((_, verifying_key)) =
+                                &journalist_provisioning_pks.get(&journalist_provisioning_pk_id)
+                            {
+                                if let Ok(sentinel_id_pk) =
+                                    verify_sentinel_id_pk(&sentinel_id_pk, verifying_key, now)
+                                {
+                                    e.insert((journalist_provisioning_pk_id, sentinel_id_pk));
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             if let Some(backup_id_pk_id) = row.backup_id_pk_id {
@@ -540,10 +589,37 @@ impl HierarchyQueries {
                         }
                     }
 
+                    let mut sentinel_id_keys =
+                        HashMap::<SentinelIdentity, SentinelIdPublicKeyList>::new();
+
+                    for (
+                        sentinel_id_pk_db_id,
+                        (parent_journalist_provisioning_db_id, sentinel_id_pk),
+                    ) in &sentinel_id_pks
+                    {
+                        if journalist_provisioning_db_id == parent_journalist_provisioning_db_id {
+                            if let Some(sentinel_id) =
+                                sentinel_ids.get(sentinel_id_pk_db_id).map(|(_, id)| id)
+                            {
+                                let entry = sentinel_id_pk.clone();
+
+                                match sentinel_id_keys.get_mut(sentinel_id) {
+                                    Some(id_pk_list) => id_pk_list.insert(entry),
+                                    None => {
+                                        let list = SentinelIdPublicKeyList::new(vec![entry]);
+                                        let sentinel_id = sentinel_id.clone();
+                                        sentinel_id_keys.insert(sentinel_id, list);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     let journalist_provisioning_pk_family =
                         JournalistProvisioningPublicKeyFamily::new(
                             journalist_provisioning_pk.clone(),
                             journalist_id_keys,
+                            sentinel_id_keys,
                         );
                     journalist_provisioning_pk_family_list
                         .insert(journalist_provisioning_pk_family);

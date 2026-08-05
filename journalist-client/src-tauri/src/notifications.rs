@@ -18,6 +18,18 @@ impl Notifications {
     /// Request a notification, if it fails to send then we log an error.
     /// Should only be used for non-critical notifications.
     pub async fn send(&self, maybe_title: Option<String>, body: impl Into<String>) {
+        // On mac, attempting to create desktop notification in a dev build
+        // causes null pointer dereference errors, so skip them.
+        // TODO remove this if we manage to fix dev build notifications
+        // https://github.com/guardian/coverdrop-internal/issues/3543
+        #[cfg(debug_assertions)]
+        {
+            tracing::debug!("Skipping desktop notification in dev build");
+            let _ = (maybe_title, body);
+            return;
+        }
+
+        #[allow(unreachable_code)]
         if let Err(e) = self.try_send(maybe_title, body).await {
             tracing::error!("Failed to send notification to task: {:?}", e);
         }

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use common::api::models::journalist_id::JournalistIdentity;
+use common::api::models::sentinel_id::SentinelIdentity;
 use openmls::prelude::{MlsMessageIn, ProtocolMessage};
 use sqlx::PgPool;
 
@@ -20,11 +20,12 @@ impl MessageQueries {
 
     /// Atomically store both welcome messages for new members and commit message for existing members.
     /// This ensures that a group membership update is delivered consistently to all parties.
+    #[allow(clippy::too_many_arguments)]
     pub async fn store_add_members_messages(
         &self,
         commit_message: MlsMessageIn,
-        existing_members: &[JournalistIdentity],
-        new_members: &[JournalistIdentity],
+        existing_members: &[SentinelIdentity],
+        new_members: &[SentinelIdentity],
         published_at: DateTime<Utc>,
         welcome_raw_content: &TlsSerialized,
         commit_raw_content: &TlsSerialized,
@@ -73,13 +74,14 @@ impl MessageQueries {
 
     /// Store a group message for multiple recipients.
     /// This also handles epoch validation for handshake messages.
+    /// Returns the `published_at` timestamp assigned to the stored messages.
     pub async fn store_group_message(
         &self,
         mls_message: MlsMessageIn,
-        recipients: &[JournalistIdentity],
+        recipients: &[SentinelIdentity],
         now: DateTime<Utc>,
         raw_content: &TlsSerialized,
-    ) -> Result<(), DeliveryServiceError> {
+    ) -> Result<DateTime<Utc>, DeliveryServiceError> {
         let mut tx = self.pool.begin().await?;
 
         // Extract protocol message to check if it's a handshake message
@@ -99,7 +101,7 @@ impl MessageQueries {
         }
 
         tx.commit().await?;
-        Ok(())
+        Ok(now)
     }
 
     /// Validate that the epoch is not older than what we've seen, and update it.
@@ -181,7 +183,7 @@ impl MessageQueries {
     async fn store_message_for_multiple_recipients(
         &self,
         tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
-        recipients: &[JournalistIdentity],
+        recipients: &[SentinelIdentity],
         published_at: &DateTime<Utc>,
         raw_content: &TlsSerialized,
     ) -> Result<(), DeliveryServiceError> {
@@ -204,11 +206,11 @@ impl MessageQueries {
         Ok(())
     }
 
-    /// Retrieve all messages for a client since a given time.
+    /// Retrieve all messages for a client with message IDs greater than the specified value.
     /// Returns messages ordered by their auto-incrementing id.
-    pub async fn get_messages_since(
+    pub async fn get_messages(
         &self,
-        client_id: &JournalistIdentity,
+        client_id: &SentinelIdentity,
         ids_greater_than: u32,
     ) -> Result<Vec<GroupMessage>, DeliveryServiceError> {
         let mut connection = self.pool.acquire().await?;

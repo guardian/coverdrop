@@ -13,7 +13,9 @@ use common::{
 use sqlx::{pool::PoolConnection, Sqlite};
 
 use crate::{
-    id_key_queries::{insert_registered_id_key_pair, published_id_key_pairs},
+    journalist_id_key_queries::{
+        insert_registered_journalist_id_key_pair, published_journalist_id_key_pairs,
+    },
     msg_key_queries::{candidate_msg_key_pair, insert_candidate_msg_key_pair},
     provisioning_key_queries::{
         delete_expired_provisioning_pks, insert_journalist_provisioning_pk,
@@ -62,7 +64,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     let created_at = now;
     let published_at = now;
     let id_key_epoch = Epoch(0);
-    insert_registered_id_key_pair(
+    insert_registered_journalist_id_key_pair(
         &mut conn,
         db_provisioning_pk.id,
         &journalist_id_key_pair,
@@ -72,9 +74,10 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     )
     .await
     .unwrap();
-    let mut journalist_id_key_pairs = published_id_key_pairs(&mut conn, now, trust_anchors.clone())
-        .await
-        .unwrap();
+    let mut journalist_id_key_pairs =
+        published_journalist_id_key_pairs(&mut conn, now, trust_anchors.clone())
+            .await
+            .unwrap();
     let db_id_key_pair_row = journalist_id_key_pairs.next().unwrap();
 
     // insert a msg key that will outlive its parent
@@ -111,7 +114,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     assert_eq!(journalist_provisioning_pks_after.count(), 0);
 
     // id key deleted
-    let journalist_id_key_pairs_after = published_id_key_pairs(
+    let journalist_id_key_pairs_after = published_journalist_id_key_pairs(
         &mut conn,
         after_provisioning_key_expiry,
         trust_anchors.clone(),

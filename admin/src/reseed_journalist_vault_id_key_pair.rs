@@ -43,6 +43,9 @@ pub async fn reseed_journalist_vault_id_key_pair(
             journalist_id_key_pair,
             pk_upload_form,
             None,
+            None,
+            None,
+            None,
             ReplacementStrategy::Replace,
         )
         .await?;

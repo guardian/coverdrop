@@ -29,6 +29,7 @@ import com.theguardian.coverdrop.ui.tests.utils.performScrollToAndClick
 import com.theguardian.coverdrop.ui.tests.utils.pressBack
 import com.theguardian.coverdrop.ui.tests.utils.randomString
 import com.theguardian.coverdrop.ui.tests.utils.waitForNavigationTo
+import com.theguardian.coverdrop.ui.tests.utils.waitUntilTextIsDisplayed
 import com.theguardian.coverdrop.ui.theme.CoverDropSurface
 import com.theguardian.coverdrop.ui.utils.COVERDROP_SAMPLE_DATA
 import com.theguardian.coverdrop.ui.utils.SampleDataProvider
@@ -248,10 +249,10 @@ class NewMessageScreenTest {
                 composeTestRule.awaitIdle();
                 delay(200);
             }
-            composeTestRule.onNodeWithText(
+            composeTestRule.waitUntilTextIsDisplayed(
                 "Failed to create a new conversation",
-                substring = true,
-            ).assertExists()
+                allowSubstringMatch = true,
+            )
         } finally {
             mockedPrivateRepo.clearSimulatedBehaviours()
         }

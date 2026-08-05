@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.jetbrains.kotlin.android)
     `maven-publish`
     signing
 }
@@ -31,10 +30,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = libs.versions.java.get()
-    }
-
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -59,7 +54,7 @@ dependencies {
 
     // lib-sodium dependencies; the "@aar" is important
     implementation("com.goterl:lazysodium-android:5.2.0@aar")
-    implementation("net.java.dev.jna:jna:5.18.1@aar")
+    implementation("net.java.dev.jna:jna:5.19.1@aar")
 
     testImplementation(libs.junit)
 

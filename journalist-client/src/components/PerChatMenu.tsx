@@ -43,7 +43,11 @@ export const PerChatMenu = ({
       Options
     </EuiButton>
   ) : (
-    <EuiButtonIcon iconType={"arrowDown"} onClick={toggleButtonClick} />
+    <EuiButtonIcon
+      iconType={"arrowDown"}
+      onClick={toggleButtonClick}
+      aria-label="Chat Options"
+    />
   );
   return (
     <EuiPopover

@@ -1,12 +1,15 @@
 use std::vec;
 
 use chrono::Utc;
+use common::clap::Stage;
 use common::{
-    api::models::journalist_id::JournalistIdentity,
+    api::models::{journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity},
     protocol::keys::{generate_journalist_provisioning_key_pair, generate_organization_key_pair},
 };
 use journalist_vault::JournalistVault;
 use tempfile::tempdir_in;
+
+mod test_utils;
 
 #[tokio::test]
 async fn sync_provisioning_keys_to_vault() {
@@ -29,22 +32,29 @@ async fn sync_provisioning_keys_to_vault() {
         let journalist_provisioning_pks =
             vec![journalist_provisioning_key_pair_1.public_key().clone()];
 
-        let _ = JournalistVault::create(
+        let _ = JournalistVault::create_with_trust_anchors(
             &db_path,
-            "test_password",
+            test_utils::TEST_PASSPHRASE_VAULT,
             &journalist_id,
+            &SentinelIdentity::new("test_sentinel").unwrap(),
             &journalist_provisioning_pks,
             now,
             trust_anchors.clone(),
+            Stage::Development,
         )
         .await
         .expect("Create journalist vault");
     }
 
     // Open vault with correct password
-    let vault = JournalistVault::open(&db_path, "test_password", trust_anchors.clone())
-        .await
-        .expect("Load journalist vault");
+    let vault = JournalistVault::open_with_trust_anchors(
+        &db_path,
+        test_utils::TEST_PASSPHRASE_VAULT,
+        trust_anchors.clone(),
+        Stage::Development,
+    )
+    .await
+    .expect("Load journalist vault");
     let vault_journalist_id = vault.journalist_id().await.expect("Get journalist ID");
     assert_eq!(journalist_id, vault_journalist_id);
 

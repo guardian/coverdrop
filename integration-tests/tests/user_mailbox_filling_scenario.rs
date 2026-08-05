@@ -40,7 +40,7 @@ enum RandomMessage {
 #[tokio::test]
 #[allow(clippy::await_holding_refcell_ref)] // See messaging scenario for explainer
 async fn user_mailbox_filling_scenario() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let stack = CoverDropStack::new(StackProfile::CoverDropOnly).await;
 

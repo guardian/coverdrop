@@ -2,9 +2,8 @@ import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
 
@@ -139,10 +138,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = libs.versions.java.get()
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -157,13 +152,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
-    // work-around: https://issuetracker.google.com/issues/217593040#comment6
-    kotlinOptions {
-        freeCompilerArgs += listOf(
-            "-Xjvm-default=all"
-        )
-    }
 }
 
 dependencies {
@@ -173,9 +161,6 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
     implementation(platform(libs.androidx.compose.bom))
-
-    kapt(libs.hilt.compiler)
-    kaptAndroidTest(libs.hilt.android.compiler)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
@@ -191,8 +176,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.truth)
-}
 
-kapt {
-    correctErrorTypes = true
+    add("ksp", libs.hilt.compiler)
 }

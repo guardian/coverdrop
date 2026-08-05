@@ -9,9 +9,11 @@ use openmls::prelude::{MlsMessageBodyIn, MlsMessageIn, WireFormat};
 use std::sync::Arc;
 
 use crate::error::DeliveryServiceError;
-use crate::helpers::fetch_and_verify_journalist_key;
+use crate::helpers::fetch_and_verify_sentinel_key;
 use crate::services::database::Database;
 use delivery_service_lib::forms::{AddMembersForm, ReceiveMessagesForm, SendMessageForm};
+use delivery_service_lib::models::SendMessageResponse;
+use delivery_service_lib::MAX_MESSAGE_SIZE_BYTES;
 
 /// Add members to a group.
 ///
@@ -27,7 +29,7 @@ pub async fn add_members(
     Json(form): Json<AddMembersForm>,
 ) -> Result<StatusCode, DeliveryServiceError> {
     let (_client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())
@@ -107,9 +109,9 @@ pub async fn send_message(
     State(api_client): State<ApiClient>,
     State(trust_anchors): State<Arc<Vec<AnchorOrganizationPublicKey>>>,
     Json(form): Json<SendMessageForm>,
-) -> Result<StatusCode, DeliveryServiceError> {
+) -> Result<Json<SendMessageResponse>, DeliveryServiceError> {
     let (_client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())
@@ -117,6 +119,14 @@ pub async fn send_message(
             tracing::error!("Failed to verify form {}", e);
             DeliveryServiceError::SignatureVerificationFailed
         })?;
+
+    // Reject messages that exceed the size limit
+    if body.message.len() > MAX_MESSAGE_SIZE_BYTES {
+        return Err(DeliveryServiceError::MessageTooLarge {
+            size: body.message.len(),
+            max: MAX_MESSAGE_SIZE_BYTES,
+        });
+    }
 
     // Deserialize the MLS message
     let mls_message_in = body.message.deserialize::<MlsMessageIn>().map_err(|e| {
@@ -132,11 +142,12 @@ pub async fn send_message(
     );
 
     // Store the message (this also handles epoch validation for handshake messages)
-    db.message_queries
+    let published_at = db
+        .message_queries
         .store_group_message(mls_message_in, &body.recipients, time::now(), &body.message)
         .await?;
 
-    Ok(StatusCode::OK)
+    Ok(Json(SendMessageResponse { published_at }))
 }
 
 /// Receive messages for a client.
@@ -151,7 +162,7 @@ pub async fn receive_messages(
     Json(form): Json<ReceiveMessagesForm>,
 ) -> Result<Json<Vec<GroupMessage>>, DeliveryServiceError> {
     let (client_id, verifying_id_pk) =
-        fetch_and_verify_journalist_key(&api_client, &trust_anchors, form.signing_pk()).await?;
+        fetch_and_verify_sentinel_key(&api_client, &trust_anchors, form.signing_pk()).await?;
 
     let body = form
         .to_verified_form_data(&verifying_id_pk, time::now())
@@ -177,7 +188,7 @@ pub async fn receive_messages(
     // Fetch all messages with IDs greater than the specified value
     let messages = db
         .message_queries
-        .get_messages_since(&client_id, body.ids_greater_than)
+        .get_messages(&client_id, body.ids_greater_than)
         .await?;
 
     tracing::info!(

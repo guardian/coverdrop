@@ -42,7 +42,9 @@ pub async fn get_trust_anchor_digests(
 }
 
 #[tauri::command]
-pub async fn force_rotate_id_pk(app: State<'_, AppStateHandle>) -> Result<(), CommandError> {
+pub async fn force_rotate_sentinel_id_pk(
+    app: State<'_, AppStateHandle>,
+) -> Result<(), CommandError> {
     let coverdrop_service = app
         .inner()
         .coverdrop_service()
@@ -50,10 +52,30 @@ pub async fn force_rotate_id_pk(app: State<'_, AppStateHandle>) -> Result<(), Co
         .context(VaultLockedSnafu)?;
 
     coverdrop_service
-        .rotate_id_key(time::now())
+        .rotate_sentinel_id_key(time::now())
         .await
         .context(VaultSnafu {
-            failed_to: "rotate identity key",
+            failed_to: "rotate sentinel identity key",
+        })?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn force_rotate_journalist_id_pk(
+    app: State<'_, AppStateHandle>,
+) -> Result<(), CommandError> {
+    let coverdrop_service = app
+        .inner()
+        .coverdrop_service()
+        .await
+        .context(VaultLockedSnafu)?;
+
+    coverdrop_service
+        .rotate_journalist_id_key(time::now())
+        .await
+        .context(VaultSnafu {
+            failed_to: "rotate journalist identity key",
         })?;
 
     Ok(())
@@ -151,7 +173,7 @@ pub async fn update_journalist_status(
 
     let now = time::now();
     let latest_id_key_pair = vault
-        .latest_id_key_pair(now)
+        .latest_journalist_id_key_pair(now)
         .await
         // Deal with failure to read the vault
         .context(VaultSnafu {

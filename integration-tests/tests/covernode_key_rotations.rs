@@ -27,7 +27,7 @@ use itertools::Itertools;
 /// This test rotates keys of the CoverNode and then verifies that the keys are rotated.
 #[tokio::test]
 async fn covernode_key_rotations() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_identity_api_task_runner_mode(RunnerMode::ManuallyTriggered)

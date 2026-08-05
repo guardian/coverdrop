@@ -122,7 +122,7 @@ pub async fn handle_journalist_command(
             service.rotate_msg_key(time::now()).await
         }
         JournalistCommand::ReadVault => {
-            let id_key_pairs = vault.id_key_pairs(time::now()).await?;
+            let id_key_pairs = vault.journalist_id_key_pairs(time::now()).await?;
 
             println!("Journalist ID key pair");
             for (idx, id_key_pair) in id_key_pairs.enumerate() {

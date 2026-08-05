@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::{env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
@@ -20,6 +21,7 @@ pub async fn start_delivery_service(
     let delivery_service = image
         .with_cmd(args.into_cmd())
         .with_network(network)
+        .with_startup_timeout(Duration::from_secs(120))
         .start()
         .await
         .expect("Start Delivery Service container");

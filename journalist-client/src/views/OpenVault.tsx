@@ -103,7 +103,7 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
               }
             }}
           >
-            <EuiFormRow label="Profile">
+            <EuiFormRow label="Environment">
               <EuiSelect
                 options={profileOptions}
                 value={profile}

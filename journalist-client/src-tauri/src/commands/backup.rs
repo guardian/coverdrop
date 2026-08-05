@@ -92,7 +92,7 @@ pub async fn perform_backup(app: State<'_, AppStateHandle>) -> Result<(), Comman
 
     let backup_path_buf = PathBuf::from(BACKUP_VOLUME_PATH).join(format!(
         "{}__{}.backup",
-        vault_state.id,
+        vault_state.journalist_id,
         now.to_rfc3339()
     ));
     let backup_path = backup_path_buf.as_path().to_str().context(GenericSnafu {

@@ -9,13 +9,14 @@ use crate::{
     protocol::keys::{AnchorOrganizationPublicKey, OrganizationPublicKeyFamilyList},
 };
 
-use super::JournalistProfile;
+use super::{JournalistProfile, SentinelProfile};
 
 pub struct VerifiedKeysAndJournalistProfiles {
     pub journalist_profiles: Vec<JournalistProfile>,
     pub default_journalist_id: Option<JournalistIdentity>,
     pub keys: OrganizationPublicKeyFamilyList,
     pub max_epoch: Epoch,
+    pub sentinel_profiles: Vec<SentinelProfile>,
 }
 
 impl VerifiedKeysAndJournalistProfiles {
@@ -38,6 +39,7 @@ impl VerifiedKeysAndJournalistProfiles {
             default_journalist_id,
             keys,
             max_epoch: untrusted.max_epoch,
+            sentinel_profiles: untrusted.sentinel_profiles,
         }
     }
 
@@ -54,6 +56,7 @@ impl VerifiedKeysAndJournalistProfiles {
             self.default_journalist_id.clone(),
             keys,
             self.max_epoch,
+            self.sentinel_profiles.clone(),
         )
     }
 }

@@ -146,8 +146,10 @@ impl BackupManager {
         if let Some(public_info) = public_info.as_ref() {
             let encrypted_vault = fs::read(vault_path)?;
             let journalist_identity = vault.journalist_id().await?;
-            let journalist_identity_key =
-                vault.latest_id_key_pair(now).await?.ok_or_else(|| {
+            let journalist_identity_key = vault
+                .latest_journalist_id_key_pair(now)
+                .await?
+                .ok_or_else(|| {
                     anyhow::anyhow!("No identity key found when trying to create backup")
                 })?;
             let backup_admin_encryption_key =

@@ -28,14 +28,3 @@ impl RetrieveUploadUrlWithMetadataForm {
         Self::new_from_form_data(form_body, signing_key_pair, now)
     }
 }
-
-// Deprecated form which does not include metadata in the presigned URL response.
-// This should be removed once there are no Sentinel versions which rely on it.
-pub type RetrieveUploadUrlForm = Form<Vec<u8>, JournalistId>;
-
-impl RetrieveUploadUrlForm {
-    pub fn new(signing_key_pair: &JournalistIdKeyPair, now: DateTime<Utc>) -> anyhow::Result<Self> {
-        // signing an empty form in order to authenticate the journalist
-        Self::new_from_form_data(vec![], signing_key_pair, now)
-    }
-}

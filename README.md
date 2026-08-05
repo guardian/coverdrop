@@ -14,7 +14,7 @@ The CoverDrop system consists of four major components:
 CoverDrop provides strong plausible deniability by making every instance of the news organisation's public mobile app behave the same way, whether it is used for secure communication or for normal news consumption:
 
 | <img src="docs/assets/architecture-overview.png"> |
-|:--:| 
+|:--:|
 |Overview of the full architecture including mobile devices and the back-end components.
 The web services are either provided by third-parties (gray); written by us and running on third-party cloud infrastructure (blue); or services running on on-premises hardware (green). The arrows in this chart indicate logical flow of messages that include messages and cryptographic key information. The on-premises services do not allow any incoming connection and instead use a pull-based approach.|
 
@@ -29,7 +29,7 @@ We have written a [white paper](https://www.coverdrop.org/coverdrop_guardian_imp
 ## Repository
 
 > [!NOTE]
-> This respository is a public copy of our internal source-of-truth respository. All changes to our main branch are automatically synchronized across.
+> This repository is a public copy of our internal source-of-truth repository. All changes to our main branch are automatically synchronized across.
 
 The implementation is split into separate clients and services.
 
@@ -67,6 +67,15 @@ The security of CoverDrop is very important to us and we acknowledge that no sys
 We are particularly interested in issues that affect the confidentiality and integrity of messages, the anonymity of network traffic, and the plausibly-deniable encryption in the apps. One area of constant improvement are side-channels caused by other components of the integrating news reader apps, and we consider this an on-going work with no existing definite solution.
 
 To let us know about security issues we would prefer you email us under encryption. Please write to coverdrop.security@theguardian.com and use the public key with the fingerprint `853F 7EFF 332F DA4F 66ED  CD83 3CA0 0C56 15FA 4518`.
+
+## Group messaging (in development)
+
+We are actively developing end-to-end encrypted group messaging features in the journalist client desktop app, using [OpenMLS](https://openmls.tech/).
+These features have not yet been released to users, and no confidential source material is being sent through them. We are taking a trunk-based development approach to this work, so related changes are being merged into this repository, and deployed to staging and production environments for testing.
+The relevant crates are
+- `group-messaging/delivery-service`
+- `journalist-services/group-messaging-service`
+- `journalist-client`
 
 ## Cryptography notice
 

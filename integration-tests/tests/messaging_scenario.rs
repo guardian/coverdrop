@@ -36,7 +36,7 @@ static JOURNALIST_MESSAGE: &str = "This is a test message from the journalist to
 // ergonomically written integration tests
 #[allow(clippy::await_holding_refcell_ref)]
 async fn messaging_scenario() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     let mut stack = CoverDropStack::builder(StackProfile::CoverDropOnly)
         .with_delete_old_dead_drops_poll_duration(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD)

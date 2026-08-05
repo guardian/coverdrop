@@ -4,7 +4,7 @@ use integration_tests::stack::{CoverDropStack, StackProfile};
 #[tokio::test]
 /// This test verifies the key counting logic for backups in the journalist vault.
 async fn backup_keys_counting() {
-    pretty_env_logger::try_init().unwrap();
+    integration_tests::utils::init_logger();
 
     // generated_test_desk in the identity which we are backing up the vault for
     let default_journalist_id = "generated_test_desk";
@@ -55,7 +55,7 @@ async fn backup_keys_counting() {
     // Creating and publishing a new identity key should further increase the count
     let service = JournalistCoverDropService::new(&api_client, &journalist_vault);
     service
-        .rotate_id_key(stack.now())
+        .rotate_journalist_id_key(stack.now())
         .await
         .expect("Generate and upload new ID key");
     let count_3 = journalist_vault

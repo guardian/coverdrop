@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e;
 
+SCRIPT_PATH=$( cd $(dirname $0) ; pwd -P )
 WORK_DIR=/tmp/coverdrop_dependency_check;
 rm -rf "$WORK_DIR" || true;
 mkdir -p "$WORK_DIR";
@@ -13,10 +14,10 @@ popd;
 
 # Export the relevant lines from each libs.versions.toml file
 echo "[ ] Extracting critical version numbers...";
-DEPS=(androidx-hilt compose-activity compose-bom compose-constraintLayout google-hilt navigation);
+DEPS=(androidx-hilt compose-activity compose-bom compose-constraintLayout google-hilt navigation ksp);
 
 for dep in ${DEPS[@]}; do
-    cat "gradle/libs.versions.toml" | grep -E "^$dep = \"" >> $WORK_DIR/coverdrop.deps;
+    cat "$SCRIPT_PATH/../gradle/libs.versions.toml" | grep -E "^$dep = \"" >> $WORK_DIR/coverdrop.deps;
     cat "$WORK_DIR/android-news-app/gradle/libs.versions.toml" | grep -E "^$dep = \"" >> $WORK_DIR/android-news-app.deps;
 done;
 

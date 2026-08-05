@@ -1,17 +1,21 @@
 use chrono::{DateTime, Utc};
 
 use crate::{
-    api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
+    api::models::{
+        covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity,
+        sentinel_id::SentinelIdentity,
+    },
     backup::keys::BackupMsgPublicKey,
     crypto::keys::Ed25519PublicKey,
     protocol::keys::{
         AnchorOrganizationPublicKey, CoverNodeIdKeyPair, CoverNodeIdPublicKey,
         CoverNodeMessagingKeyPair, CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey,
         JournalistIdPublicKey, JournalistMessagingPublicKey, JournalistProvisioningPublicKey,
-        OrganizationPublicKey, UntrustedCoverNodeIdKeyPair, UntrustedCoverNodeIdPublicKey,
-        UntrustedCoverNodeMessagingKeyPair, UntrustedCoverNodeMessagingPublicKey,
-        UntrustedCoverNodeProvisioningPublicKey, UntrustedJournalistIdPublicKey,
-        UntrustedJournalistMessagingPublicKey, UntrustedJournalistProvisioningPublicKey,
+        OrganizationPublicKey, SentinelIdPublicKey, UntrustedCoverNodeIdKeyPair,
+        UntrustedCoverNodeIdPublicKey, UntrustedCoverNodeMessagingKeyPair,
+        UntrustedCoverNodeMessagingPublicKey, UntrustedCoverNodeProvisioningPublicKey,
+        UntrustedJournalistIdPublicKey, UntrustedJournalistMessagingPublicKey,
+        UntrustedJournalistProvisioningPublicKey,
     },
 };
 
@@ -532,6 +536,34 @@ impl OrganizationPublicKeyFamilyList {
         self.journalist_id_pk_iter()
             .find(|(_, pk)| *pk.key.as_bytes() == *candidate_key)
             .map(|(journalist_id, _)| journalist_id)
+    }
+
+    pub fn sentinel_id_pk_iter(
+        &self,
+    ) -> impl Iterator<Item = (&SentinelIdentity, &SentinelIdPublicKey)> {
+        self.0.iter().flat_map(|org_pk_family| {
+            org_pk_family
+                .journalists
+                .iter()
+                .flat_map(|provisioning_family| provisioning_family.sentinel_iter())
+        })
+    }
+
+    pub fn find_sentinel_id_pk_from_raw_ed25519_pk(
+        &self,
+        candidate_key: &Ed25519PublicKey,
+    ) -> Option<(&SentinelIdentity, &SentinelIdPublicKey)> {
+        self.sentinel_id_pk_iter()
+            .find(|(_, pk)| pk.key == *candidate_key)
+    }
+
+    pub fn find_sentinel_id_from_pk_bytes(
+        &self,
+        candidate_key: &[u8],
+    ) -> Option<&SentinelIdentity> {
+        self.sentinel_id_pk_iter()
+            .find(|(_, pk)| *pk.key.as_bytes() == *candidate_key)
+            .map(|(sentinel_id, _)| sentinel_id)
     }
 
     //

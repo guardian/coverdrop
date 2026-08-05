@@ -19,7 +19,7 @@ android {
         // This prevents the linter to fail if there are incompatible with extra lint rules
         // provided by the library which target an incompatible lint API version
         // See: https://issuetracker.google.com/issues/311218673 (different versions, same problem)
-        disable("ObsoleteLintCustomCheck")
+        disable("ObsoleteLintCustomCheck", "UsingMaterialAndMaterial3Libraries")
 
         abortOnError true
         checkDependencies true

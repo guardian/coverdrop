@@ -17,6 +17,7 @@ import {
   EuiTitle,
 } from "@elastic/eui";
 import {
+  getColocatedPassword,
   sendDesktopNotification,
   softLockVault,
   unlockSoftLockedVault,
@@ -120,6 +121,14 @@ export const IdleTimeoutMonitor = ({
       setIsCheckingPassword(false);
     });
   };
+
+  useEffect(() => {
+    if (vaultState?.isSoftLocked && vaultState?.path) {
+      getColocatedPassword(vaultState.path).then(
+        (maybePassword) => maybePassword && setPassword(maybePassword),
+      );
+    }
+  }, [vaultState?.isSoftLocked]);
 
   if (vaultState?.isSoftLocked) {
     return (

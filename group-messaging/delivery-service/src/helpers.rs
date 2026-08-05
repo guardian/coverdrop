@@ -1,8 +1,8 @@
 use aws_sdk_secretsmanager::Client as SecretsClient;
 use common::api::api_client::ApiClient;
-use common::api::models::journalist_id::JournalistIdentity;
+use common::api::models::sentinel_id::SentinelIdentity;
 use common::crypto::keys::Ed25519PublicKey;
-use common::protocol::keys::{AnchorOrganizationPublicKey, JournalistIdPublicKey};
+use common::protocol::keys::{AnchorOrganizationPublicKey, SentinelIdPublicKey};
 use common::time;
 
 use crate::error::DeliveryServiceError;
@@ -50,20 +50,20 @@ pub async fn fetch_and_parse_db_url_secret(
     ))
 }
 
-/// Fetches and verifies public keys from the identity API, then finds the journalist
+/// Fetches and verifies public keys from the API, then finds the sentinel
 /// identity and verifying key for the given signing public key.
 ///
 /// This is a common pattern used across all delivery service endpoints to authenticate
 /// the request by verifying the signing key against the trusted key hierarchy.
 ///
 /// # Returns
-/// A tuple of (JournalistIdentity, JournalistIdPublicKey) if the key is found and verified,
+/// A tuple of (SentinelIdentity, SentinelIdPublicKey) if the key is found and verified,
 /// or an appropriate error if the key fetch fails or the signing key is not found.
-pub async fn fetch_and_verify_journalist_key(
+pub async fn fetch_and_verify_sentinel_key(
     api_client: &ApiClient,
     trust_anchors: &[AnchorOrganizationPublicKey],
     signing_pk: &Ed25519PublicKey,
-) -> Result<(JournalistIdentity, JournalistIdPublicKey), DeliveryServiceError> {
+) -> Result<(SentinelIdentity, SentinelIdPublicKey), DeliveryServiceError> {
     // Fetch and verify public keys
     let verified_public_keys_and_profiles = api_client
         .get_public_keys()
@@ -75,7 +75,7 @@ pub async fn fetch_and_verify_journalist_key(
 
     let (client_id, verifying_id_pk) = verified_public_keys_and_profiles
         .keys
-        .find_journalist_id_pk_from_raw_ed25519_pk(signing_pk)
+        .find_sentinel_id_pk_from_raw_ed25519_pk(signing_pk)
         .ok_or(DeliveryServiceError::SigningKeyNotFound)?;
 
     Ok((client_id.clone(), verifying_id_pk.clone()))

@@ -140,9 +140,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         service_user_to_journalist.run().await
     });
 
-    // ⚠️ WARNING: DO NOT CHANGE THE LINE BELOW! ⚠️
-    // `testcontainers` relies on this line being printed to stdout
-    // to determine that the container is ready for integration testing
     tracing::info!("Started CoverNode service user->journalist");
 
     // start cover node service journalist -> user
@@ -172,11 +169,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
 
     let port = cli.port;
     let mut web_service = tokio::spawn(async move { server::serve(port, key_state).await });
-
-    // ⚠️ WARNING: DO NOT CHANGE THE LINE BELOW! ⚠️
-    // `testcontainers` relies on this line being printed to stdout
-    // to determine that the container is ready for integration testing
-    tracing::info!("Started CoverNode service journalist->user");
 
     // block until the first service fails/exits; in that case we abort the other
     tokio::select! {

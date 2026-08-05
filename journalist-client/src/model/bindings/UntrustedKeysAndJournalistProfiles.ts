@@ -2,6 +2,7 @@
 import type { Epoch } from "./Epoch";
 import type { JournalistIdentity } from "./JournalistIdentity";
 import type { JournalistProfile } from "./JournalistProfile";
+import type { SentinelProfile } from "./SentinelProfile";
 import type { UntrustedOrganizationPublicKeyFamilyList } from "./UntrustedOrganizationPublicKeyFamilyList";
 
 /**
@@ -14,4 +15,5 @@ export type UntrustedKeysAndJournalistProfiles = {
   default_journalist_id: JournalistIdentity | null;
   keys: UntrustedOrganizationPublicKeyFamilyList;
   max_epoch: Epoch;
+  sentinel_profiles: Array<SentinelProfile>;
 };

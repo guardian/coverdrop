@@ -35,13 +35,15 @@ tokio.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
 ts-rs.workspace = true
+uuid.workspace = true
 
 
 common = { path = "../../common" }
 journalist-vault = { path = "../../journalist-vault" }
 coverdrop-service = { path = "../../journalist-services/coverdrop-service" }
+group-messaging-service = { path = "../../journalist-services/group-messaging-service" }
 tauri-plugin-notification = "2"
-trust-anchors = { path = "../../trust-anchors" }
+
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-window-state = "2"

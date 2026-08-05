@@ -1,4 +1,5 @@
 use chrono::Utc;
+use common::clap::Stage;
 use common::{
     api::models::{
         journalist_id::JournalistIdentity,
@@ -6,6 +7,7 @@ use common::{
             user_to_journalist_message::UserToJournalistMessage,
             user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
         },
+        sentinel_id::SentinelIdentity,
     },
     crypto::keys::encryption::UnsignedEncryptionKeyPair,
     protocol::{
@@ -16,6 +18,8 @@ use common::{
 };
 use journalist_vault::{JournalistVault, VaultMessage};
 use tempfile::tempdir_in;
+
+mod test_utils;
 
 #[tokio::test]
 async fn message_round_trip() {
@@ -48,13 +52,15 @@ async fn message_round_trip() {
         let journalist_provisioning_pks =
             vec![journalist_provisioning_key_pair.public_key().clone()];
 
-        let vault = JournalistVault::create(
+        let vault = JournalistVault::create_with_trust_anchors(
             &db_path,
-            "test_password",
+            test_utils::TEST_PASSPHRASE_VAULT,
             &journalist_id,
+            &SentinelIdentity::new("test_sentinel").unwrap(),
             &journalist_provisioning_pks,
             now,
             trust_anchors.clone(),
+            Stage::Development,
         )
         .await
         .expect("Create journalist vault");
@@ -70,9 +76,14 @@ async fn message_round_trip() {
     }
 
     {
-        let vault = JournalistVault::open(&db_path, "test_password", trust_anchors.clone())
-            .await
-            .expect("Load journalist vault");
+        let vault = JournalistVault::open_with_trust_anchors(
+            &db_path,
+            test_utils::TEST_PASSPHRASE_VAULT,
+            trust_anchors.clone(),
+            Stage::Development,
+        )
+        .await
+        .expect("Load journalist vault");
 
         let mut messages = vault.messages().await.unwrap();
 

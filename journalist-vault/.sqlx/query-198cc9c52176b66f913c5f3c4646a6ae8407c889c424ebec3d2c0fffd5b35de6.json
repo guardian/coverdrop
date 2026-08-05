@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT\n            id              AS \"id: GroupId\",\n            display_name    AS \"display_name: String\",\n            description     AS \"description: String\"\n        FROM groups\n        WHERE id = ?1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: GroupId",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "display_name: String",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "description: String",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "198cc9c52176b66f913c5f3c4646a6ae8407c889c424ebec3d2c0fffd5b35de6"
+}

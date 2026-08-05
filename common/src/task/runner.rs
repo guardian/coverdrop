@@ -154,7 +154,7 @@ impl TaskRunner {
                         let now = time::now();
 
                         if task.next_scheduled_execution < now {
-                            tracing::info!("Running task: {}", task.name());
+                            tracing::debug!("Running task: {}", task.name());
 
                             if let Err(e) = task.run().await {
                                 tracing::error!("Failed to run task {}: {}", task.name(), e);

@@ -92,7 +92,7 @@ struct ReadyView: View {
 }
 
 struct NonLoggedInNavigationView: View {
-    @State private var navPath = NavigationPath()
+    @State private var navPath: NavigationPath
     @ObservedObject var lib: CoverDropLibrary
     @Binding var postLoginDestination: UnlockedSecretDataDestination
     @StateObject var userNewSessionViewModel: UserNewSessionViewModel
