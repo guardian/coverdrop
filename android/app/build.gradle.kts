@@ -178,4 +178,5 @@ dependencies {
     androidTestImplementation(libs.truth)
 
     add("ksp", libs.hilt.compiler)
+    add("kspAndroidTest", libs.hilt.android.compiler)
 }

@@ -4,10 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import com.theguardian.coverdrop.core.createLibSodium
 import com.theguardian.coverdrop.core.crypto.EncryptionKeyPair
 import com.theguardian.coverdrop.core.crypto.PrivateSendingQueueSecret
+import com.theguardian.coverdrop.core.utils.putLengthEncodedByteArray
+import com.theguardian.coverdrop.core.utils.serializeOrThrow
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.nio.BufferOverflowException
+import java.nio.ByteBuffer
 import java.time.Duration
 import java.time.Instant
+import java.util.zip.GZIPOutputStream
 import kotlin.random.Random
 
 
@@ -82,6 +87,64 @@ class MailboxContentTest {
         assertThat(actual.privateSendingQueueSecret).isEqualTo(original.privateSendingQueueSecret)
         assertThat(actual.messageThreads.totalMessageCount())
             .isLessThan(original.messageThreads.totalMessageCount())
+    }
+
+    @Test
+    fun testDeserialize_whenGivenLegacyV2Format_thenContentMatchesAndReserializesAsV3() {
+        val random = Random(seed = 0)
+
+        val original = MailboxContent(
+            encryptionKeyPair = EncryptionKeyPair.new(libSodium),
+            privateSendingQueueSecret = PrivateSendingQueueSecret.fromSecureRandom(),
+            messageThreads = List(3) { randomStoredMessageThread(random) },
+        )
+
+        // reading the legacy V2 format yields the original content
+        val legacySerialized = serializeLegacyV2Format(original, maxSize)
+        val actual = MailboxContent.deserialize(legacySerialized)
+        assertThat(actual).isEqualTo(original)
+
+        // re-serializing (as happens on unlock) writes the V3 format which round-trips
+        val reserialized = actual.serializeOrThrow(maxSize)
+        assertThat(reserialized[0]).isEqualTo(0x03.toByte())
+        assertThat(MailboxContent.deserialize(reserialized)).isEqualTo(original)
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun testDeserialize_whenUnknownVersion_thenThrows() {
+        val serialized = MailboxContent.newEmptyMailbox(libSodium).serializeOrThrow(maxSize)
+        serialized[0] = 0x7F
+        MailboxContent.deserialize(serialized)
+    }
+
+    /**
+     * Replicates the legacy V2 serialization (a length-encoded GZIP payload) that has since been
+     * removed from [MailboxContent]; copied verbatim from the old implementation.
+     */
+    private fun serializeLegacyV2Format(
+        content: MailboxContent,
+        paddedOutputSize: Int,
+    ): ByteArray {
+        val innerBuffer = ByteBuffer.allocate(4 * paddedOutputSize)
+        innerBuffer.putLengthEncodedByteArray(content.encryptionKeyPair.serialize())
+        innerBuffer.putLengthEncodedByteArray(content.privateSendingQueueSecret.serialize())
+        innerBuffer.putLengthEncodedByteArray(
+            content.messageThreads.serializeOrThrow(
+                maxSize = innerBuffer.remaining(),
+                serializeElement = { it.serialize(maxSize = paddedOutputSize) })
+        )
+
+        val compressedData = ByteArrayOutputStream().use { outputStream ->
+            GZIPOutputStream(outputStream).use { gzipStream ->
+                gzipStream.write(innerBuffer.array())
+            }
+            outputStream.toByteArray()
+        }
+
+        val outerBuffer = ByteBuffer.allocate(paddedOutputSize)
+        outerBuffer.put(0x02.toByte())
+        outerBuffer.putLengthEncodedByteArray(compressedData)
+        return outerBuffer.array()
     }
 
     @Test

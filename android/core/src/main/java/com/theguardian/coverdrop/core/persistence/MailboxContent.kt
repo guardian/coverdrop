@@ -10,18 +10,21 @@ import com.theguardian.coverdrop.core.utils.deserializeList
 import com.theguardian.coverdrop.core.utils.getLengthEncodedByteArray
 import com.theguardian.coverdrop.core.utils.putLengthEncodedByteArray
 import com.theguardian.coverdrop.core.utils.serializeOrThrow
-import java.io.ByteArrayOutputStream
 import java.nio.BufferOverflowException
 import java.nio.ByteBuffer
 import java.time.Instant
 import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 /**
- * Marker for the currently used serialization code. This is currently important use as there is
- * only one version. However, we will need this forward-compatible flag for later changes.
+ * Current serialization version: the fields are written directly without compression.
  */
-private const val SERIALIZATION_VERSION_ID = 0x02.toByte()
+private const val SERIALIZATION_VERSION_V3 = 0x03.toByte()
+
+/**
+ * Legacy serialization version where the payload was wrapped in a length-encoded GZIP blob. It is
+ * only supported for reading; the next save will rewrite the mailbox using the current version.
+ */
+private const val SERIALIZATION_VERSION_V2 = 0x02.toByte()
 
 internal data class MailboxContent(
     val encryptionKeyPair: EncryptionKeyPair,
@@ -30,27 +33,36 @@ internal data class MailboxContent(
 ) {
     companion object {
         fun deserialize(bytes: ByteArray): MailboxContent {
-            val bootstrapBuffer = ByteBuffer.wrap(bytes)
+            val buffer = ByteBuffer.wrap(bytes)
 
-            // Verify serialization version to enable forward compatibility
-            val serializationVersionId = bootstrapBuffer.get()
-            check(serializationVersionId == SERIALIZATION_VERSION_ID)
+            return when (val serializationVersionId = buffer.get()) {
+                SERIALIZATION_VERSION_V3 -> deserializePayload(buffer)
+                SERIALIZATION_VERSION_V2 -> deserializeLegacyV2(buffer)
+                else -> throw IllegalStateException(
+                    "Unknown serialization version: $serializationVersionId"
+                )
+            }
+        }
 
-            // Decrypt the rest of the data
-            val compressedData = bootstrapBuffer.getLengthEncodedByteArray()
+        private fun deserializePayload(buffer: ByteBuffer) = MailboxContent(
+            encryptionKeyPair = EncryptionKeyPair.deserialize(buffer.getLengthEncodedByteArray()),
+            privateSendingQueueSecret = PrivateSendingQueueSecret.deserialize(buffer.getLengthEncodedByteArray()),
+            messageThreads = deserializeList(
+                bytes = buffer.getLengthEncodedByteArray(),
+                deserializeElement = { StoredMessageThread.deserialize(it) }
+            ),
+        )
+
+        /**
+         * The legacy V2 format wrapped the payload in a length-encoded GZIP blob; the uncompressed
+         * payload is identical to the current format.
+         */
+        private fun deserializeLegacyV2(buffer: ByteBuffer): MailboxContent {
+            val compressedData = buffer.getLengthEncodedByteArray()
             val uncompressedData = GZIPInputStream(compressedData.inputStream()).use {
                 it.readBytes()
             }
-            val buffer = ByteBuffer.wrap(uncompressedData)
-
-            return MailboxContent(
-                encryptionKeyPair = EncryptionKeyPair.deserialize(buffer.getLengthEncodedByteArray()),
-                privateSendingQueueSecret = PrivateSendingQueueSecret.deserialize(buffer.getLengthEncodedByteArray()),
-                messageThreads = deserializeList(
-                    bytes = buffer.getLengthEncodedByteArray(),
-                    deserializeElement = { StoredMessageThread.deserialize(it) }
-                ),
-            )
+            return deserializePayload(ByteBuffer.wrap(uncompressedData))
         }
 
         fun newEmptyMailbox(libSodium: SodiumAndroid): MailboxContent {
@@ -73,64 +85,17 @@ internal data class MailboxContent(
      * [java.nio.BufferOverflowException] is thrown which indicates that the value is incorrect.
      */
     fun serializeOrTruncate(paddedOutputSize: Int): ByteArray {
-        val outerBuffer = ByteBuffer.allocate(paddedOutputSize)
-
-        outerBuffer.put(SERIALIZATION_VERSION_ID)
-
-        val bufferPositionBeforeMainPayload = outerBuffer.position()
-        val remainingBytes = outerBuffer.remaining() - LENGTH_ENCODING_OVERHEAD
-        check(remainingBytes > 0)
-
         var currentMessageThreads = messageThreads
         while (true) {
             try {
-                val mainPayload =
-                    serializeMainPayloadOrThrow(paddedOutputSize, currentMessageThreads)
-
-                // This will throw if the compressed data is still too large
-                outerBuffer.putLengthEncodedByteArray(mainPayload)
-
-                break
+                return serializeOrThrow(paddedOutputSize, currentMessageThreads)
             } catch (_: BufferOverflowException) {
                 // try again without the oldest message; while this seems expensive, we generally
                 // don't expect that more than 1-2 messages have been added since we last
                 // successfully serialized and deserialized the mailbox
                 currentMessageThreads = currentMessageThreads.copyWithoutOldestMessage()
-
-                // importantly: restore the buffer position to the state before the main payload
-                outerBuffer.position(bufferPositionBeforeMainPayload)
             }
         }
-
-        // return the full-length buffer to match the final padded length
-        return outerBuffer.array()
-    }
-
-    private fun serializeMainPayloadOrThrow(
-        paddedOutputSize: Int,
-        currentMessageThreads: List<StoredMessageThread>,
-    ): ByteArray {
-        // The inner buffer will be compressed in the next steps; therefore we allocate it a larger
-        // size and hope the compression gets us below the limit; if that fails, we will throw
-        // a BufferOverflowException and the caller will try again with fewer messages.
-        val innerBuffer = ByteBuffer.allocate(4 * paddedOutputSize)
-
-        innerBuffer.putLengthEncodedByteArray(encryptionKeyPair.serialize())
-        innerBuffer.putLengthEncodedByteArray(privateSendingQueueSecret.serialize())
-        innerBuffer.putLengthEncodedByteArray(
-            currentMessageThreads.serializeOrThrow(
-                maxSize = innerBuffer.remaining(),
-                serializeElement = { it.serialize(maxSize = paddedOutputSize) })
-        )
-
-        // Compress the inner buffer
-        val compressedData = ByteArrayOutputStream().use { outputStream ->
-            GZIPOutputStream(outputStream).use { gzipStream ->
-                gzipStream.write(innerBuffer.array())
-            }
-            outputStream.toByteArray()
-        }
-        return compressedData
     }
 
     /**
@@ -141,17 +106,27 @@ internal data class MailboxContent(
      */
     @VisibleForTesting
     @kotlin.jvm.Throws(BufferOverflowException::class)
-    fun serializeOrThrow(paddedOutputSize: Int): ByteArray {
-        val outerBuffer = ByteBuffer.allocate(paddedOutputSize)
-        outerBuffer.put(SERIALIZATION_VERSION_ID)
+    fun serializeOrThrow(paddedOutputSize: Int): ByteArray =
+        serializeOrThrow(paddedOutputSize, messageThreads)
 
-        val mainPayload = serializeMainPayloadOrThrow(paddedOutputSize, messageThreads)
+    private fun serializeOrThrow(
+        paddedOutputSize: Int,
+        currentMessageThreads: List<StoredMessageThread>,
+    ): ByteArray {
+        val buffer = ByteBuffer.allocate(paddedOutputSize)
 
-        // This will throw if the compressed data is still too large
-        outerBuffer.putLengthEncodedByteArray(mainPayload)
+        buffer.put(SERIALIZATION_VERSION_V3)
+        buffer.putLengthEncodedByteArray(encryptionKeyPair.serialize())
+        buffer.putLengthEncodedByteArray(privateSendingQueueSecret.serialize())
+        buffer.putLengthEncodedByteArray(
+            currentMessageThreads.serializeOrThrow(
+                maxSize = buffer.remaining() - LENGTH_ENCODING_OVERHEAD,
+                serializeElement = { it.serialize(maxSize = paddedOutputSize) })
+        )
 
-        // return the full-length buffer to match the final padded length
-        return outerBuffer.array()
+        // return the full-length buffer to match the final padded length; the trailing zero
+        // padding is ignored during deserialization because every field is length-encoded
+        return buffer.array()
     }
 
     /**

@@ -72,6 +72,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(project(":testutils"))
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.uiTestJunit4)
     androidTestImplementation(libs.androidx.navigation.testing)
     androidTestImplementation(libs.androidx.runner)
@@ -79,5 +80,6 @@ dependencies {
     androidTestImplementation(libs.truth)
 
     add("ksp", libs.hilt.compiler)
+    add("kspAndroidTest", libs.hilt.android.compiler)
 
 }
