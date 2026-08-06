@@ -81,8 +81,6 @@ public extension Message {
         switch self {
         case let .incomingMessage(message):
             switch message {
-            case .handoverMessage:
-                return nil
             case let .textMessage(message):
                 return try UiMessage.incoming(
                     messageText: message.messageText,

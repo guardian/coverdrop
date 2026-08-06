@@ -40,8 +40,7 @@ sealed class Message(
             // pending and sent messages are always from the user
             is Pending -> false
             is Sent -> false
-            // received hand-over and text messages are from journalists
-            is Handover -> true
+            // received text messages are from journalists
             is Received -> true
             // unknown messages are likely from remote as they are usually an artifact of protocol
             // updates on the server-side
@@ -72,6 +71,7 @@ sealed class Message(
     }
 
     companion object {
+        @Suppress("DEPRECATION")
         internal fun fromStored(storedMessage: StoredMessage, isPending: Boolean): Message {
             return when (storedMessage.type) {
                 StoredMessageType.SENT -> when (isPending) {
@@ -84,10 +84,8 @@ sealed class Message(
                     storedMessage.timestamp
                 )
 
-                StoredMessageType.RECEIVED_HANDOVER -> Handover(
-                    storedMessage.payload,
-                    storedMessage.timestamp
-                )
+                // the deprecated handover type must not trigger any logic
+                StoredMessageType.RECEIVED_HANDOVER -> Unknown(storedMessage.timestamp)
 
                 StoredMessageType.RECEIVED_UNKNOWN -> Unknown(storedMessage.timestamp)
             }
@@ -120,11 +118,6 @@ sealed class Message(
      * A message that has been sent and is not in the outgoing sending queue.
      */
     class Sent(val message: String, timestamp: Instant) : Message(timestamp)
-
-    /**
-     * A handover command received from a remote party (i.e. journalist).
-     */
-    class Handover(val handoverTo: JournalistId, timestamp: Instant) : Message(timestamp)
 
     /**
      * Unknown message type (e.g. introduced in a later protocol version that this client does

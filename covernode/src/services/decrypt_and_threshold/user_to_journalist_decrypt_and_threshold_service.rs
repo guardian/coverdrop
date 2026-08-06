@@ -9,6 +9,7 @@ use common::api::models::messages::covernode_to_journalist_message::{
     EncryptedCoverNodeToJournalistMessage,
 };
 use common::aws::kinesis::models::checkpoint::EncryptedUserToCoverNodeMessageWithCheckpointsJson;
+use common::protocol::constants::USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
 use common::protocol::covernode::decrypt_user_message;
 use common::protocol::keys::LatestKey;
 use common::protocol::recipient_tag::RECIPIENT_TAG_FOR_COVER;
@@ -43,6 +44,16 @@ impl UserToJournalistDecryptionAndMixingService {
             let Some(message) = recv_message else {
                 continue;
             };
+
+            // Verify that the message is the expected size
+            if message.message.as_ref().len() != USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN {
+                tracing::error!(
+                    "Received U2C message of unexpected size: {} bytes",
+                    message.message.as_ref().len()
+                );
+                record_u2c_metric_failure();
+                continue;
+            }
 
             // Lock the current key state
             let key_state = self.key_state.read().await;

@@ -13,6 +13,9 @@ import java.time.Instant
 internal enum class StoredMessageType(val flag: Byte) {
     SENT(0x00),
     RECEIVED_MESSAGE(0x01),
+
+    // kept so that existing mailboxes containing this type still deserialize
+    @Deprecated("The handover message type is deprecated; flag byte 0x02 is reserved, do not reuse")
     RECEIVED_HANDOVER(0x02),
     RECEIVED_UNKNOWN(0x7F);
 
@@ -89,12 +92,6 @@ internal data class StoredMessage(
             timestamp = timestamp,
             payload = message,
             type = StoredMessageType.RECEIVED_MESSAGE,
-        )
-
-        fun remoteHandover(timestamp: Instant, remoteId: String) = StoredMessage(
-            timestamp = timestamp,
-            payload = remoteId,
-            type = StoredMessageType.RECEIVED_HANDOVER,
         )
 
         fun remoteUnknown(timestamp: Instant) = StoredMessage(

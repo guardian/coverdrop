@@ -1,5 +1,4 @@
-use crate::api::models::journalist_id::{JournalistIdentity, MAX_JOURNALIST_IDENTITY_LEN};
-use crate::api::models::messages::{FLAG_J2U_MESSAGE_TYPE_HANDOVER, FLAG_J2U_MESSAGE_TYPE_MESSAGE};
+use crate::api::models::messages::FLAG_J2U_MESSAGE_TYPE_MESSAGE;
 use crate::crypto::keys::encryption::UnsignedEncryptionKeyPair;
 use crate::crypto::{Encryptable, TwoPartyBox};
 use crate::protocol::constants::JOURNALIST_TO_USER_MESSAGE_LEN;
@@ -42,7 +41,6 @@ pub fn new_random_encrypted_journalist_to_user_message(
 #[derive(Clone, Eq, PartialEq)]
 pub enum JournalistToUserMessage {
     Message(FixedSizeMessageText),
-    HandOver(JournalistIdentity),
 }
 
 impl fmt::Debug for JournalistToUserMessage {
@@ -56,17 +54,9 @@ impl JournalistToUserMessage {
         Self::Message(message)
     }
 
-    pub fn new_with_hand_over(journalist_id: JournalistIdentity) -> Self {
-        // Repeat an assertion made in the journalist identity creation function
-        // to be extra careful of refactoring
-        assert!(journalist_id.len() < MAX_JOURNALIST_IDENTITY_LEN);
-        Self::HandOver(journalist_id)
-    }
-
     pub fn get_type_flag(&self) -> u8 {
         match self {
             JournalistToUserMessage::Message(_) => FLAG_J2U_MESSAGE_TYPE_MESSAGE,
-            JournalistToUserMessage::HandOver(_) => FLAG_J2U_MESSAGE_TYPE_HANDOVER,
         }
     }
 
@@ -79,10 +69,6 @@ impl JournalistToUserMessage {
         match self {
             Self::Message(message) => {
                 bytes.extend(message.as_unencrypted_bytes());
-            }
-            Self::HandOver(journalist_id) => {
-                bytes.extend(journalist_id.as_bytes());
-                bytes.resize(JOURNALIST_TO_USER_MESSAGE_LEN, b'\0');
             }
         }
 
@@ -126,16 +112,8 @@ impl SerializedJournalistToUserMessage {
             FLAG_J2U_MESSAGE_TYPE_MESSAGE => Ok(JournalistToUserMessage::new_with_message(
                 PaddedCompressedString::from_vec_unchecked(content.to_vec()),
             )),
-            FLAG_J2U_MESSAGE_TYPE_HANDOVER => {
-                let Some(end) = content.iter().position(|&c| c == b'\0') else {
-                    anyhow::bail!("Could not end of journalist identity string")
-                };
-
-                let journalist_id = String::from_utf8(content[..end].to_vec())?;
-                let journalist_id = JournalistIdentity::new(&journalist_id)?;
-
-                Ok(JournalistToUserMessage::new_with_hand_over(journalist_id))
-            }
+            // Any other flag, including the deprecated handover flag (0x01), is
+            // rejected here so that no logic can be triggered by such messages.
             _ => anyhow::bail!(
                 "Serialized journalist to user message does not have a valid type flag"
             ),
@@ -160,10 +138,9 @@ mod tests_journalist_to_user {
 
     #[test]
     fn all_j2u_message_types_round_trip() -> anyhow::Result<()> {
-        let messages = vec![
-            JournalistToUserMessage::new_with_message(FixedSizeMessageText::new("test")?),
-            JournalistToUserMessage::new_with_hand_over(JournalistIdentity::new("id")?),
-        ];
+        let messages = vec![JournalistToUserMessage::new_with_message(
+            FixedSizeMessageText::new("test")?,
+        )];
 
         for message in messages {
             let serialized_message = message.serialize();
@@ -176,6 +153,17 @@ mod tests_journalist_to_user {
         }
 
         Ok(())
+    }
+
+    #[test]
+    fn deprecated_handover_type_flag_fails_to_parse() {
+        // 0x01 is the deprecated handover type flag; it must not trigger any logic
+        let mut bytes = vec![0x01];
+        bytes.resize(JOURNALIST_TO_USER_MESSAGE_LEN, b'\0');
+
+        let serialized_message = SerializedJournalistToUserMessage::from_vec_unchecked(bytes);
+
+        assert!(serialized_message.to_message().is_err());
     }
 
     #[test]

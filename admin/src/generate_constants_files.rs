@@ -1,6 +1,9 @@
 use std::path::Path;
 
 use common::api::models::journalist_id::MAX_JOURNALIST_IDENTITY_LEN;
+// The deprecated handover flag is still emitted into the mobile constants files so
+// that its value (0x01) remains visibly reserved on all platforms.
+#[allow(deprecated)]
 use common::api::models::messages::{
     FLAG_J2U_MESSAGE_TYPE_HANDOVER, FLAG_J2U_MESSAGE_TYPE_MESSAGE, RECIPIENT_TAG_BYTES_U2J_COVER,
 };
@@ -70,6 +73,7 @@ macro_rules! format_android_bytearray {
     }};
 }
 
+#[allow(deprecated)]
 fn generate_constants_file_android(path: &Path) -> anyhow::Result<()> {
     let file = File::create(path)?;
     let mut writer = LineWriter::new(file);
@@ -143,6 +147,9 @@ fn generate_constants_file_android(path: &Path) -> anyhow::Result<()> {
     writer.write_fmt(format_android_constant_val_byte!(
         FLAG_J2U_MESSAGE_TYPE_MESSAGE
     ))?;
+    writer.write_all(
+        b"@Deprecated(\"The handover message type is deprecated; flag byte 0x01 is reserved, do not reuse\")\n",
+    )?;
     writer.write_fmt(format_android_constant_val_byte!(
         FLAG_J2U_MESSAGE_TYPE_HANDOVER
     ))?;
@@ -203,6 +210,7 @@ macro_rules! format_ios_byte_array {
     }};
 }
 
+#[allow(deprecated)]
 fn generate_constants_file_ios(path: &Path) -> anyhow::Result<()> {
     let file = File::create(path)?;
     let mut writer = LineWriter::new(file);
@@ -285,6 +293,9 @@ fn generate_constants_file_ios(path: &Path) -> anyhow::Result<()> {
 
     writer.write_fmt(format_ios_let_constant!(MAX_JOURNALIST_IDENTITY_LEN))?;
     writer.write_fmt(format_ios_let_constant_byte!(FLAG_J2U_MESSAGE_TYPE_MESSAGE))?;
+    writer.write_all(
+        b"    @available(*, deprecated, message: \"The handover message type is deprecated; flag byte 0x01 is reserved, do not reuse\")\n",
+    )?;
     writer.write_fmt(format_ios_let_constant_byte!(
         FLAG_J2U_MESSAGE_TYPE_HANDOVER
     ))?;

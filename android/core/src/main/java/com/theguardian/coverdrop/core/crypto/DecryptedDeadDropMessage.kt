@@ -1,9 +1,7 @@
 package com.theguardian.coverdrop.core.crypto
 
 import com.theguardian.coverdrop.core.api.models.JournalistIdentity
-import com.theguardian.coverdrop.core.generated.FLAG_J2U_MESSAGE_TYPE_HANDOVER
 import com.theguardian.coverdrop.core.generated.FLAG_J2U_MESSAGE_TYPE_MESSAGE
-import com.theguardian.coverdrop.core.generated.MAX_JOURNALIST_IDENTITY_LEN
 import com.theguardian.coverdrop.core.models.JournalistId
 import com.theguardian.coverdrop.core.models.PaddedCompressedString
 import com.theguardian.coverdrop.core.utils.getRemainingAsByteArray
@@ -12,7 +10,7 @@ import java.time.Instant
 
 /**
  * An abstract decrypted message from the dead drop that can be either a normal text message
- * [Text] or a hand-over command [Handover].
+ * [Text] or an [Unknown] message type.
  */
 internal sealed class DecryptedDeadDropMessage(
     val remoteId: JournalistId,
@@ -35,12 +33,8 @@ internal sealed class DecryptedDeadDropMessage(
                     timestamp = timestamp
                 )
 
-                FLAG_J2U_MESSAGE_TYPE_HANDOVER -> Handover.parse(
-                    bytes = payload,
-                    remoteId = remoteId,
-                    timestamp = timestamp
-                )
-
+                // this includes the deprecated handover flag (0x01) which must not
+                // trigger any logic
                 else -> Unknown.parse(remoteId = remoteId, timestamp = timestamp)
             }
         }
@@ -66,36 +60,6 @@ internal sealed class DecryptedDeadDropMessage(
                     timestamp = timestamp,
                     message = paddedCompressedString.toPayloadString(),
                 )
-            }
-        }
-    }
-
-    /**
-     * A message with a hand-over flag set.
-     */
-    internal class Handover(
-        remoteId: JournalistId,
-        timestamp: Instant,
-        val handoverTo: JournalistIdentity
-    ) : DecryptedDeadDropMessage(remoteId, timestamp) {
-        companion object {
-            fun parse(
-                bytes: ByteArray,
-                remoteId: JournalistId,
-                timestamp: Instant
-            ): Handover {
-                // the remainder of the message is expected to be 0x00 bytes
-                val end = bytes.indexOfFirst { it == 0x00.toByte() }
-
-                if (end in 0 until MAX_JOURNALIST_IDENTITY_LEN) {
-                    return Handover(
-                        remoteId,
-                        timestamp,
-                        bytes.slice(0 until end).toByteArray().decodeToString()
-                    )
-                } else {
-                    throw IllegalArgumentException("failed parsing journalist identity (end=$end)")
-                }
             }
         }
     }

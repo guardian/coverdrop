@@ -70,11 +70,6 @@ internal class DeadDropProcessor(private val libSodium: SodiumAndroid) {
                     message.message
                 )
 
-                is DecryptedDeadDropMessage.Handover -> StoredMessage.remoteHandover(
-                    message.timestamp,
-                    message.handoverTo
-                )
-
                 is DecryptedDeadDropMessage.Unknown -> StoredMessage.remoteUnknown(message.timestamp)
             }
 

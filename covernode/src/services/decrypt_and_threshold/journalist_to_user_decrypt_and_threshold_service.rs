@@ -6,6 +6,7 @@ use crate::mixing::mixing_strategy::{
 use crate::key_state::KeyState;
 use common::api::models::dead_drops::JournalistToUserDeadDropMessages;
 use common::aws::kinesis::models::checkpoint::EncryptedJournalistToCoverNodeMessageWithCheckpointsJson;
+use common::protocol::constants::JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
 use common::protocol::covernode::decrypt_journalist_message;
 use common::time;
 use tokio::sync::mpsc;
@@ -41,6 +42,16 @@ impl JournalistToUserDecryptionAndMixingService {
             let Some(message) = recv_message else {
                 continue;
             };
+
+            // Verify that the message is the expected size
+            if message.message.as_ref().len() != JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN {
+                tracing::error!(
+                    "Received J2C message of unexpected size: {} bytes",
+                    message.message.as_ref().len()
+                );
+                record_j2c_metric_failure();
+                continue;
+            }
 
             let key_state = self.key_state.read().await;
 

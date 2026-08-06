@@ -9,8 +9,6 @@ public enum Message: Codable, Equatable, Hashable, Comparable {
         switch self {
         case let .incomingMessage(message: incomingMessage):
             switch incomingMessage {
-            case let .handoverMessage(message: message):
-                return message.timestamp
             case let .textMessage(message: message):
                 return message.dateReceived
             }
@@ -107,28 +105,6 @@ extension OutboundMessageData: CustomStringConvertible {
 
 public enum IncomingMessageType: Hashable, Codable, Comparable {
     case textMessage(message: IncomingMessageData)
-    case handoverMessage(message: HandoverMessageData)
-}
-
-public struct HandoverMessageData: Hashable, Codable, Comparable {
-    public static func < (lhs: HandoverMessageData, rhs: HandoverMessageData) -> Bool {
-        return lhs.handoverTo < rhs.handoverTo &&
-            lhs.sender < rhs.sender &&
-            lhs.timestamp < rhs.timestamp
-    }
-
-    init?(sender: JournalistData, timestamp: Date, handoverTo: String) {
-        if handoverTo.count > Constants.maxJournalistIdentityLen {
-            return nil
-        }
-        self.handoverTo = handoverTo
-        self.sender = sender
-        self.timestamp = timestamp
-    }
-
-    public var sender: JournalistData
-    public var timestamp: Date
-    public var handoverTo: String
 }
 
 public struct IncomingMessageData: Hashable, Codable, Comparable {

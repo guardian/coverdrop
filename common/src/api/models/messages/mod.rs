@@ -18,6 +18,9 @@ pub const FLAG_J2U_REAL: u8 = 0x01;
 // Constants for [JournalistToUserMessage]
 //
 pub const FLAG_J2U_MESSAGE_TYPE_MESSAGE: u8 = 0x00;
+/// DEPRECATED: the handover message type. The value 0x01 is reserved and MUST NOT
+/// be reused for a new message type.
+#[deprecated(note = "the handover message type is deprecated; 0x01 is reserved, do not reuse")]
 pub const FLAG_J2U_MESSAGE_TYPE_HANDOVER: u8 = 0x01;
 
 //

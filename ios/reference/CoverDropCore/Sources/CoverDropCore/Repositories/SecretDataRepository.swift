@@ -30,7 +30,7 @@ public protocol SecretDataRepositoryProtocol {
     func unlock(passphrase: ValidPassword) async throws
 
     /// Returns all mailbox recipients (journalists or desks) that the user has had conversations with.
-    func getMailboxRecipients(publicKeyData: VerifiedPublicKeys) async throws -> [JournalistData]
+    func getMailboxRecipients() async throws -> [JournalistData]
 
     /// Adds a new message to the mailbox (will automatically sorted to the right conversation).
     func addMessage(message: Message) async throws
@@ -196,7 +196,7 @@ public class SecretDataRepository: ObservableObject, SecretDataRepositoryProtoco
     /// This is used when we decrypt incoming dead drops so that we only try with keys for journalists
     /// we've been in converstations with.
     /// - Returns: A list of JournalistKeyData
-    public func getMailboxRecipients(publicKeyData: VerifiedPublicKeys) async throws -> [JournalistData] {
+    public func getMailboxRecipients() async throws -> [JournalistData] {
         guard case let .unlockedSecretData(unlockedData: unlockedData) = secretData else {
             throw SecretDataRepositoryError.secretDataIsLocked
         }
@@ -208,10 +208,6 @@ public class SecretDataRepository: ObservableObject, SecretDataRepositoryProtoco
                 switch messageType {
                 case let .textMessage(message: message):
                     return message.sender
-                case let .handoverMessage(message: handover):
-                    return publicKeyData.getJournalistKeyDataForJournalistId(
-                        journalistId: handover.handoverTo
-                    )
                 }
             }
         }

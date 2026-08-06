@@ -21,13 +21,7 @@ pub fn load_user_dead_drop_messages(
 
     // POSSIBLE IMPROVEMENT:
     // We could keep a track of who the user has messages so we don't have to check every single key
-    // in the verified keys list. This is non-trivial since we want to support hand-off of journalists
-    // ideally without any client side state.
-    //
-    // A possible solution to this would be to have a "system" message which a journalist can send to a client
-    // the client interprets this as a command rather than as a regular message and adds the journalist to their
-    // list of known journalists. Even with this it's not super straight forward since the forwarding command and
-    // the first message from another journalist could arrive out of order.
+    // in the verified keys list.
 
     for dead_drop in verified_dead_drops {
         for msg in dead_drop.data.messages {
@@ -37,11 +31,6 @@ pub fn load_user_dead_drop_messages(
                 match message {
                     JournalistToUserMessage::Message(message) => {
                         mailbox.add_message_to_user_from_journalist(&journalist_id, &message);
-                    }
-                    JournalistToUserMessage::HandOver(_) => {
-                        // POSSIBLY TODO implement the optimisation that allows users to limit the number of journalist keys they check
-                        // against dead drop messages. As it stands the Rust code doesn't do this since we only act as a user for
-                        // test and debug purposes.
                     }
                 }
                 messages_loaded += 1;

@@ -27,7 +27,7 @@ public struct DeadDropDecryptionService {
             let userSecretKey: SecretEncryptionKey<User> = secretData.userKey.secretKey
 
             let currentConversationJournalists = try await secretDataRepository
-                .getMailboxRecipients(publicKeyData: verifiedPublicKeys)
+                .getMailboxRecipients()
 
             var messages: Set<Message> = []
             for journalistData in currentConversationJournalists {

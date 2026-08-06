@@ -452,4 +452,22 @@ impl KinesisClient {
     pub async fn split_user_to_journalist_shard(&self) -> anyhow::Result<()> {
         self.split_shard(StreamKind::UserToJournalist).await
     }
+
+    /// Puts raw bytes into the journalist-to-user Kinesis stream without any length checks.
+    #[cfg(feature = "integration-tests")]
+    pub async fn put_raw_bytes_onto_j2c_stream(&self, raw_bytes: &[u8]) -> anyhow::Result<()> {
+        let serialized = BASE64_STANDARD_NO_PAD.encode(raw_bytes);
+        let partition_key = Self::get_partition_key(raw_bytes);
+        let data = Blob::new(serialized);
+
+        self.inner
+            .put_record()
+            .stream_name(&self.journalist_to_user_stream)
+            .partition_key(partition_key)
+            .data(data)
+            .send()
+            .await?;
+
+        Ok(())
+    }
 }

@@ -127,13 +127,13 @@ The encoded representation looks like the following:
 ## Journalist to User Message
 
 The `JournalistToUserMessage` is a [Two Party Box](cryptography.md#two-party-box) which can contain different types of message.
-The type of message is distinguished using a byte, where `0` indicates a normal text message, `1` indicates a hand over message, etc.
+The type of message is distinguished using a byte, where `0` indicates a normal text message.
+The value `1` (formerly the hand-over message type) is deprecated and reserved; receivers must ignore messages with this flag.
 The message body is always the same size, regardless of the message type.
 
 The currently available message types are:
 
 -   Message: containing a 512 byte [Padded Compressed String](cryptography.md#padded-compressed-string).
--   Handover: containing the ID of the target journalist that the user is being handed over to. Unused bytes are set to `0x00`, padding out the payload to 512 bytes to match the other message types.
 
 The encoded representation of a plain message looks like the following:
 

@@ -316,3 +316,8 @@ pub const SECRET_SHARING_K_VALUE: usize = 1;
 
 // The total number of shares to create for the backup secret. Must be >= K.
 pub const SECRET_SHARING_N_VALUE: usize = 1;
+
+// U2C and J2C messages should have different lengths.
+const _: () = assert!(
+    USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN != JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN
+);

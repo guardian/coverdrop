@@ -16,14 +16,9 @@ enum DeadDropMessageParser {
                 deadDropId: deadDropId,
                 dateReceived: dateReceived
             )
-        } else if firstByte == Constants.flagJ2UMessageTypeHandover {
-            return parseHandoverMessage(
-                messageBytes: remainingMessageBytes,
-                journalistData: journalistData,
-                deadDropId: deadDropId,
-                dateReceived: dateReceived
-            )
         } else {
+            // this includes the deprecated handover flag (0x01) which must not
+            // trigger any logic
             return nil
         }
     }
@@ -47,27 +42,5 @@ enum DeadDropMessageParser {
             dateReceived: dateReceived,
             deadDropId: deadDropId
         )))
-    }
-
-    private static func parseHandoverMessage(
-        messageBytes: [UInt8],
-        journalistData: JournalistData,
-        deadDropId _: Int,
-        dateReceived: Date
-    ) -> Message? {
-        guard let endPositionOfJournalistIdentity = messageBytes.firstIndex(of: 0x00),
-              Constants.maxJournalistIdentityLen >= endPositionOfJournalistIdentity,
-              let journalistIdentityString = String(
-                  bytes: Array(messageBytes[1 ..< endPositionOfJournalistIdentity]),
-                  encoding: .utf8
-              ),
-              journalistIdentityString.count <= Constants.maxJournalistIdentityLen,
-              let handoverMessage = HandoverMessageData(
-                  sender: journalistData,
-                  timestamp: dateReceived,
-                  handoverTo: journalistIdentityString
-              ) else { return nil }
-        return .incomingMessage(message:
-            .handoverMessage(message: handoverMessage))
     }
 }

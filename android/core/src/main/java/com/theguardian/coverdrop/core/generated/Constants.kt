@@ -29,6 +29,7 @@ internal const val CLIENT_STATUS_DOWNLOAD_RATE_SECONDS = 300
 internal const val COVERNODE_WRAPPING_KEY_COUNT = 2
 internal const val MAX_JOURNALIST_IDENTITY_LEN = 128
 internal const val FLAG_J2U_MESSAGE_TYPE_MESSAGE: Byte = 0x00
+@Deprecated("The handover message type is deprecated; flag byte 0x01 is reserved, do not reuse")
 internal const val FLAG_J2U_MESSAGE_TYPE_HANDOVER: Byte = 0x01
 internal val RECIPIENT_TAG_BYTES_U2J_COVER = byteArrayOf(0x00, 0x00, 0x00, 0x00)
 

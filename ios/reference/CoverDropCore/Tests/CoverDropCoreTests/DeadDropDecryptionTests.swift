@@ -23,12 +23,9 @@ final class DeadDropDecryptionTests: XCTestCase {
         }
     }
 
-    func testDecryptMessageParsesHandoverMessage() throws {
-        let journalistId = "static_test_journalist"
-        let journalistIdBytes: [UInt8] = Array(journalistId.utf8)
-
-        var handoverMessage = [Constants.flagJ2UMessageTypeHandover]
-        handoverMessage.append(contentsOf: journalistIdBytes)
+    func testDecryptMessageIgnoresDeprecatedHandoverFlag() throws {
+        // 0x01 is the deprecated handover type flag; it must not trigger any logic
+        var handoverMessage: [UInt8] = [0x01]
 
         let padding: [UInt8] = Array(repeating: 0x00, count: Constants.messagePaddingLen - handoverMessage.count)
         handoverMessage.append(contentsOf: padding)
@@ -41,12 +38,7 @@ final class DeadDropDecryptionTests: XCTestCase {
             deadDropId: 1,
             dateReceived: DateFunction.currentTime()
         )
-        if case let .incomingMessage(message: incomingMessage) = result,
-           case let .handoverMessage(message: messageData) = incomingMessage {
-            XCTAssertEqual(messageData.handoverTo, journalistId)
-        } else {
-            XCTFail("Failed to parse message")
-        }
+        XCTAssertNil(result)
     }
 
     func testDecryptMessageFailsOnEmptyMessage() throws {

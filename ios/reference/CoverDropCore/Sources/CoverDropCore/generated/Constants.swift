@@ -35,6 +35,11 @@ public enum Constants {
     public static let covernodeWrappingKeyCount = 2
     public static let maxJournalistIdentityLen = 128
     public static let flagJ2UMessageTypeMessage: UInt8 = 0x00
+    @available(
+        *,
+        deprecated,
+        message: "The handover message type is deprecated; flag byte 0x01 is reserved, do not reuse"
+    )
     public static let flagJ2UMessageTypeHandover: UInt8 = 0x01
     public static let recipientTagBytesU2JCover = [0x00, 0x00, 0x00, 0x00]
 }
