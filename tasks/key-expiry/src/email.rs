@@ -3,13 +3,16 @@
 use std::collections::HashMap;
 
 use common::{
-    api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
+    api::models::{
+        covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity,
+        sentinel_id::SentinelIdentity,
+    },
     aws::ssm::{client::SsmClient, parameters::NOTIFICATION_EMAIL_SENDER, prefix::ParameterPrefix},
     crypto::keys::{role::Role, signed::SignedKey},
     protocol::keys::{
         CoverNodeIdPublicKey, CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey,
         JournalistIdPublicKey, JournalistMessagingPublicKey, JournalistProvisioningPublicKey,
-        OrganizationPublicKey,
+        OrganizationPublicKey, SentinelIdPublicKey,
     },
 };
 
@@ -98,6 +101,7 @@ fn add_text_for_expiring_pks_with_identities<Identity, R, PK>(
     text.push_str("\n\n");
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn create_email_body(
     expiring_org_pk: ExpiryState<&OrganizationPublicKey>,
     expiring_covernode_provisioning_pk: ExpiryState<&CoverNodeProvisioningPublicKey>,
@@ -112,6 +116,7 @@ pub fn create_email_body(
         &JournalistIdentity,
         ExpiryState<&JournalistMessagingPublicKey>,
     >,
+    expiring_sentinel_id_pks: HashMap<&SentinelIdentity, ExpiryState<&SentinelIdPublicKey>>,
 ) -> Option<String> {
     let mut text = String::new();
 
@@ -146,6 +151,12 @@ pub fn create_email_body(
         &mut text,
         "Journalist messaging",
         expiring_journalist_msg_pks,
+    );
+
+    add_text_for_expiring_pks_with_identities(
+        &mut text,
+        "Sentinel identity",
+        expiring_sentinel_id_pks,
     );
 
     if !text.is_empty() {

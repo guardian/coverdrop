@@ -485,6 +485,50 @@ impl OrganizationPublicKeyFamilyList {
             .max_by_key(|msg_pk| msg_pk.not_valid_after)
     }
 
+    pub fn sentinel_id_iter(&self) -> impl Iterator<Item = &SentinelIdentity> {
+        self.0.iter().flat_map(|org_pk_family| {
+            org_pk_family
+                .journalists
+                .iter()
+                .flat_map(|provisioning_family| provisioning_family.sentinel.keys())
+        })
+    }
+
+    pub fn sentinel_id_pk_iter(
+        &self,
+    ) -> impl Iterator<Item = (&SentinelIdentity, &SentinelIdPublicKey)> {
+        self.0.iter().flat_map(|org_pk_family| {
+            org_pk_family
+                .journalists
+                .iter()
+                .flat_map(|provisioning_family| provisioning_family.sentinel_iter())
+        })
+    }
+
+    pub fn latest_sentinel_id_pk(
+        &self,
+        sentinel_id: &SentinelIdentity,
+    ) -> Option<&SentinelIdPublicKey> {
+        self.sentinel_id_pk_iter()
+            .filter_map(|(iter_sentinel_id, id_pk)| {
+                if iter_sentinel_id == sentinel_id {
+                    Some(id_pk)
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|id_pk| id_pk.not_valid_after)
+    }
+
+    pub fn latest_sentinel_id_pk_iter(
+        &self,
+    ) -> impl Iterator<Item = (&SentinelIdentity, &SentinelIdPublicKey)> {
+        self.sentinel_id_iter().flat_map(|sentinel_id| {
+            self.latest_sentinel_id_pk(sentinel_id)
+                .map(|id_pk| (sentinel_id, id_pk))
+        })
+    }
+
     // Getter:
     //    Get various public signing keys using their raw Ed25519 format
     //    these are used when we have been sent a signing key and we want
@@ -536,17 +580,6 @@ impl OrganizationPublicKeyFamilyList {
         self.journalist_id_pk_iter()
             .find(|(_, pk)| *pk.key.as_bytes() == *candidate_key)
             .map(|(journalist_id, _)| journalist_id)
-    }
-
-    pub fn sentinel_id_pk_iter(
-        &self,
-    ) -> impl Iterator<Item = (&SentinelIdentity, &SentinelIdPublicKey)> {
-        self.0.iter().flat_map(|org_pk_family| {
-            org_pk_family
-                .journalists
-                .iter()
-                .flat_map(|provisioning_family| provisioning_family.sentinel_iter())
-        })
     }
 
     pub fn find_sentinel_id_pk_from_raw_ed25519_pk(

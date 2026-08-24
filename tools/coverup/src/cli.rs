@@ -368,6 +368,15 @@ pub enum JournalistVaultCommand {
         #[clap(long, conflicts_with = "password")]
         password_path: Option<PathBuf>,
     },
+    /// Revert the last applied migration on a journalist vault.
+    RevertLastMigration {
+        #[clap(long)]
+        vault_path: PathBuf,
+        #[clap(long)]
+        password: Option<String>,
+        #[clap(long, conflicts_with = "password")]
+        password_path: Option<PathBuf>,
+    },
     /// Add a provisioning key to a journalist vault.
     /// Note that Sentinel automatically adds provisioning keys from the API to journalist vaults.
     AddProvisioningPublicKey {

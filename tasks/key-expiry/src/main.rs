@@ -7,8 +7,8 @@ use common::{
         ses::client::{SendEmailConfig, SesClient},
         ssm::client::SsmClient,
     },
-    protocol::keys::{load_anchor_org_pks, load_anchor_org_pks_from_ssm},
-    time::{self, now},
+    clap::Stage,
+    time::{self},
 };
 
 use crate::{
@@ -42,36 +42,34 @@ async fn main() -> anyhow::Result<()> {
 
     let Cli {
         api_url,
-        key_location,
         team_email_address,
         stage,
+        parameter_prefix,
     } = Cli::parse();
 
     tracing::info!(
-        "parameter_prex={:?}, keys_path={:?}, api_url={}",
-        key_location.parameter_prefix,
-        key_location.keys_path,
+        "parameter_prefix={:?}, api_url={}",
+        parameter_prefix,
         api_url,
     );
 
     let api_client = ApiClient::new(api_url);
 
-    let (from_email_address, anchor_org_pks) =
-        if let Some(prefix) = key_location.parameter_prefix.clone() {
-            let ssm_client = SsmClient::new_in_aws().await;
-            let from_email_address = source_email(&ssm_client, &prefix).await?;
-            let anchor_org_pks = load_anchor_org_pks_from_ssm(&ssm_client, &prefix, now()).await?;
-            (from_email_address, anchor_org_pks)
-        } else {
-            let from_email_address = "test@test.test".to_owned();
-            let anchor_org_pks = load_anchor_org_pks(key_location.keys_path.unwrap(), now())?;
-            (from_email_address, anchor_org_pks)
-        };
+    let from_email_address = if let Some(prefix) = parameter_prefix.clone() {
+        let ssm_client = SsmClient::new_in_aws().await;
+        source_email(&ssm_client, &prefix).await?
+    } else if stage == Stage::Development {
+        "test@test.test".to_owned()
+    } else {
+        anyhow::bail!("Couldn't find parameter prefix for source email address")
+    };
+
+    let trust_anchors = trust_anchors::get_trust_anchors(&stage, time::now())?;
 
     let keys_and_profiles = api_client
         .get_public_keys()
         .await?
-        .into_trusted(&anchor_org_pks, time::now());
+        .into_trusted(&trust_anchors, time::now());
 
     let keys = keys_and_profiles.keys;
 
@@ -95,6 +93,10 @@ async fn main() -> anyhow::Result<()> {
     let expiring_journalist_msg_pks =
         check_pks_with_identifiers(&journalist_ids, keys.latest_journalist_msg_pk_iter());
 
+    let sentinel_ids = keys.sentinel_id_iter().collect::<Vec<_>>();
+    let expiring_sentinel_id_pks =
+        check_pks_with_identifiers(&sentinel_ids, keys.latest_sentinel_id_pk_iter());
+
     if let Some(email_body) = create_email_body(
         expiring_organization_pk,
         expiring_covernode_provisioning_pk,
@@ -103,8 +105,9 @@ async fn main() -> anyhow::Result<()> {
         expiring_covernode_msg_pks,
         expiring_journalist_id_pks,
         expiring_journalist_msg_pks,
+        expiring_sentinel_id_pks,
     ) {
-        let in_aws = key_location.parameter_prefix.is_some();
+        let in_aws = parameter_prefix.is_some();
         if in_aws {
             let email_client = SesClient::new_in_aws(from_email_address).await;
 

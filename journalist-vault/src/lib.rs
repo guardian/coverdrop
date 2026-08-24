@@ -72,6 +72,7 @@ use msg_key_queries::{
     candidate_msg_key_pair, insert_candidate_msg_key_pair,
     promote_candidate_msg_key_pair_to_published,
 };
+use sqlx::migrate::Migrate;
 use sqlx::Acquire;
 use sqlx::SqlitePool;
 use thiserror::Error;
@@ -1297,4 +1298,41 @@ impl JournalistVault {
     ) -> anyhow::Result<Option<SentinelIdKeyPair>> {
         self.latest_id_key_pair::<SentinelIdKeyPair>(now).await
     }
+}
+
+/// Revert the last applied migration on the given pool.
+/// Requires a `.down.sql` file to exist for the migration being reverted.
+pub async fn revert_last_migration(pool: &SqlitePool) -> anyhow::Result<()> {
+    use sqlx::migrate::MigrationType;
+
+    let migrator = sqlx::migrate!();
+
+    let applied: Vec<sqlx::migrate::AppliedMigration> =
+        pool.acquire().await?.list_applied_migrations().await?;
+
+    let mut versions: Vec<i64> = applied.iter().map(|m| m.version).collect();
+    versions.sort();
+
+    let target = match versions.len() {
+        0 => anyhow::bail!("No migrations have been applied"),
+        1 => 0,
+        n => versions[n - 2],
+    };
+
+    let latest = *versions.last().unwrap();
+
+    let has_down = migrator
+        .iter()
+        .any(|m| m.version == latest && m.migration_type == MigrationType::ReversibleDown);
+
+    if !has_down {
+        anyhow::bail!("Migration {latest} has no .down.sql file and cannot be reverted");
+    }
+
+    println!("Reverting migration version {latest} (target: {target})");
+
+    migrator.undo(pool, target).await?;
+
+    println!("Migration {latest} reverted successfully");
+    Ok(())
 }

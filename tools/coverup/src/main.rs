@@ -499,6 +499,20 @@ async fn main() -> anyhow::Result<()> {
 
                 println!("OK");
             }
+            JournalistVaultCommand::RevertLastMigration {
+                vault_path,
+                password,
+                password_path,
+            } => {
+                let password = validate_password_from_args(password, password_path)?;
+
+                let db =
+                    Argon2SqlCipher::open_and_maybe_migrate_from_legacy(&vault_path, &password)
+                        .await?;
+                let pool = db.into_sqlite_pool();
+
+                journalist_vault::revert_last_migration(&pool).await?;
+            }
         },
         Command::Verify { command } => match command {
             VerifyCommand::JournalistProvisioningKeyPair {

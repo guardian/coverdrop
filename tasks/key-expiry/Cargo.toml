@@ -18,3 +18,4 @@ serde_json.workspace = true
 thiserror.workspace = true
 
 common = { path = "../../common" }
+trust-anchors = { path = "../../trust-anchors" }
