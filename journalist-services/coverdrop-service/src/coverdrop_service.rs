@@ -4,7 +4,7 @@ use common::api::models::message_id::MessageId;
 use common::{
     api::{
         api_client::ApiClient,
-        models::messages::user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
+        models::messages::user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
     },
     client::VerifiedKeysAndJournalistProfiles,
     epoch::Epoch,
@@ -54,7 +54,7 @@ impl JournalistCoverDropService {
         public_info: &VerifiedKeysAndJournalistProfiles,
         on_progress: Option<impl Fn(usize)>,
         now: DateTime<Utc>,
-    ) -> Result<Vec<UserToJournalistMessageWithDeadDropId>> {
+    ) -> Result<Vec<U2JMessageWithMetadata>> {
         let maybe_invoke_on_progress = |remaining: usize| {
             if let Some(ref callback) = on_progress {
                 callback(remaining);
@@ -124,7 +124,7 @@ impl JournalistCoverDropService {
             .map(|(_, msg_pk)| msg_pk)
             .collect::<Vec<_>>();
 
-        let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> = dead_drops
+        let decrypted_messages: Vec<U2JMessageWithMetadata> = dead_drops
             .iter()
             .enumerate()
             .flat_map(|(index, dead_drop)| {
@@ -138,6 +138,7 @@ impl JournalistCoverDropService {
                             &journalist_msg_key_pairs,
                             encrypted_message,
                             dead_drop.id,
+                            dead_drop.created_at,
                         )
                     })
                     .collect::<Vec<_>>();

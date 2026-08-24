@@ -130,6 +130,7 @@ async fn main() -> anyhow::Result<()> {
             ProductionCommand::K8s {
                 ssh_user,
                 admin_machine_ip,
+                ssh_key,
                 port,
             } => {
                 println!(
@@ -138,12 +139,14 @@ async fn main() -> anyhow::Result<()> {
                 command_over_ssh(
                     &ssh_user,
                     admin_machine_ip,
+                    &ssh_key,
                     "kubectl -n kubernetes-dashboard create token admin-user",
                 )
                 .await?;
                 tunnel_and_port_forward(
                     &ssh_user,
                     admin_machine_ip,
+                    &ssh_key,
                     "kubernetes-dashboard-kong-proxy",
                     "kubernetes-dashboard",
                     443,
@@ -154,11 +157,13 @@ async fn main() -> anyhow::Result<()> {
             ProductionCommand::Argo {
                 ssh_user,
                 admin_machine_ip,
+                ssh_key,
                 port,
             } => {
                 tunnel_and_port_forward(
                     &ssh_user,
                     admin_machine_ip,
+                    &ssh_key,
                     "argocd-server",
                     "argocd",
                     443,
@@ -169,11 +174,13 @@ async fn main() -> anyhow::Result<()> {
             ProductionCommand::Longhorn {
                 admin_machine_ip,
                 ssh_user,
+                ssh_key,
                 local_port,
             } => {
                 tunnel_and_port_forward(
                     &ssh_user,
                     admin_machine_ip,
+                    &ssh_key,
                     "longhorn-frontend",
                     "longhorn-system",
                     80,

@@ -5,9 +5,13 @@ pub mod forms;
 pub mod models;
 pub mod tls_serialized;
 
-/// It's important that the signature algorithm in the ciphersuite is Ed25519, in order to match
-/// journalist / sentinel identity [`SignedPublicSigningKey`]s
-pub const MLS_CIPHERSUITE: Ciphersuite = Ciphersuite::MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519;
+/// The use of DH X25519, ChaCha20Poly1305, and Ed25519 matches the cryptographic primitives of
+/// the CoverDrop protocol. We're using RustCrypto as a crypto provider so that OpenMLS
+/// uses the same underlying crypto libraries as the rest of the project.
+/// It's especially important that the signature algorithm in the ciphersuite be Ed25519,
+/// in order to match Sentinel Identity [`SignedPublicSigningKey`]s
+pub const MLS_CIPHERSUITE: Ciphersuite =
+    Ciphersuite::MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519;
 
 pub const PROTOCOL_VERSION: ProtocolVersion = ProtocolVersion::Mls10;
 

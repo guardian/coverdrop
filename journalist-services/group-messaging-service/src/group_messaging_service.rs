@@ -407,6 +407,7 @@ impl GroupMessagingServiceInner {
         }
 
         let group_config = &MlsGroupCreateConfig::builder()
+            .ciphersuite(MLS_CIPHERSUITE)
             .use_ratchet_tree_extension(true)
             .build();
 

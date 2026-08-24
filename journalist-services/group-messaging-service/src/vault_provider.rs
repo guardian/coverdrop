@@ -22,6 +22,8 @@ impl Codec for CborCodec {
 
 /// OpenMLS provider that uses RustCrypto for crypto operations and SQLite for persistent storage.
 pub(crate) struct VaultProvider<'a> {
+    // Using RustCrypto means that OpenMLS uses the same key exchange, AEAD, and signing algorithms
+    // as the CoverDrop protocol.
     crypto: RustCrypto,
     storage: SqliteStorageProvider<'a, CborCodec>,
 }

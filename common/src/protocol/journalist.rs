@@ -7,9 +7,10 @@ use crate::api::models::messages::journalist_to_user_message::{
     EncryptedJournalistToUserMessage, JournalistToUserMessage,
 };
 use crate::api::models::messages::user_to_journalist_message::EncryptedUserToJournalistMessage;
-use crate::api::models::messages::user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId;
+use crate::api::models::messages::user_to_journalist_message_with_metadata::U2JMessageWithMetadata;
 use crate::protocol::constants::JOURNALIST_TO_USER_ENCRYPTED_MESSAGE_LEN;
 use crate::FixedSizeMessageText;
+use chrono::{DateTime, Utc};
 
 use super::covernode::covernode_msg_pks_from_hierarchy;
 use super::keys::{
@@ -68,7 +69,8 @@ pub fn get_decrypted_journalist_dead_drop_message(
     journalist_msg_key_pairs: &[JournalistMessagingKeyPair],
     encrypted_user_to_journalist_message: &EncryptedCoverNodeToJournalistMessage,
     dead_drop_id: DeadDropId,
-) -> Option<UserToJournalistMessageWithDeadDropId> {
+    dead_drop_created_at: DateTime<Utc>,
+) -> Option<U2JMessageWithMetadata> {
     let mut maybe_outer_decrypted = None;
 
     'outer_message_loop: for covernode_msg_pk in covernode_msg_pks.iter() {
@@ -98,9 +100,10 @@ pub fn get_decrypted_journalist_dead_drop_message(
             );
 
             if let Ok(inner_decrypted_serialized) = inner_maybe_decrypted {
-                return Some(UserToJournalistMessageWithDeadDropId {
+                return Some(U2JMessageWithMetadata {
                     u2j_message: inner_decrypted_serialized.to_message(),
-                    dead_drop_id,
+                    unsigned_dead_drop_id: dead_drop_id,
+                    dead_drop_created_at,
                 });
             }
         }
@@ -131,6 +134,7 @@ mod test {
     };
 
     use super::get_decrypted_journalist_dead_drop_message;
+    use chrono::Utc;
 
     #[test]
     fn c2j_and_u2j_messages_decrypt_correctly_when_different_journalist_msg_pk_is_used() {
@@ -181,6 +185,7 @@ mod test {
             &[journalist_msg_key_pair_1, journalist_msg_key_pair_2],
             &covernode_to_journalist_message,
             0,
+            Utc::now(),
         )
         .expect("Decrypt message");
     }

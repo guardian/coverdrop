@@ -5,10 +5,13 @@ use crate::{subprocess::create_subprocess, util::wait_for_port_active};
 pub async fn command_over_ssh(
     ssh_user: &str,
     admin_machine_ip: Ipv4Addr,
+    ssh_key_path: &str,
     command: &str,
 ) -> anyhow::Result<()> {
     println!("Running command over SSH: {command}");
-    let ssh_command = format!("ssh {ssh_user}@{admin_machine_ip} -t '{command}'");
+    let ssh_command = format!(
+        "ssh {ssh_user}@{admin_machine_ip} -o IdentitiesOnly=yes -i {ssh_key_path} -t '{command}'"
+    );
 
     let mut child = create_subprocess("SSH command", ssh_command.as_str(), true).await?;
 
@@ -20,6 +23,7 @@ pub async fn command_over_ssh(
 pub async fn tunnel_and_port_forward(
     ssh_user: &str,
     admin_machine_ip: Ipv4Addr,
+    ssh_key_path: &str,
     service_name: &str,
     service_namespace: &str,
     remote_port: u16,
@@ -40,7 +44,7 @@ pub async fn tunnel_and_port_forward(
     );
 
     let command = format!(
-        "ssh -L {local_port}:localhost:{local_port} {ssh_user}@{admin_machine_ip} -t {port_forward_command}"
+        "ssh -L {local_port}:localhost:{local_port} {ssh_user}@{admin_machine_ip} -o IdentitiesOnly=yes -i {ssh_key_path} -t {port_forward_command}"
     );
 
     let mut child = create_subprocess("Tunnel and port-forward", command.as_str(), true).await?;

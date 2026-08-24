@@ -9,7 +9,7 @@ use client::commands::{
 use common::{
     api::models::messages::{
         user_to_journalist_message::UserToJournalistMessage,
-        user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
+        user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
     },
     client::mailbox::user_mailbox::MAX_MAILBOX_MESSAGES,
     FixedSizeMessageText,
@@ -52,12 +52,13 @@ async fn user_mailbox_filling_scenario() {
     let journalist_vault = stack.load_static_journalist_vault().await;
     let mut user_mailbox = stack.mailboxes().user();
 
-    let messages = vec![UserToJournalistMessageWithDeadDropId {
+    let messages = vec![U2JMessageWithMetadata {
         u2j_message: UserToJournalistMessage::new(
             FixedSizeMessageText::new("Seeding journalist vault with user to reply to").unwrap(),
             user_mailbox.user_key_pair().public_key(),
         ),
-        dead_drop_id: 0,
+        unsigned_dead_drop_id: 0,
+        dead_drop_created_at: stack.now(),
     }];
 
     journalist_vault

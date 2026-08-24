@@ -141,6 +141,9 @@ pub enum ProductionCommand {
         admin_machine_ip: Ipv4Addr,
         #[clap(long)]
         ssh_user: String,
+        /// Path to the SSH private key for connecting to the admin machine
+        #[clap(long)]
+        ssh_key: String,
         #[clap(long, default_value = "8086")]
         port: u16,
     },
@@ -149,6 +152,9 @@ pub enum ProductionCommand {
         admin_machine_ip: Ipv4Addr,
         #[clap(long)]
         ssh_user: String,
+        /// Path to the SSH private key for connecting to the admin machine
+        #[clap(long)]
+        ssh_key: String,
         #[clap(long, default_value = "8445")]
         port: u16,
     },
@@ -157,6 +163,9 @@ pub enum ProductionCommand {
         admin_machine_ip: Ipv4Addr,
         #[clap(long)]
         ssh_user: String,
+        /// Path to the SSH private key for connecting to the admin machine
+        #[clap(long)]
+        ssh_key: String,
         #[clap(long, default_value = "8444")]
         local_port: u16,
     },

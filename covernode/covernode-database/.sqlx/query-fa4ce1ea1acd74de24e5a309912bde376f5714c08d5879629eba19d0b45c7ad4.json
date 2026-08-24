@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT\n                    stream_kind AS \"stream_kind: StreamKind\",\n                    checkpoints_json AS \"checkpoints_json: String\"\n                FROM checkpoints\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "stream_kind: StreamKind",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "checkpoints_json: String",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "fa4ce1ea1acd74de24e5a309912bde376f5714c08d5879629eba19d0b45c7ad4"
+}

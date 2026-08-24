@@ -43,7 +43,7 @@ use common::{
             journalist_id::JournalistIdentity,
             messages::{
                 journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage,
-                user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
+                user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
             },
             sentinel_id::SentinelIdentity,
         },
@@ -635,7 +635,7 @@ impl JournalistVault {
 
     pub async fn add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
         &self,
-        messages: &[UserToJournalistMessageWithDeadDropId],
+        messages: &[U2JMessageWithMetadata],
         max_dead_drop_id: i32,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
@@ -650,7 +650,8 @@ impl JournalistVault {
                 &message.u2j_message.reply_key,
                 &message.u2j_message.message,
                 now,
-                message.dead_drop_id,
+                message.unsigned_dead_drop_id,
+                message.dead_drop_created_at,
             )
             .await?;
         }

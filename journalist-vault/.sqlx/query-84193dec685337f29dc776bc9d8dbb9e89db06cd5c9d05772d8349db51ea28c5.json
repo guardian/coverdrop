@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT OR IGNORE INTO u2j_messages\n            (user_pk, message, received_at, dead_drop_id, dead_drop_created_at)\n        VALUES (?1, ?2, ?3, ?4, ?5)\n        RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "84193dec685337f29dc776bc9d8dbb9e89db06cd5c9d05772d8349db51ea28c5"
+}

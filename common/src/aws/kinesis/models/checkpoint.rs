@@ -41,7 +41,7 @@ impl Display for SequenceNumber {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(transparent, deny_unknown_fields)]
 pub struct Checkpoints(HashMap<String, SequenceNumber>);
 
@@ -72,6 +72,18 @@ impl CheckpointsJson {
     pub fn new(checkpoints: &Checkpoints) -> Result<Self, serde_json::Error> {
         let json = serde_json::to_string(checkpoints)?;
         Ok(CheckpointsJson(json))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+
+    pub fn into_string(self) -> String {
+        self.0
+    }
+
+    pub fn from_string(s: String) -> Self {
+        CheckpointsJson(s)
     }
 }
 

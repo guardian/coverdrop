@@ -5,6 +5,10 @@ use chrono::{DateTime, Utc};
 use common::{
     api::forms::PostCoverNodeIdPublicKeyForm,
     argon2_sqlcipher::Argon2SqlCipher,
+    aws::kinesis::{
+        client::StreamKind,
+        models::checkpoint::{Checkpoints, CheckpointsJson, StoredCheckpoints},
+    },
     epoch::Epoch,
     protocol::keys::{
         CoverNodeIdKeyPair, CoverNodeMessagingKeyPair, UnregisteredCoverNodeIdKeyPair,
@@ -483,5 +487,145 @@ impl Database {
         .await?;
 
         Ok(())
+    }
+
+    //
+    // Checkpoints
+    //
+
+    pub async fn select_checkpoints(&self) -> anyhow::Result<StoredCheckpoints> {
+        let mut conn = self.pool.acquire().await?;
+
+        let rows = sqlx::query!(
+            r#"
+                SELECT
+                    stream_kind AS "stream_kind: StreamKind",
+                    checkpoints_json AS "checkpoints_json: String"
+                FROM checkpoints
+            "#,
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        let mut user_to_journalist_checkpoints = Checkpoints::new();
+        let mut journalist_to_user_checkpoints = Checkpoints::new();
+
+        for row in rows {
+            let checkpoints: Checkpoints = serde_json::from_str(&row.checkpoints_json)?;
+            match row.stream_kind {
+                StreamKind::UserToJournalist => user_to_journalist_checkpoints = checkpoints,
+                StreamKind::JournalistToUser => journalist_to_user_checkpoints = checkpoints,
+            }
+        }
+
+        Ok(StoredCheckpoints {
+            user_to_journalist_checkpoints,
+            journalist_to_user_checkpoints,
+        })
+    }
+
+    pub async fn update_checkpoint(
+        &self,
+        stream_kind: StreamKind,
+        checkpoints_json: CheckpointsJson,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+
+        let json = checkpoints_json.as_str();
+
+        let result = sqlx::query!(
+            r#"
+                UPDATE checkpoints
+                SET checkpoints_json = ?1
+                WHERE stream_kind = ?2
+            "#,
+            json,
+            stream_kind,
+        )
+        .execute(&mut *conn)
+        .await?;
+
+        let rows_affected = result.rows_affected();
+        if rows_affected != 1 {
+            anyhow::bail!(
+                "Expected to update 1 checkpoint row, but updated {} rows",
+                rows_affected,
+            );
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use common::aws::kinesis::models::checkpoint::{Checkpoints, SequenceNumber};
+
+    #[tokio::test]
+    async fn update_checkpoint_errors_when_row_missing() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let db = Database::open(&db_path, "test-password").await.unwrap();
+
+        // Delete the seeded rows so the update has nothing to match
+        sqlx::query("DELETE FROM checkpoints")
+            .execute(&db.pool)
+            .await
+            .unwrap();
+
+        let checkpoints = Checkpoints::new();
+        let json = CheckpointsJson::new(&checkpoints).unwrap();
+
+        let result = db
+            .update_checkpoint(StreamKind::UserToJournalist, json)
+            .await;
+
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("Expected to update 1 checkpoint row, but updated 0 rows"),
+            "Unexpected error message: {err_msg}"
+        );
+    }
+
+    #[tokio::test]
+    async fn update_and_select_checkpoints_round_trips() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let db = Database::open(&db_path, "test-password").await.unwrap();
+
+        let mut u2j_checkpoints = Checkpoints::new();
+        u2j_checkpoints.insert("shard-abc".to_string(), SequenceNumber::from("99999"));
+
+        // U2J checkpoint round trip
+        let checkpoints_json = CheckpointsJson::new(&u2j_checkpoints).unwrap();
+        db.update_checkpoint(StreamKind::UserToJournalist, checkpoints_json)
+            .await
+            .unwrap();
+
+        let stored_checkpoints = db.select_checkpoints().await.unwrap();
+        assert_eq!(
+            stored_checkpoints.user_to_journalist_checkpoints,
+            u2j_checkpoints
+        );
+        // J2U should still be empty
+        assert_eq!(
+            stored_checkpoints.journalist_to_user_checkpoints,
+            Checkpoints::new()
+        );
+
+        // J2U checkpoint round trip
+        let mut j2u_checkpoints = Checkpoints::new();
+        j2u_checkpoints.insert("shard-xyz".to_string(), SequenceNumber::from("88888"));
+        let checkpoints_json = CheckpointsJson::new(&j2u_checkpoints).unwrap();
+        db.update_checkpoint(StreamKind::JournalistToUser, checkpoints_json)
+            .await
+            .unwrap();
+        let stored_checkpoints = db.select_checkpoints().await.unwrap();
+        assert_eq!(
+            stored_checkpoints.journalist_to_user_checkpoints,
+            j2u_checkpoints
+        );
     }
 }

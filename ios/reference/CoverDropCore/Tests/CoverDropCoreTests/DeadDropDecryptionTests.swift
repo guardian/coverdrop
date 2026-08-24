@@ -12,7 +12,6 @@ final class DeadDropDecryptionTests: XCTestCase {
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: textMessage,
             journalistData: journalistData,
-            deadDropId: 1,
             dateReceived: DateFunction.currentTime()
         )
         if case let .incomingMessage(message: incomingMessage) = result,
@@ -35,7 +34,6 @@ final class DeadDropDecryptionTests: XCTestCase {
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: handoverMessage,
             journalistData: journalistKey,
-            deadDropId: 1,
             dateReceived: DateFunction.currentTime()
         )
         XCTAssertNil(result)
@@ -48,7 +46,6 @@ final class DeadDropDecryptionTests: XCTestCase {
         let result = DeadDropMessageParser.parseMessage(
             messageBytes: handoverMessage,
             journalistData: journalistData,
-            deadDropId: 1,
             dateReceived: DateFunction.currentTime()
         )
         XCTAssertNil(result)

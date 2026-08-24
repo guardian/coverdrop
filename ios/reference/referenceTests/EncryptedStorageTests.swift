@@ -285,8 +285,7 @@ final class EncryptedStorageTests: XCTestCase {
                     message: IncomingMessageData(
                         sender: sender,
                         messageText: payload,
-                        dateReceived: Date(timeIntervalSince1970: Double(counter)),
-                        deadDropId: counter
+                        dateReceived: Date(timeIntervalSince1970: Double(counter))
                     )
                 )
             )

@@ -1,6 +1,5 @@
 use crate::checkpoint::UserToJournalistDeadDropContentWithCheckpoints;
 use crate::key_state::KeyState;
-use crate::update_checkpoint;
 use common::api::api_client::ApiClient;
 use common::api::models::dead_drops::{
     UnpublishedUserToJournalistDeadDrop, UserToJournalistDeadDropSignatureDataV2,
@@ -9,16 +8,16 @@ use common::aws::kinesis::client::StreamKind;
 use common::protocol::keys::LatestKey;
 use common::throttle::BackOffDelay;
 use common::time;
+use covernode_database::Database;
 
 use std::cmp::max;
-use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
 pub struct ToJournalistPublishingService {
     key_state: KeyState,
     api_client: ApiClient,
-    checkpoint_path: PathBuf,
+    db: Database,
 }
 
 // Delay for backoff when we fail to publish a dead drop
@@ -26,11 +25,11 @@ const BASE_DELAY_MS: u64 = 1_000;
 const MAX_DELAY_MS: u64 = 60_000;
 
 impl ToJournalistPublishingService {
-    pub fn new(key_state: KeyState, api_client: ApiClient, checkpoint_path: PathBuf) -> Self {
+    pub fn new(key_state: KeyState, api_client: ApiClient, db: Database) -> Self {
         Self {
             key_state,
             api_client,
-            checkpoint_path,
+            db,
         }
     }
 
@@ -104,11 +103,11 @@ impl ToJournalistPublishingService {
 
             tracing::info!("Saving U2J checkpoints: {:?}", inbound.checkpoints_json);
 
-            if let Err(e) = update_checkpoint(
-                self.checkpoint_path.clone(),
-                StreamKind::UserToJournalist,
-                inbound.checkpoints_json,
-            ) {
+            if let Err(e) = self
+                .db
+                .update_checkpoint(StreamKind::UserToJournalist, inbound.checkpoints_json)
+                .await
+            {
                 // If the CoverNode crashes between now and publishing the next checkpoint we will
                 // possibly republish dead drops.
                 tracing::error!("Failed to update CoverNode checkpoint: {}", e);

@@ -48,7 +48,10 @@ pub struct Cli {
     /// The base URL of the CoverDrop Identity API
     #[clap(long)]
     pub identity_api_url: Url,
-    /// A path to the directory where the sequence numbers of the Kinesis checkpoints are stored.
+    /// A path to the directory where the sequence numbers of the Kinesis checkpoints were
+    /// previously stored. Used only for one-time migration of checkpoint files into the database.
+    /// Can be removed once all deployments have migrated.
+    /// TODO Remove this after migration https://github.com/guardian/coverdrop-internal/issues/4177
     #[clap(long)]
     pub checkpoint_path: PathBuf,
 

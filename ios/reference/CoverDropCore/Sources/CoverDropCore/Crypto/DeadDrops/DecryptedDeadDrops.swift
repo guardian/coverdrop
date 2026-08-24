@@ -26,7 +26,6 @@ extension DecryptedDeadDrops {
                     journalistData: journalistData,
                     message: message,
                     verifiedPublicKeys: verifiedPublicKeys,
-                    deadDropId: deadDrop.id,
                     deadDropPublishedDate: deadDrop.publishedDate
                 )
                 if let message = await maybeMessage {
@@ -43,7 +42,6 @@ extension DecryptedDeadDrops {
     ///   - journalistKey: a JournalistKeyData wrapper around the journalist public messaging keys
     ///   - message: the ciphertext message as a `TwoPartyBox<PaddedCompressedString>` typealiased to
     /// `JournalistToUserMessage`
-    ///   - deadDropId: the dead drop Id the message was found in
     ///   - dateReceived: the date these messages where recieved, usually the current date.
     /// - Returns: A Message if decryption was succesful, or nil
     private static func decryptJournalistToUserMessage(
@@ -51,7 +49,6 @@ extension DecryptedDeadDrops {
         journalistData: JournalistData,
         message: JournalistToUserMessage,
         verifiedPublicKeys: VerifiedPublicKeys,
-        deadDropId: Int,
         deadDropPublishedDate: Date
     ) async -> Message? {
         var foundMessage: Message?
@@ -68,7 +65,6 @@ extension DecryptedDeadDrops {
                 if let message = DeadDropMessageParser.parseMessage(
                     messageBytes: messageBytes,
                     journalistData: journalistData,
-                    deadDropId: deadDropId,
                     dateReceived: deadDropPublishedDate
                 ) {
                     foundMessage = message

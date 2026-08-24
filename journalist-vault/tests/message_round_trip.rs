@@ -5,7 +5,7 @@ use common::{
         journalist_id::JournalistIdentity,
         messages::{
             user_to_journalist_message::UserToJournalistMessage,
-            user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId,
+            user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
         },
         sentinel_id::SentinelIdentity,
     },
@@ -40,12 +40,13 @@ async fn message_round_trip() {
 
     let message = FixedSizeMessageText::new("Hello").unwrap();
 
-    let u2j_message_with_dead_drop_id = UserToJournalistMessageWithDeadDropId {
+    let u2j_message_with_dead_drop_id = U2JMessageWithMetadata {
         u2j_message: UserToJournalistMessage::new(
             message.clone(),
             user_key_pair.public_key().clone(),
         ),
-        dead_drop_id: 1,
+        unsigned_dead_drop_id: 1,
+        dead_drop_created_at: now,
     };
 
     {

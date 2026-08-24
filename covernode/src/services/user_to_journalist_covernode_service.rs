@@ -50,7 +50,7 @@ impl UserToJournalistCoverNodeService {
         let publishing_service = ToJournalistPublishingService::new(
             self.config.key_state.clone(),
             self.config.api_client.clone(),
-            self.config.checkpoint_path.clone(),
+            self.config.db.clone(),
         );
 
         let mut publishing_service = tokio::spawn(async move {

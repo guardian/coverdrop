@@ -633,7 +633,9 @@ export const ChatsSideBar = ({
       : []),
   ];
 
-  const [selectedTabId, setSelectedTabId] = useState("inbox");
+  const [selectedTabId, setSelectedTabId] = useState(
+    maybeSelectedGroup ? "MLS" : "inbox",
+  );
   const selectedTabContent = useMemo(() => {
     return tabs.find((obj) => obj.id === selectedTabId)?.content;
   }, [selectedTabId, tabs]);

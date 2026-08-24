@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                UPDATE checkpoints\n                SET checkpoints_json = ?1\n                WHERE stream_kind = ?2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "a1b7171cbb12bf3586f5e15cca2c179d9269b4395e805541dc5c5d152951ccb1"
+}

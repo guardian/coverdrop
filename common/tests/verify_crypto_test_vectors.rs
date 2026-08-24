@@ -156,6 +156,7 @@ fn test_journalist_dead_drop() -> anyhow::Result<()> {
             &journalist_msg_key_pairs,
             &message,
             i,
+            Utc::now(),
         );
 
         assert_eq!(
@@ -171,6 +172,7 @@ fn test_journalist_dead_drop() -> anyhow::Result<()> {
             &journalist_msg_key_pairs,
             &message,
             i,
+            Utc::now(),
         )
         .unwrap();
 

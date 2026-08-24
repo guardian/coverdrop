@@ -2,8 +2,8 @@ use crate::key_state::KeyState;
 use crate::mixing::mixing_strategy::MixingStrategyConfiguration;
 use common::api::api_client::ApiClient;
 use common::aws::kinesis::client::KinesisClient;
+use covernode_database::Database;
 use reqwest::Url;
-use std::path::PathBuf;
 
 pub mod dead_drop_publishing;
 pub mod decrypt_and_threshold;
@@ -18,7 +18,7 @@ pub struct CoverNodeServiceConfig {
     pub api_url: Url,
     pub key_state: KeyState,
     pub api_client: ApiClient,
-    pub checkpoint_path: PathBuf,
+    pub db: Database,
     pub kinesis_client: KinesisClient,
     pub mixing_config: MixingStrategyConfiguration,
     pub disable_stream_throttle: bool,

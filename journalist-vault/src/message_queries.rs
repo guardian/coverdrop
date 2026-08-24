@@ -20,33 +20,44 @@ pub(crate) async fn add_u2j_message(
     message: &FixedSizeMessageText,
     received_at: DateTime<Utc>,
     dead_drop_id: DeadDropId,
-) -> anyhow::Result<VaultMessage> {
+    dead_drop_created_at: DateTime<Utc>,
+) -> anyhow::Result<Option<VaultMessage>> {
     let user_pk_bytes = &user_pk.as_bytes()[..];
 
     let message_bytes = message.as_bytes();
 
     let message_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO u2j_messages
-            (user_pk, message, received_at, dead_drop_id)
-        VALUES (?1, ?2, ?3, ?4)
+        INSERT OR IGNORE INTO u2j_messages
+            (user_pk, message, received_at, dead_drop_id, dead_drop_created_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
         RETURNING id"#,
         user_pk_bytes,
         message_bytes,
         received_at,
-        dead_drop_id
+        dead_drop_id,
+        dead_drop_created_at
     )
-    .fetch_one(conn)
+    .fetch_optional(conn)
     .await?;
 
-    Ok(VaultMessage::U2J(U2JMessage::new(
-        message_id,
-        user_pk.clone(),
-        message.clone(),
-        received_at,
-        None,
-        false,
-    )?))
+    match message_id {
+        Some(id) => Ok(Some(VaultMessage::U2J(U2JMessage::new(
+            id,
+            user_pk.clone(),
+            message.clone(),
+            received_at,
+            None,
+            false,
+        )?))),
+        None => {
+            // This is a duplicate message, which we'll ignore.
+            // NOTE It's important not to insert a log into the database here to avoid
+            // a replayed U2J message resulting in a noticeable increase in database size
+            // (observable via the vault backup size).
+            Ok(None)
+        }
+    }
 }
 
 pub(crate) async fn add_j2u_message(
@@ -408,15 +419,37 @@ mod test {
             .await
             .expect("test user added to DB"); // add the test user to satisfy foreign key constraints
 
-        let _u2j_1 = add_u2j_message(&mut conn, user_pk, &message, before_cutoff, dead_drop_id)
-            .await
-            .expect("u2j message received before cutoff, so we will expect it to be deleted");
-        let _u2j_2 = add_u2j_message(&mut conn, user_pk, &message, after_cutoff, dead_drop_id)
-            .await
-            .expect("u2j message received after cutoff, so we will expect it not to be deleted");
-        let u2j_3 = add_u2j_message(&mut conn, user_pk, &message, after_cutoff, dead_drop_id)
-            .await
-            .expect("u2j message received after cutoff, but will add custom expiry below");
+        let _u2j_1 = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            before_cutoff,
+            dead_drop_id,
+            before_cutoff,
+        )
+        .await
+        .expect("u2j message received before cutoff, so we will expect it to be deleted");
+        let _u2j_2 = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            after_cutoff,
+            dead_drop_id,
+            after_cutoff,
+        )
+        .await
+        .expect("u2j message received after cutoff, so we will expect it not to be deleted");
+        let u2j_3 = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            after_cutoff,
+            dead_drop_id,
+            after_cutoff - ONE_HOUR,
+        )
+        .await
+        .expect("u2j message received after cutoff, but will add custom expiry below")
+        .expect("message should not be a duplicate");
         set_custom_expiry(
             &mut conn,
             &u2j_3,
@@ -426,9 +459,17 @@ mod test {
         .expect(
             "custom expiry set on u2j message 3, to BEFORE now, so we will expect it to be deleted",
         );
-        let u2j_4 = add_u2j_message(&mut conn, user_pk, &message, before_cutoff, dead_drop_id)
-            .await
-            .expect("u2j message received before cutoff, but will add custom expiry below"); // id 4
+        let u2j_4 = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            before_cutoff,
+            dead_drop_id,
+            before_cutoff - ONE_HOUR,
+        )
+        .await
+        .expect("u2j message received before cutoff, but will add custom expiry below")
+        .expect("message should not be a duplicate"); // id 4
         set_custom_expiry(
             &mut conn,
             &u2j_4,
@@ -560,6 +601,77 @@ mod test {
             vec![2, 2],
             "Only messages with id 2 should remain in both tables after final deletion"
         );
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_u2j_message_deduplication(mut conn: PoolConnection<Sqlite>) -> sqlx::Result<()> {
+        let now: DateTime<Utc> = "2025-07-28T10:30:00Z".parse().unwrap();
+        let dead_drop_id = 1;
+        let message = FixedSizeMessageText::new("test message").unwrap();
+
+        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        let user_pk = user_key_pair.public_key();
+        add_user(&mut conn, user_pk, now)
+            .await
+            .expect("test user added to DB");
+
+        let dead_drop_created_at = now - ONE_HOUR;
+
+        // First insert should succeed.
+        let result = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            now,
+            dead_drop_id,
+            dead_drop_created_at,
+        )
+        .await
+        .expect("first insert should succeed");
+        assert!(result.is_some(), "first insert should return a message");
+
+        // Same text with same dead_drop_created_at should be deduplicated.
+        let duplicate = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            now + ONE_HOUR, // different received_at, but same dead_drop_created_at
+            dead_drop_id,
+            dead_drop_created_at,
+        )
+        .await
+        .expect("duplicate insert should not error");
+        assert!(
+            duplicate.is_none(),
+            "same text with same dead_drop_created_at should be deduplicated"
+        );
+        let all_messages = messages(&mut conn).await.unwrap();
+        assert_eq!(
+            all_messages.len(),
+            1,
+            "should have exactly 1 messages (since the second attempted insertion was a duplicate)"
+        );
+
+        // Same text with different dead_drop_created_at should NOT be deduplicated.
+        let different_dead_drop_time = add_u2j_message(
+            &mut conn,
+            user_pk,
+            &message,
+            now + ONE_HOUR,
+            dead_drop_id,
+            dead_drop_created_at + ONE_HOUR, // different dead_drop_created_at
+        )
+        .await
+        .expect("insert with different dead_drop_created_at should succeed");
+        assert!(
+            different_dead_drop_time.is_some(),
+            "same text with different dead_drop_created_at should NOT be deduplicated"
+        );
+
+        let all_messages = messages(&mut conn).await.unwrap();
+        assert_eq!(all_messages.len(), 2, "should have exactly 2 messages");
 
         Ok(())
     }

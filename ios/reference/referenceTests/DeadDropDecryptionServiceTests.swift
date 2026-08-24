@@ -73,23 +73,34 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
                 verifiedKeys: publicDataRepository.getVerifiedKeys()
             )
 
+            // Neither `id` nor the sub-second part of `createdAt` is signed, so these replays all verify.
+            var replayedDeadDropData = deadDropData
+            replayedDeadDropData.deadDrops += deadDropData.deadDrops.map { deadDrop in
+                var replayed = deadDrop
+                replayed.id = deadDrop.id + 1000
+                replayed.createdAt = RFC3339DateTimeString(
+                    date: Date(timeIntervalSince1970: TimeInterval(deadDrop.createdAt.epochSeconds) + 0.999)
+                )
+                return replayed
+            }
+
             let repo = DeadDropRepository(config: StaticConfig.devConfig, urlSession: URLSession.shared)
-            try await repo.localRepository.save(data: deadDropData)
+            try await repo.localRepository.save(data: replayedDeadDropData)
             try await DeadDropDecryptionService().decryptStoredDeadDrops(
                 publicDataRepository: publicDataRepository,
                 secretDataRepository: secretDataRepository
             )
 
-            let messageMatch = data.messageMailbox.contains(where: {
+            let matchingMessages = data.messageMailbox.filter {
                 if case let .incomingMessage(message: message) = $0 {
                     if case let .textMessage(textMessage) = message {
                         return textMessage.messageText == "This is a test message from the journalist to the user"
                     }
                 }
                 return false
-            })
+            }
 
-            XCTAssertTrue(messageMatch == true)
+            XCTAssertEqual(matchingMessages.count, 1, "replayed dead drops must not duplicate the message")
         } else {
             XCTFail("not in unlocked data")
         }

@@ -1,24 +1,19 @@
 use crate::mixing::mixing_message_types::{MixingInputMessage, MixingOutputMessage};
 use chrono::{DateTime, Duration, Utc};
-use common::aws::kinesis::models::checkpoint::CheckpointsJson;
 use std::cmp::min;
 use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
-pub struct OutputWithCheckpoint<Output> {
+pub struct MixingOutput<Output> {
     pub messages: Vec<Output>,
-    pub checkpoints_json: Option<CheckpointsJson>,
 }
-
-type Buffer<Output> = Vec<(Output, CheckpointsJson)>;
 
 pub trait MixingStrategy<Input, Output> {
     fn consume_and_check_for_new_output(
         &mut self,
         message: Input,
-        checkpoints_data: CheckpointsJson,
         now: DateTime<Utc>,
-    ) -> Option<OutputWithCheckpoint<Output>>;
+    ) -> Option<MixingOutput<Output>>;
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -60,7 +55,7 @@ impl MixingStrategyConfiguration {
 struct MixingStrategyState<Output> {
     seen_messages: usize,
     last_output_timestamp: DateTime<Utc>,
-    buffer: Buffer<Output>,
+    buffer: Vec<Output>,
 }
 
 impl<Output> MixingStrategyState<Output> {
@@ -102,7 +97,7 @@ where
         }
     }
 
-    fn consume(&mut self, message: Input, checkpoints_json: CheckpointsJson) {
+    fn consume(&mut self, message: Input) {
         // increase total number of messages we have seen
         self.state.seen_messages += 1;
 
@@ -115,13 +110,11 @@ where
 
         // if it is a real one, we keep it in our buffer
         if let Some(real_message_payload) = message.to_payload_if_real() {
-            self.state
-                .buffer
-                .push((real_message_payload, checkpoints_json));
+            self.state.buffer.push(real_message_payload);
         }
     }
 
-    fn maybe_next_output(&mut self, now: DateTime<Utc>) -> Option<OutputWithCheckpoint<Output>> {
+    fn maybe_next_output(&mut self, now: DateTime<Utc>) -> Option<MixingOutput<Output>> {
         // if we are not "ready" yet, return early with `None`
         if !self.should_create_output(now) {
             return None;
@@ -129,19 +122,7 @@ where
 
         // collect the oldest real messages from the buffer
         let cut = min(self.config.output_size, self.state.buffer.len());
-        let output_messages_and_checkpoints: Buffer<Output> =
-            self.state.buffer.drain(..cut).collect();
-
-        // find the max checkpoint_json from the buffer
-        let checkpoints_json = output_messages_and_checkpoints
-            .last()
-            .map(|(_, checkpoint_json)| checkpoint_json)
-            .cloned();
-
-        let mut output_messages: Vec<Output> = output_messages_and_checkpoints
-            .into_iter()
-            .map(|(msg, _)| msg)
-            .collect();
+        let mut output_messages: Vec<Output> = self.state.buffer.drain(..cut).collect();
 
         // fill up with cover messages if necessary
         while output_messages.len() < self.config.output_size {
@@ -151,9 +132,8 @@ where
         // reset the current number of seen messages and last recorded timestamp
         self.state.reset(now);
 
-        Some(OutputWithCheckpoint {
+        Some(MixingOutput {
             messages: output_messages,
-            checkpoints_json,
         })
     }
 
@@ -184,10 +164,9 @@ where
     fn consume_and_check_for_new_output(
         &mut self,
         message: Input,
-        checkpoints_json: CheckpointsJson,
         now: DateTime<Utc>,
-    ) -> Option<OutputWithCheckpoint<Output>> {
-        self.consume(message, checkpoints_json);
+    ) -> Option<MixingOutput<Output>> {
+        self.consume(message);
         self.maybe_next_output(now)
     }
 }
@@ -195,10 +174,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use common::{
-        aws::kinesis::models::checkpoint::{Checkpoints, SequenceNumber},
-        time,
-    };
+    use common::time;
     use rand::random;
 
     fn get_test_config() -> MixingStrategyConfiguration {
@@ -249,79 +225,63 @@ mod tests {
         }
     }
 
-    fn create_checkpoints_json(s: &str) -> CheckpointsJson {
-        let mut c = Checkpoints::new();
-        c.insert(s.to_string(), SequenceNumber::from(s));
-        CheckpointsJson::new(&c).unwrap()
-    }
-
     #[test]
     fn test_max_threshold_firing() {
         let now = time::now();
         let mut mixer = CoverDropMixingStrategy::new(get_test_config(), now);
 
         let in1 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint1 = create_checkpoints_json("1");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in1.clone(), checkpoint1, now),
+            mixer.consume_and_check_for_new_output(in1.clone(), now),
             None
         );
 
         let in2 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint2 = create_checkpoints_json("2");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in2.clone(), checkpoint2.clone(), now),
+            mixer.consume_and_check_for_new_output(in2.clone(), now),
             None
         );
 
         let in3 = TestMixingInputMessage::new_empty();
-        let checkpoint3 = create_checkpoints_json("3");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in3.clone(), checkpoint3, now),
+            mixer.consume_and_check_for_new_output(in3.clone(), now),
             None
         );
 
         // The fourth message will hit the max causing the oldest two messages to be released
         let in4 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint4 = create_checkpoints_json("4");
         let output = mixer
-            .consume_and_check_for_new_output(in4.clone(), checkpoint4.clone(), now)
+            .consume_and_check_for_new_output(in4.clone(), now)
             .unwrap();
         assert_eq!(
             output.messages,
             vec![in1.inner.unwrap(), in2.inner.unwrap()]
         );
-        assert_eq!(output.checkpoints_json, Some(checkpoint2));
 
         // At this point only the fourth message is in the buffer; adding more empty ones will then
         // cause a new output
         let in5 = TestMixingInputMessage::new_empty();
-        let checkpoint5 = create_checkpoints_json("5");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in5.clone(), checkpoint5, now),
+            mixer.consume_and_check_for_new_output(in5.clone(), now),
             None
         );
         let in6 = TestMixingInputMessage::new_empty();
-        let checkpoint6 = create_checkpoints_json("6");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in6.clone(), checkpoint6, now),
+            mixer.consume_and_check_for_new_output(in6.clone(), now),
             None
         );
         let in7 = TestMixingInputMessage::new_empty();
-        let checkpoint7 = create_checkpoints_json("7");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in7.clone(), checkpoint7, now),
+            mixer.consume_and_check_for_new_output(in7.clone(), now),
             None
         );
 
         let in8 = TestMixingInputMessage::new_empty();
-        let checkpoint8 = create_checkpoints_json("8");
-        let output = mixer.consume_and_check_for_new_output(in8.clone(), checkpoint8, now);
+        let output = mixer.consume_and_check_for_new_output(in8.clone(), now);
 
         // The output should have our oldest real message at the start and then padded with a
         // random one
         let output = output.unwrap();
-        assert_eq!(output.checkpoints_json, Some(checkpoint4));
         assert_eq!(&output.messages[0], &in4.inner.unwrap());
         assert_ne!(&output.messages[1], &output.messages[0]);
     }
@@ -333,54 +293,47 @@ mod tests {
         let mut mixer = CoverDropMixingStrategy::new(test_config, now);
 
         let in1 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint1 = create_checkpoints_json("1");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in1.clone(), checkpoint1, now),
+            mixer.consume_and_check_for_new_output(in1.clone(), now),
             None
         );
 
         // Exceeding the threshold_min, but not the timeout
         let in2 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint2 = create_checkpoints_json("2");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in2.clone(), checkpoint2.clone(), now),
+            mixer.consume_and_check_for_new_output(in2.clone(), now),
             None
         );
 
         // Exceeding the threshold_min AND the timeout
         now += test_config.timeout;
         let in3 = TestMixingInputMessage::new_empty();
-        let checkpoint3 = create_checkpoints_json("3");
         let output = mixer
-            .consume_and_check_for_new_output(in3.clone(), checkpoint3, now)
+            .consume_and_check_for_new_output(in3.clone(), now)
             .unwrap();
         assert_eq!(
             output.messages,
             vec![in1.inner.unwrap(), in2.inner.unwrap()]
         );
-        assert_eq!(output.checkpoints_json, Some(checkpoint2));
 
         // As a result of the output, the internal state's counter and last timestamp get reset
 
         // Exceeding the timeout, but not the threshold_min
         now += test_config.timeout;
         let in4 = TestMixingInputMessage::new_empty();
-        let checkpoint4 = create_checkpoints_json("4");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in4.clone(), checkpoint4, now),
+            mixer.consume_and_check_for_new_output(in4.clone(), now),
             None
         );
 
         // Meeting the threshold_min
         let in5 = TestMixingInputMessage::new_with_random_inner();
-        let checkpoint5 = create_checkpoints_json("5");
         let output = mixer
-            .consume_and_check_for_new_output(in5.clone(), checkpoint5.clone(), now)
+            .consume_and_check_for_new_output(in5.clone(), now)
             .unwrap();
 
         // The output should have our oldest real message at the start and then padded with a
         // random one
-        assert_eq!(output.checkpoints_json, Some(checkpoint5));
         assert_eq!(&output.messages[0], &in5.inner.unwrap());
         assert_ne!(&output.messages[1], &output.messages[0]);
     }
@@ -392,37 +345,29 @@ mod tests {
 
         // send threshold_max cover messages
         let in1 = TestMixingInputMessage::new_empty();
-        let checkpoint1 = create_checkpoints_json("1");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in1.clone(), checkpoint1, now),
+            mixer.consume_and_check_for_new_output(in1.clone(), now),
             None
         );
 
         let in2 = TestMixingInputMessage::new_empty();
-        let checkpoint2 = create_checkpoints_json("2");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in2.clone(), checkpoint2.clone(), now),
+            mixer.consume_and_check_for_new_output(in2.clone(), now),
             None
         );
 
         let in3 = TestMixingInputMessage::new_empty();
-        let checkpoint3 = create_checkpoints_json("3");
         assert_eq!(
-            mixer.consume_and_check_for_new_output(in3.clone(), checkpoint3, now),
+            mixer.consume_and_check_for_new_output(in3.clone(), now),
             None
         );
 
         // The fourth message will hit the max causing the oldest two messages to be released
         let in4 = TestMixingInputMessage::new_empty();
-        let checkpoint4 = create_checkpoints_json("4");
-        let output = mixer
-            .consume_and_check_for_new_output(in4, checkpoint4, now)
-            .unwrap();
+        let output = mixer.consume_and_check_for_new_output(in4, now).unwrap();
 
         // The output should have two random messages
         assert_eq!(output.messages.len(), 2);
         assert_ne!(&output.messages[0], &output.messages[1]);
-        // The checkpoint should be None
-        assert_eq!(output.checkpoints_json, None);
     }
 }

@@ -81,11 +81,9 @@ impl UserToJournalistDecryptionAndMixingService {
                 continue;
             };
 
-            let Some(mixing_strategy_output) = mixing_strategy.consume_and_check_for_new_output(
-                decrypted_message,
-                message.checkpoints_json.clone(),
-                time::now(),
-            ) else {
+            let Some(mixing_strategy_output) =
+                mixing_strategy.consume_and_check_for_new_output(decrypted_message, time::now())
+            else {
                 // No new dead drop to publish this time
                 continue;
             };
@@ -120,7 +118,8 @@ impl UserToJournalistDecryptionAndMixingService {
                             continue;
                         }
                     } else {
-                        tracing::warn!("Couldn't find journalist messaging key from recipient tag")
+                        // If we're unable to find the journalist key we shouldn't create a log,
+                        // since this would leak the timing of a real message.
                     }
                 }
 
@@ -140,11 +139,9 @@ impl UserToJournalistDecryptionAndMixingService {
 
             let dead_drop_content = UserToJournalistDeadDropMessages { messages };
 
-            // If the dead drop contains real messages, write the checkpoints of its latest real message.
-            // Otherwise, we can write the checkpoints of the message which triggered the dead drop.
-            let checkpoints_json = mixing_strategy_output
-                .checkpoints_json
-                .unwrap_or(message.checkpoints_json);
+            // Always checkpoint at the last consumed message. Trade-off: buffered real messages may be lost on crash
+            // if the buffer contains more than `output_size`.
+            let checkpoints_json = message.checkpoints_json;
 
             outbound
                 .send(UserToJournalistDeadDropContentWithCheckpoints {

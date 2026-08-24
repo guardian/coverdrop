@@ -4,7 +4,6 @@ enum DeadDropMessageParser {
     static func parseMessage(
         messageBytes: [UInt8],
         journalistData: JournalistData,
-        deadDropId: Int,
         dateReceived: Date
     ) -> Message? {
         guard let firstByte = messageBytes.first else { return nil }
@@ -13,7 +12,6 @@ enum DeadDropMessageParser {
             return parseTextMessage(
                 messageBytes: remainingMessageBytes,
                 journalistData: journalistData,
-                deadDropId: deadDropId,
                 dateReceived: dateReceived
             )
         } else {
@@ -26,7 +24,6 @@ enum DeadDropMessageParser {
     private static func parseTextMessage(
         messageBytes: [UInt8],
         journalistData: JournalistData,
-        deadDropId: Int,
         dateReceived: Date
     ) -> Message? {
         if messageBytes.count != Constants.messagePaddingLen {
@@ -39,8 +36,7 @@ enum DeadDropMessageParser {
         return .incomingMessage(message: .textMessage(message: IncomingMessageData(
             sender: journalistData,
             messageText: extractedMessage,
-            dateReceived: dateReceived,
-            deadDropId: deadDropId
+            dateReceived: dateReceived
         )))
     }
 }

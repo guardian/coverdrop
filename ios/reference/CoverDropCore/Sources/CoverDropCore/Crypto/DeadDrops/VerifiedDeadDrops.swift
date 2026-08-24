@@ -51,15 +51,13 @@ public extension VerifiedDeadDrops {
 
 /// An individual dead drop that has been verified against the CoverNodeId Public Signing Key.
 public struct VerifiedDeadDrop {
-    var id: Int
     var data: [JournalistToUserMessage]
     var publishedDate: Date
 
     /// Verifies the signature of the `PublishedJournalistToUserDeadDrop` using the `signingKey`.
     ///
-    /// During the migration phase, we only check the `signature` field if it has a meaningful value.
-    /// Otherwise, we fallback to the "legacy" check against the `cert` field. This fallback
-    /// behaviour is only temporary and should be removed once the migration is complete, see #2998.
+    /// Only `data` and `createdAt` (whole seconds) are signed; the API-assigned `id` is not, so it is
+    /// not carried over here.
     init?(unverifiedDeadDrop: DeadDrop, signingPk: CoverNodeIdPublicKey) {
         let unverifiedDeadDropSignatureData = DeadDropSignatureData(from: unverifiedDeadDrop)
 
@@ -72,7 +70,11 @@ public struct VerifiedDeadDrop {
 
             if verified {
                 let parsedDeadDropData = try VerifiedDeadDrop.parseDeadDropData(data: unverifiedDeadDrop.data.bytes)
-                let verifiedCreatedAt = unverifiedDeadDrop.createdAt.date
+
+                // Only whole seconds are signed, so the sub-second component is unauthenticated.
+                let verifiedCreatedAt = Date(
+                    timeIntervalSince1970: TimeInterval(unverifiedDeadDrop.createdAt.epochSeconds)
+                )
 
                 // Check the deaddrop publish date is not more that 1 week in the future which might be caused
                 // by dramatic clock skew between us and the API. In that case, we ignore and hope for better
@@ -82,10 +84,11 @@ public struct VerifiedDeadDrop {
                 }
 
                 // All checks passed
-                id = unverifiedDeadDrop.id
                 data = parsedDeadDropData
                 publishedDate = verifiedCreatedAt
-            } else { return nil }
+            } else {
+                return nil
+            }
         } catch { return nil }
     }
 

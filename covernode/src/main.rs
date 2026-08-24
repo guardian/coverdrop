@@ -7,16 +7,15 @@ use common::metrics::{init_metrics, COVERNODE_NAMESPACE};
 use common::task::{HeartbeatTask, TaskRunner};
 use common::time;
 use common::tracing::{init_tracing_with_reload_handle, log_task_exit, log_task_result_exit};
+use covernode::key_state::KeyState;
 use covernode::mixing::mixing_strategy::MixingStrategyConfiguration;
 use covernode::services::journalist_to_user_covernode_service::JournalistToUserCoverNodeService;
+use covernode::services::server;
+use covernode::services::tasks::{CreateKeysTask, PublishedKeysTask};
 use covernode::services::tasks::{DeleteExpiredKeysTask, RefreshTagLookUpTableTask};
 use covernode::services::user_to_journalist_covernode_service::UserToJournalistCoverNodeService;
 use covernode::services::CoverNodeServiceConfig;
-use covernode::*;
 use covernode_database::Database;
-use key_state::KeyState;
-use services::server;
-use services::tasks::{CreateKeysTask, PublishedKeysTask};
 
 mod cli;
 
@@ -45,9 +44,12 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
     let api_client = ApiClient::new(cli.api_url.clone());
     let identity_api_client = IdentityApiClient::new(cli.identity_api_url.clone());
 
-    tracing::info!("Using checkpoint location {:?}", cli.checkpoint_path);
-    let checkpoints = load_checkpoints(&cli.checkpoint_path)
-        .expect("Read checkpoint files from the specified directory");
+    let db = Database::open(&cli.db_path, &cli.db_password).await?;
+
+    // Migrate checkpoint files from the filesystem into the database (if they exist)
+    covernode::migrate_checkpoint_files_to_db(&cli.checkpoint_path, &db).await?;
+
+    let checkpoints = db.select_checkpoints().await?;
 
     let kinesis_client = KinesisClient::new_with_checkpoints(
         &cli.kinesis_config,
@@ -59,8 +61,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         checkpoints,
     )
     .await;
-
-    let db = Database::open(&cli.db_path, &cli.db_password).await?;
 
     let key_state = KeyState::new(db.clone(), &api_client, &cli.stage, time::now()).await?;
 
@@ -129,7 +129,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         api_url: cli.api_url.clone(),
         key_state: key_state.clone(),
         api_client: api_client.clone(),
-        checkpoint_path: cli.checkpoint_path.clone(),
+        db: db.clone(),
         kinesis_client: kinesis_client.clone(),
         mixing_config: mixing_u2j_config,
         disable_stream_throttle: cli.disable_stream_throttle,
@@ -156,7 +156,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         api_url: cli.api_url.clone(),
         key_state: key_state.clone(),
         api_client: api_client.clone(),
-        checkpoint_path: cli.checkpoint_path.clone(),
+        db: db.clone(),
         kinesis_client: kinesis_client.clone(),
         mixing_config: mixing_j2u_config,
         disable_stream_throttle: cli.disable_stream_throttle,

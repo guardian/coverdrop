@@ -3,7 +3,7 @@ pub mod journalist_to_covernode_message;
 pub mod journalist_to_user_message;
 pub mod user_to_covernode_message;
 pub mod user_to_journalist_message;
-pub mod user_to_journalist_message_with_dead_drop_id;
+pub mod user_to_journalist_message_with_metadata;
 
 use crate::protocol::constants::RECIPIENT_TAG_LEN;
 use serde::{Deserialize, Serialize};

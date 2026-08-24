@@ -29,5 +29,3 @@ target/
 *.password
 
 *.log
-
-.github/copilot-instructions.md

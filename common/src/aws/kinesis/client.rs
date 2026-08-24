@@ -25,6 +25,9 @@ use itertools::Itertools;
 #[cfg(feature = "test-utils")]
 use num_bigint::BigInt;
 
+// must match the values in the `stream_kind` column of the `checkpoints` table
+#[derive(Clone, Copy, Debug, sqlx::Type)]
+#[sqlx(rename_all = "snake_case")]
 pub enum StreamKind {
     UserToJournalist,
     JournalistToUser,

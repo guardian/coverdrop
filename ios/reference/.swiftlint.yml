@@ -1,6 +1,10 @@
 # The list of rules can be found at
 # https://realm.github.io/SwiftLint/rule-directory.html
 
+# Used by scripts/run_swiftlint.sh to pin the SwiftLint version/artifact used on Xcode Cloud and locally.
+swiftlint_version: "0.65.0"
+swiftlint_portable_zip_sha256: "d6cb0aa7a2f5f1ef306fc9e37bcb54dc9a26facc8f7784ac0c3dd3eccf5c6ba6"
+
 excluded:
   - Carthage
   - Pods

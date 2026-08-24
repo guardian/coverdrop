@@ -50,7 +50,7 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                     journalist_id,
                     message,
                     decrypted_message.u2j_message.reply_key.public_key_hex(),
-                    decrypted_message.dead_drop_id
+                    decrypted_message.unsigned_dead_drop_id
                 );
 
                 let maybe_delivery_duration = canary_state
@@ -72,7 +72,7 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                         journalist_id,
                         message,
                         decrypted_message.u2j_message.reply_key.public_key_hex(),
-                        decrypted_message.dead_drop_id
+                        decrypted_message.unsigned_dead_drop_id
                     );
                     metrics::counter!("DuplicateU2JMessage").increment(1);
                 }

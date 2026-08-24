@@ -19,6 +19,12 @@ public enum DateFunction {
 }
 
 public extension Date {
+    /// The timestamp at the precision CoverDrop signatures cover (see `DeadDropSignatureData`); comparing
+    /// at this precision stops an unsigned sub-second component making one message look like two.
+    var signedEpochSeconds: Int64 {
+        return Int64(timeIntervalSince1970)
+    }
+
     func plusSeconds(_ seconds: Int) throws -> Date {
         guard let result = Calendar.current.date(
             byAdding: .second,

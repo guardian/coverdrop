@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use common::api::models::dead_drops::UnverifiedUserToJournalistDeadDropsList;
-use common::api::models::messages::user_to_journalist_message_with_dead_drop_id::UserToJournalistMessageWithDeadDropId;
+use common::api::models::messages::user_to_journalist_message_with_metadata::U2JMessageWithMetadata;
 use common::protocol::covernode::verify_user_to_journalist_dead_drop_list;
 use common::protocol::journalist::get_decrypted_journalist_dead_drop_message;
 use common::protocol::keys::CoverDropPublicKeyHierarchy;
@@ -30,7 +30,7 @@ pub async fn load_journalist_dead_drop_messages(
         .map(|(_, msg_pk)| msg_pk)
         .collect::<Vec<_>>();
 
-    let decrypted_messages: Vec<UserToJournalistMessageWithDeadDropId> = verified_dead_drop_list
+    let decrypted_messages: Vec<U2JMessageWithMetadata> = verified_dead_drop_list
         .iter()
         .flat_map(|dead_drop| {
             dead_drop
@@ -43,6 +43,7 @@ pub async fn load_journalist_dead_drop_messages(
                         &journalist_msg_key_pairs,
                         encrypted_message,
                         dead_drop.id,
+                        dead_drop.created_at,
                     )
                 })
         })
