@@ -4,7 +4,6 @@ use ts_rs::TS;
 use crate::api::models::sentinel_id::SentinelIdentity;
 
 #[derive(Clone, Serialize, Deserialize, TS)]
-#[serde(deny_unknown_fields)]
 pub struct SentinelProfile {
     pub id: SentinelIdentity,
     pub display_name: String,

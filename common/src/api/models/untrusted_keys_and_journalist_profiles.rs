@@ -20,7 +20,6 @@ use super::journalist_id::JournalistIdentity;
 #[ts(export)]
 pub struct UntrustedKeysAndJournalistProfiles {
     pub journalist_profiles: Vec<JournalistProfile>,
-    // TODO "sentinel_profiles" goes here
     pub default_journalist_id: Option<JournalistIdentity>,
     pub keys: UntrustedOrganizationPublicKeyFamilyList,
     pub max_epoch: Epoch,

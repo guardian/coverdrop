@@ -19,7 +19,6 @@ use crate::crypto::{
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedSignedPublicSigningKey<KeyRole>
 where
     KeyRole: Role,

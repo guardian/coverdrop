@@ -21,7 +21,6 @@ use crate::crypto::{
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct UntrustedSignedPublicEncryptionKey<KeyRole: Role> {
     #[serde(with = "PublicEncryptionKeyHex")]
     pub key: X25519PublicKey,
