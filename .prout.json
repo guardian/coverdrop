@@ -1,0 +1,8 @@
+{
+  "checkpoints": {
+    "PUBLIC-REPO": {
+      "url": "https://github.com/guardian/coverdrop/commits/main/",
+      "overdue": "60M"
+    }
+  }
+}

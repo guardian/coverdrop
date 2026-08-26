@@ -347,6 +347,7 @@ import { icon as playFilled } from "@elastic/eui/es/components/icon/assets/playF
 import { icon as plus } from "@elastic/eui/es/components/icon/assets/plus";
 import { icon as plusInCircle } from "@elastic/eui/es/components/icon/assets/plus_in_circle";
 import { icon as plusInCircleFilled } from "@elastic/eui/es/components/icon/assets/plus_in_circle_filled";
+import { icon as plugs } from "@elastic/eui/es/components/icon/assets/plugs";
 import { icon as plusInSquare } from "@elastic/eui/es/components/icon/assets/plus_in_square";
 import { icon as popout } from "@elastic/eui/es/components/icon/assets/popout";
 import { icon as push } from "@elastic/eui/es/components/icon/assets/push";
@@ -454,6 +455,7 @@ import { icon as visualizeApp } from "@elastic/eui/es/components/icon/assets/app
 import { icon as vulnerabilityManagementApp } from "@elastic/eui/es/components/icon/assets/app_vulnerability_management";
 import { icon as warning } from "@elastic/eui/es/components/icon/assets/warning";
 import { icon as warningFilled } from "@elastic/eui/es/components/icon/assets/warningFilled";
+import { icon as web } from "@elastic/eui/es/components/icon/assets/web";
 import { icon as alert } from "@elastic/eui/es/components/icon/assets/warning";
 import { icon as watchesApp } from "@elastic/eui/es/components/icon/assets/app_watches";
 import { icon as wordWrap } from "@elastic/eui/es/components/icon/assets/wordWrap";
@@ -863,6 +865,7 @@ const cachedIcons: IconComponentCacheType = {
   plus,
   plusInCircle,
   plusInCircleFilled,
+  plugs,
   plusInSquare,
   popout,
   push,
@@ -970,6 +973,7 @@ const cachedIcons: IconComponentCacheType = {
   vulnerabilityManagementApp,
   warning,
   warningFilled,
+  web,
   alert,
   watchesApp,
   wordWrap,

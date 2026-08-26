@@ -1,5 +1,5 @@
-import { test, expect } from "@playwright/test";
-import { readFileSync, existsSync } from "node:fs";
+import { expect, test } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -50,13 +50,15 @@ for (const story of nonSkippedStories) {
     const url = base.toString();
 
     await page.goto(url);
-    await page.waitForURL(url, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(url, { waitUntil: "networkidle" });
+    await page.locator("body.sb-show-main").waitFor({ state: "visible" });
 
     await expect(page).toHaveScreenshot(
       [".storybook", "screenshots", story.title, `${story.id}.png`],
       {
         threshold: 0.2,
         fullPage: true,
+        animations: "disabled",
       },
     );
   });

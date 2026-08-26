@@ -738,6 +738,18 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2021-01-29"
 end = "2027-04-23"
 
+[[trusted.async-broadcast]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2021-05-07"
+end = "2027-08-14"
+
+[[trusted.async-channel]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2024-02-08"
+end = "2027-08-14"
+
 [[trusted.async-std]]
 criteria = "safe-to-deploy"
 user-id = 4333
@@ -1020,6 +1032,12 @@ trusted-publisher = "github:RustCrypto/utils"
 start = "2026-02-24"
 end = "2027-06-02"
 
+[[trusted.block2]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2021-11-19"
+end = "2027-08-14"
+
 [[trusted.bollard]]
 criteria = "safe-to-deploy"
 user-id = 24879 # Niel Drummond (fussybeaver)
@@ -1134,6 +1152,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-08-04"
 end = "2027-04-23"
 
+[[trusted.core-graphics]]
+criteria = "safe-to-deploy"
+user-id = 2396 # Josh Matthews (jdm)
+start = "2019-10-28"
+end = "2027-08-14"
+
 [[trusted.core-models]]
 criteria = "safe-to-deploy"
 user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
@@ -1169,6 +1193,18 @@ criteria = "safe-to-deploy"
 trusted-publisher = "github:RustCrypto/traits"
 start = "2026-02-04"
 end = "2027-06-02"
+
+[[trusted.ctor]]
+criteria = "safe-to-deploy"
+user-id = 34586 # Matt Mastracci (mmastrac)
+start = "2019-04-01"
+end = "2027-08-14"
+
+[[trusted.ctor-proc-macro]]
+criteria = "safe-to-deploy"
+user-id = 34586 # Matt Mastracci (mmastrac)
+start = "2025-02-15"
+end = "2027-08-14"
 
 [[trusted.ctr]]
 criteria = "safe-to-deploy"
@@ -1224,11 +1260,35 @@ trusted-publisher = "github:RustCrypto/traits"
 start = "2026-02-12"
 end = "2027-06-02"
 
+[[trusted.dispatch2]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2025-01-23"
+end = "2027-08-14"
+
+[[trusted.dpi]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-02-20"
+end = "2027-08-14"
+
 [[trusted.dtoa]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
 end = "2027-05-01"
+
+[[trusted.dtor]]
+criteria = "safe-to-deploy"
+user-id = 34586 # Matt Mastracci (mmastrac)
+start = "2024-02-27"
+end = "2027-08-14"
+
+[[trusted.dtor-proc-macro]]
+criteria = "safe-to-deploy"
+user-id = 34586 # Matt Mastracci (mmastrac)
+start = "2025-02-15"
+end = "2027-08-14"
 
 [[trusted.dyn-clone]]
 criteria = "safe-to-deploy"
@@ -1254,6 +1314,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-12-05"
 end = "2027-03-31"
 
+[[trusted.endi]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2023-12-10"
+end = "2027-08-14"
+
 [[trusted.env_logger]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -1265,6 +1331,12 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2020-01-06"
 end = "2027-05-01"
+
+[[trusted.event-listener]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2024-02-05"
+end = "2027-08-14"
 
 [[trusted.ff]]
 criteria = "safe-to-deploy"
@@ -1416,6 +1488,12 @@ user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
 start = "2021-11-10"
 end = "2027-03-31"
 
+[[trusted.html5ever]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2024-03-22"
+end = "2027-08-14"
+
 [[trusted.http]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
@@ -1560,6 +1638,18 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
 end = "2027-04-23"
 
+[[trusted.javascriptcore-rs]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-04"
+end = "2027-08-14"
+
+[[trusted.javascriptcore-rs-sys]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-04"
+end = "2027-08-14"
+
 [[trusted.jobserver]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1583,6 +1673,24 @@ criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-12-05"
 end = "2027-03-31"
+
+[[trusted.keyboard-types]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2025-04-29"
+end = "2027-08-14"
+
+[[trusted.libappindicator]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-11"
+end = "2027-08-14"
+
+[[trusted.libappindicator-sys]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-11"
+end = "2027-08-14"
 
 [[trusted.libc]]
 criteria = "safe-to-deploy"
@@ -1842,6 +1950,12 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-05-04"
 end = "2024-07-17"
 
+[[trusted.markup5ever]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2024-03-22"
+end = "2027-08-14"
+
 [[trusted.md-5]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -1872,6 +1986,12 @@ user-id = 10
 start = "2019-05-15"
 end = "2024-07-17"
 
+[[trusted.muda]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2022-12-06"
+end = "2027-08-14"
+
 [[trusted.new_debug_unreachable]]
 criteria = "safe-to-deploy"
 user-id = 2017 # Matt Brubeck (mbrubeck)
@@ -1880,7 +2000,7 @@ end = "2027-06-02"
 
 [[trusted.notify]]
 criteria = "safe-to-deploy"
-user-id = 51017
+user-id = 51017 # Yuki Okushi (JohnTitor)
 start = "2020-01-07"
 end = "2025-10-16"
 
@@ -1907,6 +2027,96 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-06-10"
 end = "2024-07-17"
+
+[[trusted.objc-sys]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2021-11-22"
+end = "2027-08-14"
+
+[[trusted.objc2]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2021-11-19"
+end = "2027-08-14"
+
+[[trusted.objc2-app-kit]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-cloud-kit]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-core-data]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-core-image]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-05-14"
+end = "2027-08-14"
+
+[[trusted.objc2-core-location]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-core-text]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-12-10"
+end = "2027-08-14"
+
+[[trusted.objc2-exception-helper]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-06-02"
+end = "2027-08-14"
+
+[[trusted.objc2-foundation]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2021-11-19"
+end = "2027-08-14"
+
+[[trusted.objc2-metal]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-quartz-core]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-ui-kit]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
+
+[[trusted.objc2-user-notifications]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-18"
+end = "2027-08-14"
+
+[[trusted.objc2-web-kit]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2024-04-17"
+end = "2027-08-14"
 
 [[trusted.once_cell_polyfill]]
 criteria = "safe-to-deploy"
@@ -1968,6 +2178,12 @@ user-id = 2017 # Matt Brubeck (mbrubeck)
 start = "2019-03-13"
 end = "2027-06-02"
 
+[[trusted.ordered-stream]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2023-01-02"
+end = "2027-08-14"
+
 [[trusted.p256]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -2004,6 +2220,18 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-19"
 end = "2024-07-17"
 
+[[trusted.phf_codegen]]
+criteria = "safe-to-deploy"
+user-id = 51017 # Yuki Okushi (JohnTitor)
+start = "2021-06-17"
+end = "2027-08-14"
+
+[[trusted.phf_macros]]
+criteria = "safe-to-deploy"
+user-id = 51017 # Yuki Okushi (JohnTitor)
+start = "2021-06-17"
+end = "2027-08-14"
+
 [[trusted.pkcs1]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -2015,6 +2243,12 @@ criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-06-12"
 end = "2027-04-23"
+
+[[trusted.polling]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2021-06-14"
+end = "2027-08-14"
 
 [[trusted.poly1305]]
 criteria = "safe-to-deploy"
@@ -2172,6 +2406,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-08-26"
 end = "2027-03-31"
 
+[[trusted.selectors]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2025-03-31"
+end = "2027-08-14"
+
 [[trusted.serde]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -2232,6 +2472,12 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-05-02"
 end = "2025-10-16"
 
+[[trusted.servo_arc]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2025-11-12"
+end = "2027-08-14"
+
 [[trusted.sha1]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -2280,17 +2526,143 @@ user-id = 6025 # Thomas de Zeeuw (Thomasdezeeuw)
 start = "2020-09-09"
 end = "2027-04-23"
 
+[[trusted.softbuffer]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2025-12-13"
+end = "2027-08-14"
+
 [[trusted.spki]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-12-03"
 end = "2027-04-23"
 
+[[trusted.string_cache]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2023-02-22"
+end = "2027-08-14"
+
+[[trusted.string_cache_codegen]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2025-08-26"
+end = "2027-08-14"
+
 [[trusted.syn]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
 end = "2027-05-01"
+
+[[trusted.tao]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-04-30"
+end = "2027-08-14"
+
+[[trusted.tao-macros]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2023-01-11"
+end = "2027-08-14"
+
+[[trusted.tauri]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2020-07-20"
+end = "2027-08-14"
+
+[[trusted.tauri-build]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-04-14"
+end = "2027-08-14"
+
+[[trusted.tauri-codegen]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-04-14"
+end = "2027-08-14"
+
+[[trusted.tauri-macros]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-04-14"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2024-02-03"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin-dialog]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2023-05-24"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin-fs]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2023-05-24"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin-notification]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2023-05-24"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin-opener]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2024-11-11"
+end = "2027-08-14"
+
+[[trusted.tauri-plugin-window-state]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2022-06-19"
+end = "2027-08-14"
+
+[[trusted.tauri-runtime]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-05-10"
+end = "2027-08-14"
+
+[[trusted.tauri-runtime-wry]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-05-10"
+end = "2027-08-14"
+
+[[trusted.tauri-utils]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-04-14"
+end = "2027-08-14"
+
+[[trusted.tauri-winres]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2023-01-19"
+end = "2027-08-14"
+
+[[trusted.tauri-winrt-notification]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2022-08-29"
+end = "2027-08-14"
+
+[[trusted.tendril]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2026-07-06"
+end = "2027-08-14"
 
 [[trusted.termcolor]]
 criteria = "safe-to-deploy"
@@ -2434,7 +2806,7 @@ end = "2025-10-18"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2024-09-23"
-end = "2025-10-18"
+end = "2027-08-14"
 
 [[trusted.tower-layer]]
 criteria = "safe-to-deploy"
@@ -2453,6 +2825,12 @@ criteria = "safe-to-deploy"
 user-id = 3959 # Lucio Franco (LucioFranco)
 start = "2019-08-20"
 end = "2027-04-23"
+
+[[trusted.tray-icon]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2022-12-01"
+end = "2027-08-14"
 
 [[trusted.typeid]]
 criteria = "safe-to-deploy"
@@ -2622,11 +3000,59 @@ user-id = 145038 # Guy Bedford (guybedford)
 start = "2026-01-14"
 end = "2027-03-31"
 
+[[trusted.web_atoms]]
+criteria = "safe-to-deploy"
+user-id = 2396 # Josh Matthews (jdm)
+start = "2025-04-18"
+end = "2027-08-14"
+
+[[trusted.web_atoms]]
+criteria = "safe-to-deploy"
+user-id = 2844 # Martin Robinson (mrobinson)
+start = "2025-05-07"
+end = "2027-08-14"
+
+[[trusted.webkit2gtk]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-05"
+end = "2027-08-14"
+
+[[trusted.webkit2gtk-sys]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-10-05"
+end = "2027-08-14"
+
+[[trusted.webview2-com]]
+criteria = "safe-to-deploy"
+user-id = 131438 # Bill Avery (wravery)
+start = "2021-09-06"
+end = "2027-08-14"
+
+[[trusted.webview2-com-macros]]
+criteria = "safe-to-deploy"
+user-id = 131438 # Bill Avery (wravery)
+start = "2021-09-08"
+end = "2027-08-14"
+
+[[trusted.webview2-com-sys]]
+criteria = "safe-to-deploy"
+user-id = 131438 # Bill Avery (wravery)
+start = "2021-09-08"
+end = "2027-08-14"
+
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2020-01-11"
 end = "2024-07-17"
+
+[[trusted.window-vibrancy]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2022-03-05"
+end = "2027-08-14"
 
 [[trusted.windows]]
 criteria = "safe-to-deploy"
@@ -2772,6 +3198,12 @@ user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2021-11-01"
 end = "2027-04-23"
 
+[[trusted.wry]]
+criteria = "safe-to-deploy"
+user-id = 95389 # tauri (tauri-bot)
+start = "2021-03-11"
+end = "2027-08-14"
+
 [[trusted.yoke]]
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
@@ -2783,6 +3215,30 @@ criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2021-07-02"
 end = "2027-04-23"
+
+[[trusted.zbus]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2020-07-19"
+end = "2027-08-14"
+
+[[trusted.zbus_macros]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2020-07-19"
+end = "2027-08-14"
+
+[[trusted.zbus_names]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2021-07-30"
+end = "2027-08-14"
+
+[[trusted.zcheapstr]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2026-08-09"
+end = "2027-08-14"
 
 [[trusted.zerofrom]]
 criteria = "safe-to-deploy"
@@ -2825,3 +3281,21 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2025-12-18"
 end = "2027-04-23"
+
+[[trusted.zvariant]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2019-12-30"
+end = "2027-08-14"
+
+[[trusted.zvariant_derive]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2020-05-22"
+end = "2027-08-14"
+
+[[trusted.zvariant_utils]]
+criteria = "safe-to-deploy"
+user-id = 6423 # Zeeshan Ali Khan (zeenix)
+start = "2023-03-07"
+end = "2027-08-14"

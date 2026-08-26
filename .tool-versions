@@ -1,2 +1,4 @@
 # keep this in line with .nvmrc
-nodejs 22.9.0
+nodejs 22.16.0
+# Note - rust version specified in rust-toolchain.toml (respected by rustup which is what mise uses)
+rust

@@ -78,6 +78,13 @@ user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
+[[publisher.async-broadcast]]
+version = "0.7.2"
+when = "2024-12-23"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
 [[publisher.async-trait]]
 version = "0.1.89"
 when = "2025-08-14"
@@ -335,6 +342,13 @@ version = "0.12.0"
 when = "2026-02-24"
 trusted-publisher = "github:RustCrypto/utils"
 
+[[publisher.block2]]
+version = "0.5.1"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
 [[publisher.bollard]]
 version = "0.20.2"
 when = "2026-03-15"
@@ -443,6 +457,13 @@ user-id = 5946
 user-login = "jrmuizel"
 user-name = "Jeff Muizelaar"
 
+[[publisher.core-graphics]]
+version = "0.25.0"
+when = "2025-05-27"
+user-id = 2396
+user-login = "jdm"
+user-name = "Josh Matthews"
+
 [[publisher.core-graphics-types]]
 version = "0.1.1"
 when = "2020-09-15"
@@ -483,6 +504,20 @@ version = "0.2.2"
 when = "2026-05-19"
 trusted-publisher = "github:RustCrypto/traits"
 
+[[publisher.ctor]]
+version = "0.8.0"
+when = "2026-03-28"
+user-id = 34586
+user-login = "mmastrac"
+user-name = "Matt Mastracci"
+
+[[publisher.ctor-proc-macro]]
+version = "0.0.7"
+when = "2025-10-08"
+user-id = 34586
+user-login = "mmastrac"
+user-name = "Matt Mastracci"
+
 [[publisher.ctr]]
 version = "0.9.2"
 when = "2022-09-30"
@@ -496,8 +531,15 @@ when = "2026-04-02"
 trusted-publisher = "github:RustCrypto/utils"
 
 [[publisher.derive_more]]
-version = "0.99.19"
-when = "2025-02-03"
+version = "2.1.1"
+when = "2025-12-22"
+user-id = 3797
+user-login = "JelteF"
+user-name = "Jelte Fennema-Nio"
+
+[[publisher.derive_more-impl]]
+version = "2.1.1"
+when = "2025-12-22"
 user-id = 3797
 user-login = "JelteF"
 user-name = "Jelte Fennema-Nio"
@@ -514,12 +556,33 @@ version = "0.11.3"
 when = "2026-05-03"
 trusted-publisher = "github:RustCrypto/traits"
 
+[[publisher.dispatch2]]
+version = "0.3.1"
+when = "2026-02-26"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
 [[publisher.dtoa]]
 version = "1.0.9"
 when = "2023-07-15"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.dtor]]
+version = "0.3.0"
+when = "2026-03-28"
+user-id = 34586
+user-login = "mmastrac"
+user-name = "Matt Mastracci"
+
+[[publisher.dtor-proc-macro]]
+version = "0.0.6"
+when = "2025-07-27"
+user-id = 34586
+user-login = "mmastrac"
+user-name = "Matt Mastracci"
 
 [[publisher.dyn-clone]]
 version = "1.0.18"
@@ -562,6 +625,13 @@ when = "2024-10-24"
 user-id = 4484
 user-login = "hsivonen"
 user-name = "Henri Sivonen"
+
+[[publisher.endi]]
+version = "1.1.0"
+when = "2023-12-12"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
 
 [[publisher.env_logger]]
 version = "0.10.2"
@@ -632,6 +702,12 @@ when = "2025-11-20"
 user-id = 55123
 user-login = "rust-lang-owner"
 
+[[publisher.hashbrown]]
+version = "0.17.1"
+when = "2026-05-09"
+user-id = 55123
+user-login = "rust-lang-owner"
+
 [[publisher.hax-lib]]
 version = "0.3.6"
 when = "2026-01-15"
@@ -696,6 +772,13 @@ when = "2026-03-20"
 user-id = 9765
 user-login = "franziskuskiefer"
 user-name = "Franziskus Kiefer"
+
+[[publisher.html5ever]]
+version = "0.38.0"
+when = "2026-01-22"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
 
 [[publisher.http]]
 version = "0.2.12"
@@ -786,6 +869,13 @@ user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
 
+[[publisher.indexmap]]
+version = "2.11.4"
+when = "2025-09-18"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
 [[publisher.indoc]]
 version = "2.0.5"
 when = "2024-03-23"
@@ -808,18 +898,25 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.itoa]]
-version = "0.4.8"
-when = "2021-08-22"
-user-id = 3618
-user-login = "dtolnay"
-user-name = "David Tolnay"
-
-[[publisher.itoa]]
 version = "1.0.18"
 when = "2026-03-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.javascriptcore-rs]]
+version = "1.1.2"
+when = "2023-10-26"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.javascriptcore-rs-sys]]
+version = "1.1.1"
+when = "2023-10-26"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
 
 [[publisher.jobserver]]
 version = "0.1.25"
@@ -841,6 +938,20 @@ when = "2024-09-20"
 user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
+
+[[publisher.libappindicator]]
+version = "0.9.0"
+when = "2023-10-01"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.libappindicator-sys]]
+version = "0.9.0"
+when = "2023-10-01"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
 
 [[publisher.libc]]
 version = "0.2.186"
@@ -1001,6 +1112,13 @@ user-id = 2915
 user-login = "Amanieu"
 user-name = "Amanieu d'Antras"
 
+[[publisher.markup5ever]]
+version = "0.38.0"
+when = "2026-01-22"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
+
 [[publisher.md-5]]
 version = "0.11.0"
 when = "2026-03-27"
@@ -1019,6 +1137,13 @@ when = "2023-03-20"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
+
+[[publisher.muda]]
+version = "0.19.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
 
 [[publisher.new_debug_unreachable]]
 version = "1.0.6"
@@ -1047,6 +1172,118 @@ when = "2024-05-07"
 user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
+
+[[publisher.objc-sys]]
+version = "0.3.5"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2]]
+version = "0.5.2"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2]]
+version = "0.6.4"
+when = "2026-02-26"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-app-kit]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-cloud-kit]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-core-data]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-core-image]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-core-location]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-core-text]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-exception-helper]]
+version = "0.1.1"
+when = "2025-01-22"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-foundation]]
+version = "0.2.2"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-metal]]
+version = "0.2.2"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-quartz-core]]
+version = "0.2.2"
+when = "2024-05-21"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-ui-kit]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-user-notifications]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
+
+[[publisher.objc2-web-kit]]
+version = "0.3.2"
+when = "2025-10-04"
+user-id = 36629
+user-login = "madsmtm"
+user-name = "Mads Marquart"
 
 [[publisher.openmls]]
 version = "0.8.0"
@@ -1151,6 +1388,20 @@ when = "2024-05-07"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.phf_codegen]]
+version = "0.13.1"
+when = "2025-08-23"
+user-id = 51017
+user-login = "JohnTitor"
+user-name = "Yuki Okushi"
+
+[[publisher.phf_macros]]
+version = "0.13.1"
+when = "2025-08-23"
+user-id = 51017
+user-login = "JohnTitor"
+user-name = "Yuki Okushi"
 
 [[publisher.pkcs1]]
 version = "0.7.5"
@@ -1264,6 +1515,13 @@ user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
+[[publisher.reqwest]]
+version = "0.13.4"
+when = "2026-05-25"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
 [[publisher.rfc6979]]
 version = "0.4.0"
 when = "2023-02-28"
@@ -1319,6 +1577,13 @@ when = "2023-07-16"
 user-id = 267
 user-login = "tarcieri"
 user-name = "Tony Arcieri"
+
+[[publisher.selectors]]
+version = "0.36.1"
+when = "2026-03-18"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
 
 [[publisher.serde]]
 version = "1.0.204"
@@ -1383,12 +1648,26 @@ user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
+[[publisher.serde_spanned]]
+version = "1.1.1"
+when = "2026-03-31"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
 [[publisher.serde_yaml]]
 version = "0.9.34+deprecated"
 when = "2024-03-25"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.servo_arc]]
+version = "0.4.3"
+when = "2025-11-12"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
 
 [[publisher.sha1]]
 version = "0.11.0"
@@ -1415,18 +1694,25 @@ user-login = "tarcieri"
 user-name = "Tony Arcieri"
 
 [[publisher.socket2]]
-version = "0.5.8"
-when = "2024-11-28"
-user-id = 6025
-user-login = "Thomasdezeeuw"
-user-name = "Thomas de Zeeuw"
-
-[[publisher.socket2]]
 version = "0.6.3"
 when = "2026-03-06"
 user-id = 6025
 user-login = "Thomasdezeeuw"
 user-name = "Thomas de Zeeuw"
+
+[[publisher.string_cache]]
+version = "0.9.0"
+when = "2025-08-26"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
+
+[[publisher.string_cache_codegen]]
+version = "0.6.1"
+when = "2025-09-08"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
 
 [[publisher.syn]]
 version = "1.0.109"
@@ -1441,6 +1727,139 @@ when = "2026-02-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.syn]]
+version = "3.0.3"
+when = "2026-07-22"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.tao]]
+version = "0.35.3"
+when = "2026-05-23"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tao-macros]]
+version = "0.1.3"
+when = "2024-08-21"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri]]
+version = "2.11.5"
+when = "2026-07-01"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-build]]
+version = "2.6.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-codegen]]
+version = "2.6.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-macros]]
+version = "2.6.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin]]
+version = "2.6.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin-dialog]]
+version = "2.7.2"
+when = "2026-07-18"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin-fs]]
+version = "2.5.1"
+when = "2026-05-02"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin-notification]]
+version = "2.3.3"
+when = "2025-10-27"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin-opener]]
+version = "2.5.4"
+when = "2026-05-02"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-plugin-window-state]]
+version = "2.4.1"
+when = "2025-10-27"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-runtime]]
+version = "2.11.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-runtime-wry]]
+version = "2.11.4"
+when = "2026-06-30"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-utils]]
+version = "2.9.3"
+when = "2026-06-17"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-winres]]
+version = "0.3.6"
+when = "2026-04-27"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tauri-winrt-notification]]
+version = "0.2.1"
+when = "2024-04-18"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.tendril]]
+version = "0.5.1"
+when = "2026-07-06"
+user-id = 2844
+user-login = "mrobinson"
+user-name = "Martin Robinson"
 
 [[publisher.termcolor]]
 version = "1.4.1"
@@ -1534,15 +1953,22 @@ user-login = "Darksonn"
 user-name = "Alice Ryhl"
 
 [[publisher.toml]]
-version = "0.7.8"
-when = "2023-09-09"
+version = "0.8.20"
+when = "2025-02-05"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.toml]]
-version = "0.8.20"
-when = "2025-02-05"
+version = "0.9.12+spec-1.1.0"
+when = "2026-02-10"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.toml]]
+version = "1.1.4+spec-1.1.0"
+when = "2026-07-28"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -1550,6 +1976,13 @@ user-name = "Ed Page"
 [[publisher.toml_datetime]]
 version = "0.6.8"
 when = "2024-07-30"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.toml_datetime]]
+version = "1.1.1+spec-1.1.0"
+when = "2026-03-31"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -1571,6 +2004,20 @@ user-name = "Ed Page"
 [[publisher.toml_edit]]
 version = "0.22.24"
 when = "2025-02-10"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.toml_parser]]
+version = "1.1.3+spec-1.1.0"
+when = "2026-07-27"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.toml_writer]]
+version = "1.1.2+spec-1.1.0"
+when = "2026-07-14"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -1597,8 +2044,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.tower-http]]
-version = "0.6.2"
-when = "2024-11-18"
+version = "0.6.11"
+when = "2026-05-18"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -1616,6 +2063,13 @@ when = "2024-08-13"
 user-id = 3959
 user-login = "LucioFranco"
 user-name = "Lucio Franco"
+
+[[publisher.tray-icon]]
+version = "0.24.2"
+when = "2026-07-27"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
 
 [[publisher.typeid]]
 version = "1.0.2"
@@ -1723,13 +2177,6 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.wasi]]
-version = "0.9.0+wasi-snapshot-preview1"
-when = "2019-12-02"
-user-id = 6825
-user-login = "sunfishcode"
-user-name = "Dan Gohman"
-
-[[publisher.wasi]]
 version = "0.11.0+wasi-snapshot-preview1"
 when = "2022-01-19"
 user-id = 1
@@ -1808,6 +2255,55 @@ user-id = 145038
 user-login = "guybedford"
 user-name = "Guy Bedford"
 
+[[publisher.web_atoms]]
+version = "0.2.6"
+when = "2026-08-09"
+user-id = 2396
+user-login = "jdm"
+user-name = "Josh Matthews"
+
+[[publisher.webkit2gtk]]
+version = "2.0.2"
+when = "2025-12-16"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.webkit2gtk-sys]]
+version = "2.0.2"
+when = "2025-12-16"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.webview2-com]]
+version = "0.38.2"
+when = "2026-01-07"
+user-id = 131438
+user-login = "wravery"
+user-name = "Bill Avery"
+
+[[publisher.webview2-com-macros]]
+version = "0.8.1"
+when = "2026-01-07"
+user-id = 131438
+user-login = "wravery"
+user-name = "Bill Avery"
+
+[[publisher.webview2-com-sys]]
+version = "0.38.2"
+when = "2026-01-07"
+user-id = 131438
+user-login = "wravery"
+user-name = "Bill Avery"
+
+[[publisher.window-vibrancy]]
+version = "0.6.0"
+when = "2025-02-21"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
 [[publisher.windows]]
 version = "0.56.0"
 when = "2024-04-12"
@@ -1816,8 +2312,15 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows]]
-version = "0.58.0"
-when = "2024-07-03"
+version = "0.61.3"
+when = "2025-06-12"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-collections]]
+version = "0.2.0"
+when = "2025-03-18"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1830,8 +2333,15 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows-core]]
-version = "0.58.0"
-when = "2024-07-03"
+version = "0.61.2"
+when = "2025-05-19"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-future]]
+version = "0.2.1"
+when = "2025-05-15"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1844,8 +2354,8 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows-implement]]
-version = "0.58.0"
-when = "2024-07-03"
+version = "0.60.2"
+when = "2025-10-06"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1858,8 +2368,15 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows-interface]]
-version = "0.58.0"
-when = "2024-07-03"
+version = "0.59.3"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-numerics]]
+version = "0.2.0"
+when = "2025-03-18"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1885,9 +2402,23 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows-result]]
+version = "0.3.4"
+when = "2025-05-19"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows-strings]]
 version = "0.1.0"
 when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-strings]]
+version = "0.4.2"
+when = "2025-05-19"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1921,6 +2452,13 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows-sys]]
+version = "0.60.2"
+when = "2025-06-12"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-sys]]
 version = "0.61.2"
 when = "2025-10-06"
 user-id = 64539
@@ -1949,8 +2487,15 @@ user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
 [[publisher.windows-targets]]
-version = "0.53.0"
-when = "2025-01-07"
+version = "0.53.5"
+when = "2025-10-06"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-threading]]
+version = "0.1.0"
+when = "2025-05-15"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -2145,8 +2690,15 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.winnow]]
-version = "0.7.2"
-when = "2025-02-10"
+version = "0.7.15"
+when = "2026-03-05"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.winnow]]
+version = "1.0.4"
+when = "2026-07-13"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -2192,6 +2744,41 @@ version = "0.244.0"
 when = "2026-01-06"
 trusted-publisher = "github:bytecodealliance/wasm-tools"
 
+[[publisher.wry]]
+version = "0.55.1"
+when = "2026-05-04"
+user-id = 95389
+user-login = "tauri-bot"
+user-name = "tauri"
+
+[[publisher.zbus]]
+version = "5.19.0"
+when = "2026-08-09"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
+[[publisher.zbus_macros]]
+version = "5.19.0"
+when = "2026-08-09"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
+[[publisher.zbus_names]]
+version = "4.3.4"
+when = "2026-07-17"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
+[[publisher.zcheapstr]]
+version = "1.1.0"
+when = "2026-08-10"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
 [[publisher.zerovec]]
 version = "0.10.4"
 when = "2024-06-27"
@@ -2205,6 +2792,27 @@ when = "2024-06-24"
 user-id = 1139
 user-login = "Manishearth"
 user-name = "Manish Goregaokar"
+
+[[publisher.zvariant]]
+version = "5.14.0"
+when = "2026-08-09"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
+[[publisher.zvariant_derive]]
+version = "5.14.0"
+when = "2026-08-09"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
+
+[[publisher.zvariant_utils]]
+version = "4.0.0"
+when = "2026-08-09"
+user-id = 6423
+user-login = "zeenix"
+user-name = "Zeeshan Ali Khan"
 
 [[audits.bytecode-alliance.wildcard-audits.bumpalo]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
@@ -2857,12 +3465,6 @@ criteria = "safe-to-deploy"
 version = "0.1.1"
 notes = "No unsafe usage or ambient capabilities"
 
-[[audits.embark-studios.audits.convert_case]]
-who = "Johan Andersson <opensource@embark-studios.com>"
-criteria = "safe-to-deploy"
-version = "0.4.0"
-notes = "No unsafe usage or ambient capabilities"
-
 [[audits.embark-studios.audits.ident_case]]
 who = "Johan Andersson <opensource@embark-studios.com>"
 criteria = "safe-to-deploy"
@@ -2923,12 +3525,6 @@ https://github.com/signalapp/libsignal/blob/main/rust/bridge/jni/Cargo.toml
 - https://github.com/jni-rs/jni-rs/issues/405 - discusses the ease with which
   code may expose the JVM to invalid booleans with undefined behaviour
 """
-
-[[audits.embark-studios.audits.ndk-context]]
-who = "Johan Andersson <opensource@embark-studios.com>"
-criteria = "safe-to-deploy"
-version = "0.1.1"
-notes = "Tiny crate that initializes Android with FFI, looks sane. No other ambient capabilities"
 
 [[audits.embark-studios.audits.unic-ucd-version]]
 who = "Johan Andersson <opensource@embark-studios.com>"
@@ -3272,19 +3868,6 @@ version = "0.1.61"
 notes = "Some unsafe: interfacing with system timezone APIs"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
-[[audits.google.audits.indexmap]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-version = "2.7.1"
-notes = '''
-Grepped for `-i cipher`, `-i crypto`, `'\bfs\b'`, `'\bnet\b'`
-and there were no hits.
-
-There is a little bit of `unsafe` Rust code - the audit can be found at
-https://chromium-review.googlesource.com/c/chromium/src/+/6187726/2
-'''
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
 [[audits.google.audits.itertools]]
 who = "ChromeOS"
 criteria = "safe-to-run"
@@ -3446,12 +4029,6 @@ notes = """
 For more detailed unsafe review notes please see https://crrev.com/c/6362797
 """
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.rand_chacha]]
-who = "Android Legacy"
-criteria = "safe-to-run"
-version = "0.3.1"
-aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
 
 [[audits.google.audits.rand_core]]
 who = "Lukasz Anforowicz <lukasza@chromium.org>"
@@ -4164,6 +4741,50 @@ version = "0.1.1"
 notes = "Small crate parsing a file. No unsafe code"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
+[[audits.mozilla.audits.bit-set]]
+who = "Aria Beingessner <a.beingessner@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.5.2"
+notes = "Another crate I own via contain-rs that is ancient and maintenance mode, no known issues."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-set]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "0.5.2 -> 0.5.3"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-set]]
+who = "Teodor Tanasoaia <ttanasoaia@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "0.5.3 -> 0.6.0"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-set]]
+who = "Jim Blandy <jimb@red-bean.com>"
+criteria = "safe-to-deploy"
+delta = "0.6.0 -> 0.8.0"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-vec]]
+who = "Aria Beingessner <a.beingessner@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.6.3"
+notes = "Another crate I own via contain-rs that is ancient and in maintenance mode but otherwise perfectly fine."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-vec]]
+who = "Teodor Tanasoaia <ttanasoaia@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "0.6.3 -> 0.7.0"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.bit-vec]]
+who = "Jim Blandy <jimb@red-bean.com>"
+criteria = "safe-to-deploy"
+delta = "0.7.0 -> 0.8.0"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
 [[audits.mozilla.audits.bitflags]]
 who = "Alex Franchuk <afranchuk@mozilla.com>"
 criteria = "safe-to-deploy"
@@ -4200,6 +4821,13 @@ aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-c
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.10.2 -> 0.10.3"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.block2]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.6.2"
+notes = "Contains unsafe code to interoperate with the ObjC runtime."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.camino]]
@@ -4296,6 +4924,70 @@ aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-c
 who = "Erich Gubler <erichdongubler@gmail.com>"
 criteria = "safe-to-deploy"
 version = "0.2.3"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+version = "0.29.6"
+notes = """
+I've reviewed or authored most of the recent changes to this library, and it
+was developed by other mozilla folks. Unsafe code there is reasonable (utf-8
+casts for serialization and parsing).
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Bobby Holley <bobbyholley@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.29.6 -> 0.31.0"
+notes = """
+All the changes in this release were authored by Mozilla staff, except the
+uninit_array stuff, which looks fine.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "0.31.0 -> 0.31.2"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+delta = "0.31.2 -> 0.32.0"
+notes = "All changes were either authored or reviewed by Mozilla employees."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+delta = "0.32.0 -> 0.33.0"
+notes = """
+Mozilla authored. Breaking changes from 0.32 involve splitting color APIs into
+their own crate and removing an unused line number offset mechanism.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+delta = "0.33.0 -> 0.34.0"
+notes = "I'm the publisher of the crate, and either myself or other Mozilla folks have been authors or reviewers of all the changes."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+delta = "0.34.0 -> 0.35.0"
+notes = "All non-trivial changes authored or reviewed by Mozilla employees."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.cssparser]]
+who = "Diego Escalante <descalante@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "0.35.0 -> 0.36.0"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.cssparser-macros]]
@@ -4458,13 +5150,6 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.3.27 -> 0.3.28"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.fxhash]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-version = "0.2.1"
-notes = "Straightforward crate with no unsafe code, does what it says on the tin."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.getrandom]]
@@ -4705,6 +5390,13 @@ criteria = "safe-to-deploy"
 version = "1.2.0"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
+[[audits.mozilla.audits.indexmap]]
+who = "Ben Dean-Kawamura <bdk@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "2.11.4 -> 2.14.0"
+notes = "Mostly internal refactorings.  No new unsafe code."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
 [[audits.mozilla.audits.libcrux-macros]]
 who = "Dana Keeler <dkeeler@mozilla.com>"
 criteria = "safe-to-deploy"
@@ -4717,18 +5409,6 @@ criteria = "safe-to-deploy"
 delta = "0.7.3 -> 0.7.4"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
-[[audits.mozilla.audits.libloading]]
-who = "Erich Gubler <erichdongubler@gmail.com>"
-criteria = "safe-to-deploy"
-delta = "0.7.4 -> 0.8.3"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.libloading]]
-who = "Erich Gubler <erichdongubler@gmail.com>"
-criteria = "safe-to-deploy"
-delta = "0.8.3 -> 0.8.6"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
 [[audits.mozilla.audits.malloc_buf]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -4739,19 +5419,6 @@ There is an edge-case condition that passes slice::from_raw_parts(0x1, 0) which 
 not entirely certain is technically sound, but in either case I am reasonably confident
 it's not exploitable.
 """
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.matches]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-version = "0.1.9"
-notes = "This is a trivial crate."
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.matches]]
-who = "Mike Hommey <mh+mozilla@glandium.org>"
-criteria = "safe-to-deploy"
-delta = "0.1.9 -> 0.1.10"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.nix]]
@@ -4787,11 +5454,91 @@ delta = "0.1.0 -> 0.2.0"
 notes = "Revision only removes code"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
+[[audits.mozilla.audits.objc2-core-foundation]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = """
+Contains substantial unsafe code, as is typical for FFI.
+
+The (non-published) `header-translator` crate that produces generated bindings
+in this crate was also reviewed, in lieu of a full review of the generated
+bindings.
+
+Users of this crate should be aware of the information in
+https://github.com/madsmtm/objc2/blob/main/crates/objc2/src/topics/frameworks_soundness.md.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.objc2-core-graphics]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = """
+Contains substantial unsafe code, as is typical for FFI.
+
+The (non-published) `header-translator` crate that produces generated bindings
+in this crate was also reviewed, in lieu of a full review of the generated
+bindings.
+
+Users of this crate should be aware of the information in
+https://github.com/madsmtm/objc2/blob/main/crates/objc2/src/topics/frameworks_soundness.md.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
 [[audits.mozilla.audits.objc2-encode]]
 who = "Andy Leiserson <aleiserson@mozilla.com>"
 criteria = "safe-to-deploy"
 version = "4.1.0"
 notes = "Support library for objc2 with no unsafe code"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.objc2-foundation]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = """
+Contains substantial unsafe code, as is typical for FFI.
+
+The (non-published) `header-translator` crate that produces generated bindings
+in this crate was also reviewed, in lieu of a full review of the generated
+bindings.
+
+Users of this crate should be aware of the information in
+https://github.com/madsmtm/objc2/blob/main/crates/objc2/src/topics/frameworks_soundness.md.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.objc2-io-surface]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = """
+Contains substantial unsafe code, as is typical for FFI.
+
+The (non-published) `header-translator` crate that produces generated bindings
+in this crate was also reviewed, in lieu of a full review of the generated
+bindings.
+
+Users of this crate should be aware of the information in
+https://github.com/madsmtm/objc2/blob/main/crates/objc2/src/topics/frameworks_soundness.md.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.objc2-quartz-core]]
+who = "Andy Leiserson <aleiserson@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = """
+Contains substantial unsafe code, as is typical for FFI.
+
+The (non-published) `header-translator` crate that produces generated bindings
+in this crate was also reviewed, in lieu of a full review of the generated
+bindings.
+
+Users of this crate should be aware of the information in
+https://github.com/madsmtm/objc2/blob/main/crates/objc2/src/topics/frameworks_soundness.md.
+"""
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.percent-encoding]]
@@ -4845,37 +5592,6 @@ who = "Kagami Sascha Rosylight <saschanaz@outlook.com>"
 criteria = "safe-to-deploy"
 version = "2.0.1"
 notes = "No unsafe block with a lovely `#![forbid(unsafe_code)]`."
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.proc-macro-hack]]
-who = "Mike Hommey <mh+mozilla@glandium.org>"
-criteria = "safe-to-deploy"
-delta = "0.5.19 -> 0.5.20+deprecated"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.quinn-udp]]
-who = "Max Inden <mail@max-inden.de>"
-criteria = "safe-to-deploy"
-version = "0.5.4"
-notes = "This is a small crate, providing safe wrappers around various low-level networking specific operating system features. Given that the Rust standard library does not provide safe wrappers for these low-level features, safe wrappers need to be build in the crate itself, i.e. `quinn-udp`, thus requiring `unsafe` code."
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.quinn-udp]]
-who = "Max Inden <mail@max-inden.de>"
-criteria = "safe-to-deploy"
-delta = "0.5.4 -> 0.5.6"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.quinn-udp]]
-who = "Max Inden <mail@max-inden.de>"
-criteria = "safe-to-deploy"
-delta = "0.5.6 -> 0.5.8"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.quinn-udp]]
-who = "Max Inden <mail@max-inden.de>"
-criteria = "safe-to-deploy"
-delta = "0.5.8 -> 0.5.9"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.raw-window-handle]]
@@ -4952,16 +5668,6 @@ information for parsing version information.
 """
 aggregated-from = "https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml"
 
-[[audits.mozilla.audits.selectors]]
-who = "Emilio Cobos Álvarez <emilio@crisal.io>"
-criteria = "safe-to-deploy"
-version = "0.22.0"
-notes = """
-This crate is basically developed in-tree. Mozilla employees have either
-reviewed or written virtually all of the code.
-"""
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
 [[audits.mozilla.audits.semver]]
 who = "Jan-Erik Rediger <jrediger@mozilla.com>"
 criteria = "safe-to-deploy"
@@ -5022,13 +5728,6 @@ who = "Jan-Erik Rediger <jrediger@mozilla.com>"
 criteria = "safe-to-deploy"
 delta = "1.0.227 -> 1.0.228"
 aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.servo_arc]]
-who = "Emilio Cobos Álvarez <emilio@crisal.io>"
-criteria = "safe-to-deploy"
-version = "0.1.1"
-notes = "Developed in-tree, effectively."
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.sha2]]
 who = "Mike Hommey <mh+mozilla@glandium.org>"
@@ -5164,6 +5863,13 @@ who = "Drew Willcoxon <adw@mozilla.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.0 -> 0.1.1"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.toml_datetime]]
+who = "Jan-Erik Rediger <jrediger@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.7.5+spec-1.1.0"
+notes = "Pure data type crate with some datetime parsing. No unsafe."
+aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.tracing-subscriber]]
 who = "Mark Hammond <mhammond@skippinet.com.au>"
@@ -5431,6 +6137,18 @@ criteria = "safe-to-deploy"
 delta = "0.11.2 -> 0.11.3"
 aggregated-from = "https://raw.githubusercontent.com/zcash/zcash/master/qa/supply-chain/audits.toml"
 
+[[audits.zcash.audits.phf]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.11.3 -> 0.12.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
+
+[[audits.zcash.audits.phf]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.12.1 -> 0.13.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
+
 [[audits.zcash.audits.phf_generator]]
 who = "Jack Grigg <jack@z.cash>"
 criteria = "safe-to-deploy"
@@ -5449,6 +6167,18 @@ who = "Jack Grigg <jack@electriccoin.co>"
 criteria = "safe-to-deploy"
 delta = "0.11.2 -> 0.11.3"
 aggregated-from = "https://raw.githubusercontent.com/zcash/zcash/master/qa/supply-chain/audits.toml"
+
+[[audits.zcash.audits.phf_generator]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.11.3 -> 0.12.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
+
+[[audits.zcash.audits.phf_generator]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.12.1 -> 0.13.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
 
 [[audits.zcash.audits.phf_shared]]
 who = "Jack Grigg <jack@z.cash>"
@@ -5473,6 +6203,18 @@ criteria = "safe-to-deploy"
 delta = "0.11.2 -> 0.11.3"
 notes = "Bumped MSRV and dependency versions to remove an `unsafe` block."
 aggregated-from = "https://raw.githubusercontent.com/zcash/zcash/master/qa/supply-chain/audits.toml"
+
+[[audits.zcash.audits.phf_shared]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.11.3 -> 0.12.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
+
+[[audits.zcash.audits.phf_shared]]
+who = "Jack Grigg <jack@electriccoin.co>"
+criteria = "safe-to-deploy"
+delta = "0.12.1 -> 0.13.1"
+aggregated-from = "https://raw.githubusercontent.com/zcash/librustzcash/main/supply-chain/audits.toml"
 
 [[audits.zcash.audits.redox_users]]
 who = "Jack Grigg <jack@electriccoin.co>"
