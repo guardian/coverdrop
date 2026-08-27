@@ -38,7 +38,7 @@ pub async fn scp(
     if !exit_code.success() {
         anyhow::bail!(
             "SCP command exited with status {}. Does the source file exist?",
-            exit_code.to_string()
+            exit_code
         )
     }
     println!("Successfully copied file {source_path} to {dest_path}");

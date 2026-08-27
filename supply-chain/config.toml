@@ -241,6 +241,11 @@ criteria = "safe-to-run"
 version = "0.18.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.crabgrind]]
+version = "0.2.6"
+criteria = "safe-to-deploy"
+notes = "Valgrind bindings used by libcrux-secrets for memory safety checks"
+
 [[exemptions.crc]]
 version = "3.2.1"
 criteria = "safe-to-deploy"
@@ -285,10 +290,6 @@ criteria = "safe-to-deploy"
 version = "3.4.5"
 criteria = "safe-to-deploy"
 
-[[exemptions.curve25519-dalek]]
-version = "4.1.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.curve25519-dalek-derive]]
 version = "0.1.0"
 criteria = "safe-to-deploy"
@@ -307,10 +308,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.data-encoding]]
 version = "2.8.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.dbus]]
-version = "0.9.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.dirs-sys-next]]
@@ -379,10 +376,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.event-listener]]
 version = "2.5.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.event-listener]]
-version = "5.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.event-listener-strategy]]
@@ -657,10 +650,6 @@ criteria = "safe-to-run"
 version = "0.2.7"
 criteria = "safe-to-deploy"
 
-[[exemptions.libloading]]
-version = "0.7.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.libsodium-sys]]
 version = "0.2.7"
 criteria = "safe-to-deploy"
@@ -704,6 +693,11 @@ criteria = "safe-to-deploy"
 [[exemptions.minicbor]]
 version = "2.2.2"
 criteria = "safe-to-deploy"
+
+[[exemptions.minimal-lexical]]
+version = "0.2.1"
+criteria = "safe-to-deploy"
+notes = "Well-established crate (170M+ downloads), used by nom"
 
 [[exemptions.mio]]
 version = "0.8.11"
@@ -846,8 +840,9 @@ version = "0.3.31"
 criteria = "safe-to-deploy"
 
 [[exemptions.plist]]
-version = "1.7.0"
+version = "1.10.0"
 criteria = "safe-to-deploy"
+notes = "Well-established crate (13M+ downloads), maintained by ebarnard"
 
 [[exemptions.png]]
 version = "0.18.1"
@@ -882,8 +877,9 @@ version = "0.31.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.quick-xml]]
-version = "0.32.0"
+version = "0.41.0"
 criteria = "safe-to-deploy"
+notes = "Well-established XML parser (120M+ downloads), maintained by Mingun"
 
 [[exemptions.r-efi]]
 version = "6.0.0"
@@ -1275,10 +1271,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.x11-dl]]
 version = "2.21.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.x25519-dalek]]
-version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.xattr]]

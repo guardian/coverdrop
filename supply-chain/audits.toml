@@ -1098,6 +1098,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-08-30"
 end = "2027-04-23"
 
+[[trusted.clang-sys]]
+criteria = "safe-to-deploy"
+user-id = 36629 # Mads Marquart (madsmtm)
+start = "2026-07-29"
+end = "2027-08-25"
+
 [[trusted.clap]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -1230,11 +1236,23 @@ trusted-publisher = "github:RustCrypto/utils"
 start = "2026-04-02"
 end = "2027-06-02"
 
+[[trusted.curve25519-dalek]]
+criteria = "safe-to-deploy"
+user-id = 6979 # Michael Rosenberg (rozbb)
+start = "2022-12-13"
+end = "2027-08-25"
+
 [[trusted.der]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-12-17"
 end = "2027-04-23"
+
+[[trusted.der]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/formats"
+start = "2026-02-11"
+end = "2027-08-25"
 
 [[trusted.derive_more]]
 criteria = "safe-to-deploy"
@@ -1452,6 +1470,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-10-19"
 end = "2027-04-23"
 
+[[trusted.hkdf]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/KDFs"
+start = "2026-03-30"
+end = "2027-08-25"
+
 [[trusted.hmac]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -1470,11 +1494,23 @@ user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
 start = "2020-11-10"
 end = "2027-03-31"
 
+[[trusted.hpke-rs]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2026-07-15"
+end = "2027-08-25"
+
 [[trusted.hpke-rs-crypto]]
 criteria = "safe-to-deploy"
 user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
 start = "2021-11-10"
 end = "2027-03-31"
+
+[[trusted.hpke-rs-crypto]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2026-07-15"
+end = "2027-08-25"
 
 [[trusted.hpke-rs-libcrux]]
 criteria = "safe-to-deploy"
@@ -1482,11 +1518,23 @@ user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
 start = "2025-05-28"
 end = "2027-03-31"
 
+[[trusted.hpke-rs-libcrux]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2026-07-15"
+end = "2027-08-25"
+
 [[trusted.hpke-rs-rust-crypto]]
 criteria = "safe-to-deploy"
 user-id = 9765 # Franziskus Kiefer (franziskuskiefer)
 start = "2021-11-10"
 end = "2027-03-31"
+
+[[trusted.hpke-rs-rust-crypto]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2026-07-15"
+end = "2027-08-25"
 
 [[trusted.html5ever]]
 criteria = "safe-to-deploy"
@@ -1674,6 +1722,24 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-12-05"
 end = "2027-03-31"
 
+[[trusted.keccak]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2022-05-24"
+end = "2027-08-25"
+
+[[trusted.keccak]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/sponges"
+start = "2026-02-26"
+end = "2027-08-25"
+
+[[trusted.kem]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/traits"
+start = "2026-02-05"
+end = "2027-08-25"
+
 [[trusted.keyboard-types]]
 criteria = "safe-to-deploy"
 user-id = 36629 # Mads Marquart (madsmtm)
@@ -1715,6 +1781,12 @@ criteria = "safe-to-deploy"
 user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
 start = "2025-11-05"
 end = "2027-03-31"
+
+[[trusted.libcrux-aes]]
+criteria = "safe-to-deploy"
+user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
+start = "2026-07-15"
+end = "2027-08-25"
 
 [[trusted.libcrux-aesgcm]]
 criteria = "safe-to-deploy"
@@ -1914,6 +1986,12 @@ user-id = 281161 # Jonas Schneider-Bensch (jschneider-bensch)
 start = "2025-11-05"
 end = "2027-03-31"
 
+[[trusted.libloading]]
+criteria = "safe-to-deploy"
+user-id = 726 # Simonas Kazlauskas (nagisa)
+start = "2019-06-01"
+end = "2027-08-25"
+
 [[trusted.libm]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1985,6 +2063,42 @@ criteria = "safe-to-deploy"
 user-id = 10
 start = "2019-05-15"
 end = "2024-07-17"
+
+[[trusted.ml-dsa]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-06-20"
+end = "2027-08-25"
+
+[[trusted.ml-dsa]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/signatures"
+start = "2026-03-26"
+end = "2027-08-25"
+
+[[trusted.ml-kem]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-03-04"
+end = "2027-08-25"
+
+[[trusted.ml-kem]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/KEMs"
+start = "2026-02-05"
+end = "2027-08-25"
+
+[[trusted.module-lattice]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2026-01-27"
+end = "2027-08-25"
+
+[[trusted.module-lattice]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/KEMs"
+start = "2026-02-05"
+end = "2027-08-25"
 
 [[trusted.muda]]
 criteria = "safe-to-deploy"
@@ -2144,7 +2258,7 @@ end = "2027-03-31"
 
 [[trusted.openmls_rust_crypto]]
 criteria = "safe-to-deploy"
-user-id = 104470 # raphaelrobert
+user-id = 104470
 start = "2022-02-04"
 end = "2027-04-23"
 
@@ -2153,6 +2267,12 @@ criteria = "safe-to-deploy"
 user-id = 150389 # Konrad Kohbrok (kkohbrok)
 start = "2022-02-23"
 end = "2027-03-31"
+
+[[trusted.openmls_serialization_helpers]]
+criteria = "safe-to-deploy"
+user-id = 150389 # Konrad Kohbrok (kkohbrok)
+start = "2026-08-24"
+end = "2027-08-25"
 
 [[trusted.openmls_sqlx_storage]]
 criteria = "safe-to-deploy"
@@ -2244,6 +2364,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-06-12"
 end = "2027-04-23"
 
+[[trusted.pkcs8]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/formats"
+start = "2026-02-11"
+end = "2027-08-25"
+
 [[trusted.polling]]
 criteria = "safe-to-deploy"
 user-id = 6423 # Zeeshan Ali Khan (zeenix)
@@ -2315,6 +2441,12 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-09"
 end = "2027-04-23"
+
+[[trusted.rayon]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-13"
+end = "2027-08-25"
 
 [[trusted.ref-cast]]
 criteria = "safe-to-deploy"
@@ -2502,11 +2634,29 @@ trusted-publisher = "github:RustCrypto/hashes"
 start = "2026-03-25"
 end = "2027-06-02"
 
+[[trusted.sha3]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-02-26"
+end = "2027-08-25"
+
+[[trusted.shake]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/XOFs"
+start = "2026-05-15"
+end = "2027-08-25"
+
 [[trusted.signature]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-05-25"
 end = "2027-04-23"
+
+[[trusted.signature]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/traits"
+start = "2026-05-02"
+end = "2027-08-25"
 
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
@@ -2537,6 +2687,18 @@ criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-12-03"
 end = "2027-04-23"
+
+[[trusted.spki]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/formats"
+start = "2026-04-04"
+end = "2027-08-25"
+
+[[trusted.sponge-cursor]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-05-08"
+end = "2027-08-25"
 
 [[trusted.string_cache]]
 criteria = "safe-to-deploy"
@@ -3204,6 +3366,24 @@ user-id = 95389 # tauri (tauri-bot)
 start = "2021-03-11"
 end = "2027-08-14"
 
+[[trusted.x-wing]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2024-01-11"
+end = "2027-08-25"
+
+[[trusted.x-wing]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/KEMs"
+start = "2026-02-05"
+end = "2027-08-25"
+
+[[trusted.x25519-dalek]]
+criteria = "safe-to-deploy"
+user-id = 6979 # Michael Rosenberg (rozbb)
+start = "2023-03-31"
+end = "2027-08-25"
+
 [[trusted.yoke]]
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
@@ -3252,11 +3432,23 @@ user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2022-04-06"
 end = "2027-04-23"
 
+[[trusted.zeroize]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2027-08-25"
+
 [[trusted.zeroize_derive]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-03-23"
 end = "2027-04-23"
+
+[[trusted.zeroize_derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2027-08-25"
 
 [[trusted.zerotrie]]
 criteria = "safe-to-deploy"

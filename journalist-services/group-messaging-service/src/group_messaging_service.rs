@@ -1078,6 +1078,16 @@ impl GroupMessagingServiceInner {
                                     .await?;
                             }
                         }
+                        ProcessedMessageContent::OwnPendingCommit => {
+                            // Own commit fanned back by the delivery service — merge the pending commit
+                            group.merge_pending_commit(&provider)?;
+                        }
+                        ProcessedMessageContent::OwnPrivateMessage => {
+                            // Own private message fanned back — content can't be decrypted, skip
+                            tracing::debug!(
+                                "Skipping own private message fanned back by delivery service"
+                            );
+                        }
                     }
                 }
                 _ => {
