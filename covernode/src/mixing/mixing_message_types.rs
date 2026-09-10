@@ -8,6 +8,8 @@ use common::api::models::messages::user_to_journalist_message::{
 };
 use common::protocol::recipient_tag::{RecipientTag, RECIPIENT_TAG_FOR_COVER};
 
+use sha2::{Digest, Sha256};
+
 pub trait MixingInputMessage<OUTPUT> {
     /// Returns the inner message for real messages, otherwise `None`
     fn to_payload_if_real(self) -> Option<OUTPUT>;
@@ -15,6 +17,16 @@ pub trait MixingInputMessage<OUTPUT> {
 
 pub trait MixingOutputMessage {
     fn generate_new_random_message() -> Self;
+    fn to_hash(&self) -> MixingOutputMessageHash;
+}
+
+#[derive(Eq, Hash, PartialEq)]
+pub struct MixingOutputMessageHash([u8; 32]);
+
+impl MixingOutputMessageHash {
+    pub fn new(hash: [u8; 32]) -> Self {
+        Self(hash)
+    }
 }
 
 //
@@ -44,6 +56,13 @@ impl MixingOutputMessage for UserToJournalistMixingOutputMessage {
         let encrypted_message = new_random_encrypted_user_to_journalist_message();
         (RECIPIENT_TAG_FOR_COVER, encrypted_message)
     }
+
+    fn to_hash(&self) -> MixingOutputMessageHash {
+        let mut hasher = Sha256::new();
+        hasher.update(self.0.as_ref());
+        hasher.update(self.1.as_bytes());
+        MixingOutputMessageHash::new(hasher.finalize().into())
+    }
 }
 
 //
@@ -63,5 +82,11 @@ impl MixingInputMessage<EncryptedJournalistToUserMessage> for JournalistToCoverN
 impl MixingOutputMessage for EncryptedJournalistToUserMessage {
     fn generate_new_random_message() -> Self {
         new_random_encrypted_journalist_to_user_message().unwrap()
+    }
+
+    fn to_hash(&self) -> MixingOutputMessageHash {
+        let mut hasher = Sha256::new();
+        hasher.update(self.as_bytes());
+        MixingOutputMessageHash::new(hasher.finalize().into())
     }
 }

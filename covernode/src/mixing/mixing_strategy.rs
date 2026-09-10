@@ -1,6 +1,9 @@
-use crate::mixing::mixing_message_types::{MixingInputMessage, MixingOutputMessage};
+use crate::mixing::mixing_message_types::{
+    MixingInputMessage, MixingOutputMessage, MixingOutputMessageHash,
+};
 use chrono::{DateTime, Duration, Utc};
 use std::cmp::min;
+use std::collections::HashSet;
 use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
@@ -56,6 +59,7 @@ struct MixingStrategyState<Output> {
     seen_messages: usize,
     last_output_timestamp: DateTime<Utc>,
     buffer: Vec<Output>,
+    seen_message_hashes: HashSet<MixingOutputMessageHash>,
 }
 
 impl<Output> MixingStrategyState<Output> {
@@ -64,6 +68,7 @@ impl<Output> MixingStrategyState<Output> {
             seen_messages: 0,
             buffer: Vec::new(),
             last_output_timestamp: now,
+            seen_message_hashes: HashSet::new(),
         }
     }
 
@@ -108,9 +113,16 @@ where
         )
         .absolute(self.state.seen_messages as u64);
 
-        // if it is a real one, we keep it in our buffer
+        // if it is a real one and not a dupe, we add it in our buffer
         if let Some(real_message_payload) = message.to_payload_if_real() {
-            self.state.buffer.push(real_message_payload);
+            let hash_inserted_and_new = self
+                .state
+                .seen_message_hashes
+                .insert(real_message_payload.to_hash());
+
+            if hash_inserted_and_new {
+                self.state.buffer.push(real_message_payload);
+            }
         }
     }
 
@@ -176,6 +188,7 @@ mod tests {
     use super::*;
     use common::time;
     use rand::random;
+    use sha2::Digest;
 
     fn get_test_config() -> MixingStrategyConfiguration {
         MixingStrategyConfiguration {
@@ -199,6 +212,12 @@ mod tests {
     impl MixingOutputMessage for TestMixingOutputMessage {
         fn generate_new_random_message() -> Self {
             TestMixingOutputMessage { content: random() }
+        }
+
+        fn to_hash(&self) -> MixingOutputMessageHash {
+            let mut hasher = sha2::Sha256::new();
+            hasher.update(self.content);
+            MixingOutputMessageHash::new(hasher.finalize().into())
         }
     }
 
@@ -369,5 +388,52 @@ mod tests {
         // The output should have two random messages
         assert_eq!(output.messages.len(), 2);
         assert_ne!(&output.messages[0], &output.messages[1]);
+    }
+
+    #[test]
+    fn test_remove_duplicate_messages() {
+        let now = time::now();
+        let config = MixingStrategyConfiguration {
+            threshold_max: 500,
+            ..get_test_config()
+        };
+        let mut mixer = CoverDropMixingStrategy::new(config, now);
+
+        let duplicate_message = TestMixingInputMessage::new_with_random_inner();
+
+        // Duplicate messages should be deduped
+        for i in 0..100 {
+            mixer.consume_and_check_for_new_output(duplicate_message.clone(), now);
+        }
+
+        // Cover messages should be ignored
+        for i in 0..100 {
+            mixer.consume_and_check_for_new_output(TestMixingInputMessage::new_empty(), now);
+        }
+
+        assert_eq!(mixer.state.seen_message_hashes.len(), 1);
+        assert_eq!(mixer.state.buffer.len(), 1);
+        assert_eq!(mixer.state.seen_messages, 200);
+    }
+
+    #[test]
+    fn test_keep_unique_messages() {
+        let now = time::now();
+        let config = MixingStrategyConfiguration {
+            threshold_max: 500,
+            ..get_test_config()
+        };
+        let mut mixer = CoverDropMixingStrategy::new(config, now);
+
+        for i in 0..100 {
+            mixer.consume_and_check_for_new_output(
+                TestMixingInputMessage::new_with_random_inner(),
+                now,
+            );
+        }
+
+        assert_eq!(mixer.state.seen_message_hashes.len(), 100);
+        assert_eq!(mixer.state.buffer.len(), 100);
+        assert_eq!(mixer.state.seen_messages, 100);
     }
 }
