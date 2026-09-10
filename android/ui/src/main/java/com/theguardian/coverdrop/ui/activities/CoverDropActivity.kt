@@ -3,6 +3,7 @@ package com.theguardian.coverdrop.ui.activities
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.view.WindowManager.LayoutParams
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -85,6 +86,11 @@ class CoverDropActivity : ComponentActivity(), IntegrityViolationCallback {
             // Disable screenshots which also blanks out the app in the recent apps switcher.
             window.addFlags(LayoutParams.FLAG_SECURE)
         }
+
+        // Disable the Android Autofill framework for this whole activity, so that no autofill
+        // service (e.g. a password manager) is offered the chance to fill in, or save, the
+        // user's passphrase or message contents.
+        window.decorView.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
 
         IntegrityGuard.INSTANCE.addIntegrityViolationCallback(this)
 

@@ -61,6 +61,7 @@ struct PassphraseFormView: View {
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true) // extra safety
                 .keyboardType(.asciiCapable) // avoids predictive bar triggers which cause hangs
+                .privacySensitive()
 
             Button(action: {
                 $wordVisible.wrappedValue[id] = false
@@ -91,6 +92,7 @@ struct PassphraseFormView: View {
                 .focused(passwordFieldFocus, equals: passwordFieldFocusValue)
                 .submitLabel(id == wordCount - 1 ? .done : .next)
                 .keyboardType(.asciiCapable)
+                .privacySensitive()
             Button(action: {
                 $wordVisible.wrappedValue[id] = true
                 passwordFieldFocus.wrappedValue = passwordFieldFocusValue

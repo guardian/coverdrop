@@ -253,7 +253,10 @@ fun PassphraseWordEditField(
         onValueChange = { text = it; updatePassphraseWord(it.text) },
         singleLine = true,
         visualTransformation = if (passphraseWord.revealed) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            autoCorrectEnabled = false,
+        ),
         enabled = enabled,
         trailingIcon = {
             if (showHideRevealIcons) {
