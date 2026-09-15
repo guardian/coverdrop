@@ -9,7 +9,7 @@ RUN cd fastly-edge
 
 RUN deno compile --allow-net fastly-edge/forwarder.ts
 
-FROM rust:latest AS rust
+FROM rust:1.98 AS rust
 WORKDIR /usr/src/app
 
 COPY . .

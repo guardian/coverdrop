@@ -173,9 +173,8 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
     assert_eq!(keys.journalist_id_pk_iter().count(), 1);
 
     // Assert that the new id key is in the hierarchy under the first provisioning key
-    let provisioning_key_1_id_pks = keys.journalist_id_pk_iter_for_provisioning_pk(
-        &journalist_provisioning_key_pair_1.public_key(),
-    );
+    let provisioning_key_1_id_pks = keys
+        .journalist_id_pk_iter_for_provisioning_pk(journalist_provisioning_key_pair_1.public_key());
     assert_eq!(
         provisioning_key_1_id_pks
             .max_by_key(|pk| pk.not_valid_after)
@@ -183,9 +182,8 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
         new_journalist_id_key_pair.public_key()
     );
     // and there are no id keys under provisioning key 2
-    let provisioning_key_2_id_pks = keys.journalist_id_pk_iter_for_provisioning_pk(
-        &journalist_provisioning_key_pair_2.public_key(),
-    );
+    let provisioning_key_2_id_pks = keys
+        .journalist_id_pk_iter_for_provisioning_pk(journalist_provisioning_key_pair_2.public_key());
     assert_eq!(provisioning_key_2_id_pks.collect_vec().len(), 0);
 }
 
@@ -287,7 +285,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
 
     // Assert that the new msg key is in the hierarchy under the first id key
     let id_key_1_msg_pks =
-        keys.journalist_msg_pk_iter_for_id_pk(&journalist_id_key_pair_1.public_key());
+        keys.journalist_msg_pk_iter_for_id_pk(journalist_id_key_pair_1.public_key());
     assert_eq!(
         id_key_1_msg_pks
             .max_by_key(|pk| pk.not_valid_after)
@@ -296,6 +294,6 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
     );
     // and there are no msg keys under id key 2
     let id_key_2_msg_pks =
-        keys.journalist_msg_pk_iter_for_id_pk(&journalist_id_key_pair_2.public_key());
+        keys.journalist_msg_pk_iter_for_id_pk(journalist_id_key_pair_2.public_key());
     assert_eq!(id_key_2_msg_pks.collect_vec().len(), 0);
 }

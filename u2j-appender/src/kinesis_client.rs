@@ -54,6 +54,7 @@ impl KinesisClient {
     }
 
     /// Serializes and base64-encodes the u2j message before adding it to the Kinesis stream.
+    #[allow(clippy::result_large_err)]
     pub async fn encode_and_put_u2j_message(
         &self,
         message: EncryptedUserToCoverNodeMessage,

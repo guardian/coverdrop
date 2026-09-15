@@ -694,7 +694,7 @@ end = "2027-03-31"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-03-28"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.anstream]]
 criteria = "safe-to-deploy"
@@ -752,7 +752,7 @@ end = "2027-08-14"
 
 [[trusted.async-std]]
 criteria = "safe-to-deploy"
-user-id = 4333
+user-id = 4333 # Josh Triplett (joshtriplett)
 start = "2022-06-18"
 end = "2025-10-16"
 
@@ -779,6 +779,12 @@ criteria = "safe-to-deploy"
 user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2019-10-23"
 end = "2025-10-16"
+
+[[trusted.autocfg]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-05-22"
+end = "2027-09-10"
 
 [[trusted.aws-config]]
 criteria = "safe-to-deploy"
@@ -1160,7 +1166,7 @@ end = "2027-04-23"
 
 [[trusted.core-graphics]]
 criteria = "safe-to-deploy"
-user-id = 2396 # Josh Matthews (jdm)
+user-id = 2396 # Josh Bowman-Matthews (jdm)
 start = "2019-10-28"
 end = "2027-08-14"
 
@@ -1241,6 +1247,12 @@ criteria = "safe-to-deploy"
 user-id = 6979 # Michael Rosenberg (rozbb)
 start = "2022-12-13"
 end = "2027-08-25"
+
+[[trusted.curve25519-dalek-derive]]
+criteria = "safe-to-deploy"
+user-id = 6979 # Michael Rosenberg (rozbb)
+start = "2023-06-24"
+end = "2027-09-10"
 
 [[trusted.der]]
 criteria = "safe-to-deploy"
@@ -1366,7 +1378,7 @@ end = "2027-03-31"
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-04-23"
-end = "2025-10-16"
+end = "2027-09-10"
 
 [[trusted.find-msvc-tools]]
 criteria = "safe-to-deploy"
@@ -1376,7 +1388,13 @@ end = "2027-06-02"
 
 [[trusted.flate2]]
 criteria = "safe-to-deploy"
-user-id = 4333
+user-id = 980 # Sebastian Thiel (Byron)
+start = "2023-08-15"
+end = "2027-09-10"
+
+[[trusted.flate2]]
+criteria = "safe-to-deploy"
+user-id = 4333 # Josh Triplett (joshtriplett)
 start = "2020-09-30"
 end = "2024-07-17"
 
@@ -1558,7 +1576,7 @@ end = "2025-10-18"
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2022-10-25"
-end = "2025-06-13"
+end = "2027-09-10"
 
 [[trusted.httparse]]
 criteria = "safe-to-deploy"
@@ -1583,6 +1601,12 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-01"
 end = "2027-04-23"
+
+[[trusted.hyper-named-pipe]]
+criteria = "safe-to-deploy"
+user-id = 24879 # Niel Drummond (fussybeaver)
+start = "2024-01-20"
+end = "2027-09-10"
 
 [[trusted.hyper-tls]]
 criteria = "safe-to-deploy"
@@ -1698,6 +1722,36 @@ user-id = 95389 # tauri (tauri-bot)
 start = "2021-10-04"
 end = "2027-08-14"
 
+[[trusted.jiff]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2024-02-17"
+end = "2027-09-10"
+
+[[trusted.jiff-core]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2026-06-30"
+end = "2027-09-10"
+
+[[trusted.jiff-static]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2025-03-06"
+end = "2027-09-10"
+
+[[trusted.jiff-tzdb]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2024-07-09"
+end = "2027-09-10"
+
+[[trusted.jiff-tzdb-platform]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2024-07-09"
+end = "2027-09-10"
+
 [[trusted.jobserver]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -1712,7 +1766,7 @@ end = "2024-07-17"
 
 [[trusted.js-sys]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
@@ -2050,7 +2104,7 @@ end = "2027-06-02"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-07-07"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.mime]]
 criteria = "safe-to-deploy"
@@ -2135,6 +2189,18 @@ criteria = "safe-to-deploy"
 user-id = 539 # Josh Stone (cuviper)
 start = "2019-06-10"
 end = "2027-04-23"
+
+[[trusted.num-integer]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-05-20"
+end = "2027-09-10"
+
+[[trusted.num-iter]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-05-20"
+end = "2027-09-10"
 
 [[trusted.num_cpus]]
 criteria = "safe-to-deploy"
@@ -2237,6 +2303,12 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2025-05-22"
 end = "2027-04-23"
+
+[[trusted.open]]
+criteria = "safe-to-deploy"
+user-id = 980 # Sebastian Thiel (Byron)
+start = "2019-07-03"
+end = "2027-09-10"
 
 [[trusted.openmls]]
 criteria = "safe-to-deploy"
@@ -2464,25 +2536,25 @@ end = "2027-04-23"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-02-27"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.regex-automata]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-02-25"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.regex-lite]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2023-02-28"
-end = "2025-09-03"
+end = "2027-09-10"
 
 [[trusted.regex-syntax]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-03-30"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.reqwest]]
 criteria = "safe-to-deploy"
@@ -2512,7 +2584,7 @@ end = "2027-04-23"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-07-08"
-end = "2024-08-08"
+end = "2027-09-10"
 
 [[trusted.ryu]]
 criteria = "safe-to-deploy"
@@ -2548,7 +2620,7 @@ end = "2027-08-14"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.serde-untagged]]
 criteria = "safe-to-deploy"
@@ -2562,11 +2634,17 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-25"
 end = "2027-03-31"
 
+[[trusted.serde_core]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-13"
+end = "2027-09-10"
+
 [[trusted.serde_derive]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.serde_derive_internals]]
 criteria = "safe-to-deploy"
@@ -2590,7 +2668,7 @@ end = "2025-11-13"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-26"
-end = "2025-06-13"
+end = "2027-09-10"
 
 [[trusted.serde_spanned]]
 criteria = "safe-to-deploy"
@@ -2848,7 +2926,7 @@ end = "2027-04-23"
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-09-07"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.tinystr]]
 criteria = "safe-to-deploy"
@@ -3098,7 +3176,7 @@ end = "2024-07-17"
 
 [[trusted.wasm-bindgen]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
@@ -3116,7 +3194,7 @@ end = "2024-07-17"
 
 [[trusted.wasm-bindgen-futures]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
@@ -3128,7 +3206,7 @@ end = "2024-07-17"
 
 [[trusted.wasm-bindgen-macro]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
@@ -3140,13 +3218,13 @@ end = "2024-07-17"
 
 [[trusted.wasm-bindgen-macro-support]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
 [[trusted.wasm-bindgen-shared]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-15"
 end = "2027-03-31"
 
@@ -3158,13 +3236,13 @@ end = "2024-07-17"
 
 [[trusted.web-sys]]
 criteria = "safe-to-deploy"
-user-id = 145038 # Guy Bedford (guybedford)
+user-id = 145038
 start = "2026-01-14"
 end = "2027-03-31"
 
 [[trusted.web_atoms]]
 criteria = "safe-to-deploy"
-user-id = 2396 # Josh Matthews (jdm)
+user-id = 2396 # Josh Bowman-Matthews (jdm)
 start = "2025-04-18"
 end = "2027-08-14"
 
@@ -3208,7 +3286,7 @@ end = "2027-08-14"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2020-01-11"
-end = "2024-07-17"
+end = "2027-09-10"
 
 [[trusted.window-vibrancy]]
 criteria = "safe-to-deploy"
@@ -3467,6 +3545,12 @@ criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2021-12-11"
 end = "2027-04-23"
+
+[[trusted.zlib-rs]]
+criteria = "safe-to-deploy"
+user-id = 1303
+start = "2024-02-23"
+end = "2027-09-10"
 
 [[trusted.zmij]]
 criteria = "safe-to-deploy"

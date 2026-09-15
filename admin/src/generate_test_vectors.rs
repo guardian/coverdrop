@@ -29,7 +29,7 @@ pub fn generate_test_vectors(path: &Path) -> anyhow::Result<()> {
 
 fn generate_test_vectors_anonymous_box(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating anonymous box test vectors in {:?}", &path);
+    println!("Creating anonymous box test vectors in {:?}", path);
 
     let recipient_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
 
@@ -55,7 +55,7 @@ fn generate_test_vectors_anonymous_box(path: &Path) -> anyhow::Result<()> {
 
 fn generate_test_vectors_two_party_box(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating two party box test vectors in {:?}", &path);
+    println!("Creating two party box test vectors in {:?}", path);
 
     let sender_key_pair = UnsignedEncryptionKeyPair::<Test>::generate();
     write_bytes(
@@ -96,7 +96,7 @@ fn generate_test_vectors_two_party_box(path: &Path) -> anyhow::Result<()> {
 
 fn generate_test_vectors_multi_anonymous_box(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating multi anonymous box test vectors in {:?}", &path);
+    println!("Creating multi anonymous box test vectors in {:?}", path);
 
     let recipient_1_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
     write_bytes(
@@ -137,7 +137,7 @@ fn generate_test_vectors_multi_anonymous_box(path: &Path) -> anyhow::Result<()> 
 
 fn generate_test_vectors_journalist_dead_drop(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating journalist dead drop test vectors in {:?}", &path);
+    println!("Creating journalist dead drop test vectors in {:?}", path);
 
     let journalist_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
     let other_journalist_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
@@ -217,7 +217,7 @@ fn generate_test_vectors_journalist_dead_drop(path: &Path) -> anyhow::Result<()>
 
 fn generate_test_vectors_signature(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating signature test vectors in {:?}", &path);
+    println!("Creating signature test vectors in {:?}", path);
 
     let key_pair = UnsignedSigningKeyPair::<Test>::generate();
     write_bytes(path, "01_pk", key_pair.public_key().as_bytes())?;
@@ -234,7 +234,7 @@ fn generate_test_vectors_signature(path: &Path) -> anyhow::Result<()> {
 
 fn generate_test_vectors_certificate_data(path: &Path) -> anyhow::Result<()> {
     ensure_dir(path);
-    println!("Creating certificate data test vectors in {:?}", &path);
+    println!("Creating certificate data test vectors in {:?}", path);
 
     let key_pair = UnsignedEncryptionKeyPair::<Test>::generate();
     write_bytes(path, "01_pk", &key_pair.raw_public_key().to_bytes())?;

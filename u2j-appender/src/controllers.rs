@@ -100,6 +100,7 @@ fn put_metrics(user_agent: &Option<TypedHeader<UserAgent>>, outcome: AppendOutco
 }
 
 #[axum::debug_handler]
+#[allow(clippy::result_large_err)]
 pub async fn post_u2j_message(
     user_agent: Option<TypedHeader<UserAgent>>,
     State(kinesis_client): State<KinesisClient>,

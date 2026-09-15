@@ -196,6 +196,7 @@ impl JournalistVault {
     /// Creates a vault with explicitly provided trust anchors instead of deriving them from stage.
     /// This is useful for tests that generate their own organization key pairs.
     #[cfg(feature = "test-utils")]
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_with_trust_anchors(
         path: impl AsRef<Path>,
         password: &str,

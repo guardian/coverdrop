@@ -410,7 +410,7 @@ mod tests {
     ) -> SignedEncryptionKeyPair<JournalistMessaging> {
         let unsigned_pair = UnsignedEncryptionKeyPair::generate();
         let not_valid_after = now() + chrono::Duration::days(30);
-        unsigned_pair.to_signed_key_pair(&signed_signing_key_pair, not_valid_after)
+        unsigned_pair.to_signed_key_pair(signed_signing_key_pair, not_valid_after)
     }
 
     fn create_test_journalist(
@@ -476,8 +476,8 @@ mod tests {
         let backup_state = coverup_initiate_restore_step(
             journalist_identity.clone(),
             signed_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         )
         .expect("Failed to initiate restore");
@@ -497,7 +497,7 @@ mod tests {
         let restored_vault = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &vec![backup_admin_encryption_pair],
+            &[backup_admin_encryption_pair],
             1, // k=1
         )
         .expect("Failed to finish restore");
@@ -554,8 +554,8 @@ mod tests {
         let result = coverup_initiate_restore_step(
             journalist_identity,
             signed_backup_data,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         );
 
@@ -599,8 +599,8 @@ mod tests {
         let result = coverup_initiate_restore_step(
             journalist_identity,
             signed_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![different_backup_admin_pair], // Different key!
+            journalist_signing_pair.public_key(),
+            &[different_backup_admin_pair], // Different key!
             now(),
         );
 
@@ -660,8 +660,8 @@ mod tests {
         let result = coverup_initiate_restore_step(
             journalist_identity,
             tampered_backup_data_with_signature,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair],
+            journalist_signing_pair.public_key(),
+            &[backup_admin_encryption_pair],
             now(),
         );
 
@@ -718,8 +718,8 @@ mod tests {
         let backup_state = coverup_initiate_restore_step(
             journalist_identity,
             signed_backup_data,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         )
         .expect("Failed to initiate restore");
@@ -738,7 +738,7 @@ mod tests {
         let result = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &vec![backup_admin_encryption_pair],
+            &[backup_admin_encryption_pair],
             1, // k=1
         );
 
@@ -780,8 +780,8 @@ mod tests {
         let backup_state = coverup_initiate_restore_step(
             journalist_identity,
             verified_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         )
         .expect("Failed to initiate restore");
@@ -805,7 +805,7 @@ mod tests {
         let result = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share],
-            &vec![backup_admin_encryption_pair],
+            &[backup_admin_encryption_pair],
             1, // k=1
         );
 
@@ -850,8 +850,8 @@ mod tests {
         let result = coverup_initiate_restore_step(
             different_identity, // Different identity!
             signed_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair],
+            journalist_signing_pair.public_key(),
+            &[backup_admin_encryption_pair],
             now(),
         );
 
@@ -914,8 +914,8 @@ mod tests {
         let backup_state = coverup_initiate_restore_step(
             journalist_identity.clone(),
             signed_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         )
         .expect("Failed to initiate restore");
@@ -943,7 +943,7 @@ mod tests {
         let restored_vault = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share1, wrapped_share2],
-            &vec![backup_admin_encryption_pair],
+            &[backup_admin_encryption_pair],
             2, // k=2
         )
         .expect("Failed to finish restore");
@@ -1001,8 +1001,8 @@ mod tests {
         let backup_state = coverup_initiate_restore_step(
             journalist_identity.clone(),
             signed_backup_data.to_unverified()?,
-            &journalist_signing_pair.public_key(),
-            &vec![backup_admin_encryption_pair.clone()],
+            journalist_signing_pair.public_key(),
+            std::slice::from_ref(&backup_admin_encryption_pair),
             now(),
         )
         .expect("Failed to initiate restore");
@@ -1021,7 +1021,7 @@ mod tests {
         let result = coverup_finish_restore_step(
             backup_state,
             vec![wrapped_share1],
-            &vec![backup_admin_encryption_pair],
+            &[backup_admin_encryption_pair],
             2, // k=2
         );
 

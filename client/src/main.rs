@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
                 anyhow::Ok(password_generator.generate(DEFAULT_PASSPHRASE_WORDS))
             })?;
 
-            println!("{}", &password);
+            println!("{}", password);
 
             if mailbox_path.is_dir() {
                 mailbox_path.push("user");

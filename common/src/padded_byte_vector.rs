@@ -271,7 +271,7 @@ mod tests {
         const PAD_TO_STEP_SIZE: usize = 16;
 
         // create vector payloads between 5 and 40 bytes
-        let payloads: Vec<Vec<u8>> = (5..=40).map(|len| randombytes(len)).collect();
+        let payloads: Vec<Vec<u8>> = (5..=40).map(randombytes).collect();
 
         for payload in payloads {
             let padded = SteppingPaddedByteVector::<PAD_TO_STEP_SIZE>::new(payload.clone())?;

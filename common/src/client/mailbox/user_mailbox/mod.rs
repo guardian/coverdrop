@@ -243,7 +243,7 @@ mod tests {
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
         let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = vec![org_pk.to_untrusted()];
+        let org_pks = [org_pk.to_untrusted()];
 
         let mailbox_1 = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;
 
@@ -277,7 +277,7 @@ mod tests {
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
         let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = vec![org_pk.to_untrusted()];
+        let org_pks = [org_pk.to_untrusted()];
 
         // Create initial
         let mailbox = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;
@@ -332,7 +332,7 @@ mod tests {
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
         let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = vec![org_pk.to_untrusted()];
+        let org_pks = [org_pk.to_untrusted()];
 
         // Create initial
         let mailbox = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;

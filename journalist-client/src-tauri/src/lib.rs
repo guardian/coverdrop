@@ -89,7 +89,7 @@ fn run_tauri(cli: Cli) {
         .setup(move |app| {
             let config_dir = app.path().app_data_dir()?;
 
-            let app_name = format!("{} (Secure Messaging)", &app.package_info().name);
+            let app_name = format!("{} (Secure Messaging)", app.package_info().name);
 
             let notifications = start_notification_service(app.app_handle(), app_name.clone());
             let app_state =

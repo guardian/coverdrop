@@ -65,7 +65,7 @@ pub async fn get_db_password(
     let secret_value = secret_response
         .secret_string
         .clone()
-        .ok_or_else(|| anyhow::anyhow!("Secret {} not found", &secret_arn));
+        .ok_or_else(|| anyhow::anyhow!("Secret {} not found", secret_arn));
     match secret_value {
         Ok(s) => {
             let secret: serde_json::Value = serde_json::from_str(&s)?;

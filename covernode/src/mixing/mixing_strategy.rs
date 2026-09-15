@@ -402,12 +402,12 @@ mod tests {
         let duplicate_message = TestMixingInputMessage::new_with_random_inner();
 
         // Duplicate messages should be deduped
-        for i in 0..100 {
+        for _i in 0..100 {
             mixer.consume_and_check_for_new_output(duplicate_message.clone(), now);
         }
 
         // Cover messages should be ignored
-        for i in 0..100 {
+        for _i in 0..100 {
             mixer.consume_and_check_for_new_output(TestMixingInputMessage::new_empty(), now);
         }
 
@@ -425,7 +425,7 @@ mod tests {
         };
         let mut mixer = CoverDropMixingStrategy::new(config, now);
 
-        for i in 0..100 {
+        for _i in 0..100 {
             mixer.consume_and_check_for_new_output(
                 TestMixingInputMessage::new_with_random_inner(),
                 now,

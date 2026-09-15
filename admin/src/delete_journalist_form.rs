@@ -51,7 +51,7 @@ pub async fn delete_journalist_form(
         now,
     )?;
 
-    let output_file_path = output_path.join(format!("delete_{}.form.json", &journalist_id));
+    let output_file_path = output_path.join(format!("delete_{}.form.json", journalist_id));
 
     let mut file = File::create_new(&output_file_path)?;
 

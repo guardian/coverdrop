@@ -44,7 +44,7 @@ async fn covernode_j2u_deduplication_scenario() {
 
         let encrypted_outer_msg = encrypt_real_message_from_journalist_to_user_via_covernode(
             &keys_and_profiles.keys,
-            &user_mailbox.user_key_pair().public_key(),
+            user_mailbox.user_key_pair().public_key(),
             &journalist_msg_key_pair,
             &message,
         )

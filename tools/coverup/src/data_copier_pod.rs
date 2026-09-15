@@ -152,7 +152,7 @@ impl DataCopierPod {
 
         let sh_cmd = format!(
             "if [ -f {} ]; then echo true; else echo false; fi",
-            &mounted_path
+            mounted_path
         );
 
         let cmd = vec!["sh", "-c", &sh_cmd];

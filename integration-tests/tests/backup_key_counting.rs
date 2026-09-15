@@ -38,7 +38,7 @@ async fn backup_keys_counting() {
     assert_eq!(count_1, 0, "Expected no new keys since last backup");
 
     // Rotating the messaging key should increase the count
-    let service = JournalistCoverDropService::new(&api_client, &journalist_vault);
+    let service = JournalistCoverDropService::new(api_client, &journalist_vault);
     service
         .rotate_msg_key(stack.now())
         .await
@@ -53,7 +53,7 @@ async fn backup_keys_counting() {
     );
 
     // Creating and publishing a new identity key should further increase the count
-    let service = JournalistCoverDropService::new(&api_client, &journalist_vault);
+    let service = JournalistCoverDropService::new(api_client, &journalist_vault);
     service
         .rotate_journalist_id_key(stack.now())
         .await

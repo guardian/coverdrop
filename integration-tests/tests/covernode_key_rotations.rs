@@ -230,7 +230,7 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
 
     // Assert that the new id key is in the hierarchy under the first provisioning key
     let provisioning_key_1_id_pks = keys
-        .covernode_id_pk_iter_for_provisioning_pk(&covernode_provisioning_key_pair_1.public_key());
+        .covernode_id_pk_iter_for_provisioning_pk(covernode_provisioning_key_pair_1.public_key());
     assert_eq!(
         provisioning_key_1_id_pks
             .max_by_key(|pk| pk.not_valid_after)
@@ -239,7 +239,7 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
     );
     // and there are no id keys under provisioning key 2
     let provisioning_key_2_id_pks = keys
-        .covernode_id_pk_iter_for_provisioning_pk(&covernode_provisioning_key_pair_2.public_key());
+        .covernode_id_pk_iter_for_provisioning_pk(covernode_provisioning_key_pair_2.public_key());
     assert_eq!(provisioning_key_2_id_pks.collect_vec().len(), 0);
 }
 
@@ -281,7 +281,7 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
     stack
         .api_client_cached()
         .post_covernode_id_pk(
-            &stack.covernode_id(),
+            stack.covernode_id(),
             &covernode_id_key_pair_2.public_key().clone(),
             &stack.keys().covernode_provisioning_key_pair,
             stack.now(),
@@ -318,7 +318,7 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
 
     // Assert that the new msg key is in the hierarchy under the first id key
     let id_key_1_msg_pks =
-        keys.covernode_msg_pk_iter_for_id_pk(&covernode_id_key_pair_1.public_key());
+        keys.covernode_msg_pk_iter_for_id_pk(covernode_id_key_pair_1.public_key());
     assert_eq!(
         id_key_1_msg_pks
             .max_by_key(|pk| pk.not_valid_after)
@@ -327,7 +327,7 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
     );
     // and there are no msg keys under id key 2
     let id_key_2_msg_pks =
-        keys.covernode_msg_pk_iter_for_id_pk(&covernode_id_key_pair_2.public_key());
+        keys.covernode_msg_pk_iter_for_id_pk(covernode_id_key_pair_2.public_key());
     assert_eq!(id_key_2_msg_pks.collect_vec().len(), 0);
 }
 

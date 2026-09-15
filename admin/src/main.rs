@@ -441,7 +441,7 @@ async fn main() -> anyhow::Result<()> {
                 for key in org_keys {
                     println!(
                         "[API] {} -> {}",
-                        &key.public_key_hex(),
+                        key.public_key_hex(),
                         human_readable_digest(&key.key)
                     );
                 }
@@ -452,7 +452,7 @@ async fn main() -> anyhow::Result<()> {
                 for key in keys {
                     println!(
                         "[LOCAL] {} -> {}",
-                        &key.public_key_hex(),
+                        key.public_key_hex(),
                         human_readable_digest(&key.key)
                     );
                 }
