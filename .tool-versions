@@ -2,3 +2,10 @@
 nodejs 22.16.0
 # Note - rust version specified in rust-toolchain.toml (respected by rustup which is what mise uses)
 rust
+github:guardian/devenv 20260721-123412
+# These tools are not all available in the standard apt repositories.
+# Use Mike Farah's yq, matching Homebrew, rather than the Python apt package.
+helm latest
+kubeseal latest
+yq latest
+deno latest
