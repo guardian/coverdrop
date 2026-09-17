@@ -20,6 +20,9 @@ tokio.workspace = true
 common = { path = "../common", features = ["test-utils"] }
 covernode-database.path = "../covernode/covernode-database"
 journalist-vault.path = "../journalist-vault"
+# 0.12 depends on ml-kem 0.2, which no longer compiles against the `kem` version
+# resolved for the rest of the workspace.
+age = "0.11.1"
 log = "0.4.25"
 
 [features]

@@ -1,3 +1,4 @@
+use age::{secrecy::SecretString, Encryptor};
 use chrono::{DateTime, Utc};
 
 use common::{
@@ -8,7 +9,7 @@ use common::{
     },
     crypto::{
         keys::{
-            serde::StorableKeyMaterial,
+            serde::{set_key_permissions, StorableKeyMaterial},
             signing::{SignedPublicSigningKey, SigningKeyPair},
         },
         pbkdf::DEFAULT_PASSPHRASE_WORDS,
@@ -27,7 +28,8 @@ use common::{
 use covernode_database::Database;
 use std::{
     fmt::Display,
-    fs::{remove_file, write},
+    fs::{write, File},
+    io::Write,
     num::NonZeroU8,
     path::PathBuf,
     vec,
@@ -103,37 +105,47 @@ impl UsbDevice {
     }
 }
 
-// TODO add age https://crates.io/crates/age
-// and use this directly, rather than prompting the user to use the cli tool.
-// age is currently broken by a transitive dependency issue, see https://github.com/kellpossible/cargo-i18n/issues/164
-/// Write the org key pair to disk, generate a passphrase,
-/// prompt the user to encrypt the key pair using age and move
-/// the encrypted file and passphrase to removable devices.
-fn prompt_org_key_encryption(
+/// Generate a passphrase, encrypt the org key pair with it using age and prompt
+/// the user to move the encrypted key pair and the passphrase to removable devices.
+///
+/// The unencrypted key pair is never written to disk.
+fn encrypt_org_key_pair(
     org_key_pair_copy: Copy,
     org_key_pair: &SigningKeyPair<Organization, SignedPublicSigningKey<Organization>>,
-    output_directory: &PathBuf,
+    output_directory: &Path,
     assume_yes: &AssumeYes,
 ) -> anyhow::Result<()> {
     let password_generator = PasswordGenerator::from_eff_large_wordlist()?;
     let passphrase = password_generator.generate(DEFAULT_PASSPHRASE_WORDS);
 
-    let org_key_pair_file = org_key_pair.to_untrusted().save_to_disk(output_directory)?;
-    let encrypted_org_key_file = format!("{}.age", org_key_pair_file.to_str().unwrap());
-    let message = format!(
-        "Use age to encrypt the organization key pair {} \nusing the following command:\n
-        ./age -p {} > {}\n  enter this passphrase when prompted: {}",
+    let untrusted_org_key_pair = org_key_pair.to_untrusted();
+    let org_key_pair_json = serde_json::to_vec(&untrusted_org_key_pair)?;
+
+    let encrypted_org_key_pair_file = output_directory.join(format!(
+        "copy{}_{}.age",
         org_key_pair_copy,
-        org_key_pair_file.to_str().unwrap(),
-        encrypted_org_key_file,
-        passphrase
+        untrusted_org_key_pair.file_name()
+    ));
+
+    let encryptor = Encryptor::with_user_passphrase(SecretString::from(passphrase.clone()));
+
+    let mut writer = encryptor.wrap_output(File::create(&encrypted_org_key_pair_file)?)?;
+    writer.write_all(&org_key_pair_json)?;
+    writer.finish()?;
+
+    set_key_permissions(&encrypted_org_key_pair_file);
+
+    println!(
+        "Organization key pair {} encrypted with age and written to {}",
+        org_key_pair_copy,
+        encrypted_org_key_pair_file.to_str().unwrap()
     );
-    ask_user_to_confirm(&message, *assume_yes)?;
 
     // write passphrase to a file
     let passphrase_file =
         output_directory.join(format!("org_key_pair_passphrase_{}.txt", org_key_pair_copy));
     write(&passphrase_file, &passphrase)?;
+    set_key_permissions(&passphrase_file);
 
     println!(
         "passphrase {} written to {}",
@@ -144,20 +156,13 @@ fn prompt_org_key_encryption(
     ask_user_to_confirm(
         &format!(
             "Move org key {} to removable device '{}' and passphrase {} to removable device '{}'",
-            encrypted_org_key_file,
+            encrypted_org_key_pair_file.to_str().unwrap(),
             UsbDevice::OrgKeyPair(org_key_pair_copy.clone()).description(),
             passphrase_file.to_str().unwrap(),
             UsbDevice::OrgKeyPairPassword(org_key_pair_copy).description(),
         ),
         *assume_yes,
     )?;
-
-    // delete unencrypted key file
-    println!(
-        "Deleting unencrypted organization key pair file {}",
-        org_key_pair_file.to_str().unwrap()
-    );
-    remove_file(org_key_pair_file)?;
 
     Ok(())
 }
@@ -380,18 +385,8 @@ impl CeremonyStep {
                 } else {
                     println!("Generated new organization key pair.");
                 }
-                prompt_org_key_encryption(
-                    Copy::Primary,
-                    &org_key_pair,
-                    output_directory,
-                    assume_yes,
-                )?;
-                prompt_org_key_encryption(
-                    Copy::Secondary,
-                    &org_key_pair,
-                    output_directory,
-                    assume_yes,
-                )?;
+                encrypt_org_key_pair(Copy::Primary, &org_key_pair, output_directory, assume_yes)?;
+                encrypt_org_key_pair(Copy::Secondary, &org_key_pair, output_directory, assume_yes)?;
 
                 Ok(())
             }
@@ -415,7 +410,7 @@ impl CeremonyStep {
                         "- Copy the journalist provisioning key pair to removable device '{}'.",
                         UsbDevice::IdentityAPI.description()
                     ),
-                    &format!("- Copy the journalist provisioning key pair to removable device '{}'. This will be used by the editorial staff creating journalists.", UsbDevice::EditorialStaff.description()),
+                    &format!("- Copy the journalist provisioning key pair to removable device '{}'. This will be used by editorial staff to create journalist profiles and vaults.", UsbDevice::EditorialStaff.description()),
                     "Have you completed both steps?",
                 ]
                 .join("\n");

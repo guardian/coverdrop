@@ -653,6 +653,22 @@ criteria = "safe-to-deploy"
 version = "0.9.1"
 criteria = "safe-to-run"
 
+[[exemptions.i18n-config]]
+version = "0.4.8"
+criteria = "safe-to-run"
+
+[[exemptions.i18n-embed]]
+version = "0.15.4"
+criteria = "safe-to-run"
+
+[[exemptions.i18n-embed-fl]]
+version = "0.9.4"
+criteria = "safe-to-run"
+
+[[exemptions.i18n-embed-impl]]
+version = "0.8.4"
+criteria = "safe-to-run"
+
 [[exemptions.iana-time-zone]]
 version = "0.1.65"
 criteria = "safe-to-deploy"
@@ -712,6 +728,10 @@ criteria = "safe-to-deploy"
 [[exemptions.instability]]
 version = "0.3.13"
 criteria = "safe-to-deploy"
+
+[[exemptions.io_tee]]
+version = "0.1.1"
+criteria = "safe-to-run"
 
 [[exemptions.ipnet]]
 version = "2.12.2"
@@ -1166,6 +1186,18 @@ criteria = "safe-to-deploy"
 version = "0.0.6"
 criteria = "safe-to-deploy"
 
+[[exemptions.rust-embed]]
+version = "8.12.0"
+criteria = "safe-to-run"
+
+[[exemptions.rust-embed-impl]]
+version = "8.12.0"
+criteria = "safe-to-run"
+
+[[exemptions.rust-embed-utils]]
+version = "8.12.0"
+criteria = "safe-to-run"
+
 [[exemptions.rustc-hash]]
 version = "2.1.3"
 criteria = "safe-to-deploy"
@@ -1441,6 +1473,10 @@ criteria = "safe-to-deploy"
 [[exemptions.tungstenite]]
 version = "0.24.0"
 criteria = "safe-to-deploy"
+
+[[exemptions.type-map]]
+version = "0.5.1"
+criteria = "safe-to-run"
 
 [[exemptions.typenum]]
 version = "1.20.1"

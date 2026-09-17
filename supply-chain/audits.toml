@@ -690,6 +690,18 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2019-08-16"
 end = "2027-03-31"
 
+[[trusted.age]]
+criteria = "safe-to-deploy"
+user-id = 6289 # Jack Grigg (str4d)
+start = "2019-10-06"
+end = "2027-09-16"
+
+[[trusted.age-core]]
+criteria = "safe-to-deploy"
+user-id = 6289 # Jack Grigg (str4d)
+start = "2020-02-02"
+end = "2027-09-16"
+
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -1008,6 +1020,12 @@ user-id = 267 # Tony Arcieri (tarcieri)
 start = "2021-01-21"
 end = "2027-04-23"
 
+[[trusted.bech32]]
+criteria = "safe-to-deploy"
+user-id = 1588 # Andrew Poelstra (apoelstra)
+start = "2021-06-18"
+end = "2027-09-16"
+
 [[trusted.bincode]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -1163,6 +1181,12 @@ criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
 start = "2020-08-04"
 end = "2027-04-23"
+
+[[trusted.cookie-factory]]
+criteria = "safe-to-deploy"
+user-id = 959 # Geoffroy Couprie (Geal)
+start = "2019-05-11"
+end = "2027-09-16"
 
 [[trusted.core-graphics]]
 criteria = "safe-to-deploy"
@@ -1380,6 +1404,12 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-04-23"
 end = "2027-09-10"
 
+[[trusted.find-crate]]
+criteria = "safe-to-deploy"
+user-id = 33035 # Taiki Endo (taiki-e)
+start = "2019-06-16"
+end = "2027-09-16"
+
 [[trusted.find-msvc-tools]]
 criteria = "safe-to-deploy"
 user-id = 539 # Josh Stone (cuviper)
@@ -1397,6 +1427,24 @@ criteria = "safe-to-deploy"
 user-id = 4333 # Josh Triplett (joshtriplett)
 start = "2020-09-30"
 end = "2024-07-17"
+
+[[trusted.fluent]]
+criteria = "safe-to-deploy"
+user-id = 9648 # Zibi Braniecki (zbraniecki)
+start = "2019-03-26"
+end = "2027-09-16"
+
+[[trusted.fluent-bundle]]
+criteria = "safe-to-deploy"
+user-id = 9648 # Zibi Braniecki (zbraniecki)
+start = "2019-03-26"
+end = "2027-09-16"
+
+[[trusted.fluent-syntax]]
+criteria = "safe-to-deploy"
+user-id = 9648 # Zibi Braniecki (zbraniecki)
+start = "2019-03-26"
+end = "2027-09-16"
 
 [[trusted.ghash]]
 criteria = "safe-to-deploy"
@@ -2112,6 +2160,12 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-09-09"
 end = "2024-07-17"
 
+[[trusted.mime_guess]]
+criteria = "safe-to-deploy"
+user-id = 127 # Austin Bonander (abonander)
+start = "2019-04-28"
+end = "2027-09-16"
+
 [[trusted.mio]]
 criteria = "safe-to-deploy"
 user-id = 10
@@ -2412,6 +2466,12 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-19"
 end = "2024-07-17"
 
+[[trusted.pbkdf2]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-06-10"
+end = "2027-09-16"
+
 [[trusted.phf_codegen]]
 criteria = "safe-to-deploy"
 user-id = 51017 # Yuki Okushi (JohnTitor)
@@ -2604,6 +2664,12 @@ user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2020-02-16"
 end = "2024-07-17"
 
+[[trusted.scrypt]]
+criteria = "safe-to-deploy"
+user-id = 267 # Tony Arcieri (tarcieri)
+start = "2020-08-18"
+end = "2027-09-16"
+
 [[trusted.sec1]]
 criteria = "safe-to-deploy"
 user-id = 267 # Tony Arcieri (tarcieri)
@@ -2615,6 +2681,12 @@ criteria = "safe-to-deploy"
 user-id = 2844 # Martin Robinson (mrobinson)
 start = "2025-03-31"
 end = "2027-08-14"
+
+[[trusted.self_cell]]
+criteria = "safe-to-deploy"
+user-id = 18325 # Lukas Bergdoll (Voultapher)
+start = "2021-04-26"
+end = "2027-09-16"
 
 [[trusted.serde]]
 criteria = "safe-to-deploy"
@@ -3083,6 +3155,12 @@ criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-07-21"
 end = "2025-10-16"
+
+[[trusted.unicase]]
+criteria = "safe-to-deploy"
+user-id = 359 # Sean McArthur (seanmonstar)
+start = "2019-03-05"
+end = "2027-09-16"
 
 [[trusted.unicode-bidi]]
 criteria = "safe-to-deploy"
