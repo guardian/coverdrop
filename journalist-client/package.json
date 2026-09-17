@@ -35,7 +35,7 @@
     "@guardian/libs": "^10.0.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.2.0",
-    "@tauri-apps/plugin-notification": "^2.3.3",
+    "@tauri-apps/plugin-notification": "^2.4.0",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-window-state": "^2.2.2",
     "moment": "^2.30.1",
