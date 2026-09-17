@@ -9,3 +9,5 @@ helm latest
 kubeseal latest
 yq latest
 deno latest
+# Should match the version in Cargo.toml, .github/workflows/journalist-client.yaml, and .github/workflows/rust.yaml
+cargo:sqlx-cli 0.8.6

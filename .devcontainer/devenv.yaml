@@ -29,18 +29,16 @@ modules:
 #   - "source=${localEnv:HOME}/.gu/example,target=/home/vscode/.gu/example,readonly,type=bind,consistency=cached"
 
 # Optional: IDE plugins - shared project plugins like language support
-# plugins:
-#   vscode: []
-#   intellij: []
+plugins:
+  vscode: ["rust-lang.rust-analyzer"]
+  intellij: []
 
 # Optional: Commands to run after container creation
 # Each command has a 'cmd' field and a 'workingDirectory' field
 # e.g.
-# postCreateCommand:
-#   - cmd: "npm install"
-#     workingDirectory: "."
-#   - cmd: "make setup"
-#     workingDirectory: "/workspaces/project"
+postCreateCommand:
+   - cmd: "./scripts/devcontainer-setup.sh"
+     workingDirectory: "."
 # postStartCommand:
 #   - cmd: "echo 'Container started successfully'"
 #     workingDirectory: "."
