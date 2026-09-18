@@ -1,0 +1,32 @@
+name: Update Dependency Graph for Gradle
+on:
+  push:
+    branches:
+      - main
+      - Gradle-dependency-graph-04d1617c8a12d844
+  workflow_dispatch: 
+permissions:
+  contents: read
+jobs:
+  dependency-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        id: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Java
+        id: java
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Submit dependencies
+        id: submit
+        uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+      - name: Log snapshot for user validation
+        id: validate
+        run: cat
+          "$GITHUB_WORKSPACE/dependency-graph-reports/update_dependency_graph_for_gradle-dependency-graph.json"
+          | jq
+    permissions:
+      contents: write
