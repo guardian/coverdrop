@@ -1,9 +1,12 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
-    api::forms::{
-        PostJournalistForm, PostJournalistIdPublicKeyForm, PostSentinelIdPublicKeyForm,
-        PostSentinelProfileForm,
+    api::{
+        forms::{
+            PostJournalistForm, PostJournalistIdPublicKeyForm, PostSentinelIdPublicKeyForm,
+            PostSentinelProfileForm,
+        },
+        models::{journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity},
     },
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
@@ -90,6 +93,8 @@ pub(crate) async fn get_vault_setup_bundle<'a, E>(
     conn: E,
     now: DateTime<Utc>,
     trust_anchors: AnchorOrganizationPublicKeys,
+    journalist_id: &JournalistIdentity,
+    sentinel_id: Option<&SentinelIdentity>,
 ) -> anyhow::Result<Option<SeedInfoRow>>
 where
     E: Executor<'a, Database = Sqlite>,
@@ -135,7 +140,7 @@ where
             serde_json::from_str::<PostJournalistIdPublicKeyForm>(&row.journalist_id_pk_upload_form_json)?;
 
         let key_pair = serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.journalist_id_keypair_json)?;
-        let key_pair = key_pair.to_trusted(&provisioning_pk, now)?;
+        let key_pair = key_pair.to_trusted_with_identity(&provisioning_pk, now, journalist_id)?;
 
         let register_journalist_form = row
             .register_journalist_form_json
@@ -150,8 +155,14 @@ where
         let sentinel_id_key_pair = row
             .sentinel_id_keypair_json
             .map(|json: String| -> anyhow::Result<SentinelIdKeyPair> {
+                // Most prod vaults don't have a sentinel ID.  If the setup bundle itself contains sentinel data
+                // but there's no sentinel ID to verify it against, return an error.
+                // TODO simplify once all vaults have a sentinel ID https://github.com/guardian/coverdrop-internal/issues/3884
+                let sentinel_id = sentinel_id.context(
+                    "Vault setup bundle contains sentinel data but no sentinel ID found in vault",
+                )?;
                 let untrusted = serde_json::from_str::<UntrustedSentinelIdKeyPair>(&json)?;
-                let trusted = untrusted.to_trusted(&provisioning_pk, now)?;
+                let trusted = untrusted.to_trusted_with_identity(&provisioning_pk, now, sentinel_id)?;
                 Ok(trusted)
             })
             .transpose()?;

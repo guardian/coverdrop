@@ -100,11 +100,13 @@ pub async fn generate_journalist(
     let sentinel_id_key_pair = protocol::keys::generate_sentinel_id_key_pair(
         &latest_journalist_provisioning_key_pair,
         now,
+        &sentinel_id,
     );
 
     let journalist_id_key_pair = protocol::keys::generate_journalist_id_key_pair(
         &latest_journalist_provisioning_key_pair,
         now,
+        &journalist_id,
     );
 
     let register_sentinel_profile_form = PostSentinelProfileForm::new(

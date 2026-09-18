@@ -47,7 +47,12 @@ impl PlainMailboxData {
 
         let MessageTimestamp(not_valid_after) = MessageTimestamp::read(reader)?;
 
-        let org_pk = AnchorOrganizationPublicKey::new(key, certificate, not_valid_after);
+        let org_pk = AnchorOrganizationPublicKey::new(
+            key,
+            Some(certificate.clone()),
+            certificate,
+            not_valid_after,
+        );
         let org_pk = vec![org_pk];
 
         Ok(PlainMailboxData {

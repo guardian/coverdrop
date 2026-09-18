@@ -99,7 +99,8 @@ impl IdKeyToRotate for SentinelIdKeyRotation {
     ) -> anyhow::Result<()> {
         let new_pk = UnregisteredSentinelIdPublicKey::new(new_pk_raw);
 
-        let signed_sentinel_id_pk = sign_sentinel_id_pk(new_pk, provisioning_key_pair, now);
+        let signed_sentinel_id_pk =
+            sign_sentinel_id_pk(new_pk, provisioning_key_pair, now, &identity);
 
         tracing::debug!(
             "Signed new sentinel id public key for {}: {}",

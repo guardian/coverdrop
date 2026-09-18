@@ -16,3 +16,6 @@ pub const S3_META_BACKUP_DATA_SIGNATURE: &str = "backup-data-signature";
 /// S3 object metadata key for the JSON-encoded signing key
 /// (`UntrustedSignedPublicSigningKey`).
 pub const S3_META_SIGNED_WITH: &str = "signed-with";
+
+/// The string identity used to construct a [`BackupIdentity`](super::backup_id::BackupIdentity).
+pub const BACKUP_IDENTITY_STR: &str = "backup";

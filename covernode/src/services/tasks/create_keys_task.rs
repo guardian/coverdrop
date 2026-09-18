@@ -178,6 +178,7 @@ mod tests {
     use crate::services::tasks::CreateKeysTask;
     use chrono::{DateTime, Utc};
     use common::{
+        api::models::covernode_id::CoverNodeIdentity,
         epoch::Epoch,
         protocol::{
             constants::{
@@ -203,8 +204,10 @@ mod tests {
     fn create_test_covernode_id_key_pair(
         created_at: DateTime<Utc>,
         provisioning_key: CoverNodeProvisioningKeyPair,
+        covernode_id: &CoverNodeIdentity,
     ) -> CoverNodeIdKeyPairWithEpoch {
-        let id_key_pair = generate_covernode_id_key_pair(&provisioning_key, created_at);
+        let id_key_pair =
+            generate_covernode_id_key_pair(&provisioning_key, created_at, covernode_id);
         CoverNodeIdKeyPairWithEpoch::new(id_key_pair, Epoch(1), created_at)
     }
 
@@ -241,7 +244,11 @@ mod tests {
     #[tokio::test]
     async fn id_key_less_than_rotation_period_no_rotation() {
         let provisioning_key = create_test_provisioning_key(now());
-        let id_key_pair = create_test_covernode_id_key_pair(now(), provisioning_key);
+        let id_key_pair = create_test_covernode_id_key_pair(
+            now(),
+            provisioning_key,
+            &CoverNodeIdentity::new("covernode_123").unwrap(),
+        );
         let published_identity_key_pairs = vec![id_key_pair];
 
         let candidate_id_key_pair =
@@ -258,7 +265,11 @@ mod tests {
     async fn id_key_older_than_rotation_period_requires_rotation() {
         let old_time = now() - COVERNODE_ID_KEY_ROTATE_AFTER - chrono::Duration::seconds(1);
         let provisioning_key = create_test_provisioning_key(old_time);
-        let keypair = create_test_covernode_id_key_pair(old_time, provisioning_key);
+        let keypair = create_test_covernode_id_key_pair(
+            old_time,
+            provisioning_key,
+            &CoverNodeIdentity::new("covernode_001").unwrap(),
+        );
         let published = vec![keypair];
 
         let candidate = create_test_candidate_covernode_id_key_pair(&published, now());
@@ -285,7 +296,11 @@ mod tests {
         // This ID key is recent enough to avoid rotation ie only 7 hours old
         let id_recent_date = now() - chrono::Duration::hours(7);
         // As the parent provisioning key is near expiry, this means that when a child ID key is generated, it will have a truncated expiry date too
-        let id_key = generate_covernode_id_key_pair(&provisioning_key, id_recent_date);
+        let id_key = generate_covernode_id_key_pair(
+            &provisioning_key,
+            id_recent_date,
+            &CoverNodeIdentity::new("covernode_001").unwrap(),
+        );
 
         // Sanity check - ensure the ID key expiry is the same as the parent provisioning key
         assert_eq!(
@@ -302,12 +317,17 @@ mod tests {
             "Expected no rotation when provisioning key near expiry but ID key is fresh"
         );
     }
+
     /// Scenario 1:
     /// Msg Key is less than COVERNODE_MSG_KEY_ROTATE_AFTER_SECONDS  → no rotation should occur.
     #[tokio::test]
     async fn msg_key_is_recently_created_no_rotation() {
         let provisioning_key = create_test_provisioning_key(now());
-        let covernode_id_key_pair = create_test_covernode_id_key_pair(now(), provisioning_key);
+        let covernode_id_key_pair = create_test_covernode_id_key_pair(
+            now(),
+            provisioning_key,
+            &CoverNodeIdentity::new("covernode_001").unwrap(),
+        );
         let published_covernode_id_key_pair = vec![covernode_id_key_pair.clone()];
 
         let covernode_msg_key_pair =
@@ -330,7 +350,11 @@ mod tests {
     async fn msg_key_older_than_rotation_period_requires_rotation() {
         let old_time = now() - COVERNODE_MSG_KEY_ROTATE_AFTER - chrono::Duration::seconds(1);
         let provisioning_key = create_test_provisioning_key(old_time);
-        let covernode_id_key_pair = create_test_covernode_id_key_pair(old_time, provisioning_key);
+        let covernode_id_key_pair = create_test_covernode_id_key_pair(
+            old_time,
+            provisioning_key,
+            &CoverNodeIdentity::new("covernode_001").unwrap(),
+        );
         let published_covernode_id_key_pair = vec![covernode_id_key_pair.clone()];
 
         let covernode_msg_key_pair =
@@ -366,8 +390,11 @@ mod tests {
         let id_near_expiry =
             now() - COVERNODE_ID_KEY_VALID_DURATION + chrono::Duration::minutes(10);
 
-        let covernode_id_key_pair =
-            create_test_covernode_id_key_pair(id_near_expiry, provisioning_key);
+        let covernode_id_key_pair = create_test_covernode_id_key_pair(
+            id_near_expiry,
+            provisioning_key,
+            &CoverNodeIdentity::new("covernode_001").unwrap(),
+        );
         let published_covernode_id_key_pair = vec![covernode_id_key_pair.clone()];
 
         // This message key needs to be recent enough to avoid rotation but also have a truncated expiry date

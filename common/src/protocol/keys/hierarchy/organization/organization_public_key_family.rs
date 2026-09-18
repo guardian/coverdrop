@@ -1,7 +1,11 @@
 use chrono::{DateTime, Utc};
 
 use crate::{
-    backup::roles::{BackupId, BackupMsg},
+    backup::{
+        backup_id::BackupIdentity,
+        constants::BACKUP_IDENTITY_STR,
+        roles::{BackupId, BackupMsg},
+    },
     protocol::{
         keys::{
             verify_organization_pk, AnchorOrganizationPublicKey, BackupIdPublicKeyFamilyList,
@@ -64,6 +68,7 @@ impl OrganizationPublicKeyFamily {
                     untrusted_backups,
                     &org_pk,
                     now,
+                    &BackupIdentity::new(BACKUP_IDENTITY_STR),
                 ))
             } else {
                 None

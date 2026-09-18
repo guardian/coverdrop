@@ -3,12 +3,17 @@ use ed25519_dalek::SigningKey;
 use hex_buffer_serde::Hex;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use crate::crypto::keys::{
-    public_key::PublicKey,
-    role::Role,
-    serde::{SigningKeyPairHex, StorableKeyMaterial, StorableKeyMaterialType},
-    signing::{traits, PublicSigningKey, SignedSigningKeyPair},
-    untrusted::UntrustedKeyError,
+use crate::{
+    api::models::identity::Identity,
+    crypto::keys::{
+        id_key_certificate_data::IdKeyCertificateData,
+        key_certificate_data::KeyCertificateData,
+        public_key::PublicKey,
+        role::Role,
+        serde::{SigningKeyPairHex, StorableKeyMaterial, StorableKeyMaterialType},
+        signing::{traits, PublicSigningKey, SignedSigningKeyPair},
+        untrusted::UntrustedKeyError,
+    },
 };
 
 use super::UntrustedSignedPublicSigningKey;
@@ -31,7 +36,9 @@ impl<KeyRole: Role> UntrustedSignedSigningKeyPair<KeyRole> {
             secret_key,
         }
     }
+}
 
+impl<KeyRole: Role<CertData = KeyCertificateData>> UntrustedSignedSigningKeyPair<KeyRole> {
     pub fn to_trusted<SigningKeyRole: Role>(
         &self,
         signing_pk: &impl traits::PublicSigningKey<SigningKeyRole>,
@@ -66,6 +73,40 @@ impl<KeyRole: Role> UntrustedSignedSigningKeyPair<KeyRole> {
         let Some(pk) =
             signing_pk_iter.find_map(|signing_pk| self.public_key.to_trusted(signing_pk, now).ok())
         else {
+            anyhow::bail!(UntrustedKeyError::ParentKeyNotFound)
+        };
+
+        Ok(SignedSigningKeyPair::new(pk, self.secret_key.clone()))
+    }
+}
+
+impl<KeyRole: Role<CertData = IdKeyCertificateData>> UntrustedSignedSigningKeyPair<KeyRole> {
+    pub fn to_trusted_with_identity<SigningKeyRole: Role>(
+        &self,
+        signing_pk: &impl traits::PublicSigningKey<SigningKeyRole>,
+        now: DateTime<Utc>,
+        identity: &impl Identity,
+    ) -> anyhow::Result<SignedSigningKeyPair<KeyRole>> {
+        let pk = self
+            .public_key
+            .to_trusted_with_identity(signing_pk, now, identity)?;
+
+        Ok(SignedSigningKeyPair::new(pk, self.secret_key.clone()))
+    }
+
+    pub fn to_trusted_from_candidate_parents_with_identity<'a, SigningKeyRole: Role>(
+        &self,
+        mut signing_pk_iter: impl Iterator<
+            Item = &'a (impl traits::PublicSigningKey<SigningKeyRole> + 'a),
+        >,
+        now: DateTime<Utc>,
+        identity: &impl Identity,
+    ) -> anyhow::Result<SignedSigningKeyPair<KeyRole>> {
+        let Some(pk) = signing_pk_iter.find_map(|signing_pk| {
+            self.public_key
+                .to_trusted_with_identity(signing_pk, now, identity)
+                .ok()
+        }) else {
             anyhow::bail!(UntrustedKeyError::ParentKeyNotFound)
         };
 

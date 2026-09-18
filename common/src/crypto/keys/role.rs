@@ -1,6 +1,9 @@
 use chrono::Duration;
+use std::fmt::Debug;
 
 pub trait Role: Clone {
+    type CertData: Clone + Debug + PartialEq + Eq;
+
     fn display() -> &'static str;
     fn entity_name() -> &'static str;
     fn valid_duration() -> Option<Duration>;
@@ -9,12 +12,18 @@ pub trait Role: Clone {
 
 #[macro_export]
 macro_rules! define_role {
-    ($name:ident, $display: tt, $entity_name: tt, $valid_duration: expr, $rotate_after: expr) => {
+    // Allow defining a role with a specific certificate data type.
+    // This is used to differentiate signing key roles for identity keys, which need to include
+    // identities in their certificate data, from roles that use the default `KeyCertificateData`.
+    // Encryption key roles should use the default `KeyCertificateData`.
+    ($name:ident, $display: tt, $entity_name: tt, $valid_duration: expr, $rotate_after: expr, $cert_data: ty) => {
         #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, Hash)]
         #[serde(deny_unknown_fields)]
         pub struct $name {}
 
         impl $crate::crypto::keys::role::Role for $name {
+            type CertData = $cert_data;
+
             /// A human-readable name for this role
             fn display() -> &'static str {
                 $display
@@ -37,6 +46,17 @@ macro_rules! define_role {
             }
         }
     };
+    // If no certificate data type is provided, default to using `KeyCertificateData`
+    ($name:ident, $display: tt, $entity_name: tt, $valid_duration: expr, $rotate_after: expr) => {
+        $crate::define_role!(
+            $name,
+            $display,
+            $entity_name,
+            $valid_duration,
+            $rotate_after,
+            $crate::crypto::keys::key_certificate_data::KeyCertificateData
+        );
+    };
     ($name:ident, $display: tt, $entity_name: tt) => {
         $crate::define_role!($name, $display, $entity_name, None, None);
     };
@@ -45,12 +65,3 @@ macro_rules! define_role {
 // A test role used for testing cryptographic primitives without valid duration or rotation time
 // Used unit tests and in the admin crate to generate test vectors for cross-platform testing
 define_role!(Test, "Test key", "test_key");
-
-// A test role with a valid duration and rotation time
-define_role!(
-    Test2,
-    "Test key 2",
-    "test_key_with_rotate_after",
-    Some(Duration::hours(24)),
-    Some(Duration::hours(12))
-);

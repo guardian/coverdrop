@@ -22,15 +22,54 @@ use common::{
         JournalistProvisioningPublicKey, JournalistProvisioningPublicKeyFamily,
         JournalistProvisioningPublicKeyFamilyList, OrganizationPublicKey,
         OrganizationPublicKeyFamily, OrganizationPublicKeyFamilyList, SentinelIdPublicKey,
-        SentinelIdPublicKeyList, UntrustedBackupMessagingPublicKey, UntrustedCoverNodeIdPublicKey,
+        SentinelIdPublicKeyList, UntrustedBackupMessagingPublicKey,
         UntrustedCoverNodeMessagingPublicKey, UntrustedCoverNodeProvisioningPublicKey,
-        UntrustedJournalistIdPublicKey, UntrustedJournalistMessagingPublicKey,
-        UntrustedJournalistProvisioningPublicKey, UntrustedOrganizationPublicKey,
-        UntrustedSentinelIdPublicKey,
+        UntrustedJournalistMessagingPublicKey, UntrustedJournalistProvisioningPublicKey,
+        UntrustedOrganizationPublicKey,
     },
 };
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use sqlx::PgPool;
+
+/// A hashmap of the key ID to a tuple of the parent key ID and the key itself
+type ChildKeyMap<T> = HashMap<i32, (i32, T)>;
+
+/// Verify an identity public key (journalist, covernode, sentinel) against its parent key
+/// and the identity it belongs to, inserting it into `id_pks` on success.
+///
+/// Keys which are already present, whose parent key or identity is missing, or which fail
+/// verification are skipped so that one bad key doesn't invalidate the rest of the hierarchy.
+#[allow(clippy::too_many_arguments)]
+fn insert_verified_id_pk<Untrusted, Parent, Identity, Verified>(
+    id_pks: &mut ChildKeyMap<Verified>,
+    id_pk_id: i32,
+    id_pk_json: Value,
+    parent_pks: &ChildKeyMap<Parent>,
+    parent_pk_id: i32,
+    identities: &ChildKeyMap<Identity>,
+    now: DateTime<Utc>,
+    verify: impl FnOnce(&Untrusted, &Parent, DateTime<Utc>, &Identity) -> anyhow::Result<Verified>,
+) -> anyhow::Result<()>
+where
+    Untrusted: DeserializeOwned,
+{
+    let Entry::Vacant(entry) = id_pks.entry(id_pk_id) else {
+        return Ok(());
+    };
+
+    let untrusted_id_pk = serde_json::from_value::<Untrusted>(id_pk_json)?;
+
+    if let Some(((_, verifying_key), (_, identity))) =
+        parent_pks.get(&parent_pk_id).zip(identities.get(&id_pk_id))
+    {
+        if let Ok(id_pk) = verify(&untrusted_id_pk, verifying_key, now, identity) {
+            entry.insert((parent_pk_id, id_pk));
+        }
+    }
+
+    Ok(())
+}
 
 #[derive(Clone)]
 pub struct HierarchyQueries {
@@ -204,9 +243,6 @@ impl HierarchyQueries {
         .fetch_all(&mut *conn)
         .await?;
 
-        // A hashmap of the key ID to a tuple of the parent key ID and the key itself
-        type ChildKeyMap<T> = HashMap<i32, (i32, T)>;
-
         // Lots of allocations here but it makes it easy for us to know if we need to re-verify a key
 
         // The org PK has no parent so it doesn't use the `ChildKeyMap`
@@ -288,22 +324,16 @@ impl HierarchyQueries {
                         }
 
                         if let Some(covernode_id_pk_json) = row.covernode_id_pk_json {
-                            if let Entry::Vacant(e) = covernode_id_pks.entry(covernode_id_pk_id) {
-                                let covernode_id_pk =
-                                    serde_json::from_value::<UntrustedCoverNodeIdPublicKey>(
-                                        covernode_id_pk_json,
-                                    )?;
-
-                                if let Some((_, verifying_key)) =
-                                    &covernode_provisioning_pks.get(&covernode_provisioning_pk_id)
-                                {
-                                    if let Ok(covernode_id_pk) =
-                                        verify_covernode_id_pk(&covernode_id_pk, verifying_key, now)
-                                    {
-                                        e.insert((covernode_provisioning_pk_id, covernode_id_pk));
-                                    }
-                                }
-                            }
+                            insert_verified_id_pk(
+                                &mut covernode_id_pks,
+                                covernode_id_pk_id,
+                                covernode_id_pk_json,
+                                &covernode_provisioning_pks,
+                                covernode_provisioning_pk_id,
+                                &covernode_ids,
+                                now,
+                                verify_covernode_id_pk,
+                            )?;
                         }
 
                         if let Some(covernode_msg_pk_id) = row.covernode_msg_pk_id {
@@ -367,22 +397,16 @@ impl HierarchyQueries {
                     }
 
                     if let Some(journalist_id_pk_json) = row.journalist_id_pk_json {
-                        if let Entry::Vacant(e) = journalist_id_pks.entry(journalist_id_pk_id) {
-                            let journalist_id_pk =
-                                serde_json::from_value::<UntrustedJournalistIdPublicKey>(
-                                    journalist_id_pk_json,
-                                )?;
-
-                            if let Some((_, verifying_key)) =
-                                &journalist_provisioning_pks.get(&journalist_provisioning_pk_id)
-                            {
-                                if let Ok(journalist_id_pk) =
-                                    verify_journalist_id_pk(&journalist_id_pk, verifying_key, now)
-                                {
-                                    e.insert((journalist_provisioning_pk_id, journalist_id_pk));
-                                }
-                            }
-                        }
+                        insert_verified_id_pk(
+                            &mut journalist_id_pks,
+                            journalist_id_pk_id,
+                            journalist_id_pk_json,
+                            &journalist_provisioning_pks,
+                            journalist_provisioning_pk_id,
+                            &journalist_ids,
+                            now,
+                            verify_journalist_id_pk,
+                        )?;
                     }
                     if let Some(journalist_msg_pk_id) = row.journalist_msg_pk_id {
                         if let Some(journalist_msg_pk_json) = row.journalist_msg_pk_json {
@@ -418,21 +442,16 @@ impl HierarchyQueries {
                     }
 
                     if let Some(sentinel_id_pk_json) = row.sentinel_id_pk_json {
-                        if let Entry::Vacant(e) = sentinel_id_pks.entry(sentinel_id_pk_id) {
-                            let sentinel_id_pk = serde_json::from_value::<
-                                UntrustedSentinelIdPublicKey,
-                            >(sentinel_id_pk_json)?;
-
-                            if let Some((_, verifying_key)) =
-                                &journalist_provisioning_pks.get(&journalist_provisioning_pk_id)
-                            {
-                                if let Ok(sentinel_id_pk) =
-                                    verify_sentinel_id_pk(&sentinel_id_pk, verifying_key, now)
-                                {
-                                    e.insert((journalist_provisioning_pk_id, sentinel_id_pk));
-                                }
-                            }
-                        }
+                        insert_verified_id_pk(
+                            &mut sentinel_id_pks,
+                            sentinel_id_pk_id,
+                            sentinel_id_pk_json,
+                            &journalist_provisioning_pks,
+                            journalist_provisioning_pk_id,
+                            &sentinel_ids,
+                            now,
+                            verify_sentinel_id_pk,
+                        )?;
                     }
                 }
             }

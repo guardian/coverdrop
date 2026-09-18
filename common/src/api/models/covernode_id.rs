@@ -8,7 +8,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::Error;
+use crate::{api::models::identity::Identity, Error};
 
 #[derive(
     Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, sqlx::Type, PartialOrd, Ord,
@@ -42,6 +42,8 @@ impl CoverNodeIdentity {
         self.0
     }
 }
+
+impl Identity for CoverNodeIdentity {}
 
 impl FromStr for CoverNodeIdentity {
     type Err = Error;

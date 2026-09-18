@@ -120,7 +120,12 @@ where
 #[derive(Clone, Debug, PartialEq)]
 pub struct SignedPublicEncryptionKey<T: Role> {
     pub key: X25519PublicKey,
+    // deprecating `certificate` in favor of `signature` field
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys have been migrated to include the signature field
     pub certificate: Signature<KeyCertificateData>,
+    // signature is Option for backwards compatibility.
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove Option once all keys have been migrated to include the signature field
+    pub signature: Option<Signature<KeyCertificateData>>,
     pub not_valid_after: DateTime<Utc>,
     marker: PhantomData<T>,
 }
@@ -133,6 +138,8 @@ impl<T: Role> SignedPublicEncryptionKey<T> {
     ) -> Self {
         SignedPublicEncryptionKey {
             key: key.key,
+            // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) accept signature directly once certificate is removed
+            signature: Some(certificate.clone()),
             certificate,
             not_valid_after,
             marker: PhantomData,
@@ -287,6 +294,7 @@ impl<R: Role> UnsignedEncryptionKeyPair<R> {
     {
         let cert_data =
             KeyCertificateData::new_for_encryption_key(&self.raw_public_key(), not_valid_after);
+        // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) rename to signature after migration
         let certificate = signing_key_pair.sign(&cert_data);
 
         let pk =

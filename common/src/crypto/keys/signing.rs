@@ -3,8 +3,10 @@ use std::{
     marker::PhantomData,
 };
 
+use crate::api::models::identity::Identity;
 use chrono::{DateTime, Utc};
 
+use super::id_key_certificate_data::IdKeyCertificateData;
 use ed25519_dalek::{Signer, SigningKey};
 use rand::thread_rng;
 
@@ -58,10 +60,15 @@ impl<T: Role> PublicKey for PublicSigningKey<T> {
     }
 }
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SignedPublicSigningKey<T: Role> {
     pub key: Ed25519PublicKey,
+    // deprecating `certificate` in favor of `signature` field
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys have been migrated to include the signature field
     pub certificate: Signature<KeyCertificateData>,
+    // signature is Option for backwards compatibility.
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove Option once all keys have been migrated to include the signature field
+    pub signature: Option<Signature<T::CertData>>,
     pub not_valid_after: DateTime<Utc>,
     marker: PhantomData<T>,
 }
@@ -75,6 +82,7 @@ impl<KeyRole: Role> PublicKey for SignedPublicSigningKey<KeyRole> {
 impl<T: Role> SignedPublicSigningKey<T> {
     pub fn new(
         key: Ed25519PublicKey,
+        signature: Option<Signature<T::CertData>>,
         certificate: Signature<KeyCertificateData>,
         not_valid_after: DateTime<Utc>,
     ) -> Self {
@@ -82,6 +90,7 @@ impl<T: Role> SignedPublicSigningKey<T> {
             key,
             certificate,
             not_valid_after,
+            signature,
             marker: PhantomData::<T>,
         }
     }
@@ -89,19 +98,10 @@ impl<T: Role> SignedPublicSigningKey<T> {
     pub fn to_untrusted(&self) -> UntrustedSignedPublicSigningKey<T> {
         UntrustedSignedPublicSigningKey::new(
             self.key,
+            self.signature.clone(),
             self.certificate.clone(),
             self.not_valid_after,
         )
-    }
-}
-
-// Allow comparing public signing keys with different roles.
-// This is used to compare the `TrustedOrganizationPublicKey` with an `OrganizationPublicKey`
-impl<R1: Role, R2: Role> PartialEq<SignedPublicSigningKey<R2>> for SignedPublicSigningKey<R1> {
-    fn eq(&self, other: &SignedPublicSigningKey<R2>) -> bool {
-        self.key == other.key
-            && self.certificate == other.certificate
-            && self.not_valid_after == other.not_valid_after
     }
 }
 
@@ -122,7 +122,8 @@ pub type SignedSigningKeyPair<R> = SigningKeyPair<R, SignedPublicSigningKey<R>>;
 pub type UnsignedSigningKeyPair<R> = SigningKeyPair<R, PublicSigningKey<R>>;
 
 // Specialised functions for the UNSIGNED version of a key pair
-impl<R: Role> UnsignedSigningKeyPair<R> {
+// Used for all signing keys except for journalist identity keys, which have different certificate data.
+impl<R: Role<CertData = KeyCertificateData>> UnsignedSigningKeyPair<R> {
     pub fn to_signed_key_pair<SR, SK>(
         self,
         signing_key_pair: &SigningKeyPair<SR, SK>,
@@ -136,7 +137,15 @@ impl<R: Role> UnsignedSigningKeyPair<R> {
             KeyCertificateData::new_for_signing_key(&self.public_key.key, not_valid_after);
         let certificate = signing_key_pair.sign(&cert_data);
 
-        let pk = SignedPublicSigningKey::new(self.public_key.key, certificate, not_valid_after);
+        let pk = SignedPublicSigningKey::new(
+            self.public_key.key,
+            // This function is used for all signing keys except org keys and identity keys.
+            // Pass through the certificate as the signature in order to rename the field.
+            // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove certificate after the migration is complete.
+            Some(certificate.clone()),
+            certificate,
+            not_valid_after,
+        );
 
         SignedSigningKeyPair::<R>::new(pk, self.secret_key)
     }
@@ -149,16 +158,62 @@ impl<R: Role> UnsignedSigningKeyPair<R> {
             KeyCertificateData::new_for_signing_key(&self.public_key.key, not_valid_after);
         let certificate = self.sign(&cert_data);
 
-        let pk = SignedPublicSigningKey::new(self.public_key.key, certificate, not_valid_after);
+        let pk = SignedPublicSigningKey::new(
+            self.public_key.key,
+            // This function is only used for org keys.
+            // Pass through the certificate as the signature for self-signed keys in order to rename the field.
+            // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove certificate after the migration is complete.
+            Some(certificate.clone()),
+            certificate,
+            not_valid_after,
+        );
 
         SignedSigningKeyPair::<R>::new(pk, self.secret_key)
     }
+}
 
+impl<R: Role> UnsignedSigningKeyPair<R> {
     pub fn to_untrusted(&self) -> UntrustedUnsignedSigningKeyPair<R> {
         UntrustedUnsignedSigningKeyPair::new(
             self.public_key.to_untrusted(),
             self.secret_key.clone(),
         )
+    }
+}
+
+// Specialised functions for the unsigned version of a key pair for identity keys (journalist, sentinel, covernode).
+// This is necessary since ID keys include the identity they are associated with in their certificate data
+// so that there is a cryptographic link between the identity and the key.
+impl<R: Role<CertData = IdKeyCertificateData>> UnsignedSigningKeyPair<R> {
+    pub fn to_signed_key_pair_with_identity<SR, SK>(
+        self,
+        signing_key_pair: &SigningKeyPair<SR, SK>,
+        not_valid_after: DateTime<Utc>,
+        identity: &impl Identity,
+    ) -> SignedSigningKeyPair<R>
+    where
+        SR: Role,
+        SK: traits::PublicSigningKey<SR>,
+    {
+        // Create the legacy certificate data for the signing key
+        // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys have been migrated to include the signature field.
+        let old_cert_data =
+            KeyCertificateData::new_for_signing_key(&self.public_key.key, not_valid_after);
+        let certificate = signing_key_pair.sign(&old_cert_data);
+
+        // Create the new signature with the new certificate data
+        let new_cert_data =
+            IdKeyCertificateData::new::<R>(&self.public_key.key, not_valid_after, identity);
+        let signature = signing_key_pair.sign(&new_cert_data);
+
+        let pk = SignedPublicSigningKey::new(
+            self.public_key.key,
+            Some(signature),
+            certificate,
+            not_valid_after,
+        );
+
+        SignedSigningKeyPair::<R>::new(pk, self.secret_key)
     }
 }
 

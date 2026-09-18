@@ -3,7 +3,10 @@ mod inner_key_state;
 use std::sync::Arc;
 
 use chrono::{DateTime, Utc};
-use common::{api::api_client::ApiClient, clap::Stage};
+use common::{
+    api::{api_client::ApiClient, models::covernode_id::CoverNodeIdentity},
+    clap::Stage,
+};
 use covernode_database::Database;
 use inner_key_state::{IdentityKeyPairCollection, MessagingKeyPairCollection};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -30,6 +33,7 @@ impl KeyState {
         api_client: &ApiClient,
         stage: &Stage,
         now: DateTime<Utc>,
+        covernode_id: CoverNodeIdentity,
     ) -> anyhow::Result<KeyState> {
         let anchor_org_pks = trust_anchors::get_trust_anchors(stage, now)?;
 
@@ -54,8 +58,13 @@ impl KeyState {
             .await?
             .map(|k| k.key_pair.to_trusted());
 
-        let covernode_id_key_pairs =
-            get_and_verify_covernode_id_key_pairs(&db, &covernode_provisioning_pks, now).await?;
+        let covernode_id_key_pairs = get_and_verify_covernode_id_key_pairs(
+            &db,
+            &covernode_provisioning_pks,
+            now,
+            &covernode_id,
+        )
+        .await?;
 
         let candidate_covernode_msg_key_pair =
             db.select_candidate_msg_key_pair().await?.and_then(|k| {
@@ -83,6 +92,7 @@ impl KeyState {
         let mut inner = InnerKeyState::new(
             api_client.clone(),
             db,
+            covernode_id,
             anchor_org_pks,
             covernode_id_key_pairs,
             covernode_msg_key_pairs,

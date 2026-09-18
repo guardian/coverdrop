@@ -13,6 +13,7 @@ use common::{
             PostCoverNodeProvisioningPublicKeyForm, PostJournalistProvisioningPublicKeyForm,
         },
         models::covernode_id::CoverNodeIdentity,
+        models::journalist_id::JournalistIdentity,
     },
     backup::keys::{BackupIdKeyPair, BackupMsgKeyPair},
     crypto::keys::serde::set_key_permissions,
@@ -111,9 +112,13 @@ pub fn load_static_stack_keys(now: DateTime<Utc>) -> StackKeys {
         load_covernode_provisioning_key_pairs(&keys_path, &anchor_org_pks, now)
             .expect("Load covernode provisioning key pair");
 
-    let mut covernode_id_key_pairs =
-        load_covernode_id_key_pairs(&keys_path, &covernode_provisioning_key_pairs, now)
-            .expect("Load covernode identity key");
+    let mut covernode_id_key_pairs = load_covernode_id_key_pairs(
+        &keys_path,
+        &covernode_provisioning_key_pairs,
+        now,
+        &CoverNodeIdentity::new("covernode_001").expect("Make covernode identity"),
+    )
+    .expect("Load covernode identity key");
 
     let mut covernode_msg_key_pairs =
         load_covernode_msg_key_pairs(&keys_path, &covernode_id_key_pairs, now)
@@ -127,6 +132,7 @@ pub fn load_static_stack_keys(now: DateTime<Utc>) -> StackKeys {
         &keys_path,
         journalist_provisioning_key_pairs.first().unwrap(),
         now,
+        &JournalistIdentity::new("static_test_journalist").unwrap(),
     );
 
     let journalist_msg_key_pair =

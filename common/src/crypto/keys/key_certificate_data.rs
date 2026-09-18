@@ -9,9 +9,11 @@ use super::{Ed25519PublicKey, X25519PublicKey};
 const PUBLIC_KEY_AND_NOT_VALID_AFTER_LEN: usize = X25519_PUBLIC_KEY_LEN + size_of::<i64>();
 
 /// A structure used for signing keys and their expiry time.
+/// Used by all signing keys, except for identity keys (journalist, covernode, sentinel),
+/// which use `IdKeyCertificateData`.
 ///
 /// This object is very short lived, only long enough to create or verify a signature.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct KeyCertificateData(pub [u8; PUBLIC_KEY_AND_NOT_VALID_AFTER_LEN]);
 
 impl KeyCertificateData {

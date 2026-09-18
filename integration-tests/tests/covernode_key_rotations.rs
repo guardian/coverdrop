@@ -182,8 +182,11 @@ async fn concurrent_covernode_id_and_provisioning_key_rotations() {
 
     // Create a new covernode id key signed with the current covernode provisioning key
     let covernode_provisioning_key_pair_1 = &stack.keys().covernode_provisioning_key_pair;
-    let new_covernode_id_key_pair =
-        generate_covernode_id_key_pair(covernode_provisioning_key_pair_1, stack.now());
+    let new_covernode_id_key_pair = generate_covernode_id_key_pair(
+        covernode_provisioning_key_pair_1,
+        stack.now(),
+        stack.covernode_id(),
+    );
 
     // Rotate covernode provisioning key
     let covernode_provisioning_key_pair_2 =
@@ -276,8 +279,11 @@ async fn concurrent_covernode_msg_and_id_key_rotations() {
         generate_covernode_messaging_key_pair(covernode_id_key_pair_1, stack.now());
 
     // Rotate covernode id key
-    let covernode_id_key_pair_2 =
-        generate_covernode_id_key_pair(&stack.keys().covernode_provisioning_key_pair, stack.now());
+    let covernode_id_key_pair_2 = generate_covernode_id_key_pair(
+        &stack.keys().covernode_provisioning_key_pair,
+        stack.now(),
+        stack.covernode_id(),
+    );
     stack
         .api_client_cached()
         .post_covernode_id_pk(

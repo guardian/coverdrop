@@ -7,6 +7,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::api::models::identity::Identity;
 use crate::Error;
 
 pub const MAX_JOURNALIST_IDENTITY_LEN: usize = 128;
@@ -35,6 +36,8 @@ impl JournalistIdentity {
         self.0
     }
 }
+
+impl Identity for JournalistIdentity {}
 
 impl FromStr for JournalistIdentity {
     type Err = Error;

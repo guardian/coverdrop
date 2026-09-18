@@ -155,12 +155,14 @@ async fn main() -> anyhow::Result<()> {
             .await
         }
         Commands::GenerateCoverNodeMessagingKeyPair {
+            covernode_id,
             keys_path,
             api_url,
             do_not_upload_to_api,
         } => {
             let api_client = ApiClient::new(api_url);
             generate_covernode_messaging_key_pair(
+                covernode_id,
                 keys_path,
                 api_client,
                 do_not_upload_to_api,
@@ -218,9 +220,13 @@ async fn main() -> anyhow::Result<()> {
             Ok(())
         }
         #[cfg(feature = "integration-tests")]
-        Commands::GenerateJournalistMessagingKeysForIntegrationTest { keys_path } => {
+        Commands::GenerateJournalistMessagingKeysForIntegrationTest {
+            keys_path,
+            journalist_id,
+        } => {
             integration_tests::generate_journalist_messaging_keys_for_integration_test(
                 keys_path,
+                &journalist_id,
                 time::now(),
             )
             .await?;

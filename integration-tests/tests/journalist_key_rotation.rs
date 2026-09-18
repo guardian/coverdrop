@@ -121,8 +121,11 @@ async fn concurrent_journalist_id_and_provisioning_key_rotations() {
     // Create, but don't publish, a new journalist id key signed with the current journalist provisioning key
     let journalist_provisioning_key_pair_1 = stack.keys().journalist_provisioning_key_pair.clone();
 
-    let new_journalist_id_key_pair =
-        generate_journalist_id_key_pair(&journalist_provisioning_key_pair_1, stack.now());
+    let new_journalist_id_key_pair = generate_journalist_id_key_pair(
+        &journalist_provisioning_key_pair_1,
+        stack.now(),
+        &JournalistIdentity::new("generated_test_journalist").unwrap(),
+    );
 
     // Rotate journalist provisioning key
     let journalist_provisioning_key_pair_2 =
@@ -240,6 +243,7 @@ async fn concurrent_journalist_msg_and_id_key_rotations() {
     let journalist_id_key_pair_2 = generate_journalist_id_key_pair(
         &stack.keys().journalist_provisioning_key_pair,
         stack.now(),
+        &JournalistIdentity::new("generated_test_journalist").unwrap(),
     );
     let journalist_id_form = PostJournalistIdPublicKeyForm::new(
         JournalistIdentity::new("generated_test_journalist").unwrap(),

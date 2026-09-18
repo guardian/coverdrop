@@ -1,5 +1,6 @@
 use chrono::{DateTime, Duration, Utc};
 use common::{
+    api::models::journalist_id::JournalistIdentity,
     crypto::keys::{encryption::UnsignedEncryptionKeyPair, signing::UnsignedSigningKeyPair},
     epoch::Epoch,
     protocol::{
@@ -60,7 +61,11 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     let id_key_not_valid_after =
         provisioning_key_not_valid_after + JOURNALIST_ID_KEY_VALID_DURATION;
     let journalist_id_key_pair = UnsignedSigningKeyPair::generate()
-        .to_signed_key_pair(&journalist_provisioning_key_pair, id_key_not_valid_after);
+        .to_signed_key_pair_with_identity(
+            &journalist_provisioning_key_pair,
+            id_key_not_valid_after,
+            &JournalistIdentity::new("test_journalist").unwrap(),
+        );
     let created_at = now;
     let published_at = now;
     let id_key_epoch = Epoch(0);
@@ -74,10 +79,14 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
     )
     .await
     .unwrap();
-    let mut journalist_id_key_pairs =
-        published_journalist_id_key_pairs(&mut conn, now, trust_anchors.clone())
-            .await
-            .unwrap();
+    let mut journalist_id_key_pairs = published_journalist_id_key_pairs(
+        &mut conn,
+        now,
+        trust_anchors.clone(),
+        JournalistIdentity::new("test_journalist").unwrap(),
+    )
+    .await
+    .unwrap();
     let db_id_key_pair_row = journalist_id_key_pairs.next().unwrap();
 
     // insert a msg key that will outlive its parent
@@ -90,12 +99,18 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         &journalist_msg_key_pair,
         now,
         trust_anchors.clone(),
+        &JournalistIdentity::new("test_journalist").unwrap(),
     )
     .await
     .unwrap();
-    let journalist_msg_key_pairs = candidate_msg_key_pair(&mut conn, now, trust_anchors.clone())
-        .await
-        .unwrap();
+    let journalist_msg_key_pairs = candidate_msg_key_pair(
+        &mut conn,
+        now,
+        trust_anchors.clone(),
+        &JournalistIdentity::new("test_journalist").unwrap(),
+    )
+    .await
+    .unwrap();
     assert!(journalist_msg_key_pairs.is_some());
 
     let after_provisioning_key_expiry = provisioning_key_not_valid_after + Duration::days(1);
@@ -118,6 +133,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         &mut conn,
         after_provisioning_key_expiry,
         trust_anchors.clone(),
+        JournalistIdentity::new("test_journalist").unwrap(),
     )
     .await
     .unwrap();
@@ -128,6 +144,7 @@ async fn test_cascading_deletes(mut conn: PoolConnection<Sqlite>) -> sqlx::Resul
         &mut conn,
         after_provisioning_key_expiry,
         trust_anchors.clone(),
+        &JournalistIdentity::new("test_journalist").unwrap(),
     )
     .await
     .unwrap();

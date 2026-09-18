@@ -10,7 +10,7 @@ use ed25519_dalek::SigningKey;
 use hex_buffer_serde::Hex;
 use regex::Regex;
 use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use x25519_dalek::PublicKey as X25519PublicKey;
 use x25519_dalek::StaticSecret as X25519SecretKey;
 
@@ -114,6 +114,31 @@ impl<T> Hex<Signature<T>> for SignatureHex {
             signature,
             marker: PhantomData,
         })
+    }
+}
+
+pub(crate) struct OptionalSignatureHex;
+
+impl OptionalSignatureHex {
+    pub fn serialize<T, S: serde::Serializer>(
+        value: &Option<Signature<T>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        match value {
+            Some(sig) => SignatureHex::serialize(sig, serializer),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, T, D: serde::Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<Signature<T>>, D::Error> {
+        Option::<String>::deserialize(deserializer)?
+            .map(|hex_str| {
+                let bytes = hex::decode(&hex_str).map_err(serde::de::Error::custom)?;
+                SignatureHex::from_bytes(&bytes).map_err(serde::de::Error::custom)
+            })
+            .transpose()
     }
 }
 

@@ -1,5 +1,7 @@
+use crate::backup::backup_id::BackupIdentity;
 use crate::backup::constants::{BACKUP_ID_KEY_VALID_DURATION, BACKUP_MSG_KEY_VALID_DURATION};
 
+use crate::backup::constants::BACKUP_IDENTITY_STR;
 use crate::backup::roles::{BackupId, BackupMsg};
 use crate::crypto::keys::encryption::{
     EncryptionKeyPair, PublicEncryptionKey, SignedEncryptionKeyPair, SignedPublicEncryptionKey,
@@ -38,7 +40,11 @@ pub fn generate_backup_id_key_pair(
 ) -> BackupIdKeyPair {
     let not_valid_after = now + BACKUP_ID_KEY_VALID_DURATION;
 
-    UnsignedSigningKeyPair::generate().to_signed_key_pair(org_key_pair, not_valid_after)
+    UnsignedSigningKeyPair::generate().to_signed_key_pair_with_identity(
+        org_key_pair,
+        not_valid_after,
+        &BackupIdentity::new(BACKUP_IDENTITY_STR),
+    )
 }
 
 pub fn verify_backup_id_pk(
@@ -46,7 +52,7 @@ pub fn verify_backup_id_pk(
     org_pk: &OrganizationPublicKey,
     now: DateTime<Utc>,
 ) -> anyhow::Result<BackupIdPublicKey> {
-    untrusted.to_trusted(org_pk, now)
+    untrusted.to_trusted_with_identity(org_pk, now, &BackupIdentity::new(BACKUP_IDENTITY_STR))
 }
 
 pub fn generate_backup_msg_key_pair(
@@ -76,9 +82,13 @@ pub fn load_backup_signing_key_pair(
     let key_pair = UntrustedBackupIdKeyPair::load_from_directory(&keys_path)?
         .iter()
         .flat_map(|key_pair| {
-            org_pks
-                .iter()
-                .flat_map(|org_pk| key_pair.to_trusted(org_pk, now))
+            org_pks.iter().flat_map(|org_pk| {
+                key_pair.to_trusted_with_identity(
+                    org_pk,
+                    now,
+                    &BackupIdentity::new(BACKUP_IDENTITY_STR),
+                )
+            })
         })
         .collect::<Vec<_>>();
 

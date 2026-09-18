@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 
-use crate::protocol::keys::{JournalistProvisioningPublicKey, SentinelIdPublicKey};
+use crate::{
+    api::models::identity::Identity,
+    protocol::keys::{JournalistProvisioningPublicKey, SentinelIdPublicKey},
+};
 
 use super::UntrustedSentinelIdPublicKeyList;
 
@@ -24,10 +27,13 @@ impl SentinelIdPublicKeyList {
         keys: UntrustedSentinelIdPublicKeyList,
         verifying_pk: &JournalistProvisioningPublicKey,
         now: DateTime<Utc>,
+        identity: &impl Identity,
     ) -> Self {
         let keys = keys
             .into_iter()
-            .flat_map(|untrusted_pk| untrusted_pk.to_trusted(verifying_pk, now))
+            .flat_map(|untrusted_pk| {
+                untrusted_pk.to_trusted_with_identity(verifying_pk, now, identity)
+            })
             .collect();
 
         Self(keys)

@@ -181,10 +181,11 @@ pub fn load_journalist_id_key_pair(
     keys_path: impl AsRef<Path>,
     journalist_provisioning_pk: &impl traits::PublicSigningKey<JournalistProvisioning>,
     now: DateTime<Utc>,
+    journalist_id: &JournalistIdentity,
 ) -> JournalistIdKeyPair {
     UntrustedJournalistIdKeyPair::load_from_directory(&keys_path)
         .expect("Should load journalist ID key pair")[0]
-        .to_trusted(journalist_provisioning_pk, now)
+        .to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
         .expect("Verify signing key pair")
 }
 

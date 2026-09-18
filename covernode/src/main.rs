@@ -62,7 +62,14 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
     )
     .await;
 
-    let key_state = KeyState::new(db.clone(), &api_client, &cli.stage, time::now()).await?;
+    let key_state = KeyState::new(
+        db.clone(),
+        &api_client,
+        &cli.stage,
+        time::now(),
+        cli.covernode_id.clone(),
+    )
+    .await?;
 
     tracing::debug!("Setting up background tasks");
     let mut background_tasks = tokio::spawn({
@@ -76,6 +83,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
             key_state.clone(),
             api_client.clone(),
             identity_api_client.clone(),
+            cli.covernode_id.clone(),
         );
 
         let refresh_tag_lookup_table_task = RefreshTagLookUpTableTask::new(

@@ -49,6 +49,7 @@ impl CoverNodeProvisioningPublicKeyFamily {
                     id_pk_family_list,
                     &covernode_provisioning_pk,
                     now,
+                    &covernode_id,
                 );
 
                 (covernode_id, id_pk_family_list)

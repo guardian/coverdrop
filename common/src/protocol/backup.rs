@@ -400,9 +400,11 @@ mod tests {
         let unsigned_pair = UnsignedSigningKeyPair::generate();
         let not_valid_after = now() + chrono::Duration::days(30);
         // self-signed for testing
-        unsigned_pair
-            .clone()
-            .to_signed_key_pair(&unsigned_pair, not_valid_after)
+        unsigned_pair.clone().to_signed_key_pair_with_identity(
+            &unsigned_pair,
+            not_valid_after,
+            &JournalistIdentity::new("journalist_123").unwrap(),
+        )
     }
 
     fn create_test_journalist_messaging_key_pair(

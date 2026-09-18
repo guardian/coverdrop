@@ -2,10 +2,14 @@ use std::marker::PhantomData;
 
 use chrono::{DateTime, Utc};
 
-use crate::crypto::keys::{
-    encryption::SignedPublicEncryptionKey,
-    role::Role,
-    signing::{traits, SignedPublicSigningKey},
+use crate::{
+    api::models::identity::Identity,
+    crypto::keys::{
+        encryption::SignedPublicEncryptionKey,
+        id_key_certificate_data::IdKeyCertificateData,
+        role::Role,
+        signing::{traits, SignedPublicSigningKey},
+    },
 };
 
 use super::UntrustedIdentityPublicKeyFamily;
@@ -26,8 +30,11 @@ pub struct IdentityPublicKeyFamily<VerifyingRole: Role, IdentityRole: Role, Mess
     verifying_role_marker: PhantomData<VerifyingRole>,
 }
 
-impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
-    IdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>
+impl<
+        VerifyingRole: Role,
+        IdentityRole: Role<CertData = IdKeyCertificateData>,
+        MessagingRole: Role,
+    > IdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>
 {
     pub fn new(
         id_pk: SignedPublicSigningKey<IdentityRole>,
@@ -44,8 +51,11 @@ impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
         untrusted: UntrustedIdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>,
         id_verifying_key: &impl traits::PublicSigningKey<VerifyingRole>,
         now: DateTime<Utc>,
+        identity: &impl Identity,
     ) -> anyhow::Result<Self> {
-        let id_pk = untrusted.id_pk.to_trusted(id_verifying_key, now)?;
+        let id_pk = untrusted
+            .id_pk
+            .to_trusted_with_identity(id_verifying_key, now, identity)?;
 
         let msg_pks = untrusted
             .msg_pks

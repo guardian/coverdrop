@@ -61,6 +61,7 @@ impl UntrustedOrganizationPublicKey {
     pub fn to_tofu_anchor(&self) -> UntrustedAnchorOrganizationPublicKey {
         UntrustedAnchorOrganizationPublicKey::new(
             self.key,
+            self.signature.clone(),
             self.certificate.clone(),
             self.not_valid_after,
         )
@@ -146,13 +147,23 @@ impl AnchorOrganizationPublicKey {
     /// This is useful when you want to use a local/trusted organization key for cryptographic
     /// purposes.
     pub fn into_non_anchor(self) -> OrganizationPublicKey {
-        OrganizationPublicKey::new(self.key, self.certificate, self.not_valid_after)
+        OrganizationPublicKey::new(
+            self.key,
+            self.signature,
+            self.certificate,
+            self.not_valid_after,
+        )
     }
 
     /// Make a new organization key that is not trusted but is verified, this is basically a cop-out
     /// to make the type system happy but isn't used very often.
     pub fn to_non_anchor(&self) -> OrganizationPublicKey {
-        OrganizationPublicKey::new(self.key, self.certificate.clone(), self.not_valid_after)
+        OrganizationPublicKey::new(
+            self.key,
+            self.signature.clone(),
+            self.certificate.clone(),
+            self.not_valid_after,
+        )
     }
 }
 
@@ -186,7 +197,12 @@ pub type OrganizationKeyPair = SignedSigningKeyPair<Organization>;
 impl OrganizationPublicKey {
     /// Upgrade a verified key into an anchor key.
     pub fn into_anchor(self) -> AnchorOrganizationPublicKey {
-        AnchorOrganizationPublicKey::new(self.key, self.clone().certificate, self.not_valid_after)
+        AnchorOrganizationPublicKey::new(
+            self.key,
+            self.signature,
+            self.certificate,
+            self.not_valid_after,
+        )
     }
 }
 

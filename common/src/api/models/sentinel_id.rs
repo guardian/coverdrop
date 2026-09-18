@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::Error;
+use crate::{api::models::identity::Identity, Error};
 
 pub const MAX_SENTINEL_IDENTITY_LEN: usize = 128;
 
@@ -39,6 +39,8 @@ impl SentinelIdentity {
         self.0
     }
 }
+
+impl Identity for SentinelIdentity {}
 
 impl FromStr for SentinelIdentity {
     type Err = Error;

@@ -1,5 +1,8 @@
 use chrono::{DateTime, Utc};
 use common::{
+    api::models::{
+        identity::Identity, journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity,
+    },
     crypto::keys::{public_key::PublicKey, signing::UnsignedSigningKeyPair},
     epoch::Epoch,
     identity_api::models::{
@@ -22,12 +25,14 @@ pub trait PromotableIdKeyPair: Sized + PublicKey {
     type Unregistered;
     type SignedWithEpoch;
     type VerifiedPublicKey;
+    type IdentityType: Identity;
 
     #[allow(async_fn_in_trait)]
     async fn get_published_keys(
         conn: &mut SqliteConnection,
         now: DateTime<Utc>,
         trust_anchors: AnchorOrganizationPublicKeys,
+        identity: &Self::IdentityType,
     ) -> anyhow::Result<Vec<Self>>;
 
     fn into_latest(key_pairs: Vec<Self>) -> Option<Self>;
@@ -40,6 +45,7 @@ pub trait PromotableIdKeyPair: Sized + PublicKey {
         signed_with_epoch: &Self::SignedWithEpoch,
         provisioning_pk: &JournalistProvisioningPublicKey,
         now: DateTime<Utc>,
+        identity: &Self::IdentityType,
     ) -> Option<Self::VerifiedPublicKey>;
 
     /// Construct a registered (signed) key pair from the verified public key
@@ -79,6 +85,7 @@ pub trait PromotableIdKeyPair: Sized + PublicKey {
         candidate_created_at: DateTime<Utc>,
         signed_with_epoch: Self::SignedWithEpoch,
         now: DateTime<Utc>,
+        identity: &Self::IdentityType,
     ) -> anyhow::Result<()> {
         let epoch = Self::get_epoch(&signed_with_epoch);
         let mut tx = pool.begin().await?;
@@ -88,7 +95,7 @@ pub trait PromotableIdKeyPair: Sized + PublicKey {
             provisioning_key_queries::journalist_provisioning_pks(&mut tx, now, trust_anchors)
                 .await?
                 .find_map(|row| {
-                    Self::try_verify(&signed_with_epoch, &row.pk, now)
+                    Self::try_verify(&signed_with_epoch, &row.pk, now, identity)
                         .map(|verified_pk| (row.pk, verified_pk))
                 });
 
@@ -147,17 +154,23 @@ impl PromotableIdKeyPair for JournalistIdKeyPair {
     type Unregistered = UnregisteredJournalistIdKeyPair;
     type SignedWithEpoch = UntrustedJournalistIdPublicKeyWithEpoch;
     type VerifiedPublicKey = JournalistIdPublicKey;
+    type IdentityType = JournalistIdentity;
 
     async fn get_published_keys(
         conn: &mut SqliteConnection,
         now: DateTime<Utc>,
         trust_anchors: AnchorOrganizationPublicKeys,
+        identity: &Self::IdentityType,
     ) -> anyhow::Result<Vec<Self>> {
-        let id_key_pairs =
-            journalist_id_key_queries::published_journalist_id_key_pairs(conn, now, trust_anchors)
-                .await?
-                .map(|row| row.key_pair)
-                .collect();
+        let id_key_pairs = journalist_id_key_queries::published_journalist_id_key_pairs(
+            conn,
+            now,
+            trust_anchors,
+            identity.clone(),
+        )
+        .await?
+        .map(|row| row.key_pair)
+        .collect();
         Ok(id_key_pairs)
     }
 
@@ -193,8 +206,12 @@ impl PromotableIdKeyPair for JournalistIdKeyPair {
         signed_with_epoch: &Self::SignedWithEpoch,
         provisioning_pk: &JournalistProvisioningPublicKey,
         now: DateTime<Utc>,
+        identity: &Self::IdentityType,
     ) -> Option<Self::VerifiedPublicKey> {
-        signed_with_epoch.key.to_trusted(provisioning_pk, now).ok()
+        signed_with_epoch
+            .key
+            .to_trusted_with_identity(provisioning_pk, now, identity)
+            .ok()
     }
 
     fn construct_registered_from_candidate(
@@ -242,18 +259,23 @@ impl PromotableIdKeyPair for SentinelIdKeyPair {
     type Unregistered = UnregisteredSentinelIdKeyPair;
     type SignedWithEpoch = UntrustedSentinelIdPublicKeyWithEpoch;
     type VerifiedPublicKey = SentinelIdPublicKey;
+    type IdentityType = SentinelIdentity;
 
     async fn get_published_keys(
         conn: &mut SqliteConnection,
         now: DateTime<Utc>,
         trust_anchors: AnchorOrganizationPublicKeys,
+        identity: &Self::IdentityType,
     ) -> anyhow::Result<Vec<Self>> {
-        Ok(
-            sentinel_id_key_queries::published_sentinel_id_key_pairs(conn, now, trust_anchors)
-                .await?
-                .map(|row| row.key_pair)
-                .collect(),
+        Ok(sentinel_id_key_queries::published_sentinel_id_key_pairs(
+            conn,
+            now,
+            trust_anchors,
+            identity.clone(),
         )
+        .await?
+        .map(|row| row.key_pair)
+        .collect())
     }
 
     fn into_latest(key_pairs: Vec<Self>) -> Option<Self> {
@@ -287,8 +309,12 @@ impl PromotableIdKeyPair for SentinelIdKeyPair {
         signed_with_epoch: &Self::SignedWithEpoch,
         provisioning_pk: &JournalistProvisioningPublicKey,
         now: DateTime<Utc>,
+        identity: &Self::IdentityType,
     ) -> Option<Self::VerifiedPublicKey> {
-        signed_with_epoch.key.to_trusted(provisioning_pk, now).ok()
+        signed_with_epoch
+            .key
+            .to_trusted_with_identity(provisioning_pk, now, identity)
+            .ok()
     }
 
     fn construct_registered_from_candidate(

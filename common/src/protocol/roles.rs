@@ -1,4 +1,5 @@
 use crate::{
+    crypto::keys::id_key_certificate_data::IdKeyCertificateData,
     define_role,
     protocol::constants::{
         COVERNODE_ID_KEY_ROTATE_AFTER, COVERNODE_ID_KEY_VALID_DURATION,
@@ -58,7 +59,8 @@ define_role!(
     "CoverNode identity",
     "covernode_id",
     Some(COVERNODE_ID_KEY_VALID_DURATION),
-    Some(COVERNODE_ID_KEY_ROTATE_AFTER)
+    Some(COVERNODE_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 // Unsigned Covernode identity keys are used when rotating keys. They are submitted
@@ -68,7 +70,8 @@ define_role!(
     "unsigned covernode identity",
     "unsigned_covernode_id",
     Some(COVERNODE_ID_KEY_VALID_DURATION),
-    Some(COVERNODE_ID_KEY_ROTATE_AFTER)
+    Some(COVERNODE_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 // The CoverNode messaging key is used for communications between clients
@@ -102,7 +105,8 @@ define_role!(
     "journalist identity",
     "journalist_id",
     Some(JOURNALIST_ID_KEY_VALID_DURATION),
-    Some(JOURNALIST_ID_KEY_ROTATE_AFTER)
+    Some(JOURNALIST_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 // Unsigned journalist identity keys are used when rotating keys. They are submitted
@@ -112,7 +116,8 @@ define_role!(
     "unsigned journalist identity",
     "unsigned_journalist_id",
     Some(JOURNALIST_ID_KEY_VALID_DURATION),
-    Some(JOURNALIST_ID_KEY_ROTATE_AFTER)
+    Some(JOURNALIST_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 // The messaging key is the encryption key used by journalists to communicate with
@@ -131,7 +136,8 @@ define_role!(
     "sentinel identity",
     "sentinel_id",
     Some(SENTINEL_ID_KEY_VALID_DURATION),
-    Some(SENTINEL_ID_KEY_ROTATE_AFTER)
+    Some(SENTINEL_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 // Unsigned sentinel identity keys are used when rotating keys. They are submitted
@@ -141,7 +147,8 @@ define_role!(
     "unsigned sentinel identity",
     "unsigned_sentinel_id",
     Some(SENTINEL_ID_KEY_VALID_DURATION),
-    Some(SENTINEL_ID_KEY_ROTATE_AFTER)
+    Some(SENTINEL_ID_KEY_ROTATE_AFTER),
+    IdKeyCertificateData
 );
 
 ///////////

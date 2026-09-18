@@ -52,6 +52,7 @@ impl JournalistProvisioningPublicKeyFamily {
                     untrusted_id_pk_family_list,
                     &journalist_provisioning_pk,
                     now,
+                    &journalist_id,
                 );
 
                 (journalist_id, id_pk_family)
@@ -66,6 +67,7 @@ impl JournalistProvisioningPublicKeyFamily {
                     untrusted_id_pk_list,
                     &journalist_provisioning_pk,
                     now,
+                    &sentinel_id,
                 );
 
                 (sentinel_id, id_pk_list)

@@ -80,6 +80,10 @@ pub trait RotatableIdKeyPair: PromotableIdKeyPair {
     /// additional identity-specific checks (e.g. sentinel_id existence).
     #[allow(async_fn_in_trait)]
     async fn should_attempt_rotation(vault: &JournalistVault) -> Result<bool>;
+
+    /// Get the identity for this key type from the vault.
+    #[allow(async_fn_in_trait)]
+    async fn get_identity(vault: &JournalistVault) -> Result<Self::IdentityType>;
 }
 
 impl RotatableIdKeyPair for JournalistIdKeyPair {
@@ -139,6 +143,10 @@ impl RotatableIdKeyPair for JournalistIdKeyPair {
 
     async fn should_attempt_rotation(_vault: &JournalistVault) -> Result<bool> {
         Ok(true)
+    }
+
+    async fn get_identity(vault: &JournalistVault) -> Result<Self::IdentityType> {
+        vault.journalist_id().await
     }
 }
 
@@ -207,5 +215,12 @@ impl RotatableIdKeyPair for SentinelIdKeyPair {
             return Ok(false);
         }
         Ok(true)
+    }
+
+    async fn get_identity(vault: &JournalistVault) -> Result<Self::IdentityType> {
+        vault
+            .sentinel_id()
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("No sentinel identity set in vault"))
     }
 }

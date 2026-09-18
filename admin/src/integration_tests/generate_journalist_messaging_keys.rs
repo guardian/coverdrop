@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use common::api::models::journalist_id::JournalistIdentity;
 use common::protocol::keys::LatestKey;
 use common::{
     crypto::keys::serde::StorableKeyMaterial,
@@ -15,6 +16,7 @@ use std::path::Path;
 /// It assumes test-only key generation and disk persistence.
 pub async fn generate_journalist_messaging_keys_for_integration_test(
     keys_path: impl AsRef<Path>,
+    journalist_id: &JournalistIdentity,
     now: DateTime<Utc>,
 ) -> anyhow::Result<()> {
     let keys_path = keys_path.as_ref();
@@ -26,7 +28,8 @@ pub async fn generate_journalist_messaging_keys_for_integration_test(
     let latest_journalist_provisioning_key_pair = provisioning_pks.into_latest_key_required()?;
 
     let provisioning_pk = latest_journalist_provisioning_key_pair.public_key();
-    let id_key_pairs = load_journalist_id_key_pairs(keys_path, provisioning_pk, now)?;
+    let id_key_pairs =
+        load_journalist_id_key_pairs(keys_path, provisioning_pk, now, journalist_id)?;
 
     let latest_id_key_pair = id_key_pairs.into_latest_key_required()?;
 

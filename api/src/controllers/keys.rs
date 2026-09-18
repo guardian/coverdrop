@@ -323,7 +323,12 @@ pub async fn post_covernode_id_key(
     let (new_id_pk, key_signing_provisioning_pk) = keys
         .covernode_provisioning_pk_iter()
         .find_map(|covernode_provisioning_pk| {
-            match verify_covernode_id_pk(&covernode_id_pk, covernode_provisioning_pk, time::now()) {
+            match verify_covernode_id_pk(
+                &covernode_id_pk,
+                covernode_provisioning_pk,
+                time::now(),
+                &covernode_id,
+            ) {
                 Ok(id_pk) => Some((id_pk, covernode_provisioning_pk)),
                 Err(_) => None,
             }
@@ -552,6 +557,7 @@ pub async fn post_journalist_id_key(
                 &journalist_id_pk,
                 journalist_provisioning_pk,
                 time::now(),
+                &journalist_id,
             ) {
                 Ok(id_pk) => Some((id_pk, journalist_provisioning_pk)),
                 Err(_) => None,
@@ -812,7 +818,12 @@ pub async fn post_sentinel_id_key(
     let (new_id_pk, key_signing_provisioning_pk) = keys
         .journalist_provisioning_pk_iter()
         .find_map(|journalist_provisioning_pk| {
-            match verify_sentinel_id_pk(&sentinel_id_pk, journalist_provisioning_pk, time::now()) {
+            match verify_sentinel_id_pk(
+                &sentinel_id_pk,
+                journalist_provisioning_pk,
+                time::now(),
+                &sentinel_id,
+            ) {
                 Ok(id_pk) => Some((id_pk, journalist_provisioning_pk)),
                 Err(_) => None,
             }

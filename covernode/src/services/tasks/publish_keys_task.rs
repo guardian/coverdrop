@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Duration, Utc};
 use common::{
-    api::{api_client::ApiClient, forms::PostCoverNodeMessagingPublicKeyForm},
+    api::{
+        api_client::ApiClient, forms::PostCoverNodeMessagingPublicKeyForm,
+        models::covernode_id::CoverNodeIdentity,
+    },
     crypto::keys::{public_key::PublicKey, signing::SignedSigningKeyPair},
     identity_api::{
         client::IdentityApiClient, forms::post_rotate_covernode_id::RotateCoverNodeIdPublicKeyForm,
@@ -25,6 +28,7 @@ pub struct PublishedKeysTask {
     key_state: KeyState,
     api_client: ApiClient,
     identity_api_client: IdentityApiClient,
+    covernode_id: CoverNodeIdentity,
 }
 
 #[async_trait]
@@ -158,12 +162,14 @@ impl PublishedKeysTask {
         key_state: KeyState,
         api_client: ApiClient,
         identity_api_client: IdentityApiClient,
+        covernode_id: CoverNodeIdentity,
     ) -> Self {
         Self {
             interval,
             key_state,
             api_client,
             identity_api_client,
+            covernode_id,
         }
     }
 
@@ -214,7 +220,7 @@ impl PublishedKeysTask {
         // Confirm we trust the key that has just been given to us
         let signed_id_pk = signed_id_pk_with_epoch
             .key
-            .to_trusted(covernode_provisioning_pk, now)
+            .to_trusted_with_identity(covernode_provisioning_pk, now, &self.covernode_id)
             .inspect_err(|e| {
                 tracing::warn!(
                     "identity service returned covernode id key pair which we cannot validate: {}",

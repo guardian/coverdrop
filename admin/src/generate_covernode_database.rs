@@ -47,7 +47,7 @@ pub async fn generate_covernode_database(
     let db = Database::open(&output_path, covernode_db_password).await?;
 
     let covernode_id_key_pair =
-        generate_covernode_id_key_pair(covernode_provisioning_key_pair, now);
+        generate_covernode_id_key_pair(covernode_provisioning_key_pair, now, &covernode_identity);
 
     let form = PostCoverNodeIdPublicKeyForm::new_for_bundle(
         covernode_identity.clone(),

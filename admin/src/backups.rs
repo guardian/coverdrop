@@ -130,6 +130,7 @@ pub async fn backup_initiate_restore_finalize(
         .verify_journalist_id_key(
             response_bundle.signed_backup_data.signed_with().clone(),
             now,
+            &response_bundle.journalist_id,
         )
         .context("Failed to verify journalist identity key from backup data")?;
 

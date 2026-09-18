@@ -1,6 +1,7 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
+    api::models::sentinel_id::SentinelIdentity,
     epoch::Epoch,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, SentinelIdKeyPair,
@@ -68,6 +69,7 @@ pub(crate) async fn published_sentinel_id_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
     trust_anchors: AnchorOrganizationPublicKeys,
+    sentinel_id: SentinelIdentity,
 ) -> anyhow::Result<impl Iterator<Item = PublishedSentinelIdKeyPairRow>> {
     let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
 
@@ -104,7 +106,7 @@ pub(crate) async fn published_sentinel_id_key_pairs(
             ))?;
 
         let key_pair = serde_json::from_str::<UntrustedSentinelIdKeyPair>(&row.key_pair_json)?
-            .to_trusted(&provisioning_pk, now)?;
+            .to_trusted_with_identity(&provisioning_pk, now, &sentinel_id)?;
 
         let key_pair_row = PublishedSentinelIdKeyPairRow::new(row.id, key_pair, row.epoch);
 

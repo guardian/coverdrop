@@ -150,6 +150,9 @@ pub enum Commands {
     },
     #[clap(name = "generate-covernode-messaging-key-pair")]
     GenerateCoverNodeMessagingKeyPair {
+        /// The identity of the CoverNode. Must match the regex format `covernode_\d\d\d`
+        #[clap(long)]
+        covernode_id: CoverNodeIdentity,
         /// The directory you wish to create the key files in
         /// and the path to the directory containing the organization's
         /// public and secret keys
@@ -167,6 +170,8 @@ pub enum Commands {
     GenerateJournalistMessagingKeysForIntegrationTest {
         #[clap(long)]
         keys_path: PathBuf,
+        #[clap(long)]
+        journalist_id: JournalistIdentity,
     },
     #[clap(name = "generate-covernode-database")]
     GenerateCoverNodeDatabase {

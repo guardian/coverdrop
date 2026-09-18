@@ -1,6 +1,7 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
+    api::models::journalist_id::JournalistIdentity,
     epoch::Epoch,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdPublicKey,
@@ -19,6 +20,7 @@ pub(crate) async fn candidate_msg_key_pair(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
     trust_anchors: AnchorOrganizationPublicKeys,
+    journalist_id: &JournalistIdentity,
 ) -> anyhow::Result<Option<CandidateJournalistMessagingKeyPairRow>> {
     let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
 
@@ -58,7 +60,7 @@ pub(crate) async fn candidate_msg_key_pair(
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
-                .to_trusted(&provisioning_pk, now)?;
+                .to_trusted_with_identity(&provisioning_pk, now, journalist_id)?;
 
         let msg_key_pair =
             serde_json::from_str::<UntrustedJournalistMessagingKeyPair>(&row.msg_key_pair_json)?
@@ -80,6 +82,7 @@ pub(crate) async fn published_msg_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
     trust_anchors: AnchorOrganizationPublicKeys,
+    journalist_id: JournalistIdentity,
 ) -> anyhow::Result<impl Iterator<Item = PublishedJournalistMessagingKeyPairRow>> {
     let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
 
@@ -121,7 +124,7 @@ pub(crate) async fn published_msg_key_pairs(
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
-                .to_trusted(&provisioning_pk, now)?;
+                .to_trusted_with_identity(&provisioning_pk, now, &journalist_id)?;
 
         let msg_key_pair =
             serde_json::from_str::<UntrustedJournalistMessagingKeyPair>(&row.msg_key_pair_json)?
@@ -166,10 +169,11 @@ pub(crate) async fn insert_candidate_msg_key_pair(
     msg_key_pair: &JournalistMessagingKeyPair,
     now: DateTime<Utc>,
     org_pks: AnchorOrganizationPublicKeys,
+    journalist_id: &JournalistIdentity,
 ) -> anyhow::Result<()> {
     let key_pair_json = serde_json::to_string(&msg_key_pair.to_untrusted())?;
 
-    let id_key_pair_id = journalist_id_key_queries::published_journalist_id_key_pairs(conn, now, org_pks)
+    let id_key_pair_id = journalist_id_key_queries::published_journalist_id_key_pairs(conn, now, org_pks, journalist_id.clone())
         .await?
         .find(|key_pair_row| key_pair_row.key_pair.public_key() == id_pk)
         .map(|key_pair_row| key_pair_row.id)

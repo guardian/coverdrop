@@ -27,6 +27,7 @@ pub async fn reseed_journalist_vault_id_key_pair(
     let journalist_id_key_pair = protocol::keys::generate_journalist_id_key_pair(
         latest_journalist_provisioning_key_pair,
         now,
+        &journalist_id,
     );
 
     let pk_upload_form = PostJournalistIdPublicKeyForm::new(

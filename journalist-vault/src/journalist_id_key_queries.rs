@@ -1,6 +1,7 @@
 use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
+    api::models::journalist_id::JournalistIdentity,
     epoch::Epoch,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
@@ -73,6 +74,7 @@ pub(crate) async fn published_journalist_id_key_pairs(
     conn: &mut SqliteConnection,
     now: DateTime<Utc>,
     trust_anchors: AnchorOrganizationPublicKeys,
+    journalist_id: JournalistIdentity,
 ) -> anyhow::Result<impl Iterator<Item = PublishedJournalistIdKeyPairRow>> {
     let org_pks_from_trust_anchors = trust_anchors.into_non_anchors();
 
@@ -113,7 +115,7 @@ pub(crate) async fn published_journalist_id_key_pairs(
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
-                .to_trusted(&provisioning_pk, now)?;
+                .to_trusted_with_identity(&provisioning_pk, now, &journalist_id)?;
 
         let key_pair_row = PublishedJournalistIdKeyPairRow::new(id_key_pair_id, id_key_pair, epoch);
 

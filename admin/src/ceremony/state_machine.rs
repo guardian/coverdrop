@@ -464,6 +464,7 @@ impl CeremonyStep {
                     let covernode_id_key_pair = generate_covernode_id_key_pair(
                         state.covernode_provisioning_key_pair.as_ref().unwrap(),
                         *now,
+                        &covernode_identity,
                     );
 
                     let now = time::now();

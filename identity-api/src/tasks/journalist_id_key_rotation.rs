@@ -99,7 +99,8 @@ impl IdKeyToRotate for JournalistIdKeyRotation {
     ) -> anyhow::Result<()> {
         let new_pk = UnregisteredJournalistIdPublicKey::new(new_pk_raw);
 
-        let signed_journalist_id_pk = sign_journalist_id_pk(new_pk, provisioning_key_pair, now);
+        let signed_journalist_id_pk =
+            sign_journalist_id_pk(new_pk, provisioning_key_pair, now, &identity);
 
         tracing::debug!(
             "Signed new journalist id public key for {}: {}",

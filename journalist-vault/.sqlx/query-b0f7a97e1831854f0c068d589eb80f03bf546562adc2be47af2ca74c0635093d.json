@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT id\n            FROM journalist_provisioning_pks\n            WHERE json_extract(pk_json, '$.key') = json_extract(?1, '$.key')\n            AND json_extract(pk_json, '$.certificate') = json_extract(?1, '$.certificate')\n            AND json_extract(pk_json, '$.not_valid_after') = json_extract(?1, '$.not_valid_after')\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b0f7a97e1831854f0c068d589eb80f03bf546562adc2be47af2ca74c0635093d"
+}

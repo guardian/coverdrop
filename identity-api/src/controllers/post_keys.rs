@@ -91,8 +91,12 @@ pub async fn post_rotate_covernode_id_key(
         .map_err(AppError::DatabaseError)?
         .into_latest_key_required()?;
 
-    let signed_covernode_id_pk =
-        sign_covernode_id_pk(new_pk, &covernode_provisioning_key_pair, time::now());
+    let signed_covernode_id_pk = sign_covernode_id_pk(
+        new_pk,
+        &covernode_provisioning_key_pair,
+        time::now(),
+        covernode_id,
+    );
 
     tracing::debug!(
         "Signed new CoverNode id public key: {}",

@@ -1,6 +1,10 @@
 use chrono::{DateTime, Duration, Utc};
 
 use crate::{
+    api::models::{
+        covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity,
+        sentinel_id::SentinelIdentity,
+    },
     crypto::keys::{role::Role, signing::traits::PublicSigningKey},
     protocol::constants::{
         COVERNODE_ID_KEY_VALID_DURATION, COVERNODE_PROVISIONING_KEY_VALID_DURATION,
@@ -57,6 +61,7 @@ pub fn generate_journalist_provisioning_key_pair(
 pub fn generate_journalist_id_key_pair(
     journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
     now: DateTime<Utc>,
+    journalist_identity: &JournalistIdentity,
 ) -> JournalistIdKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
         JOURNALIST_ID_KEY_VALID_DURATION,
@@ -64,8 +69,11 @@ pub fn generate_journalist_id_key_pair(
         now,
     );
 
-    UnsignedSigningKeyPair::generate()
-        .to_signed_key_pair(journalist_provisioning_key_pair, not_valid_after)
+    UnsignedSigningKeyPair::generate().to_signed_key_pair_with_identity(
+        journalist_provisioning_key_pair,
+        not_valid_after,
+        journalist_identity,
+    )
 }
 
 pub fn generate_unregistered_journalist_id_key_pair() -> UnregisteredJournalistIdKeyPair {
@@ -91,6 +99,7 @@ pub fn generate_journalist_messaging_key_pair(
 pub fn generate_sentinel_id_key_pair(
     journalist_provisioning_key_pair: &JournalistProvisioningKeyPair,
     now: DateTime<Utc>,
+    sentinel_identity: &SentinelIdentity,
 ) -> SentinelIdKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
         SENTINEL_ID_KEY_VALID_DURATION,
@@ -98,8 +107,11 @@ pub fn generate_sentinel_id_key_pair(
         now,
     );
 
-    UnsignedSigningKeyPair::generate()
-        .to_signed_key_pair(journalist_provisioning_key_pair, not_valid_after)
+    UnsignedSigningKeyPair::generate().to_signed_key_pair_with_identity(
+        journalist_provisioning_key_pair,
+        not_valid_after,
+        sentinel_identity,
+    )
 }
 
 /// Create a new signing key pair for the creation of new CoverNodes
@@ -120,6 +132,7 @@ pub fn generate_covernode_provisioning_key_pair(
 pub fn generate_covernode_id_key_pair(
     covernode_provisioning_key_pair: &CoverNodeProvisioningKeyPair,
     now: DateTime<Utc>,
+    covernode_identity: &CoverNodeIdentity,
 ) -> CoverNodeIdKeyPair {
     let not_valid_after = generate_child_expiry_not_valid_after(
         COVERNODE_ID_KEY_VALID_DURATION,
@@ -127,8 +140,11 @@ pub fn generate_covernode_id_key_pair(
         now,
     );
 
-    UnsignedSigningKeyPair::generate()
-        .to_signed_key_pair(covernode_provisioning_key_pair, not_valid_after)
+    UnsignedSigningKeyPair::generate().to_signed_key_pair_with_identity(
+        covernode_provisioning_key_pair,
+        not_valid_after,
+        covernode_identity,
+    )
 }
 
 pub fn generate_unregistered_covernode_id_key_pair() -> UnregisteredCoverNodeIdKeyPair {
@@ -273,21 +289,23 @@ pub mod test {
 
         let covernode_id = CoverNodeIdentity::from_node_id(1);
         let covernode_id_key_pair =
-            generate_covernode_id_key_pair(&covernode_provisioning_key_pair, now);
+            generate_covernode_id_key_pair(&covernode_provisioning_key_pair, now, &covernode_id);
         let covernode_msg_key_pair =
             generate_covernode_messaging_key_pair(&covernode_id_key_pair, now);
 
         // Journalist
         let journalist_provisioning_key_pair =
             generate_journalist_provisioning_key_pair(&org_key_pair, now);
+        let journalist_id = JournalistIdentity::new("test_journalist").unwrap();
         let journalist_id_key_pair =
-            generate_journalist_id_key_pair(&journalist_provisioning_key_pair, now);
+            generate_journalist_id_key_pair(&journalist_provisioning_key_pair, now, &journalist_id);
         let journalist_msg_key_pair =
             generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
 
         // Sentinel
+        let sentinel_id = SentinelIdentity::new("test_sentinel").unwrap();
         let sentinel_id_key_pair =
-            generate_sentinel_id_key_pair(&journalist_provisioning_key_pair, now);
+            generate_sentinel_id_key_pair(&journalist_provisioning_key_pair, now, &sentinel_id);
 
         // Backups
         let backup_id_key_pair = generate_backup_id_key_pair(&org_key_pair, now);
@@ -318,7 +336,7 @@ pub mod test {
                 JournalistProvisioningPublicKeyFamily::new(
                     journalist_provisioning_key_pair.public_key().clone(),
                     HashMap::from([(
-                        JournalistIdentity::new("journalist_0").unwrap(),
+                        journalist_id.clone(),
                         JournalistIdPublicKeyFamilyList::new(vec![
                             JournalistIdPublicKeyFamily::new(
                                 journalist_id_key_pair.public_key().clone(),
@@ -327,7 +345,7 @@ pub mod test {
                         ]),
                     )]),
                     HashMap::from([(
-                        SentinelIdentity::new("sentinel_0").unwrap(),
+                        sentinel_id.clone(),
                         SentinelIdPublicKeyList::new(vec![sentinel_id_key_pair
                             .public_key()
                             .clone()]),

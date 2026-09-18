@@ -192,7 +192,7 @@ pub async fn generate_covernode_identity_key_pair(
         covernode_provisioning_key_pairs.into_latest_key_required()?;
 
     let covernode_id_key_pair =
-        generate_covernode_id_key_pair(&latest_covernode_provisioning_key_pair, now);
+        generate_covernode_id_key_pair(&latest_covernode_provisioning_key_pair, now, &covernode_id);
 
     if !do_not_upload_to_api {
         api_client
@@ -220,6 +220,7 @@ pub async fn generate_covernode_identity_key_pair(
 }
 
 pub async fn generate_covernode_messaging_key_pair(
+    covernode_id: CoverNodeIdentity,
     keys_path: impl AsRef<Path>,
     api_client: ApiClient,
     do_not_upload_to_api: bool,
@@ -231,8 +232,12 @@ pub async fn generate_covernode_messaging_key_pair(
     let covernode_provisioning_key_pairs =
         load_covernode_provisioning_key_pairs(&keys_path, &org_pks, now)?;
 
-    let covernode_id_key_pairs =
-        load_covernode_id_key_pairs(&keys_path, &covernode_provisioning_key_pairs, now)?;
+    let covernode_id_key_pairs = load_covernode_id_key_pairs(
+        &keys_path,
+        &covernode_provisioning_key_pairs,
+        now,
+        &covernode_id,
+    )?;
 
     let latest_covernode_id_key_pair = covernode_id_key_pairs.into_latest_key_required()?;
 

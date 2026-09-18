@@ -32,10 +32,10 @@ date -u +"%Y-%m-%dT%H:%M:%SZ" >"${KEYS_PATH}/keys_generated_at.txt"
 
 cargo run --quiet --bin admin -- generate-organization-key-pair --keys-path "$KEYS_PATH"
 echo "org key created in ${KEYS_PATH} - Be sure to move this to the trust anchors crate: trust-anchors/development.json"
-cargo run --quiet --bin admin -- generate-journalist-provisioning-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
-cargo run --quiet --bin admin -- generate-covernode-provisioning-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
+cargo run --quiet --bin admin -- generate-journalist-provisioning-key-pair --keys-path "$KEYS_PATH"
+cargo run --quiet --bin admin -- generate-covernode-provisioning-key-pair --keys-path "$KEYS_PATH"
 cargo run --quiet --bin admin -- generate-covernode-identity-key-pair --covernode-id covernode_001 --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
-cargo run --quiet --bin admin -- generate-covernode-messaging-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
+cargo run --quiet --bin admin -- generate-covernode-messaging-key-pair --covernode-id covernode_001 --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
 cargo run --quiet --bin admin -- generate-backup-identity-key-pair --keys-path "$KEYS_PATH"
 cargo run --quiet --bin admin -- generate-backup-messaging-key-pair --keys-path "$KEYS_PATH"
 cargo run --quiet --bin admin -- generate-admin-key-pair --keys-path "$KEYS_PATH" --api-url "$API_URL" --do-not-upload-to-api
@@ -71,15 +71,22 @@ rm "$KEYS_PATH/static_test_journalist.password" || true
 cargo run --quiet --bin admin -- generate-journalist \
 	--keys-path "$KEYS_PATH" \
 	--vault-path "$KEYS_PATH" \
+	--sentinel-id 'static_test_journalist' \
+	--stage 'DEV' \
 	--sort-name 'journalist static test' \
-	--display-name 'static test journalist' \
+	--journalist-id 'static_test_journalist' \
+	--journalist-display-name 'static test journalist' \
+	--sentinel-display-name 'static test journalist' \
 	--description 'test journalist description'
 
 PASSWORD=$(cat "$KEYS_PATH/static_test_journalist.password")
 
-get_key 'keypair_json' 'vault_setup_bundle' 'journalist_id'
+get_key 'journalist_id_keypair_json' 'vault_setup_bundle' 'journalist_id'
 
-cargo run --features "integration-tests" --quiet --bin admin -- generate-journalist-messaging-keys-for-integration-test --keys-path "$KEYS_PATH"
+cargo run --features "integration-tests" --quiet --bin admin -- generate-journalist-messaging-keys-for-integration-test --journalist-id 'static_test_journalist' --keys-path "$KEYS_PATH"
+
+echo "Updating trust-anchors crate with new integration test trust anchor"
+jq -s . $KEYS_PATH/organization-*.pub.json > "${SCRIPT_PATH}/../../trust-anchors/development.json"
 
 rm "$KEYS_PATH/static_test_journalist.vault"
 

@@ -2,6 +2,7 @@ pub mod covernode_id;
 pub mod dead_drop_summary;
 pub mod dead_drops;
 pub mod general;
+pub mod identity;
 pub mod journalist_id;
 pub mod journalist_id_and_id_pk_rotation_form;
 pub mod message_id;

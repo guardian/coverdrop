@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use chrono::DateTime;
 use common::{
-    api::api_client::ApiClient,
+    api::{api_client::ApiClient, models::identity::Identity},
     crypto::keys::Ed25519PublicKey,
     protocol::keys::{JournalistProvisioningKeyPair, OrganizationPublicKeyFamilyList},
 };
@@ -10,7 +10,7 @@ use common::{
 #[async_trait]
 pub trait IdKeyToRotate: Send + Sync {
     /// The identity type (JournalistIdentity or SentinelIdentity)
-    type Identity: std::fmt::Display + Clone + PartialEq + Send + Sync;
+    type Identity: Identity + Clone + PartialEq + Send + Sync;
 
     /// The rotation form entry type returned from the API
     type IdAndPKRotationForm: Send + Sync;

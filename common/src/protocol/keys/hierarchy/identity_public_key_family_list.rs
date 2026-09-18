@@ -2,12 +2,17 @@ use std::slice::Iter;
 
 use chrono::{DateTime, Utc};
 
-use crate::crypto::keys::{
-    encryption::SignedPublicEncryptionKey,
-    role::Role,
-    signing::{traits, SignedPublicSigningKey},
-    untrusted::{
-        encryption::UntrustedSignedPublicEncryptionKey, signing::UntrustedSignedPublicSigningKey,
+use crate::{
+    api::models::identity::Identity,
+    crypto::keys::{
+        encryption::SignedPublicEncryptionKey,
+        id_key_certificate_data::IdKeyCertificateData,
+        role::Role,
+        signing::{traits, SignedPublicSigningKey},
+        untrusted::{
+            encryption::UntrustedSignedPublicEncryptionKey,
+            signing::UntrustedSignedPublicSigningKey,
+        },
     },
 };
 
@@ -25,8 +30,11 @@ pub struct IdentityPublicKeyFamilyList<VerifyingRole: Role, IdentityRole: Role, 
     Vec<IdentityPublicKeyFamily<VerifyingRole, IdentityRole, MessagingRole>>,
 );
 
-impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
-    IdentityPublicKeyFamilyList<VerifyingRole, IdentityRole, MessagingRole>
+impl<
+        VerifyingRole: Role,
+        IdentityRole: Role<CertData = IdKeyCertificateData>,
+        MessagingRole: Role,
+    > IdentityPublicKeyFamilyList<VerifyingRole, IdentityRole, MessagingRole>
 {
     pub fn empty() -> Self {
         Self(vec![])
@@ -42,11 +50,17 @@ impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
         keys: UntrustedIdentityPublicKeyFamilyList<VerifyingRole, IdentityRole, MessagingRole>,
         verifying_pk: &SignedPublicSigningKey<VerifyingRole>,
         now: DateTime<Utc>,
+        identity: &impl Identity,
     ) -> Self {
         let keys = keys
             .into_iter()
             .flat_map(|untrusted_id_pk_family| {
-                IdentityPublicKeyFamily::from_untrusted(untrusted_id_pk_family, verifying_pk, now)
+                IdentityPublicKeyFamily::from_untrusted(
+                    untrusted_id_pk_family,
+                    verifying_pk,
+                    now,
+                    identity,
+                )
             })
             .collect();
 
@@ -59,11 +73,12 @@ impl<VerifyingRole: Role, IdentityRole: Role, MessagingRole: Role>
         id_pks: Vec<UntrustedSignedPublicSigningKey<IdentityRole>>,
         msg_pks: Vec<UntrustedSignedPublicEncryptionKey<MessagingRole>>,
         now: DateTime<Utc>,
+        identity: &impl Identity,
     ) -> anyhow::Result<Self> {
         let mut keys = vec![];
 
         for id_pk in id_pks {
-            if let Ok(id_pk) = id_pk.to_trusted(verifying_pk, now) {
+            if let Ok(id_pk) = id_pk.to_trusted_with_identity(verifying_pk, now, identity) {
                 let id_and_msg = IdentityPublicKeyFamily::<
                     VerifyingRole,
                     IdentityRole,

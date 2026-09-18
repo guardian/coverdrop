@@ -8,11 +8,10 @@ use crate::{
     backup::keys::BackupMsgPublicKey,
     crypto::keys::Ed25519PublicKey,
     protocol::keys::{
-        AnchorOrganizationPublicKey, CoverNodeIdKeyPair, CoverNodeIdPublicKey,
-        CoverNodeMessagingKeyPair, CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey,
-        JournalistIdPublicKey, JournalistMessagingPublicKey, JournalistProvisioningPublicKey,
-        OrganizationPublicKey, SentinelIdPublicKey, UntrustedCoverNodeIdKeyPair,
-        UntrustedCoverNodeIdPublicKey, UntrustedCoverNodeMessagingKeyPair,
+        AnchorOrganizationPublicKey, CoverNodeIdPublicKey, CoverNodeMessagingKeyPair,
+        CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey, JournalistIdPublicKey,
+        JournalistMessagingPublicKey, JournalistProvisioningPublicKey, OrganizationPublicKey,
+        SentinelIdPublicKey, UntrustedCoverNodeIdPublicKey, UntrustedCoverNodeMessagingKeyPair,
         UntrustedCoverNodeMessagingPublicKey, UntrustedCoverNodeProvisioningPublicKey,
         UntrustedJournalistIdPublicKey, UntrustedJournalistMessagingPublicKey,
         UntrustedJournalistProvisioningPublicKey,
@@ -186,19 +185,6 @@ impl OrganizationPublicKeyFamilyList {
             self.latest_covernode_id_pk(covernode_id)
                 .map(|msg_pk| (covernode_id, msg_pk))
         })
-    }
-
-    pub fn verify_covernode_id_key_pairs_batch<'a>(
-        &self,
-        untrusted_id_pair_iter: impl Iterator<Item = &'a UntrustedCoverNodeIdKeyPair>,
-        now: DateTime<Utc>,
-    ) -> Vec<CoverNodeIdKeyPair> {
-        untrusted_id_pair_iter
-            .flat_map(|key_pair| {
-                self.covernode_provisioning_pk_iter()
-                    .find_map(|covernode_id_pk| key_pair.to_trusted(covernode_id_pk, now).ok())
-            })
-            .collect()
     }
 
     pub fn covernode_msg_pk_iter(
@@ -618,10 +604,13 @@ impl OrganizationPublicKeyFamilyList {
         &self,
         untrusted: UntrustedCoverNodeIdPublicKey,
         now: DateTime<Utc>,
+        covernode_id: &CoverNodeIdentity,
     ) -> Option<CoverNodeIdPublicKey> {
         self.covernode_provisioning_pk_iter()
             .find_map(|covernode_provisioning_pk| {
-                untrusted.to_trusted(covernode_provisioning_pk, now).ok()
+                untrusted
+                    .to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
+                    .ok()
             })
     }
 
@@ -647,10 +636,13 @@ impl OrganizationPublicKeyFamilyList {
         &self,
         untrusted: UntrustedJournalistIdPublicKey,
         now: DateTime<Utc>,
+        journalist_id: &JournalistIdentity,
     ) -> Option<JournalistIdPublicKey> {
         self.journalist_provisioning_pk_iter()
             .find_map(|journalist_provisioning_pk| {
-                untrusted.to_trusted(journalist_provisioning_pk, now).ok()
+                untrusted
+                    .to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
+                    .ok()
             })
     }
 

@@ -84,11 +84,15 @@ pub(crate) async fn journalist_provisioning_pk_id_from_pk(
 ) -> anyhow::Result<Option<i64>> {
     let pk_json = serde_json::to_string(&journalist_provisioning_pk.to_untrusted())?;
 
+    // Match on individual fields rather than the whole JSON blob so that rows written by a
+    // different version of the key types (e.g. without the `signature` field) are still found.
     let maybe_id = sqlx::query!(
         r#"
             SELECT id
             FROM journalist_provisioning_pks
-            WHERE pk_json = ?1
+            WHERE json_extract(pk_json, '$.key') = json_extract(?1, '$.key')
+            AND json_extract(pk_json, '$.certificate') = json_extract(?1, '$.certificate')
+            AND json_extract(pk_json, '$.not_valid_after') = json_extract(?1, '$.not_valid_after')
         "#,
         pk_json
     )

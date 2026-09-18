@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use common::{
+    api::models::covernode_id::CoverNodeIdentity,
     crypto::keys::public_key::PublicKey,
     protocol::keys::{
         CoverNodeIdKeyPairWithEpoch, CoverNodeMessagingKeyPairWithEpoch,
@@ -13,6 +14,7 @@ pub async fn get_and_verify_covernode_id_key_pairs(
     db: &Database,
     covernode_provisioning_pks: &[CoverNodeProvisioningPublicKey],
     now: DateTime<Utc>,
+    covernode_id: &CoverNodeIdentity,
 ) -> anyhow::Result<Vec<CoverNodeIdKeyPairWithEpoch>> {
     let published_id_key_pairs = db.select_published_id_key_pairs().await?;
 
@@ -24,7 +26,7 @@ pub async fn get_and_verify_covernode_id_key_pairs(
                 .flat_map(|covernode_provisioning_pk| {
                     key_pair
                         .key_pair
-                        .to_trusted(covernode_provisioning_pk, now)
+                        .to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
                         .map(|signed_encrypted_key_pair| {
                             CoverNodeIdKeyPairWithEpoch::new(
                                 signed_encrypted_key_pair,

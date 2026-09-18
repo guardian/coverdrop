@@ -248,6 +248,7 @@ impl VerifiedBackupData {
 mod tests {
     use super::*;
     use crate::crypto::{SecretBoxKey, SECRET_BOX_KEY_LEN};
+    use crate::protocol::roles::JournalistProvisioning;
     use crate::time::now;
     use rand::RngCore;
 
@@ -287,9 +288,15 @@ mod tests {
         let backup_data = _create_sample_backup_data()?;
 
         // Self-signed key pair for testing
-        let journalist_identity_key_pair: SignedSigningKeyPair<JournalistId> =
+        let journalist_provisioning_key: SignedSigningKeyPair<JournalistProvisioning> =
             SignedSigningKeyPair::generate()
                 .to_self_signed_key_pair(now + chrono::Duration::days(30));
+        let journalist_identity_key_pair: SignedSigningKeyPair<JournalistId> =
+            SignedSigningKeyPair::generate().to_signed_key_pair_with_identity(
+                &journalist_provisioning_key,
+                now + chrono::Duration::days(30),
+                &JournalistIdentity::new("journalist_123").unwrap(),
+            );
         let journalist_identity_public_key = journalist_identity_key_pair.public_key().clone();
 
         let signed_backup_data =

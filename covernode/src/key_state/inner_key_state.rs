@@ -1,6 +1,9 @@
 use chrono::{DateTime, Utc};
 use common::{
-    api::{api_client::ApiClient, forms::PostCoverNodeIdPublicKeyForm},
+    api::{
+        api_client::ApiClient, forms::PostCoverNodeIdPublicKeyForm,
+        models::covernode_id::CoverNodeIdentity,
+    },
     crypto::keys::signed::SignedKey,
     epoch::Epoch,
     protocol::{
@@ -61,6 +64,7 @@ impl MessagingKeyPairCollection {
 pub struct InnerKeyState {
     api_client: ApiClient,
     db: Database,
+    covernode_id: CoverNodeIdentity,
 
     anchor_org_pks: Vec<AnchorOrganizationPublicKey>,
     covernode_id_key_pairs: IdentityKeyPairCollection,
@@ -73,6 +77,7 @@ impl InnerKeyState {
     pub fn new(
         api_client: ApiClient,
         db: Database,
+        covernode_id: CoverNodeIdentity,
         anchor_org_pks: Vec<AnchorOrganizationPublicKey>,
         covernode_id_key_pairs: IdentityKeyPairCollection,
         mut covernode_msg_key_pairs: MessagingKeyPairCollection,
@@ -87,6 +92,7 @@ impl InnerKeyState {
         Self {
             api_client,
             db,
+            covernode_id,
             anchor_org_pks,
             covernode_id_key_pairs,
             covernode_msg_key_pairs,
@@ -326,7 +332,11 @@ impl InnerKeyState {
 
             let provisioning_key_pairs = keys.covernode_provisioning_pk_iter();
             let trusted_signed_id_key_pair = untrusted_key_pair
-                .to_trusted_from_candidate_parents(provisioning_key_pairs, now)?;
+                .to_trusted_from_candidate_parents_with_identity(
+                    provisioning_key_pairs,
+                    now,
+                    &self.covernode_id,
+                )?;
 
             self.insert_covernode_id_key_pair(trusted_signed_id_key_pair, epoch, now)
                 .await?;

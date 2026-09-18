@@ -1,4 +1,5 @@
 pub mod encryption;
+pub mod id_key_certificate_data;
 pub mod key_certificate_data;
 pub mod public_key;
 pub mod role;

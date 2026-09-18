@@ -109,7 +109,7 @@ pub const COVERNODE_WRAPPING_KEY_COUNT: usize = 2;
 ///
 /// let ProtocolKeys { user_pk, hierarchy, .. } = generate_protocol_keys(time::now());
 ///
-/// let journalist_id = JournalistIdentity::new("journalist_0").unwrap();
+/// let journalist_id = JournalistIdentity::new("test_journalist").unwrap();
 /// let message = FixedSizeMessageText::new("test message").unwrap();
 /// let message = encrypt_real_message_from_user_to_journalist_via_covernode(
 ///     // The CoverDrop key hierarchy

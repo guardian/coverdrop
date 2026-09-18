@@ -6,14 +6,16 @@ use hex_buffer_serde::Hex;
 use serde::{Deserialize, Serialize};
 use x25519_dalek::PublicKey as X25519PublicKey;
 
-use crate::crypto::keys::public_key::PublicKey;
-use crate::crypto::keys::serde::StorableKeyMaterialType;
 use crate::crypto::{
     keys::{
         encryption::{PublicEncryptionKey, SignedPublicEncryptionKey},
         key_certificate_data::KeyCertificateData,
+        public_key::PublicKey,
         role::Role,
-        serde::{PublicEncryptionKeyHex, SignatureHex, StorableKeyMaterial},
+        serde::{
+            OptionalSignatureHex, PublicEncryptionKeyHex, SignatureHex, StorableKeyMaterial,
+            StorableKeyMaterialType,
+        },
         signing::traits,
         untrusted::UntrustedKeyError,
     },
@@ -24,9 +26,19 @@ use crate::crypto::{
 pub struct UntrustedSignedPublicEncryptionKey<KeyRole: Role> {
     #[serde(with = "PublicEncryptionKeyHex")]
     pub key: X25519PublicKey,
+    // deprecating `certificate` in favor of `signature` field
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys have been migrated to include the signature field
     #[serde(with = "SignatureHex")]
     pub certificate: Signature<KeyCertificateData>,
     pub not_valid_after: DateTime<Utc>,
+    // signature is Option for backwards compatibility.
+    // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove Option once all keys have been migrated to include the signature field
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "OptionalSignatureHex"
+    )]
+    pub signature: Option<Signature<KeyCertificateData>>,
     #[serde(skip)]
     marker: PhantomData<KeyRole>,
 }
@@ -42,6 +54,8 @@ where
     ) -> Self {
         Self {
             key,
+            // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) accept signature directly once certificate is removed
+            signature: Some(certificate.clone()),
             certificate,
             not_valid_after,
             marker: PhantomData,
@@ -59,18 +73,23 @@ where
             let certificate_data =
                 KeyCertificateData::new_for_encryption_key(&self.key, self.not_valid_after);
 
-            if signer_pk
-                .verify::<KeyCertificateData>(&certificate_data, &self.certificate, now)
-                .is_ok()
-            {
-                Ok(SignedPublicEncryptionKey::new(
-                    PublicEncryptionKey::new(self.key),
-                    self.certificate.clone(),
-                    self.not_valid_after,
-                ))
-            } else {
-                Err(UntrustedKeyError::CertificateNotValid)
+            // Verify new signature field if it is present
+            if let Some(signature) = &self.signature {
+                signer_pk
+                    .verify::<KeyCertificateData>(&certificate_data, signature, now)
+                    .map_err(|_| UntrustedKeyError::CertificateNotValid)?;
             }
+            // Also verify the legacy certificate until its removed
+            // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove legacy certificate verification
+            signer_pk
+                .verify::<KeyCertificateData>(&certificate_data, &self.certificate, now)
+                .map_err(|_| UntrustedKeyError::CertificateNotValid)?;
+
+            Ok(SignedPublicEncryptionKey::new(
+                PublicEncryptionKey::new(self.key),
+                self.certificate.clone(),
+                self.not_valid_after,
+            ))
         }
     }
 }

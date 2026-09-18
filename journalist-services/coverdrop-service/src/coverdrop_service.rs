@@ -171,7 +171,9 @@ impl JournalistCoverDropService {
         &self,
         now: DateTime<Utc>,
     ) -> Result<Option<Epoch>> {
-        let Some(latest_key_pair) = self.vault.latest_id_key_pair::<K>(now).await? else {
+        let identity = K::get_identity(&self.vault).await?;
+        let Some(latest_key_pair) = self.vault.latest_id_key_pair::<K>(now, &identity).await?
+        else {
             anyhow::bail!(
                 "No {} key pairs present in vault, cannot rotate to a new key pair.",
                 K::key_type_name()
@@ -202,6 +204,7 @@ impl JournalistCoverDropService {
                     candidate_added_at,
                     signed_with_epoch,
                     now,
+                    &identity,
                 )
                 .await?;
 
@@ -241,6 +244,7 @@ impl JournalistCoverDropService {
                     candidate_added_at,
                     signed_with_epoch,
                     now,
+                    &identity,
                 )
                 .await?;
 
@@ -315,7 +319,13 @@ impl JournalistCoverDropService {
             return Ok(false);
         }
 
-        if self.vault.latest_id_key_pair::<K>(now).await?.is_none() {
+        let identity = K::get_identity(&self.vault).await?;
+        if self
+            .vault
+            .latest_id_key_pair::<K>(now, &identity)
+            .await?
+            .is_none()
+        {
             tracing::warn!(
                 "No valid {} keys found in vault, cannot rotate",
                 K::key_type_name()
@@ -370,9 +380,11 @@ impl JournalistCoverDropService {
     /// Check if the journalist keys need to be rotated, if so, rotate them.
     /// Returns true if any keys were rotated, false if no rotation was needed.
     pub async fn check_and_rotate_keys(&self, now: DateTime<Utc>) -> Result<bool> {
+        let journalist_identity =
+            <JournalistIdKeyPair as RotatableIdKeyPair>::get_identity(&self.vault).await?;
         if self
             .vault
-            .latest_id_key_pair::<JournalistIdKeyPair>(now)
+            .latest_id_key_pair::<JournalistIdKeyPair>(now, &journalist_identity)
             .await?
             .is_none()
         {

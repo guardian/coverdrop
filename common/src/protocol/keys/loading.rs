@@ -3,10 +3,13 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 
 use crate::{
+    api::models::{covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity},
     aws::ssm::{
         client::SsmClient, parameters::ANCHOR_ORG_PK_SSM_PARAMETER, prefix::ParameterPrefix,
     },
     backup::{
+        backup_id::BackupIdentity,
+        constants::BACKUP_IDENTITY_STR,
         keys::{
             BackupIdKeyPair, BackupMsgKeyPair, UntrustedBackupIdKeyPair, UntrustedBackupMsgKeyPair,
         },
@@ -155,6 +158,7 @@ pub fn load_covernode_id_key_pairs(
     keys_path: impl AsRef<Path>,
     covernode_provisioning_pks: &[impl traits::PublicSigningKey<CoverNodeProvisioning>],
     now: DateTime<Utc>,
+    covernode_id: &CoverNodeIdentity,
 ) -> anyhow::Result<Vec<CoverNodeIdKeyPair>> {
     let covernode_id_key_pairs = UntrustedCoverNodeIdKeyPair::load_from_directory(&keys_path)?
         .iter()
@@ -162,10 +166,10 @@ pub fn load_covernode_id_key_pairs(
             covernode_provisioning_pks
                 .iter()
                 .flat_map(|covernode_provisioning_pk| {
-                    key_pair.to_trusted(covernode_provisioning_pk, now)
+                    key_pair.to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
                 })
         })
-        .inspect(|key_pair| {
+        .inspect(|key_pair: &CoverNodeIdKeyPair| {
             let public_key_hex = hex::encode(&key_pair.public_key().as_bytes()[..8]);
             tracing::debug!("Loaded CoverNode ID key pair: {}", public_key_hex);
         })
@@ -264,10 +268,13 @@ pub fn load_journalist_id_key_pairs(
     keys_path: impl AsRef<Path>,
     journalist_provisioning_pk: &SignedPublicSigningKey<JournalistProvisioning>,
     now: DateTime<Utc>,
+    journalist_id: &JournalistIdentity,
 ) -> anyhow::Result<Vec<JournalistIdKeyPair>> {
     let journalist_id_key_pairs = UntrustedJournalistIdKeyPair::load_from_directory(&keys_path)?
         .iter()
-        .flat_map(|key_pair| key_pair.to_trusted(journalist_provisioning_pk, now))
+        .flat_map(|key_pair| {
+            key_pair.to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
+        })
         .collect::<Vec<_>>();
 
     Ok(journalist_id_key_pairs)
@@ -286,9 +293,13 @@ where
     let backup_id_key_pairs = UntrustedBackupIdKeyPair::load_from_directory(&keys_path)?
         .iter()
         .flat_map(|key_pair| {
-            anchor_org_pks
-                .iter()
-                .flat_map(|org_pk| key_pair.to_trusted(org_pk, now))
+            anchor_org_pks.iter().flat_map(|org_pk| {
+                key_pair.to_trusted_with_identity(
+                    org_pk,
+                    now,
+                    &BackupIdentity::new(BACKUP_IDENTITY_STR),
+                )
+            })
         })
         .collect::<Vec<_>>();
 
