@@ -2,9 +2,9 @@ use std::time::Duration;
 use std::{env, net::IpAddr};
 
 use chrono::{DateTime, Utc};
-use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, ImageExt};
 
+use crate::containers::start_with_retry::start_with_retry;
 use crate::images::{DeliveryService, DeliveryServiceArgs};
 use crate::{constants::POSTGRES_PORT, panic_handler::register_container_panic_hook};
 
@@ -15,16 +15,17 @@ pub async fn start_delivery_service(
     postgres_ip: IpAddr,
     base_time: DateTime<Utc>,
 ) -> ContainerAsync<DeliveryService> {
-    let image = DeliveryService::default();
     let args = DeliveryServiceArgs::new(api_ip, api_port, postgres_ip, POSTGRES_PORT, base_time);
+    let cmd = args.into_cmd();
 
-    let delivery_service = image
-        .with_cmd(args.into_cmd())
-        .with_network(network)
-        .with_startup_timeout(Duration::from_secs(120))
-        .start()
-        .await
-        .expect("Start Delivery Service container");
+    let delivery_service = start_with_retry("Delivery Service", || {
+        DeliveryService::default()
+            .with_cmd(cmd.clone())
+            .with_network(network)
+            .with_startup_timeout(Duration::from_secs(120))
+    })
+    .await
+    .expect("Start Delivery Service container");
 
     if env::var("PRINT_DELIVERY_SERVICE_CONTAINER_LOGS").is_ok() {
         register_container_panic_hook("Delivery Service", delivery_service.id());

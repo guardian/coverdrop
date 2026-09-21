@@ -4,6 +4,7 @@ use std::{env, net::IpAddr, path::Path};
 use crate::images::{dev_j2u_mixing_config, dev_u2j_mixing_config};
 use crate::{
     constants::{IDENTITY_API_PORT, KINESIS_PORT},
+    containers::start_with_retry::start_with_retry,
     docker_utils::temp_dir_to_mount,
     images::{CoverNode, CoverNodeArgs},
     panic_handler::register_container_panic_hook,
@@ -11,7 +12,6 @@ use crate::{
 use chrono::{DateTime, Utc};
 use common::api::models::covernode_id::CoverNodeIdentity;
 use common::task::RunnerMode;
-use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, ImageExt};
 
 const CONTAINER_KEYS_DIR: &str = "/var/keys";
@@ -33,7 +33,6 @@ pub async fn start_covernode(
     let keys_volume = temp_dir_to_mount(keys_path, CONTAINER_KEYS_DIR);
     let checkpoints_volume = temp_dir_to_mount(checkpoints_path, CONTAINER_CHECKPOINTS_DIR);
 
-    let covernode_image = CoverNode::default();
     let covernode_image_args = CoverNodeArgs::new(
         covernode_id,
         api_ip,
@@ -49,19 +48,21 @@ pub async fn start_covernode(
         dev_j2u_mixing_config(),
         runner_mode,
     );
+    let cmd = covernode_image_args.into_cmd();
 
     if runner_mode.triggerable() {
         env::set_var("TASK_RUNNER_TRIGGERABLE", "true");
     }
 
-    let covernode = covernode_image
-        .with_cmd(covernode_image_args.into_cmd())
-        .with_mount(keys_volume)
-        .with_mount(checkpoints_volume)
-        .with_network(network)
-        .with_startup_timeout(Duration::from_secs(120))
-        .start()
-        .await;
+    let covernode = start_with_retry("CoverNode", || {
+        CoverNode::default()
+            .with_cmd(cmd.clone())
+            .with_mount(keys_volume.clone())
+            .with_mount(checkpoints_volume.clone())
+            .with_network(network)
+            .with_startup_timeout(Duration::from_secs(120))
+    })
+    .await;
 
     let covernode = covernode.expect("Start covernode container");
 

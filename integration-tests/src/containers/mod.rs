@@ -5,5 +5,6 @@ pub mod identity_api;
 pub mod kinesis;
 pub mod minio;
 pub mod postgres;
+pub mod start_with_retry;
 pub mod u2j_appender;
 pub mod varnish;

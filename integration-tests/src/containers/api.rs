@@ -3,13 +3,14 @@ use std::{env, net::IpAddr, path::Path};
 
 use crate::{
     constants::{KINESIS_PORT, POSTGRES_PORT},
+    containers::start_with_retry::start_with_retry,
     docker_utils::temp_dir_to_mount,
     images::{Api, ApiArgs},
     panic_handler::register_container_panic_hook,
 };
 use chrono::{DateTime, Utc};
 use testcontainers::ContainerAsync;
-use testcontainers::{core::Host, runners::AsyncRunner, ImageExt};
+use testcontainers::{core::Host, ImageExt};
 
 #[allow(clippy::too_many_arguments)]
 pub async fn start_api(
@@ -23,7 +24,6 @@ pub async fn start_api(
     minio_url: String,
     minio_host: Host,
 ) -> ContainerAsync<Api> {
-    let api_image = Api::default();
     let api_image_args = ApiArgs::new(
         postgres_ip,
         POSTGRES_PORT,
@@ -35,21 +35,23 @@ pub async fn start_api(
         minio_url,
         minio_host.clone(),
     );
+    let cmd = api_image_args.into_cmd();
 
     let keys_volume = temp_dir_to_mount(keys_dir, "/var/keys");
 
-    let api = api_image
-        .with_cmd(api_image_args.into_cmd())
-        .with_mount(keys_volume)
-        .with_network(network)
-        // We want to be able to issue presigned urls from minio on the `localhost` domain,
-        // This means we need to able to call minio on the localhost domain from the s3 client in the api
-        // This is why we have setup a local hosts entry to map localhost to the minio IP address.
-        .with_host("localhost", minio_host)
-        .with_startup_timeout(Duration::from_secs(120))
-        .start()
-        .await
-        .expect("Start container");
+    let api = start_with_retry("API", || {
+        Api::default()
+            .with_cmd(cmd.clone())
+            .with_mount(keys_volume.clone())
+            .with_network(network)
+            // We want to be able to issue presigned urls from minio on the `localhost` domain,
+            // This means we need to able to call minio on the localhost domain from the s3 client in the api
+            // This is why we have setup a local hosts entry to map localhost to the minio IP address.
+            .with_host("localhost", minio_host.clone())
+            .with_startup_timeout(Duration::from_secs(120))
+    })
+    .await
+    .expect("Start container");
 
     if env::var("PRINT_API_CONTAINER_LOGS").is_ok() {
         register_container_panic_hook("API", api.id());
