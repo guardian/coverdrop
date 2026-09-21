@@ -21,6 +21,9 @@ const PUBLISH_KEYS_TASK_PERIOD_SECONDS: &str = "60";
 /// The rate at which the delete expired keys task will run
 const DELETE_EXPIRED_KEYS_TASK_PERIOD_SECONDS: &str = "60";
 
+/// The rate at which the delete expired seen message hashes task will run
+const DELETE_EXPIRED_SEEN_MESSAGE_HASHES_TASK_PERIOD_SECONDS: &str = "60";
+
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 #[clap(propagate_version = true)]
@@ -110,6 +113,10 @@ pub struct Cli {
     /// The amount of time in seconds to wait between attempting to delete expired keys
     #[clap(long, default_value = DELETE_EXPIRED_KEYS_TASK_PERIOD_SECONDS)]
     pub delete_expired_keys_task_period_seconds: NonZeroU32,
+
+    /// The amount of time in seconds to wait between attempting to delete expired seen message hashes
+    #[clap(long, default_value = DELETE_EXPIRED_SEEN_MESSAGE_HASHES_TASK_PERIOD_SECONDS)]
+    pub delete_expired_seen_message_hashes_task_period_seconds: NonZeroU32,
 
     /// The mode to start the task runner for either time based execution or manually triggered
     /// via a web server.

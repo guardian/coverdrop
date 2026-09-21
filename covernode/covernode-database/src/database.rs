@@ -18,15 +18,69 @@ use common::{
 };
 
 use crate::{
+    MessageHash, MessageHashExpiry, MessageHashesWithExpiries,
     UntrustedCandidateCoverNodeIdKeyPairWithCreatedAt,
     UntrustedCandidateCoverNodeMessagingKeyPairWithCreatedAt,
     UntrustedCoverNodeIdKeyPairWithCreatedAt,
 };
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 
 #[derive(Clone)]
 pub struct Database {
     pool: SqlitePool,
+}
+
+async fn update_checkpoint(
+    conn: &mut SqliteConnection,
+    stream_kind: StreamKind,
+    checkpoints_json: CheckpointsJson,
+) -> anyhow::Result<()> {
+    let json = checkpoints_json.as_str();
+
+    let result = sqlx::query!(
+        r#"
+                UPDATE checkpoints
+                SET checkpoints_json = ?1
+                WHERE stream_kind = ?2
+            "#,
+        json,
+        stream_kind,
+    )
+    .execute(&mut *conn)
+    .await?;
+
+    let rows_affected = result.rows_affected();
+    if rows_affected != 1 {
+        anyhow::bail!(
+            "Expected to update 1 checkpoint row, but updated {} rows",
+            rows_affected,
+        );
+    }
+
+    Ok(())
+}
+
+async fn insert_seen_message_hashes(
+    conn: &mut SqliteConnection,
+    stream_kind: StreamKind,
+    hashes: &[(MessageHash, MessageHashExpiry)],
+) -> anyhow::Result<()> {
+    for (hash, expires_at) in hashes {
+        sqlx::query!(
+            r#"
+                INSERT OR IGNORE INTO seen_message_hashes
+                (stream_kind, hash, expires_at)
+                VALUES (?1, ?2, ?3)
+            "#,
+            stream_kind,
+            hash,
+            expires_at
+        )
+        .execute(&mut *conn)
+        .await?;
+    }
+
+    Ok(())
 }
 
 impl Database {
@@ -524,35 +578,68 @@ impl Database {
         })
     }
 
-    pub async fn update_checkpoint(
+    //
+    // Message hashes
+    //
+
+    pub async fn select_seen_message_hashes(
         &self,
         stream_kind: StreamKind,
-        checkpoints_json: CheckpointsJson,
+        now: DateTime<Utc>,
+    ) -> anyhow::Result<MessageHashesWithExpiries> {
+        let mut conn = self.pool.acquire().await?;
+
+        let rows = sqlx::query!(
+            r#"
+                SELECT hash AS "hash: MessageHash",
+                       expires_at AS "expires_at: MessageHashExpiry"
+                FROM seen_message_hashes
+                WHERE stream_kind = ?1 AND expires_at > ?2
+            "#,
+            stream_kind,
+            now
+        )
+        .fetch_all(&mut *conn)
+        .await?;
+
+        let hashes = rows
+            .into_iter()
+            .map(|row| (row.hash, row.expires_at))
+            .collect();
+
+        Ok(hashes)
+    }
+
+    pub async fn delete_expired_seen_message_hashes(
+        &self,
+        now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         let mut conn = self.pool.acquire().await?;
 
-        let json = checkpoints_json.as_str();
-
-        let result = sqlx::query!(
+        sqlx::query!(
             r#"
-                UPDATE checkpoints
-                SET checkpoints_json = ?1
-                WHERE stream_kind = ?2
+            DELETE
+               FROM seen_message_hashes
+               WHERE expires_at <= ?1
             "#,
-            json,
-            stream_kind,
+            now
         )
         .execute(&mut *conn)
         .await?;
 
-        let rows_affected = result.rows_affected();
-        if rows_affected != 1 {
-            anyhow::bail!(
-                "Expected to update 1 checkpoint row, but updated {} rows",
-                rows_affected,
-            );
-        }
+        Ok(())
+    }
 
+    pub async fn update_checkpoint_and_insert_seen_message_hashes(
+        &self,
+        stream_kind: StreamKind,
+        checkpoints_json: CheckpointsJson,
+        hashes: &[(MessageHash, MessageHashExpiry)],
+    ) -> anyhow::Result<()> {
+        let mut tx = self.pool.begin().await?;
+        update_checkpoint(&mut tx, stream_kind, checkpoints_json).await?;
+        insert_seen_message_hashes(&mut tx, stream_kind, hashes).await?;
+        tx.commit().await?;
         Ok(())
     }
 }
@@ -560,7 +647,32 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Duration;
     use common::aws::kinesis::models::checkpoint::{Checkpoints, SequenceNumber};
+    use common::time;
+
+    async fn update_checkpoints_in_transaction(
+        db: &Database,
+        stream_kind: StreamKind,
+        checkpoints_json: CheckpointsJson,
+    ) -> anyhow::Result<()> {
+        let mut tx = db.pool.begin().await.expect("Transaction to be created");
+        update_checkpoint(&mut tx, stream_kind, checkpoints_json).await?;
+        tx.commit().await.expect("Transaction to be commited");
+        Ok(())
+    }
+
+    async fn insert_seen_message_hash_in_transaction(
+        db: &Database,
+        stream_kind: StreamKind,
+        hashes: &[(MessageHash, MessageHashExpiry)],
+    ) {
+        let mut tx = db.pool.begin().await.expect("Transaction to be created");
+        insert_seen_message_hashes(&mut tx, stream_kind, hashes)
+            .await
+            .expect("Hashes to be inserted");
+        tx.commit().await.expect("Transaction to be commited");
+    }
 
     #[tokio::test]
     async fn update_checkpoint_errors_when_row_missing() {
@@ -577,9 +689,8 @@ mod tests {
         let checkpoints = Checkpoints::new();
         let json = CheckpointsJson::new(&checkpoints).unwrap();
 
-        let result = db
-            .update_checkpoint(StreamKind::UserToJournalist, json)
-            .await;
+        let result =
+            update_checkpoints_in_transaction(&db, StreamKind::UserToJournalist, json).await;
 
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
@@ -600,9 +711,9 @@ mod tests {
 
         // U2J checkpoint round trip
         let checkpoints_json = CheckpointsJson::new(&u2j_checkpoints).unwrap();
-        db.update_checkpoint(StreamKind::UserToJournalist, checkpoints_json)
+        update_checkpoints_in_transaction(&db, StreamKind::UserToJournalist, checkpoints_json)
             .await
-            .unwrap();
+            .expect("Update to complete");
 
         let stored_checkpoints = db.select_checkpoints().await.unwrap();
         assert_eq!(
@@ -619,13 +730,159 @@ mod tests {
         let mut j2u_checkpoints = Checkpoints::new();
         j2u_checkpoints.insert("shard-xyz".to_string(), SequenceNumber::from("88888"));
         let checkpoints_json = CheckpointsJson::new(&j2u_checkpoints).unwrap();
-        db.update_checkpoint(StreamKind::JournalistToUser, checkpoints_json)
+        update_checkpoints_in_transaction(&db, StreamKind::JournalistToUser, checkpoints_json)
             .await
-            .unwrap();
+            .expect("Update to complete");
         let stored_checkpoints = db.select_checkpoints().await.unwrap();
         assert_eq!(
             stored_checkpoints.journalist_to_user_checkpoints,
             j2u_checkpoints
+        );
+    }
+
+    #[tokio::test]
+    async fn insert_check_and_expire_old_message_hashes() {
+        // Establish DB
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let db = Database::open(&db_path, "test-password").await.unwrap();
+
+        let now = time::now();
+        let expired_messaging_key = MessageHashExpiry::new(now - Duration::weeks(2));
+        let valid_messaging_key = MessageHashExpiry::new(now);
+        let message_hash_zeros = MessageHash::new([0_u8; 32]);
+        let message_hash_ones = MessageHash::new([1_u8; 32]);
+
+        // Messages to be inserted (one expired key, one not expired)
+        let hashes: MessageHashesWithExpiries = vec![
+            (message_hash_zeros, valid_messaging_key),
+            (message_hash_ones, expired_messaging_key),
+        ];
+
+        insert_seen_message_hash_in_transaction(&db, StreamKind::UserToJournalist, &hashes).await;
+
+        let hashes = db
+            .select_seen_message_hashes(StreamKind::UserToJournalist, now)
+            .await
+            .expect("Hashes to be selected");
+
+        // Only valid hashes should be selected out
+        assert_eq!(hashes, vec![(message_hash_zeros, valid_messaging_key)]);
+        assert_eq!(hashes.len(), 1);
+
+        // There should be no JournalistToUser messages
+        let hashes = db
+            .select_seen_message_hashes(StreamKind::JournalistToUser, now)
+            .await
+            .expect("Hashes to be selected");
+
+        assert_eq!(hashes, vec![]);
+        assert_eq!(hashes.len(), 0);
+
+        // Two weeks elapse
+        let now = now + Duration::weeks(2);
+
+        db.delete_expired_seen_message_hashes(now)
+            .await
+            .expect("Hashes to be deleted");
+
+        let hashes = db
+            .select_seen_message_hashes(StreamKind::UserToJournalist, now)
+            .await
+            .expect("Hashes to be selected");
+
+        // No message hashes should remain
+        assert_eq!(hashes, vec![]);
+        assert_eq!(hashes.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn insert_duplicate_hashes() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let db = Database::open(&db_path, "test-password").await.unwrap();
+
+        let now = time::now();
+        let now_plus_one = MessageHashExpiry::new(now + Duration::minutes(1));
+        let now_plus_five = MessageHashExpiry::new(now + Duration::minutes(5));
+        let message_hash = MessageHash::new([0_u8; 32]);
+
+        let hashes: MessageHashesWithExpiries = vec![(message_hash, now_plus_one)];
+
+        insert_seen_message_hash_in_transaction(&db, StreamKind::UserToJournalist, &hashes).await;
+
+        let hashes: MessageHashesWithExpiries = vec![(message_hash, now_plus_five)];
+
+        insert_seen_message_hash_in_transaction(&db, StreamKind::UserToJournalist, &hashes).await;
+
+        insert_seen_message_hash_in_transaction(&db, StreamKind::UserToJournalist, &hashes).await;
+
+        let hashes = db
+            .select_seen_message_hashes(StreamKind::UserToJournalist, now)
+            .await
+            .expect("Hashes to be selected");
+
+        assert_eq!(vec![(message_hash, now_plus_one)], hashes);
+        assert_eq!(hashes.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn update_checkpoint_and_insert_seen_message_hashes_writes_both() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("test.db");
+        let db = Database::open(&db_path, "test-password").await.unwrap();
+
+        let now = time::now();
+        let now_plus_five = MessageHashExpiry::new(now + Duration::minutes(5));
+
+        let mut u2j_checkpoints = Checkpoints::new();
+        u2j_checkpoints.insert("shard-abc".to_string(), SequenceNumber::from("99999"));
+        let checkpoints_json = CheckpointsJson::new(&u2j_checkpoints).unwrap();
+
+        let message_hash_zeros = MessageHash::new([0_u8; 32]);
+        let message_hash_ones = MessageHash::new([1_u8; 32]);
+        let hashes: MessageHashesWithExpiries = vec![
+            (message_hash_zeros, now_plus_five),
+            (message_hash_ones, now_plus_five),
+        ];
+
+        db.update_checkpoint_and_insert_seen_message_hashes(
+            StreamKind::UserToJournalist,
+            checkpoints_json,
+            &hashes,
+        )
+        .await
+        .expect("Checkpoints and hashes to be written");
+
+        let stored_checkpoints = db.select_checkpoints().await.unwrap();
+        assert_eq!(
+            stored_checkpoints.user_to_journalist_checkpoints,
+            u2j_checkpoints
+        );
+
+        let stored_hashes = db
+            .select_seen_message_hashes(StreamKind::UserToJournalist, now)
+            .await
+            .expect("Hashes to be selected");
+
+        assert_eq!(
+            stored_hashes,
+            vec![
+                (message_hash_zeros, now_plus_five),
+                (message_hash_ones, now_plus_five),
+            ]
+        );
+
+        // The other stream must be untouched
+        assert_eq!(
+            stored_checkpoints.journalist_to_user_checkpoints,
+            Checkpoints::new()
+        );
+        assert_eq!(
+            db.select_seen_message_hashes(StreamKind::JournalistToUser, now)
+                .await
+                .expect("Hashes to be selected"),
+            vec![]
         );
     }
 }

@@ -38,8 +38,12 @@ pub async fn migrate_checkpoint_files_to_db(
         let reader = File::open(&user_to_journalist_path)?;
         let checkpoints: Checkpoints = serde_json::from_reader(reader)?;
         let checkpoints_json = CheckpointsJson::new(&checkpoints)?;
-        db.update_checkpoint(StreamKind::UserToJournalist, checkpoints_json)
-            .await?;
+        db.update_checkpoint_and_insert_seen_message_hashes(
+            StreamKind::UserToJournalist,
+            checkpoints_json,
+            &[],
+        )
+        .await?;
         fs::remove_file(&user_to_journalist_path)?;
         tracing::info!("Migrated U2J checkpoint file to database");
     }
@@ -49,8 +53,12 @@ pub async fn migrate_checkpoint_files_to_db(
         let reader = File::open(&journalist_to_user_path)?;
         let checkpoints: Checkpoints = serde_json::from_reader(reader)?;
         let checkpoints_json = CheckpointsJson::new(&checkpoints)?;
-        db.update_checkpoint(StreamKind::JournalistToUser, checkpoints_json)
-            .await?;
+        db.update_checkpoint_and_insert_seen_message_hashes(
+            StreamKind::JournalistToUser,
+            checkpoints_json,
+            &[],
+        )
+        .await?;
         fs::remove_file(&journalist_to_user_path)?;
         tracing::info!("Migrated J2U checkpoint file to database");
     }

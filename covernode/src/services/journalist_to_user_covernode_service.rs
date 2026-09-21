@@ -1,4 +1,4 @@
-use crate::checkpoint::JournalistToUserDeadDropContentWithCheckpoints;
+use crate::checkpoint::JournalistToUserDeadDropContentWithCheckpointsAndMessageHashes;
 use crate::services::dead_drop_publishing::ToUserPublishingService;
 use crate::services::decrypt_and_threshold::JournalistToUserDecryptionAndMixingService;
 use crate::services::poll_messages::FromJournalistPollingService;
@@ -24,7 +24,9 @@ impl JournalistToUserCoverNodeService {
             );
 
         let (channel_inner_to_publish_sender, channel_inner_to_publish_receiver) =
-            mpsc::channel::<JournalistToUserDeadDropContentWithCheckpoints>(MPSC_CHANNEL_BOUND);
+            mpsc::channel::<JournalistToUserDeadDropContentWithCheckpointsAndMessageHashes>(
+                MPSC_CHANNEL_BOUND,
+            );
 
         // create polling service
         let mut polling_service = FromJournalistPollingService::new(
@@ -39,6 +41,7 @@ impl JournalistToUserCoverNodeService {
         let inner_service = JournalistToUserDecryptionAndMixingService::new(
             self.config.key_state.clone(),
             self.config.mixing_config,
+            self.config.db.clone(),
         );
 
         let mut inner_service = tokio::spawn(async move {

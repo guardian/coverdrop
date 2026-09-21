@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE\n               FROM seen_message_hashes\n               WHERE expires_at <= ?1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "ef293f6714db1f802489d4a9f3032e15e9c489fe5a59398f2e05a8ec14665395"
+}

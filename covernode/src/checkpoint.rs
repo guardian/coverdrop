@@ -3,16 +3,19 @@ use common::{
     aws::kinesis::models::checkpoint::CheckpointsJson,
     epoch::Epoch,
 };
+use covernode_database::MessageHashesWithExpiries;
 
 #[derive(Debug)]
-pub struct UserToJournalistDeadDropContentWithCheckpoints {
+pub struct UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes {
     pub dead_drop_content: UserToJournalistDeadDropMessages,
     pub checkpoints_json: CheckpointsJson,
+    pub message_hashes: MessageHashesWithExpiries,
     pub encryption_max_epoch: Epoch,
 }
 
 #[derive(Debug)]
-pub struct JournalistToUserDeadDropContentWithCheckpoints {
+pub struct JournalistToUserDeadDropContentWithCheckpointsAndMessageHashes {
     pub dead_drop_content: JournalistToUserDeadDropMessages,
     pub checkpoints_json: CheckpointsJson,
+    pub message_hashes: MessageHashesWithExpiries,
 }

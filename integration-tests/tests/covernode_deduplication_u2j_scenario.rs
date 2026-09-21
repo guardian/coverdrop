@@ -2,6 +2,7 @@ use client::commands::user::messages::send_user_to_journalist_cover_message;
 use common::protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode;
 use common::FixedSizeMessageText;
 use coverdrop_service::JournalistCoverDropService;
+use integration_tests::api_wrappers::get_journalist_dead_drops;
 use integration_tests::{
     api_wrappers::get_and_verify_public_keys,
     dev_u2j_mixing_config,
@@ -69,7 +70,42 @@ async fn covernode_u2j_deduplication_scenario() {
             .expect("Send user cover message");
         }
 
-        tokio::time::sleep(Duration::from_secs(5)).await;
+        tokio::time::sleep(Duration::from_secs(15)).await;
+
+        // Restart covernode to exercise hash persistence flow
+
+        stack
+            .covernode()
+            .stop()
+            .await
+            .expect("Covernode should shutdown");
+
+        stack
+            .covernode()
+            .start()
+            .await
+            .expect("Covernode should startup");
+
+        // Add further duplicates
+        for _ in 0..5 {
+            stack
+                .messaging_client()
+                .post_user_message(encrypted_outer_msg.clone())
+                .await
+                .expect("Send U2J message");
+        }
+
+        // trigger u2j dead drop
+        for _ in 0..(dev_u2j_mixing_config().threshold_max - 5) {
+            send_user_to_journalist_cover_message(
+                stack.messaging_client(),
+                &keys_and_profiles.keys,
+            )
+            .await
+            .expect("Send user cover message");
+        }
+
+        tokio::time::sleep(Duration::from_secs(15)).await;
     }
 
     //
@@ -87,6 +123,13 @@ async fn covernode_u2j_deduplication_scenario() {
             stack.now(),
         )
         .await;
+
+        let dead_drop_count = get_journalist_dead_drops(stack.api_client_cached(), 0)
+            .await
+            .dead_drops
+            .len();
+
+        assert_eq!(dead_drop_count, 2);
 
         let pulled_and_decrypted_messages = journalist_service
             .pull_and_decrypt_dead_drops(&public_keys, None::<fn(usize)>, stack.now())

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT hash AS \"hash: MessageHash\",\n                       expires_at AS \"expires_at: MessageHashExpiry\"\n                FROM seen_message_hashes\n                WHERE stream_kind = ?1 AND expires_at > ?2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "hash: MessageHash",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "expires_at: MessageHashExpiry",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "f908fa7ac4739fa21e220296aa05843275d92d40729f6c65fffc0bf5e4eb482a"
+}

@@ -1,4 +1,4 @@
-use crate::checkpoint::UserToJournalistDeadDropContentWithCheckpoints;
+use crate::checkpoint::UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes;
 use crate::key_state::KeyState;
 use common::api::api_client::ApiClient;
 use common::api::models::dead_drops::{
@@ -35,7 +35,7 @@ impl ToJournalistPublishingService {
 
     pub async fn run(
         &self,
-        mut inbound: mpsc::Receiver<UserToJournalistDeadDropContentWithCheckpoints>,
+        mut inbound: mpsc::Receiver<UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes>,
     ) -> anyhow::Result<()> {
         loop {
             let inbound = inbound.recv().await.unwrap();
@@ -101,16 +101,23 @@ impl ToJournalistPublishingService {
                 }
             }
 
-            tracing::info!("Saving U2J checkpoints: {:?}", inbound.checkpoints_json);
+            tracing::info!(
+                "Saving U2J hashes and checkpoints: {:?}",
+                inbound.checkpoints_json
+            );
 
             if let Err(e) = self
                 .db
-                .update_checkpoint(StreamKind::UserToJournalist, inbound.checkpoints_json)
+                .update_checkpoint_and_insert_seen_message_hashes(
+                    StreamKind::UserToJournalist,
+                    inbound.checkpoints_json,
+                    &inbound.message_hashes,
+                )
                 .await
             {
                 // If the CoverNode crashes between now and publishing the next checkpoint we will
                 // possibly republish dead drops.
-                tracing::error!("Failed to update CoverNode checkpoint: {}", e);
+                tracing::error!("Failed to update CoverNode hashes and checkpoints: {}", e);
             }
         }
     }

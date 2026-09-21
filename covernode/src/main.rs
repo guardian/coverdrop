@@ -12,7 +12,9 @@ use covernode::mixing::mixing_strategy::MixingStrategyConfiguration;
 use covernode::services::journalist_to_user_covernode_service::JournalistToUserCoverNodeService;
 use covernode::services::server;
 use covernode::services::tasks::{CreateKeysTask, PublishedKeysTask};
-use covernode::services::tasks::{DeleteExpiredKeysTask, RefreshTagLookUpTableTask};
+use covernode::services::tasks::{
+    DeleteExpiredKeysTask, DeleteExpiredSeenMessageHashesTask, RefreshTagLookUpTableTask,
+};
 use covernode::services::user_to_journalist_covernode_service::UserToJournalistCoverNodeService;
 use covernode::services::CoverNodeServiceConfig;
 use covernode_database::Database;
@@ -96,6 +98,14 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
             key_state.clone(),
         );
 
+        let delete_expired_seen_message_hashes = DeleteExpiredSeenMessageHashesTask::new(
+            chrono::Duration::seconds(
+                cli.delete_expired_seen_message_hashes_task_period_seconds
+                    .get() as i64,
+            ),
+            db.clone(),
+        );
+
         let heartbeat_task = HeartbeatTask::default();
 
         let mut runner = TaskRunner::new(cli.task_runner_mode);
@@ -105,6 +115,7 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
         runner.add_task(create_keys_task).await;
         runner.add_task(heartbeat_task).await;
         runner.add_task(delete_expired_keys_task).await;
+        runner.add_task(delete_expired_seen_message_hashes).await;
 
         async move { runner.run().await }
     });

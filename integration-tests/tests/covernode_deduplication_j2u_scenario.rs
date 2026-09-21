@@ -51,7 +51,6 @@ async fn covernode_j2u_deduplication_scenario() {
         .expect("Encrypt real message from journalist to user");
 
         // Send many duplicates
-
         for _ in 0..5 {
             stack
                 .kinesis_client()
@@ -67,7 +66,39 @@ async fn covernode_j2u_deduplication_scenario() {
                 .expect("Send journalist cover message");
         }
 
-        tokio::time::sleep(Duration::from_secs(5)).await;
+        tokio::time::sleep(Duration::from_secs(15)).await;
+
+        // Restart covernode to exercise hash persistence flow
+
+        stack
+            .covernode()
+            .stop()
+            .await
+            .expect("Covernode should shutdown");
+
+        stack
+            .covernode()
+            .start()
+            .await
+            .expect("Covernode should startup");
+
+        // Add further duplicates
+        for _ in 0..5 {
+            stack
+                .kinesis_client()
+                .encode_and_put_journalist_message(encrypted_outer_msg.clone())
+                .await
+                .expect("Send J2U message");
+        }
+
+        // trigger j2u dead drop
+        for _ in 0..(dev_j2u_mixing_config().threshold_max - 5) {
+            send_journalist_to_user_cover_message(stack.kinesis_client(), &keys_and_profiles.keys)
+                .await
+                .expect("Send journalist cover message");
+        }
+
+        tokio::time::sleep(Duration::from_secs(15)).await;
     }
 
     //
@@ -79,7 +110,7 @@ async fn covernode_j2u_deduplication_scenario() {
         let dead_drop_list =
             get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id()).await;
 
-        assert_eq!(dead_drop_list.len(), 1, "Expected exactly one dead drop");
+        assert_eq!(dead_drop_list.len(), 2, "Expected two dead drops");
 
         load_user_dead_drop_messages(
             &dead_drop_list,

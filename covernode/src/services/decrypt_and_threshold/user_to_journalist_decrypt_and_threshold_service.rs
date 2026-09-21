@@ -1,5 +1,7 @@
-use crate::checkpoint::UserToJournalistDeadDropContentWithCheckpoints;
+use super::{record_u2c_metric_failure, record_u2c_metric_success};
+use crate::checkpoint::UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes;
 use crate::key_state::KeyState;
+use crate::mixing::mixing_message_types::SeenMessageHashes;
 use crate::mixing::mixing_strategy::{
     CoverDropMixingStrategy, MixingStrategy, MixingStrategyConfiguration,
 };
@@ -8,35 +10,53 @@ use common::api::models::messages::covernode_to_journalist_message::{
     new_random_encrypted_covernode_to_journalist_message, CoverNodeToJournalistMessage,
     EncryptedCoverNodeToJournalistMessage,
 };
+use common::aws::kinesis::client::StreamKind;
 use common::aws::kinesis::models::checkpoint::EncryptedUserToCoverNodeMessageWithCheckpointsJson;
+use common::crypto::keys::signed::SignedKey;
 use common::protocol::constants::USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
 use common::protocol::covernode::decrypt_user_message;
 use common::protocol::keys::LatestKey;
 use common::protocol::recipient_tag::RECIPIENT_TAG_FOR_COVER;
 use common::time;
+use covernode_database::{Database, MessageHashExpiry};
 use tokio::sync::mpsc;
-
-use super::{record_u2c_metric_failure, record_u2c_metric_success};
 
 pub struct UserToJournalistDecryptionAndMixingService {
     key_state: KeyState,
     mixing_config: MixingStrategyConfiguration,
+    db: Database,
 }
 
 impl UserToJournalistDecryptionAndMixingService {
-    pub fn new(key_state: KeyState, mixing_config: MixingStrategyConfiguration) -> Self {
+    pub fn new(
+        key_state: KeyState,
+        mixing_config: MixingStrategyConfiguration,
+        db: Database,
+    ) -> Self {
         Self {
             key_state,
             mixing_config,
+            db,
         }
     }
 
     pub async fn run(
         &self,
         mut inbound: mpsc::Receiver<EncryptedUserToCoverNodeMessageWithCheckpointsJson>,
-        outbound: mpsc::Sender<UserToJournalistDeadDropContentWithCheckpoints>,
+        outbound: mpsc::Sender<UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes>,
     ) -> anyhow::Result<()> {
-        let mut mixing_strategy = CoverDropMixingStrategy::new(self.mixing_config, time::now());
+        let now = time::now();
+
+        let seen_message_hashes = self
+            .db
+            .select_seen_message_hashes(StreamKind::UserToJournalist, now)
+            .await?
+            .into_iter()
+            .map(|(hash, expires_at)| Ok((hash, expires_at)))
+            .collect::<anyhow::Result<SeenMessageHashes>>()?;
+
+        let mut mixing_strategy =
+            CoverDropMixingStrategy::new(self.mixing_config, now, seen_message_hashes);
 
         loop {
             // receive message from stream service
@@ -62,15 +82,16 @@ impl UserToJournalistDecryptionAndMixingService {
 
             // Attempt to decrypt the outer layer of encryption using all available
             // CoverNode messaging keys
-            let Some(decrypted_message) = key_state
+            let Some((decrypted_message, messaging_key_expiry)) = key_state
                 .covernode_msg_key_pairs_for_decryption_with_rank(now)
                 .find_map(|(rank, msg_key_pair)| {
                     if let Ok(decrypted_message) =
                         decrypt_user_message(msg_key_pair, &message.message)
                     {
                         record_u2c_metric_success(rank);
-
-                        Some(decrypted_message)
+                        let messaging_key_expires_at =
+                            MessageHashExpiry::new(msg_key_pair.not_valid_after());
+                        Some((decrypted_message, messaging_key_expires_at))
                     } else {
                         None
                     }
@@ -81,9 +102,11 @@ impl UserToJournalistDecryptionAndMixingService {
                 continue;
             };
 
-            let Some(mixing_strategy_output) =
-                mixing_strategy.consume_and_check_for_new_output(decrypted_message, time::now())
-            else {
+            let Some(mixing_strategy_output) = mixing_strategy.consume_and_check_for_new_output(
+                decrypted_message,
+                time::now(),
+                messaging_key_expiry,
+            ) else {
                 // No new dead drop to publish this time
                 continue;
             };
@@ -139,16 +162,17 @@ impl UserToJournalistDecryptionAndMixingService {
 
             let dead_drop_content = UserToJournalistDeadDropMessages { messages };
 
-            // Always checkpoint at the last consumed message. Trade-off: buffered real messages may be lost on crash
-            // if the buffer contains more than `output_size`.
-            let checkpoints_json = message.checkpoints_json;
-
             outbound
-                .send(UserToJournalistDeadDropContentWithCheckpoints {
-                    dead_drop_content,
-                    checkpoints_json,
-                    encryption_max_epoch: latest_covernode_msg_key_pair.epoch,
-                })
+                .send(
+                    UserToJournalistDeadDropContentWithCheckpointsAndMessageHashes {
+                        dead_drop_content,
+                        // Always checkpoint at the last consumed message. Trade-off: buffered real messages may be lost on crash
+                        // if the buffer contains more than `output_size`.
+                        checkpoints_json: message.checkpoints_json,
+                        encryption_max_epoch: latest_covernode_msg_key_pair.epoch,
+                        message_hashes: mixing_strategy_output.message_hashes,
+                    },
+                )
                 .await?;
         }
     }

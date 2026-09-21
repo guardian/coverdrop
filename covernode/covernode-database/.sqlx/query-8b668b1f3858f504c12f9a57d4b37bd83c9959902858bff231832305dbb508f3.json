@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT OR IGNORE INTO seen_message_hashes\n                (stream_kind, hash, expires_at)\n                VALUES (?1, ?2, ?3)\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8b668b1f3858f504c12f9a57d4b37bd83c9959902858bff231832305dbb508f3"
+}
