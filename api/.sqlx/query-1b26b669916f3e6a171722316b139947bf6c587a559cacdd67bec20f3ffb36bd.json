@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                id,\n                created_at AS \"created_at: DateTime<Utc>\",\n                data       AS \"data: SerializedJournalistToUserDeadDropMessages\",\n                signature  AS \"signature: Signature<JournalistToUserDeadDropSignatureDataV2>\"\n            FROM user_dead_drops\n            WHERE id > $1\n            ORDER BY id ASC\n            LIMIT $2\n            ",
+  "query": "\n            SELECT\n                id,\n                created_at AS \"created_at: DateTime<Utc>\",\n                data       AS \"data: SerializedJournalistToUserDeadDropMessages\",\n                signature  AS \"signature: Signature<JournalistToUserDeadDropSignatureDataV2>\"\n            FROM journalist_to_user_dead_drops\n            WHERE id > $1\n            ORDER BY id ASC\n            LIMIT $2\n            ",
   "describe": {
     "columns": [
       {
@@ -37,5 +37,5 @@
       false
     ]
   },
-  "hash": "94c59925115331127fe2b754fb0e8215a6766819bfdc1913a9d3ae5416d70c99"
+  "hash": "1b26b669916f3e6a171722316b139947bf6c587a559cacdd67bec20f3ffb36bd"
 }

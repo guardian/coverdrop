@@ -5,7 +5,7 @@ use client::commands::{
 use common::protocol::journalist::encrypt_real_message_from_journalist_to_user_via_covernode;
 use common::FixedSizeMessageText;
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_user_dead_drops},
+    api_wrappers::{get_and_verify_public_keys, get_journalist_to_user_dead_drops},
     dev_j2u_mixing_config,
     stack::{CoverDropStack, StackProfile},
 };
@@ -107,8 +107,11 @@ async fn covernode_j2u_deduplication_scenario() {
     {
         let mut user_mailbox = stack.mailboxes().user();
 
-        let dead_drop_list =
-            get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id()).await;
+        let dead_drop_list = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            user_mailbox.max_dead_drop_created_at(),
+        )
+        .await;
 
         assert_eq!(dead_drop_list.len(), 2, "Expected two dead drops");
 

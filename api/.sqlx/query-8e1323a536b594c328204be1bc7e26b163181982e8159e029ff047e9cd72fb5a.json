@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM journalist_to_user_dead_drops WHERE created_at + INTERVAL '14 days' < $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8e1323a536b594c328204be1bc7e26b163181982e8159e029ff047e9cd72fb5a"
+}

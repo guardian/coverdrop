@@ -78,14 +78,11 @@ pub async fn handle_user_commands(
             .await
         }
         UserCommand::PullDeadDrops => {
-            let max_dead_drop_id = mailbox.max_dead_drop_id();
-            println!(
-                "Pulling dead drops from Max Dead Drop ID: {}",
-                max_dead_drop_id
-            );
+            let created_after = mailbox.max_dead_drop_created_at();
+            println!("Pulling dead drops created after: {}", created_after);
 
             let dead_drop_list = api_client
-                .pull_user_dead_drops(mailbox.max_dead_drop_id())
+                .pull_journalist_to_user_dead_drops(mailbox.max_dead_drop_created_at())
                 .await?;
 
             println!("Pulled {} dead drops", dead_drop_list.len());

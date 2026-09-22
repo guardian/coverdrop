@@ -1,8 +1,9 @@
+use chrono::{DateTime, Utc};
 use client::commands::user::messages::send_user_to_journalist_cover_message;
 use common::protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode;
 use common::FixedSizeMessageText;
 use coverdrop_service::JournalistCoverDropService;
-use integration_tests::api_wrappers::get_journalist_dead_drops;
+use integration_tests::api_wrappers::get_user_to_journalist_dead_drops;
 use integration_tests::{
     api_wrappers::get_and_verify_public_keys,
     dev_u2j_mixing_config,
@@ -124,10 +125,13 @@ async fn covernode_u2j_deduplication_scenario() {
         )
         .await;
 
-        let dead_drop_count = get_journalist_dead_drops(stack.api_client_cached(), 0)
-            .await
-            .dead_drops
-            .len();
+        let dead_drop_count = get_user_to_journalist_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await
+        .dead_drops
+        .len();
 
         assert_eq!(dead_drop_count, 2);
 

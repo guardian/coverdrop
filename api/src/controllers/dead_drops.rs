@@ -7,9 +7,10 @@ use crate::error::AppError;
 use crate::services::database::Database;
 use axum::extract::{Query, State};
 use axum::Json;
+use chrono::{DateTime, Utc};
 use common::api::models::dead_drop_summary::DeadDropSummary;
 use common::api::models::dead_drops::{
-    DeadDropId, UnpublishedJournalistToUserDeadDrop, UnpublishedUserToJournalistDeadDrop,
+    UnpublishedJournalistToUserDeadDrop, UnpublishedUserToJournalistDeadDrop,
     UnverifiedJournalistToUserDeadDropsList, UnverifiedUserToJournalistDeadDropsList,
 };
 use common::protocol::covernode::{
@@ -23,45 +24,48 @@ use serde::Deserialize;
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct GetDeadDropQueryParams {
-    ids_greater_than: DeadDropId,
+    created_after: DateTime<Utc>,
     limit: Option<NonZeroU32>,
 }
 
 impl GetDeadDropQueryParams {
     pub fn limit_or_default(&self, default_limit: NonZeroU32) -> NonZeroU32 {
-        self.limit.map_or(default_limit, |requested_limit| {
-            if requested_limit.get() <= default_limit.get() {
-                requested_limit
-            } else {
-                tracing::warn!(
-                    "Request made for {} dead drops, which is more than the dead drop limit ({})",
-                    requested_limit,
-                    default_limit
-                );
-                default_limit
-            }
-        })
+        limit_or_default(self.limit, default_limit)
     }
 }
 
-pub async fn get_user_dead_drops(
+pub(crate) fn limit_or_default(limit: Option<NonZeroU32>, default_limit: NonZeroU32) -> NonZeroU32 {
+    limit.map_or(default_limit, |requested_limit| {
+        if requested_limit.get() <= default_limit.get() {
+            requested_limit
+        } else {
+            tracing::warn!(
+                "Request made for {} dead drops, which is more than the dead drop limit ({})",
+                requested_limit,
+                default_limit
+            );
+            default_limit
+        }
+    })
+}
+
+pub async fn get_journalist_to_user_dead_drops(
     State(db): State<Database>,
     State(dead_drop_limits): State<DeadDropLimits>,
     query_params: Query<GetDeadDropQueryParams>,
 ) -> Result<(HeaderMap, Json<UnverifiedJournalistToUserDeadDropsList>), AppError> {
-    let ids_greater_than = query_params.ids_greater_than;
+    let created_after = query_params.created_after;
     let limit = query_params.limit_or_default(dead_drop_limits.j2u_dead_drops_per_request_limit);
 
-    tracing::info!(
-        ids_greater_than,
-        "GET request for J2U dead drop with ID greater than {} limit {}",
-        ids_greater_than,
+    tracing::debug!(
+        "GET request for J2U dead drop with created_at after {} limit {}",
+        created_after,
         limit
     );
 
     let dead_drops = db
         .dead_drop_queries
-        .get_journalist_to_user_dead_drops(ids_greater_than, limit)
+        .get_journalist_to_user_dead_drops(created_after, limit)
         .await?;
 
     let mut headers = HeaderMap::new();
@@ -73,24 +77,23 @@ pub async fn get_user_dead_drops(
     ))
 }
 
-pub async fn get_journalist_dead_drops(
+pub async fn get_user_to_journalist_dead_drops(
     State(db): State<Database>,
     State(dead_drop_limits): State<DeadDropLimits>,
     query_params: Query<GetDeadDropQueryParams>,
 ) -> Result<(HeaderMap, Json<UnverifiedUserToJournalistDeadDropsList>), AppError> {
-    let ids_greater_than = query_params.ids_greater_than;
+    let created_after = query_params.created_after;
     let limit = query_params.limit_or_default(dead_drop_limits.u2j_dead_drops_per_request_limit);
 
-    tracing::info!(
-        ids_greater_than,
-        "GET request for U2J dead drop with ID greater than {} limit {}",
-        ids_greater_than,
+    tracing::debug!(
+        "GET request for U2J dead drop with created_at after {} limit {}",
+        created_after,
         limit
     );
 
     let dead_drops = db
         .dead_drop_queries
-        .get_user_to_journalist_dead_drops(ids_greater_than, limit)
+        .get_user_to_journalist_dead_drops(created_after, limit)
         .await?;
 
     let mut headers = HeaderMap::new();
@@ -102,7 +105,7 @@ pub async fn get_journalist_dead_drops(
     ))
 }
 
-pub async fn post_user_dead_drops(
+pub async fn post_journalist_to_user_dead_drops(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
     State(db): State<Database>,
     Json(dead_drop): Json<UnpublishedJournalistToUserDeadDrop>,
@@ -125,7 +128,7 @@ pub async fn post_user_dead_drops(
     Ok(())
 }
 
-pub async fn post_journalist_dead_drops(
+pub async fn post_user_to_journalist_dead_drops(
     State(anchor_org_pks): State<AnchorOrganizationPublicKeyCache>,
     State(db): State<Database>,
     Json(dead_drop): Json<UnpublishedUserToJournalistDeadDrop>,
@@ -148,7 +151,7 @@ pub async fn post_journalist_dead_drops(
     Ok(())
 }
 
-pub async fn get_user_recent_dead_drop_summary(
+pub async fn get_journalist_to_user_recent_dead_drop_summary(
     State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<Vec<DeadDropSummary>>), AppError> {
     let summaries = db
@@ -162,7 +165,7 @@ pub async fn get_user_recent_dead_drop_summary(
     Ok((headers, Json(summaries)))
 }
 
-pub async fn get_journalist_recent_dead_drop_summary(
+pub async fn get_user_to_journalist_recent_dead_drop_summary(
     State(db): State<Database>,
 ) -> Result<(HeaderMap, Json<Vec<DeadDropSummary>>), AppError> {
     let summaries = db
@@ -180,24 +183,16 @@ pub async fn get_journalist_recent_dead_drop_summary(
 mod tests {
     use std::num::NonZeroU32;
 
-    use super::GetDeadDropQueryParams;
-
-    // Wrapper to avoid the construction of a GetDeadDropQueryParams many times
-    fn query_param_limit(limit: Option<NonZeroU32>, default_limit: NonZeroU32) -> u32 {
-        let params = GetDeadDropQueryParams {
-            ids_greater_than: 1,
-            limit,
-        };
-        params.limit_or_default(default_limit).get()
-    }
+    use super::limit_or_default;
 
     #[test]
     fn query_params_limit_less_than_default() {
         assert_eq!(
-            query_param_limit(
+            limit_or_default(
                 Some(NonZeroU32::new(1).unwrap()),
                 NonZeroU32::new(10).unwrap()
-            ),
+            )
+            .get(),
             1
         );
     }
@@ -205,10 +200,11 @@ mod tests {
     #[test]
     fn query_params_limit_equal_to_default() {
         assert_eq!(
-            query_param_limit(
+            limit_or_default(
                 Some(NonZeroU32::new(10).unwrap()),
                 NonZeroU32::new(10).unwrap()
-            ),
+            )
+            .get(),
             10
         );
     }
@@ -216,10 +212,19 @@ mod tests {
     #[test]
     fn query_params_limit_more_than_default() {
         assert_eq!(
-            query_param_limit(
+            limit_or_default(
                 Some(NonZeroU32::new(100).unwrap()),
                 NonZeroU32::new(10).unwrap()
-            ),
+            )
+            .get(),
+            10
+        );
+    }
+
+    #[test]
+    fn query_params_limit_none_uses_default() {
+        assert_eq!(
+            limit_or_default(None, NonZeroU32::new(10).unwrap()).get(),
             10
         );
     }

@@ -1,0 +1,1 @@
+ALTER TABLE vault_info ADD COLUMN max_dead_drop_created_at TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z';

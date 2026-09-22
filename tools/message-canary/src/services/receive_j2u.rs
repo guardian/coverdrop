@@ -23,12 +23,12 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
 
         let keys = canary_state.get_keys_and_profiles(now).await?.keys;
 
-        let ids_greater_than = canary_state.db.get_max_j2u_dead_drop_id().await?;
+        let created_after = canary_state.db.get_max_j2u_dead_drop_created_at().await?;
 
-        tracing::info!("pulling dead drops with id > {}", ids_greater_than);
+        tracing::info!("pulling dead drops with created_at > {}", created_after);
         let dead_drop_list = canary_state
             .api_client
-            .pull_user_dead_drops(ids_greater_than)
+            .pull_journalist_to_user_dead_drops(created_after)
             .await?;
 
         let num_dead_drops = dead_drop_list.dead_drops.len();
@@ -40,14 +40,14 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
         }
 
         let verified_dead_drops =
-            verify_journalist_to_user_dead_drop_list(&keys, &dead_drop_list, now);
+            verify_journalist_to_user_dead_drop_list(&keys, &dead_drop_list, created_after, now);
 
         tracing::info!("Found {} verified dead drops", verified_dead_drops.len());
 
-        let Some(max_dead_drop_id) = verified_dead_drops
+        let Some(max_dead_drop_created_at) = verified_dead_drops
             .iter()
-            .max_by_key(|d| d.id)
-            .map(|d| d.id)
+            .max_by_key(|d| d.created_at)
+            .map(|d| d.created_at)
         else {
             tracing::info!("No verified dead drops in dead drop list");
 
@@ -110,10 +110,13 @@ pub async fn receive_j2u(canary_state: CanaryState) -> anyhow::Result<()> {
             }
         }
 
-        tracing::info!("updating max dead drop id to {}", max_dead_drop_id);
+        tracing::info!(
+            "updating max dead drop created_at to {}",
+            max_dead_drop_created_at
+        );
         canary_state
             .db
-            .insert_j2u_processed_dead_drop(&max_dead_drop_id, now)
+            .insert_j2u_processed_dead_drop(max_dead_drop_created_at, now)
             .await?;
 
         throttle.wait().await;

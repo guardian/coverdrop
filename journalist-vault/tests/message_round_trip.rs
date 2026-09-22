@@ -67,9 +67,9 @@ async fn message_round_trip() {
         .expect("Create journalist vault");
 
         vault
-            .add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
+            .add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
                 &[u2j_message_with_dead_drop_id],
-                1,
+                now,
                 now,
             )
             .await

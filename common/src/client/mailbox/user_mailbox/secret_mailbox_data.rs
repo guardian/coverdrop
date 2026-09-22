@@ -3,8 +3,9 @@ use std::{
     mem::size_of,
 };
 
+use chrono::{DateTime, Utc};
+
 use crate::{
-    api::models::dead_drops::DeadDropId,
     client::mailbox::mailbox_message::MailboxMessage,
     crypto::{
         keys::{
@@ -27,7 +28,7 @@ pub type FixedMessageBuffer = FixedBuffer<MailboxMessage, MAX_MAILBOX_MESSAGES>;
 #[derive(Clone)]
 pub struct SecretMailboxData {
     pub user_key_pair: UserKeyPair,
-    pub max_dead_drop_id: DeadDropId,
+    pub max_dead_drop_created_at: DateTime<Utc>,
     pub messages: FixedMessageBuffer,
 }
 
@@ -36,7 +37,7 @@ impl SecretMailboxData {
         + X25519_PUBLIC_KEY_LEN // User public key
         + X25519_SECRET_KEY_LEN // User secret key
         + FixedMessageBuffer::SERIALIZED_LEN  // Mailbox messages
-        + size_of::<DeadDropId>(); // Next dead drop ID
+        + size_of::<i64>(); // max_dead_drop_created_at as unix timestamp
 
     /// Deserialize secret data from a vector containing *only* the encrypted secret mailbox data.
     pub fn deserialize(
@@ -60,14 +61,21 @@ impl SecretMailboxData {
 
         let messages = FixedMessageBuffer::read(&mut cursor)?;
 
-        let mut max_dead_drop_id_buf = [0; size_of::<DeadDropId>()];
-        cursor.read_exact(&mut max_dead_drop_id_buf)?;
-        let max_dead_drop_id = DeadDropId::from_be_bytes(max_dead_drop_id_buf);
+        // Backward compat: old mailboxes don't have this field
+        let max_dead_drop_created_at = {
+            let mut ts_buf = [0; size_of::<i64>()];
+            if cursor.read_exact(&mut ts_buf).is_ok() {
+                DateTime::from_timestamp(i64::from_be_bytes(ts_buf), 0)
+                    .unwrap_or(DateTime::<Utc>::UNIX_EPOCH)
+            } else {
+                DateTime::<Utc>::UNIX_EPOCH
+            }
+        };
 
         Ok(Self {
             user_key_pair,
             messages,
-            max_dead_drop_id,
+            max_dead_drop_created_at,
         })
     }
 
@@ -85,7 +93,12 @@ impl SecretMailboxData {
 
         self.messages.write(&mut buf)?;
 
-        buf.write_all(self.max_dead_drop_id.to_be_bytes().as_ref())?;
+        buf.write_all(
+            self.max_dead_drop_created_at
+                .timestamp()
+                .to_be_bytes()
+                .as_ref(),
+        )?;
 
         // Encrypt
         let ciphertext = SecretBox::encrypt(key, buf.into_inner())?;

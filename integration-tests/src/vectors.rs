@@ -7,9 +7,11 @@ use std::{
 };
 
 use crate::api_wrappers::{
-    get_journalist_dead_drops, get_latest_status, get_public_keys, get_user_dead_drops,
+    get_journalist_to_user_dead_drops, get_latest_status, get_public_keys,
+    get_user_to_journalist_dead_drops,
 };
 use crate::CoverDropStack;
+use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 
 type TestName = String;
@@ -74,7 +76,9 @@ pub async fn save_test_vectors(
         &public_keys,
     );
 
-    let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
+    let user_dead_drops =
+        get_journalist_to_user_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
+            .await;
     write_vector_for_serializable(
         path.clone(),
         state_name,
@@ -83,7 +87,9 @@ pub async fn save_test_vectors(
         &user_dead_drops,
     );
 
-    let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+    let journalist_dead_drops =
+        get_user_to_journalist_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
+            .await;
     write_vector_for_serializable(
         path.clone(),
         state_name,

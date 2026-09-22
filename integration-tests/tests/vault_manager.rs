@@ -1,7 +1,7 @@
 use common::crypto::keys::serde::StorableKeyMaterial;
 
 use admin::api_has_anchor_org_pk;
-use chrono::Duration;
+use chrono::{DateTime, Duration, Utc};
 use common::{
     protocol::{constants::ORGANIZATION_KEY_VALID_DURATION, keys::generate_organization_key_pair},
     throttle::Throttle,
@@ -10,7 +10,7 @@ use common::{
 use core::time::Duration as CoreDuration;
 
 use integration_tests::{
-    api_wrappers::{get_journalist_dead_drops, get_user_dead_drops},
+    api_wrappers::{get_journalist_to_user_dead_drops, get_user_to_journalist_dead_drops},
     stack::{CoverDropStack, StackProfile},
 };
 
@@ -31,8 +31,12 @@ async fn vault_manager_test() -> anyhow::Result<()> {
     // Confirm clean initial state
     //
 
-    let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
-    let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+    let user_dead_drops =
+        get_journalist_to_user_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
+            .await;
+    let journalist_dead_drops =
+        get_user_to_journalist_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
+            .await;
     assert!(user_dead_drops.is_empty());
     assert!(journalist_dead_drops.is_empty());
 

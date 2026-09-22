@@ -5,14 +5,14 @@ use std::path::Path;
 
 use admin::generate_journalist;
 use chrono::{DateTime, Utc};
+use common::api::models::dead_drops::DeadDropId;
 use common::clap::Stage;
 use common::{
     api::{
         api_client::ApiClient,
         models::{
             dead_drops::{
-                DeadDropId, UnverifiedJournalistToUserDeadDropsList,
-                UnverifiedUserToJournalistDeadDropsList,
+                UnverifiedJournalistToUserDeadDropsList, UnverifiedUserToJournalistDeadDropsList,
             },
             general::PublishedStatusEvent,
             untrusted_keys_and_journalist_profiles::UntrustedKeysAndJournalistProfiles,
@@ -151,6 +151,8 @@ pub async fn upload_new_messaging_key(
 // Dead drops
 //
 
+// Legacy wrappers for the deprecated /user/ and /journalist/ dead drop endpoints.
+// TODO remove https://github.com/guardian/coverdrop-internal/issues/4202
 pub async fn get_journalist_dead_drops(
     api_client: &ApiClient,
     ids_greater_than: DeadDropId,
@@ -169,6 +171,26 @@ pub async fn get_user_dead_drops(
         .pull_user_dead_drops(ids_greater_than)
         .await
         .expect("Get journalist dead drops")
+}
+
+pub async fn get_user_to_journalist_dead_drops(
+    api_client: &ApiClient,
+    created_after: DateTime<Utc>,
+) -> UnverifiedUserToJournalistDeadDropsList {
+    api_client
+        .pull_all_user_to_journalist_dead_drops(DeadDropId::default(), created_after)
+        .await
+        .expect("Get u2j dead drops")
+}
+
+pub async fn get_journalist_to_user_dead_drops(
+    api_client: &ApiClient,
+    created_after: DateTime<Utc>,
+) -> UnverifiedJournalistToUserDeadDropsList {
+    api_client
+        .pull_journalist_to_user_dead_drops(created_after)
+        .await
+        .expect("Get j2u dead drops")
 }
 
 //

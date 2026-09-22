@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                SELECT\n                    id         AS \"id: DeadDropId\",\n                    created_at AS \"created_at: DateTime<Utc>\"\n                FROM user_dead_drops\n                ORDER BY id DESC\n                LIMIT 10\n            ",
+  "query": "\n                SELECT\n                    id         AS \"id: DeadDropId\",\n                    created_at AS \"created_at: DateTime<Utc>\"\n                FROM journalist_to_user_dead_drops\n                ORDER BY id DESC\n                LIMIT 10\n            ",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "bd07bad5ce6eb49edd2bcf9c886362a52d1e8fe6a1be71eef90a93330cecd358"
+  "hash": "7a843ef1344725b9970d3b9e37a8a666a9575d0b98139202d563c4f6a5b29afc"
 }

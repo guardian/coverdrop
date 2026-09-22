@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                max_dead_drop_created_at AS \"max_dead_drop_created_at: DateTime<Utc>\"\n            FROM vault_info\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "max_dead_drop_created_at: DateTime<Utc>",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "67ef79405e265fda5f387364315fcc57164a29089bf3565f6ca64aff8e7002ea"
+}

@@ -2,7 +2,7 @@ use client::commands::user::dead_drops::load_user_dead_drop_messages;
 use common::api::models::message_id::MessageId;
 use coverdrop_service::JournalistCoverDropService;
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_user_dead_drops},
+    api_wrappers::{get_and_verify_public_keys, get_journalist_to_user_dead_drops},
     dev_j2u_mixing_config,
     stack::{CoverDropStack, StackProfile},
 };
@@ -81,8 +81,11 @@ async fn j2c_deduplication_scenario() {
     tokio::time::sleep(Duration::from_secs(5)).await;
 
     // Pull user dead drops and verify only one copy of the message arrived
-    let dead_drop_list =
-        get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id()).await;
+    let dead_drop_list = get_journalist_to_user_dead_drops(
+        stack.api_client_cached(),
+        user_mailbox.max_dead_drop_created_at(),
+    )
+    .await;
 
     assert_eq!(dead_drop_list.len(), 1, "Expected exactly one dead drop");
 

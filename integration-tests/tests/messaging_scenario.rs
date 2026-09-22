@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use client::commands::{
     journalist::{
         dead_drops::load_journalist_dead_drop_messages,
@@ -9,7 +10,10 @@ use client::commands::{
     },
 };
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
+    api_wrappers::{
+        get_and_verify_public_keys, get_journalist_to_user_dead_drops,
+        get_user_to_journalist_dead_drops,
+    },
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
     stack::{CoverDropStack, StackProfile},
 };
@@ -53,8 +57,16 @@ async fn messaging_scenario() {
     //
 
     {
-        let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
-        let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+        let user_dead_drops = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
+        let journalist_dead_drops = get_user_to_journalist_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert!(user_dead_drops.is_empty());
         assert!(journalist_dead_drops.is_empty());
     }
@@ -107,13 +119,17 @@ async fn messaging_scenario() {
     {
         let journalist_vault = stack.load_static_journalist_vault().await;
 
-        let max_dead_drop_id = journalist_vault
-            .max_dead_drop_id()
+        let max_dead_drop_created_at = journalist_vault
+            .max_dead_drop_created_at()
             .await
-            .expect("Get max dead drop id");
+            .expect("Get max dead drop created at");
+
+        // assert that the initial value of max_dead_drop_created_at is the Unix epoch
+        assert_eq!(max_dead_drop_created_at, DateTime::<Utc>::UNIX_EPOCH);
 
         let dead_drop_list =
-            get_journalist_dead_drops(stack.api_client_cached(), max_dead_drop_id).await;
+            get_user_to_journalist_dead_drops(stack.api_client_cached(), max_dead_drop_created_at)
+                .await;
 
         load_journalist_dead_drop_messages(
             dead_drop_list,
@@ -123,6 +139,13 @@ async fn messaging_scenario() {
         )
         .await
         .expect("Save journalist's messages to vault");
+
+        // assert that the max_dead_drop_created_at has been updated
+        let new_max_dead_drop_created_at = journalist_vault
+            .max_dead_drop_created_at()
+            .await
+            .expect("Get max dead drop created at");
+        assert!(new_max_dead_drop_created_at > DateTime::<Utc>::UNIX_EPOCH);
 
         let messages = journalist_vault
             .messages()
@@ -186,8 +209,13 @@ async fn messaging_scenario() {
     {
         let mut user_mailbox = stack.mailboxes().user();
 
+        // assert that the initial value of max_dead_drop_created_at is the Unix epoch
+        let max_dead_drop_created_at = user_mailbox.max_dead_drop_created_at();
+        assert_eq!(max_dead_drop_created_at, DateTime::<Utc>::UNIX_EPOCH);
+
         let dead_drop_list =
-            get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id()).await;
+            get_journalist_to_user_dead_drops(stack.api_client_cached(), max_dead_drop_created_at)
+                .await;
 
         assert_eq!(dead_drop_list.len(), 1);
 
@@ -198,6 +226,10 @@ async fn messaging_scenario() {
             stack.now(),
         )
         .expect("Save users's messages to mailbox");
+
+        // assert that the max_dead_drop_created_at has been updated
+        let new_max_dead_drop_created_at = user_mailbox.max_dead_drop_created_at();
+        assert!(new_max_dead_drop_created_at > DateTime::<Utc>::UNIX_EPOCH);
 
         let messages = user_mailbox.messages().iter().collect::<Vec<_>>();
 
@@ -217,7 +249,11 @@ async fn messaging_scenario() {
     {
         let vault = stack.load_static_journalist_vault().await;
 
-        let dead_drop_list = get_user_dead_drops(stack.api_client_cached(), 0).await;
+        let dead_drop_list = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert_eq!(dead_drop_list.len(), 1);
         let first_dead_drop = dead_drop_list.dead_drops.first().unwrap();
 
@@ -230,7 +266,11 @@ async fn messaging_scenario() {
 
         // There seems to be some timing related issues where an extra dead drop is sometimes published
         // So we will assert that the original dead drop still exists.
-        let dead_drop_list = get_user_dead_drops(stack.api_client_cached(), 0).await;
+        let dead_drop_list = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert!(
             dead_drop_list.dead_drops.contains(first_dead_drop),
             "Unexpected number of dead drops 13 days after publication"
@@ -248,7 +288,11 @@ async fn messaging_scenario() {
         tokio::time::sleep(DELETE_OLD_DEAD_DROPS_POLLING_PERIOD + Duration::from_secs(1)).await;
 
         // After 14 days the original dead drop should be deleted.
-        let dead_drop_list_after_delete = get_user_dead_drops(stack.api_client_cached(), 0).await;
+        let dead_drop_list_after_delete = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert!(
             !dead_drop_list_after_delete
                 .dead_drops

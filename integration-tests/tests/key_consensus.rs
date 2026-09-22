@@ -1,10 +1,14 @@
 use api::cache_control::PUBLIC_KEYS_TTL;
+use chrono::{DateTime, Utc};
 use client::commands::user::{
     dead_drops::load_user_dead_drop_messages, messages::send_user_to_journalist_real_message,
 };
 use common::protocol::constants::COVERNODE_MSG_KEY_ROTATE_AFTER;
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
+    api_wrappers::{
+        get_and_verify_public_keys, get_journalist_to_user_dead_drops,
+        get_user_to_journalist_dead_drops,
+    },
     dev_u2j_mixing_config, save_test_vector,
     stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
@@ -40,8 +44,16 @@ async fn key_consensus() -> anyhow::Result<()> {
     // Confirm clean initial state
     //
     {
-        let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
-        let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+        let user_dead_drops = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
+        let journalist_dead_drops = get_user_to_journalist_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert!(user_dead_drops.is_empty());
         assert!(journalist_dead_drops.is_empty());
     }
@@ -62,9 +74,16 @@ async fn key_consensus() -> anyhow::Result<()> {
         // Confirm clean initial state
         //
         {
-            let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
-            let journalist_dead_drops =
-                get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+            let user_dead_drops = get_journalist_to_user_dead_drops(
+                stack.api_client_cached(),
+                DateTime::<Utc>::UNIX_EPOCH,
+            )
+            .await;
+            let journalist_dead_drops = get_user_to_journalist_dead_drops(
+                stack.api_client_cached(),
+                DateTime::<Utc>::UNIX_EPOCH,
+            )
+            .await;
             assert!(user_dead_drops.is_empty());
             assert!(journalist_dead_drops.is_empty());
         }
@@ -148,9 +167,11 @@ async fn key_consensus() -> anyhow::Result<()> {
             )
             .await;
 
-            let dead_drop_list =
-                get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id())
-                    .await;
+            let dead_drop_list = get_journalist_to_user_dead_drops(
+                stack.api_client_cached(),
+                user_mailbox.max_dead_drop_created_at(),
+            )
+            .await;
 
             load_user_dead_drop_messages(
                 &dead_drop_list,

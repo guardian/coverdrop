@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE vault_info SET max_dead_drop_created_at = ?1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6184b25f218af1a477efb5b843f670f7fd3bcc6f32c7df98e92e90e5e2597708"
+}

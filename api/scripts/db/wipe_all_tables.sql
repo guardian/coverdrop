@@ -1,5 +1,5 @@
-DELETE FROM journalist_dead_drops;
-DELETE FROM user_dead_drops;
+DELETE FROM user_to_journalist_dead_drops;
+DELETE FROM journalist_to_user_dead_drops;
 DELETE FROM system_status_events;
 DELETE FROM journalist_msg_pks;
 DELETE FROM journalist_profiles;

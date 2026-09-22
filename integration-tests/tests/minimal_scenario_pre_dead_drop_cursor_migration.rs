@@ -2,20 +2,17 @@ use std::time::Duration;
 
 use tokio::time;
 
-use chrono::{DateTime, Utc};
 use client::commands::journalist::messages::send_journalist_to_user_cover_message;
 use integration_tests::{
-    api_wrappers::{
-        get_and_verify_public_keys, get_journalist_to_user_dead_drops,
-        get_user_to_journalist_dead_drops,
-    },
+    api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
     stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
 };
 
-/// This test is a minimal integration test that generates valid looking data for all public API
-/// end-points. Since all messages are cover messages, no interesting communication happens.
+/// Minimal messaging integration test which makes sure that the legacy dead drop endpoints work as expected.
+/// TODO This can be removed when these endpoint are no longer used
+/// https://github.com/guardian/coverdrop-internal/issues/4202
 #[tokio::test]
 #[allow(clippy::await_holding_refcell_ref)]
 async fn minimal_scenario() {
@@ -56,14 +53,10 @@ async fn minimal_scenario() {
     // Allow for CoverNode and API to process anything remaining
     time::sleep(Duration::from_secs(5)).await;
 
-    let user_dead_drops =
-        get_journalist_to_user_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
-            .await;
+    let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
     assert_eq!(user_dead_drops.len(), 3);
 
-    let journalist_dead_drops =
-        get_user_to_journalist_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
-            .await;
+    let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
     assert_eq!(journalist_dead_drops.len(), 2);
 
     assert!(!stack.do_secrets_exist_in_stack().await);

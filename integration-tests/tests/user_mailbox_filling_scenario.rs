@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use chrono::{DateTime, Utc};
 use client::commands::{
     journalist::messages::{
         send_journalist_to_user_cover_message, send_journalist_to_user_real_message,
@@ -15,7 +16,7 @@ use common::{
     FixedSizeMessageText,
 };
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_user_dead_drops},
+    api_wrappers::{get_and_verify_public_keys, get_journalist_to_user_dead_drops},
     dev_u2j_mixing_config, CoverDropStack, StackProfile,
 };
 use rand::Rng;
@@ -62,7 +63,11 @@ async fn user_mailbox_filling_scenario() {
     }];
 
     journalist_vault
-        .add_messages_from_user_to_journalist_and_update_max_dead_drop_id(&messages, 0, stack.now())
+        .add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
+            &messages,
+            stack.now(),
+            stack.now(),
+        )
         .await
         .expect("Add message to journalist vault");
 
@@ -126,14 +131,20 @@ async fn user_mailbox_filling_scenario() {
     // then verify the messages have all been sent correctly and are in the mailbox
     //
 
-    let mut dead_drop_list = get_user_dead_drops(stack.api_client_cached(), 0).await;
+    let mut dead_drop_list =
+        get_journalist_to_user_dead_drops(stack.api_client_cached(), DateTime::<Utc>::UNIX_EPOCH)
+            .await;
 
     // Poll the dead drops every 5 seconds until we don't get any more
     let mut prev_dead_drop_len = 0;
     while dead_drop_list.len() != prev_dead_drop_len {
         prev_dead_drop_len = dead_drop_list.len();
         time::sleep(Duration::from_secs(2)).await;
-        dead_drop_list = get_user_dead_drops(stack.api_client_cached(), 0).await;
+        dead_drop_list = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
     }
 
     println!("Sent {} messages", message_queue.len());

@@ -62,32 +62,36 @@ impl JournalistCoverDropService {
         };
         let keys = &public_info.keys;
 
-        let ids_greater_than = self.vault.max_dead_drop_id().await?;
+        let max_dead_drop_id = self.vault.max_dead_drop_id().await?;
+        let created_after = self.vault.max_dead_drop_created_at().await?;
 
         tracing::info!(
-            "Pulling dead drops with ID greater than {}",
-            ids_greater_than
+            "Pulling dead drops with created_at after {} and max_dead_drop_id {}",
+            created_after,
+            max_dead_drop_id
         );
 
         let dead_drop_list = self
             .api_client
-            .pull_all_journalist_dead_drops(ids_greater_than)
+            .pull_all_user_to_journalist_dead_drops(max_dead_drop_id, created_after)
             .await?;
-
-        let maybe_max_dead_drop_id = dead_drop_list
-            .dead_drops
-            .iter()
-            .max_by_key(|d| d.id)
-            .map(|d| d.id);
-        let Some(max_dead_drop_id) = maybe_max_dead_drop_id else {
-            tracing::info!("No dead drops in dead drop list");
-            maybe_invoke_on_progress(0);
-            return Ok(Vec::new());
-        };
 
         // TODO should we return early if verified dead drops < total dead drops?
         // see https://github.com/guardian/coverdrop-internal/issues/3643
-        let dead_drops = verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, now);
+        let dead_drops =
+            verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, created_after, now);
+
+        if dead_drops.is_empty() {
+            tracing::info!("No verified dead drops found");
+            maybe_invoke_on_progress(0);
+            return Ok(Vec::new());
+        }
+
+        // The cursor must only ever be advanced using verified dead drops, otherwise a malicious
+        // API could poison it with an unverifiable dead drop with a far future `created_at`.
+        let max_dead_drop_created_at = dead_drops
+            .iter()
+            .fold(created_after, |acc, d| acc.max(d.created_at));
 
         tracing::info!("Found {} dead drops", dead_drops.len());
 
@@ -151,9 +155,9 @@ impl JournalistCoverDropService {
             .collect();
 
         self.vault
-            .add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
+            .add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
                 &decrypted_messages,
-                max_dead_drop_id,
+                max_dead_drop_created_at,
                 now,
             )
             .await?;
@@ -677,7 +681,7 @@ impl JournalistCoverDropService {
         if let Ok(None) = self.vault.latest_msg_key_pair(now).await {
             if let Ok(recent_dead_drops_summary) = self
                 .api_client
-                .get_journalist_recent_dead_drop_summary()
+                .get_user_to_journalist_recent_dead_drop_summary()
                 .await
             {
                 if let Some(max_dead_drop_summary) = recent_dead_drops_summary
@@ -686,7 +690,7 @@ impl JournalistCoverDropService {
                 {
                     if let Err(e) = self
                         .vault
-                        .set_max_dead_drop_id(max_dead_drop_summary.id)
+                        .set_max_dead_drop_created_at(max_dead_drop_summary.created_at)
                         .await
                     {
                         tracing::error!("Failed to set max dead drop id {:?}", e);

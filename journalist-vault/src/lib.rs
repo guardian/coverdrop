@@ -17,6 +17,7 @@ mod vault_message;
 pub mod vault_setup_bundle;
 
 use anyhow::Context;
+use common::api::models::dead_drops::DeadDropId;
 use key_rows::{
     AllVaultKeys, UntrustedCandidateJournalistIdKeyPairRow,
     UntrustedCandidateJournalistMessagingKeyPairRow, UntrustedCandidateSentinelIdKeyPairRow,
@@ -39,7 +40,6 @@ use common::{
             PostSentinelProfileForm,
         },
         models::{
-            dead_drops::DeadDropId,
             journalist_id::JournalistIdentity,
             messages::{
                 journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage,
@@ -411,9 +411,24 @@ impl JournalistVault {
         msg_key_queries::last_published_msg_key_pair_at(&mut conn).await
     }
 
+    // TODO can be removed once all journalist clients are using the new
+    // dead drop endpoint https://github.com/guardian/coverdrop-internal/issues/4202
     pub async fn max_dead_drop_id(&self) -> anyhow::Result<DeadDropId> {
         let mut conn = self.pool.acquire().await?;
         info_queries::max_dead_drop_id(&mut conn).await
+    }
+
+    pub async fn max_dead_drop_created_at(&self) -> anyhow::Result<DateTime<Utc>> {
+        let mut conn = self.pool.acquire().await?;
+        info_queries::max_dead_drop_created_at(&mut conn).await
+    }
+
+    pub async fn set_max_dead_drop_created_at(
+        &self,
+        created_at: DateTime<Utc>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.pool.acquire().await?;
+        info_queries::set_max_dead_drop_created_at(&mut conn, created_at).await
     }
 
     pub async fn all_vault_keys(&self, now: DateTime<Utc>) -> anyhow::Result<AllVaultKeys> {
@@ -651,10 +666,10 @@ impl JournalistVault {
     // Messages
     //
 
-    pub async fn add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
+    pub async fn add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
         &self,
         messages: &[U2JMessageWithMetadata],
-        max_dead_drop_id: i32,
+        max_dead_drop_created_at: DateTime<Utc>,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         let mut tx = self.pool.begin().await?;
@@ -674,7 +689,7 @@ impl JournalistVault {
             .await?;
         }
 
-        info_queries::set_max_dead_drop_id(&mut tx, max_dead_drop_id).await?;
+        info_queries::set_max_dead_drop_created_at(&mut tx, max_dead_drop_created_at).await?;
 
         tx.commit().await?;
 
@@ -1071,12 +1086,6 @@ impl JournalistVault {
             epoch,
         )
         .await
-    }
-
-    /// Set the max dead drop ID in the vault.
-    pub async fn set_max_dead_drop_id(&self, max_dead_drop_id: i32) -> anyhow::Result<()> {
-        let mut conn = self.pool.acquire().await?;
-        info_queries::set_max_dead_drop_id(&mut conn, max_dead_drop_id).await
     }
 
     pub async fn max_delivery_service_message_id(&self) -> anyhow::Result<u32> {

@@ -7,8 +7,8 @@ use crate::api::forms::{
     PostJournalistToCoverNodeMessageForm,
 };
 use crate::api::models::dead_drops::{
-    UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
-    UnverifiedUserToJournalistDeadDropsList,
+    DeadDropId, UnpublishedJournalistToUserDeadDrop, UnverifiedJournalistToUserDeadDropsList,
+    UnverifiedUserToJournalistDeadDrop, UnverifiedUserToJournalistDeadDropsList,
 };
 
 use crate::api::models::message_id::MessageId;
@@ -26,10 +26,7 @@ use crate::protocol::keys::{
     UnregisteredSentinelIdPublicKey,
 };
 
-use crate::api::models::{
-    dead_drops::{DeadDropId, UnpublishedUserToJournalistDeadDrop},
-    realms::Realm,
-};
+use crate::api::models::dead_drops::UnpublishedUserToJournalistDeadDrop;
 use crate::clients::{
     handle_response, handle_response_json, handle_response_text, new_reqwest_client,
     new_reqwest_client_with_default_headers,
@@ -50,7 +47,6 @@ use super::forms::{
 };
 use super::models::covernode_id::CoverNodeIdentity;
 use super::models::dead_drop_summary::DeadDropSummary;
-use super::models::dead_drops::UnverifiedUserToJournalistDeadDrop;
 use super::models::general::{PublishedStatusEvent, StatusEvent};
 use super::models::journalist_id::JournalistIdentity;
 use super::models::journalist_id_and_id_pk_rotation_form::JournalistIdAndPublicKeyRotationForm;
@@ -641,7 +637,7 @@ impl ApiClient {
     }
 
     //
-    // GET /v1/{realm}/dead_drops
+    // GET /v1/{realm}/dead_drops (legacy — TODO remove https://github.com/guardian/coverdrop-internal/issues/4202)
     //
 
     pub async fn pull_user_dead_drops(
@@ -652,7 +648,7 @@ impl ApiClient {
         url.path_segments_mut()
             .unwrap()
             .push("v1")
-            .push((&Realm::User).into())
+            .push("user")
             .push("dead-drops");
         url.query_pairs_mut()
             .append_pair("ids_greater_than", &ids_greater_than.to_string());
@@ -673,7 +669,7 @@ impl ApiClient {
         url.path_segments_mut()
             .unwrap()
             .push("v1")
-            .push((&Realm::Journalist).into())
+            .push("journalist")
             .push("dead-drops");
         url.query_pairs_mut()
             .append_pair("ids_greater_than", &ids_greater_than.to_string());
@@ -690,27 +686,9 @@ impl ApiClient {
         Ok(journalist_dead_drops)
     }
 
-    pub async fn get_journalist_recent_dead_drop_summary(
-        &self,
-    ) -> anyhow::Result<Vec<DeadDropSummary>> {
-        let mut url = self.base_url.clone();
-        url.path_segments_mut()
-            .unwrap()
-            .push("v1")
-            .push((&Realm::Journalist).into())
-            .push("dead-drops")
-            .push("recent-summary");
-
-        let recent_dead_drops_summary = self.client.get(url).send().await?;
-
-        let recent_dead_drops_summary = handle_response_json(recent_dead_drops_summary).await?;
-
-        Ok(recent_dead_drops_summary)
-    }
-
     pub async fn pull_all_journalist_dead_drops(
         &self,
-        max_dead_drop_id: i32,
+        max_dead_drop_id: DeadDropId,
     ) -> anyhow::Result<UnverifiedUserToJournalistDeadDropsList> {
         let mut dead_drop_list: Vec<UnverifiedUserToJournalistDeadDrop> = Vec::new();
         let mut max_dead_drop_id = max_dead_drop_id;
@@ -738,10 +716,122 @@ impl ApiClient {
     }
 
     //
-    // POST /v1/{realm}/dead-drops
+    // GET /v1/journalist-to-user/dead-drops and /v1/user-to-journalist/dead-drops
     //
 
-    pub async fn post_user_dead_drop(
+    pub async fn pull_journalist_to_user_dead_drops(
+        &self,
+        created_after: DateTime<Utc>,
+    ) -> anyhow::Result<UnverifiedJournalistToUserDeadDropsList> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("journalist-to-user")
+            .push("dead-drops");
+        url.query_pairs_mut()
+            .append_pair("created_after", &created_after.to_rfc3339());
+
+        let dead_drops = self.client.get(url).send().await?;
+        let dead_drops = handle_response_json(dead_drops).await?;
+
+        Ok(dead_drops)
+    }
+
+    pub async fn pull_user_to_journalist_dead_drops(
+        &self,
+        max_dead_drop_id: DeadDropId,
+        created_after: DateTime<Utc>,
+        limit: Option<u32>,
+    ) -> anyhow::Result<UnverifiedUserToJournalistDeadDropsList> {
+        let mut url = self.base_url.clone();
+
+        // During the migration from using ids_greater_than to created_since, use ids_greater_than one time
+        // if the value of created_after is 1970-01-01T00:00:00Z', the column's default value.
+        // This prevents the request from leaking any information about u2j messages in previous dead drops.
+        // TODO: use `created_after` exclusively https://github.com/guardian/coverdrop-internal/issues/4202
+        if created_after == DateTime::<Utc>::UNIX_EPOCH {
+            url.path_segments_mut()
+                .unwrap()
+                .push("v1")
+                .push("journalist")
+                .push("dead-drops");
+            url.query_pairs_mut()
+                .append_pair("ids_greater_than", &max_dead_drop_id.to_string());
+        } else {
+            url.path_segments_mut()
+                .unwrap()
+                .push("v1")
+                .push("user-to-journalist")
+                .push("dead-drops");
+            url.query_pairs_mut()
+                .append_pair("created_after", &created_after.to_rfc3339());
+        }
+
+        if let Some(limit) = limit {
+            url.query_pairs_mut()
+                .append_pair("limit", &limit.to_string());
+        }
+
+        let dead_drops = self.client.get(url).send().await?;
+        let dead_drops = handle_response_json(dead_drops).await?;
+
+        Ok(dead_drops)
+    }
+
+    pub async fn get_user_to_journalist_recent_dead_drop_summary(
+        &self,
+    ) -> anyhow::Result<Vec<DeadDropSummary>> {
+        let mut url = self.base_url.clone();
+        url.path_segments_mut()
+            .unwrap()
+            .push("v1")
+            .push("user-to-journalist")
+            .push("dead-drops")
+            .push("recent-summary");
+
+        let recent_dead_drops_summary = self.client.get(url).send().await?;
+
+        let recent_dead_drops_summary = handle_response_json(recent_dead_drops_summary).await?;
+
+        Ok(recent_dead_drops_summary)
+    }
+
+    pub async fn pull_all_user_to_journalist_dead_drops(
+        &self,
+        max_dead_drop_id: DeadDropId,
+        created_after: DateTime<Utc>,
+    ) -> anyhow::Result<UnverifiedUserToJournalistDeadDropsList> {
+        let mut dead_drop_list: Vec<UnverifiedUserToJournalistDeadDrop> = Vec::new();
+        let mut max_created_after = created_after;
+
+        loop {
+            let new_dead_drop_list = self
+                .pull_user_to_journalist_dead_drops(max_dead_drop_id, max_created_after, None)
+                .await?;
+
+            if new_dead_drop_list.dead_drops.is_empty() {
+                break;
+            }
+
+            max_created_after = new_dead_drop_list
+                .dead_drops
+                .iter()
+                .map(|d| d.created_at)
+                .max()
+                .unwrap_or(max_created_after);
+
+            dead_drop_list.extend(new_dead_drop_list.dead_drops);
+        }
+
+        Ok(UnverifiedUserToJournalistDeadDropsList::new(dead_drop_list))
+    }
+
+    //
+    // POST /v1/journalist-to-user/dead-drops and /v1/user-to-journalist/dead-drops
+    //
+
+    pub async fn post_journalist_to_user_dead_drop(
         &self,
         signed_dead_drop: &UnpublishedJournalistToUserDeadDrop,
     ) -> anyhow::Result<()> {
@@ -749,7 +839,7 @@ impl ApiClient {
         url.path_segments_mut()
             .unwrap()
             .push("v1")
-            .push((&Realm::User).into())
+            .push("journalist-to-user")
             .push("dead-drops");
 
         let resp = self.client.post(url).json(signed_dead_drop).send().await?;
@@ -757,7 +847,7 @@ impl ApiClient {
         handle_response(resp).await
     }
 
-    pub async fn post_journalist_dead_drop(
+    pub async fn post_user_to_journalist_dead_drop(
         &self,
         dead_drop: &UnpublishedUserToJournalistDeadDrop,
     ) -> anyhow::Result<()> {
@@ -765,7 +855,7 @@ impl ApiClient {
         url.path_segments_mut()
             .unwrap()
             .push("v1")
-            .push((&Realm::Journalist).into())
+            .push("user-to-journalist")
             .push("dead-drops");
 
         let resp = self.client.post(url).json(dead_drop).send().await?;

@@ -13,11 +13,19 @@ pub fn load_user_dead_drop_messages(
     now: DateTime<Utc>,
 ) -> anyhow::Result<usize> {
     let mut messages_loaded = 0;
-    let Some(max_dead_drop_id) = dead_drop_list.max_id() else {
-        return Ok(messages_loaded);
-    };
 
-    let verified_dead_drops = verify_journalist_to_user_dead_drop_list(keys, dead_drop_list, now);
+    let created_after = mailbox.max_dead_drop_created_at();
+
+    let verified_dead_drops =
+        verify_journalist_to_user_dead_drop_list(keys, dead_drop_list, created_after, now);
+
+    // The cursors must only ever be advanced using verified dead drops, otherwise a malicious
+    // API could poison them with an unverifiable dead drop with a far future `created_at`.
+    let max_dead_drop_created_at = verified_dead_drops
+        .iter()
+        .map(|d| d.created_at)
+        .max()
+        .unwrap_or(created_after);
 
     // POSSIBLE IMPROVEMENT:
     // We could keep a track of who the user has messages so we don't have to check every single key
@@ -38,7 +46,7 @@ pub fn load_user_dead_drop_messages(
         }
     }
 
-    mailbox.set_max_dead_drop_id(max_dead_drop_id);
+    mailbox.set_max_dead_drop_created_at(max_dead_drop_created_at);
 
     Ok(messages_loaded)
 }

@@ -7,7 +7,6 @@ pub mod journalist_id;
 pub mod journalist_id_and_id_pk_rotation_form;
 pub mod message_id;
 pub mod messages;
-pub mod realms;
 pub mod sentinel_id;
 pub mod sentinel_id_and_id_pk_rotation_form;
 pub mod untrusted_keys_and_journalist_profiles;

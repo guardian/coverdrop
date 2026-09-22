@@ -33,9 +33,10 @@ where
 
     loop {
         let now = now_fn();
+        let created_after = vault.max_dead_drop_created_at().await?;
         let max_dead_drop_id = vault.max_dead_drop_id().await?;
         let dead_drop_list = api_client
-            .pull_all_journalist_dead_drops(max_dead_drop_id)
+            .pull_all_user_to_journalist_dead_drops(max_dead_drop_id, created_after)
             .await?;
 
         load_journalist_dead_drop_messages(dead_drop_list, &keys_and_profiles.keys, vault, now)

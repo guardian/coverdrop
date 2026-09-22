@@ -1,0 +1,5 @@
+DROP INDEX idx_j2u_dead_drops_created_at;
+DROP INDEX idx_u2j_dead_drops_created_at;
+
+ALTER TABLE journalist_to_user_dead_drops RENAME TO user_dead_drops;
+ALTER TABLE user_to_journalist_dead_drops RENAME TO journalist_dead_drops;

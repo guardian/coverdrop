@@ -6,9 +6,14 @@ use api::controllers::backups::{
     post_backup_encryption_pk, post_backup_signing_pk, retrieve_upload_url_with_metadata,
 };
 use api::controllers::dead_drops::{
-    get_journalist_dead_drops, get_journalist_recent_dead_drop_summary, get_user_dead_drops,
-    get_user_recent_dead_drop_summary, post_journalist_dead_drops, post_user_dead_drops,
+    get_journalist_to_user_dead_drops, get_journalist_to_user_recent_dead_drop_summary,
+    get_user_to_journalist_dead_drops, get_user_to_journalist_recent_dead_drop_summary,
 };
+use api::controllers::dead_drops::{
+    post_journalist_to_user_dead_drops, post_user_to_journalist_dead_drops,
+};
+#[allow(deprecated)]
+use api::controllers::dead_drops_legacy::{get_journalist_dead_drops, get_user_dead_drops};
 use api::controllers::general::{
     get_healthcheck, get_latest_status, post_reload_tracing, post_status_event,
 };
@@ -221,22 +226,39 @@ async fn main() -> anyhow::Result<()> {
             "/public-keys/sentinel/identity-public-key/{pk_hex}",
             get(get_sentinel_id_pk_with_epoch),
         )
-        // Dead drops
+        // Dead drops (legacy paths — TODO remove https://github.com/guardian/coverdrop-internal/issues/4202)
         .route(
             "/user/dead-drops",
-            get(get_user_dead_drops).post(post_user_dead_drops),
+            get(get_user_dead_drops).post(post_journalist_to_user_dead_drops),
         )
         .route(
             "/user/dead-drops/recent-summary",
-            get(get_user_recent_dead_drop_summary),
+            get(get_journalist_to_user_recent_dead_drop_summary),
         )
         .route(
             "/journalist/dead-drops",
-            get(get_journalist_dead_drops).post(post_journalist_dead_drops),
+            get(get_journalist_dead_drops).post(post_user_to_journalist_dead_drops),
         )
         .route(
             "/journalist/dead-drops/recent-summary",
-            get(get_journalist_recent_dead_drop_summary),
+            get(get_user_to_journalist_recent_dead_drop_summary),
+        )
+        // Dead drops (new paths)
+        .route(
+            "/journalist-to-user/dead-drops",
+            get(get_journalist_to_user_dead_drops).post(post_journalist_to_user_dead_drops),
+        )
+        .route(
+            "/journalist-to-user/dead-drops/recent-summary",
+            get(get_journalist_to_user_recent_dead_drop_summary),
+        )
+        .route(
+            "/user-to-journalist/dead-drops",
+            get(get_user_to_journalist_dead_drops).post(post_user_to_journalist_dead_drops),
+        )
+        .route(
+            "/user-to-journalist/dead-drops/recent-summary",
+            get(get_user_to_journalist_recent_dead_drop_summary),
         )
         // deprecating this endpoint in favor of the one with deduplication token
         // TODO remove https://github.com/guardian/coverdrop-internal/issues/4087

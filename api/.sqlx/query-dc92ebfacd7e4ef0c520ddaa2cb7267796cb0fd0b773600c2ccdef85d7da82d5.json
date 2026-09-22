@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                id,\n                created_at AS \"created_at: DateTime<Utc>\",\n                data       AS \"data: SerializedJournalistToUserDeadDropMessages\",\n                signature  AS \"signature: Signature<JournalistToUserDeadDropSignatureDataV2>\"\n            FROM journalist_to_user_dead_drops\n            WHERE created_at > $1\n            ORDER BY created_at ASC\n            LIMIT $2\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "created_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "data: SerializedJournalistToUserDeadDropMessages",
+        "type_info": "Bytea"
+      },
+      {
+        "ordinal": 3,
+        "name": "signature: Signature<JournalistToUserDeadDropSignatureDataV2>",
+        "type_info": "Bytea"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "dc92ebfacd7e4ef0c520ddaa2cb7267796cb0fd0b773600c2ccdef85d7da82d5"
+}

@@ -13,12 +13,18 @@ pub async fn load_journalist_dead_drop_messages(
     vault: &JournalistVault,
     now: DateTime<Utc>,
 ) -> anyhow::Result<usize> {
-    let Some(max_id) = dead_drop_list.max_id() else {
-        return Ok(0);
-    };
+    let created_after = vault.max_dead_drop_created_at().await?;
 
     let verified_dead_drop_list =
-        verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, now);
+        verify_user_to_journalist_dead_drop_list(keys, dead_drop_list, created_after, now);
+
+    // The cursor must only ever be advanced using verified dead drops, otherwise a malicious
+    // API could poison it with an unverifiable dead drop with a far future `created_at`.
+    let max_created_at = verified_dead_drop_list
+        .iter()
+        .map(|dead_drop| dead_drop.created_at)
+        .max()
+        .unwrap_or(created_after);
 
     let journalist_msg_key_pairs = vault
         .msg_key_pairs_for_decryption(now)
@@ -51,9 +57,9 @@ pub async fn load_journalist_dead_drop_messages(
 
     let messages_loaded = decrypted_messages.len();
     vault
-        .add_messages_from_user_to_journalist_and_update_max_dead_drop_id(
+        .add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
             &decrypted_messages,
-            max_id,
+            max_created_at,
             now,
         )
         .await?;

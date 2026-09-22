@@ -347,7 +347,7 @@ impl Database {
 
     pub async fn insert_j2u_processed_dead_drop(
         &self,
-        dead_drop_id: &i32,
+        dead_drop_created_at: DateTime<Utc>,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
         let mut connection = self.pool.acquire().await?;
@@ -355,12 +355,12 @@ impl Database {
         sqlx::query!(
             r#"
                 INSERT INTO j2u_processed_dead_drops (
-                    dead_drop_id,
+                    dead_drop_created_at,
                     processed_at
                 ) VALUES
                 ($1, $2)
             "#,
-            dead_drop_id,
+            dead_drop_created_at,
             now,
         )
         .execute(&mut *connection)
@@ -369,17 +369,17 @@ impl Database {
         Ok(())
     }
 
-    pub async fn get_max_j2u_dead_drop_id(&self) -> anyhow::Result<i32> {
+    pub async fn get_max_j2u_dead_drop_created_at(&self) -> anyhow::Result<DateTime<Utc>> {
         let mut connection = self.pool.acquire().await?;
         let row = sqlx::query!(
             r#"
-                SELECT MAX(dead_drop_id) AS "max_dead_drop_id: i32"
+                SELECT MAX(dead_drop_created_at) AS "max_created_at: DateTime<Utc>"
                 FROM j2u_processed_dead_drops;
             "#
         )
         .fetch_one(&mut *connection)
         .await?;
 
-        Ok(row.max_dead_drop_id.unwrap_or(0))
+        Ok(row.max_created_at.unwrap_or(DateTime::<Utc>::UNIX_EPOCH))
     }
 }

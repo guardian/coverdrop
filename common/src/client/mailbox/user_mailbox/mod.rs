@@ -8,7 +8,7 @@ use std::{
 };
 
 use crate::{
-    api::models::{dead_drops::DeadDropId, journalist_id::JournalistIdentity},
+    api::models::journalist_id::JournalistIdentity,
     crypto::{
         keys::encryption::UnsignedEncryptionKeyPair,
         pbkdf::{derive_secret_box_key_with_configuration, generate_salt, Argon2Configuration},
@@ -71,7 +71,7 @@ impl UserMailbox {
             secret: SecretMailboxData {
                 user_key_pair,
                 messages: FixedBuffer::default(),
-                max_dead_drop_id: 0,
+                max_dead_drop_created_at: DateTime::<Utc>::UNIX_EPOCH,
             },
             plain: PlainMailboxData { salt, org_pks },
         })
@@ -93,7 +93,7 @@ impl UserMailbox {
             secret: SecretMailboxData {
                 user_key_pair,
                 messages: FixedBuffer::default(),
-                max_dead_drop_id: 0,
+                max_dead_drop_created_at: DateTime::<Utc>::UNIX_EPOCH,
             },
             plain: PlainMailboxData { salt, org_pks },
         })
@@ -203,12 +203,12 @@ impl UserMailbox {
         self.secret.messages.push(message);
     }
 
-    pub fn max_dead_drop_id(&self) -> DeadDropId {
-        self.secret.max_dead_drop_id
+    pub fn max_dead_drop_created_at(&self) -> DateTime<Utc> {
+        self.secret.max_dead_drop_created_at
     }
 
-    pub fn set_max_dead_drop_id(&mut self, id: DeadDropId) {
-        self.secret.max_dead_drop_id = id;
+    pub fn set_max_dead_drop_created_at(&mut self, created_at: DateTime<Utc>) {
+        self.secret.max_dead_drop_created_at = created_at;
     }
 }
 
@@ -262,6 +262,14 @@ mod tests {
             mailbox_2.secret.user_key_pair.secret_key().to_bytes()
         );
         assert_eq!(mailbox_1.secret.messages, mailbox_2.secret.messages);
+        assert_eq!(
+            mailbox_1.max_dead_drop_created_at(),
+            chrono::DateTime::<chrono::Utc>::UNIX_EPOCH
+        );
+        assert_eq!(
+            mailbox_1.max_dead_drop_created_at(),
+            mailbox_2.max_dead_drop_created_at()
+        );
 
         assert_eq!(mailbox_1.plain.salt, mailbox_2.plain.salt);
 

@@ -5,11 +5,11 @@ backend default {
     .port = "{port}";
 }
 
-# dead-drop endpoint default cache time is set to 5 minutes 
-# which is slowing down key_consensus test. This endpoint 
-# doesn't need to be cached. 
+# dead-drop endpoint default cache time is set to 5 minutes
+# which is slowing down key_consensus test. This endpoint
+# doesn't need to be cached.
 sub vcl_recv {
-    if (regsub(req.url, "\?.*$", "") == "/v1/journalist/dead-drops") {
+    if (regsub(req.url, "\?.*$", "") == "/v1/user-to-journalist/dead-drops") {
         return(pass);
-    } 
+    }
 }

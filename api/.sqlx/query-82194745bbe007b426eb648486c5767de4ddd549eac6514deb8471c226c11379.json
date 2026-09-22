@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO user_dead_drops (data, signature, created_at, published_at)\n                VALUES ($1, $2, $3, $4)\n                ON CONFLICT DO NOTHING\n                RETURNING id\n            ",
+  "query": "\n                INSERT INTO journalist_to_user_dead_drops (data, signature, created_at, published_at)\n                VALUES ($1, $2, $3, $4)\n                ON CONFLICT DO NOTHING\n                RETURNING id\n            ",
   "describe": {
     "columns": [
       {
@@ -21,5 +21,5 @@
       false
     ]
   },
-  "hash": "f10a409d171be6bc2c973152642f2e5f25e416b47ba2f7c72242ce0271aca811"
+  "hash": "82194745bbe007b426eb648486c5767de4ddd549eac6514deb8471c226c11379"
 }

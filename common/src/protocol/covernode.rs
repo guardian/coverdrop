@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 
 use crate::api::models::dead_drops::{
@@ -117,14 +119,38 @@ pub fn encrypt_message_to_journalist(
 // Verification
 //
 
+/// Verifies a list of user to journalist dead drops.
+///
+/// A malicious API could replay dead drops the client has already processed, or serve the same
+/// dead drop many times within a single response. Since `created_at` and the dead drop contents
+/// are covered by the CoverNode signature, we can safely discard anything at or before the
+/// client's `created_after` cursor and drop duplicates within the batch.
 pub fn verify_user_to_journalist_dead_drop_list(
     keys: &CoverDropPublicKeyHierarchy,
     dead_drop_list: UnverifiedUserToJournalistDeadDropsList,
+    created_after: DateTime<Utc>,
     now: DateTime<Utc>,
 ) -> Vec<UserToJournalistDeadDrop> {
+    let mut seen_signatures = HashSet::new();
+
     dead_drop_list
         .dead_drops
         .into_iter()
+        .filter(|dead_drop| {
+            if dead_drop.created_at <= created_after {
+                tracing::warn!(
+                    "Discarding user to journalist dead drop created at or before the requested cursor"
+                );
+                return false;
+            }
+
+            if !seen_signatures.insert(dead_drop.signature.to_bytes()) {
+                tracing::warn!("Discarding duplicate user to journalist dead drop");
+                return false;
+            }
+
+            true
+        })
         .filter_map(|dead_drop| {
             // For each ID PK, check the dead drop
             for (_, id_pk) in keys.covernode_id_pk_iter() {
@@ -155,14 +181,33 @@ pub fn verify_user_to_journalist_dead_drop_list(
         .collect()
 }
 
+/// Verifies a list of journalist to user dead drops.
 pub fn verify_journalist_to_user_dead_drop_list(
     keys: &CoverDropPublicKeyHierarchy,
     dead_drop_list: &UnverifiedJournalistToUserDeadDropsList,
+    created_after: DateTime<Utc>,
     now: DateTime<Utc>,
 ) -> Vec<JournalistToUserDeadDrop> {
+    let mut seen_signatures = HashSet::new();
+
     dead_drop_list
         .dead_drops
         .iter()
+        .filter(|dead_drop| {
+            if dead_drop.created_at <= created_after {
+                tracing::warn!(
+                    "Discarding journalist to user dead drop created at or before the requested cursor"
+                );
+                return false;
+            }
+
+            if !seen_signatures.insert(dead_drop.signature.to_bytes()) {
+                tracing::warn!("Discarding duplicate journalist to user dead drop");
+                return false;
+            }
+
+            true
+        })
         .filter_map(|dead_drop| {
             // For each ID PK, check the dead drop
             for (_, id_pk) in keys.covernode_id_pk_iter() {

@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::api::models::dead_drops::DeadDropId;
-
 use super::UnverifiedJournalistToUserDeadDrop;
 
 /// A list of dead drops that has been served from the API but has not yet
@@ -23,9 +21,5 @@ impl UnverifiedJournalistToUserDeadDropsList {
 
     pub fn is_empty(&self) -> bool {
         self.dead_drops.is_empty()
-    }
-
-    pub fn max_id(&self) -> Option<DeadDropId> {
-        self.dead_drops.iter().map(|dead_drop| dead_drop.id).max()
     }
 }

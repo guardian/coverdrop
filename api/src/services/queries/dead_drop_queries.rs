@@ -29,7 +29,11 @@ impl DeadDropQueries {
         Self { pool }
     }
 
-    pub async fn get_journalist_to_user_dead_drops(
+    // TODO remove https://github.com/guardian/coverdrop-internal/issues/4202
+    #[deprecated(
+        note = "This function is deprecated, use `get_journalist_to_user_dead_drops` instead"
+    )]
+    pub async fn get_journalist_to_user_dead_drops_legacy(
         &self,
         ids_greater_than: DeadDropId,
         limit: NonZeroU32,
@@ -44,7 +48,7 @@ impl DeadDropQueries {
                 created_at AS "created_at: DateTime<Utc>",
                 data       AS "data: SerializedJournalistToUserDeadDropMessages",
                 signature  AS "signature: Signature<JournalistToUserDeadDropSignatureDataV2>"
-            FROM user_dead_drops
+            FROM journalist_to_user_dead_drops
             WHERE id > $1
             ORDER BY id ASC
             LIMIT $2
@@ -58,7 +62,40 @@ impl DeadDropQueries {
         Ok(dead_drops)
     }
 
-    pub async fn get_user_to_journalist_dead_drops(
+    pub async fn get_journalist_to_user_dead_drops(
+        &self,
+        created_after: DateTime<Utc>,
+        limit: NonZeroU32,
+    ) -> Result<Vec<UnverifiedJournalistToUserDeadDrop>, AppError> {
+        let mut connection = self.pool.acquire().await?;
+
+        let dead_drops = sqlx::query_as!(
+            UnverifiedJournalistToUserDeadDrop,
+            r#"
+            SELECT
+                id,
+                created_at AS "created_at: DateTime<Utc>",
+                data       AS "data: SerializedJournalistToUserDeadDropMessages",
+                signature  AS "signature: Signature<JournalistToUserDeadDropSignatureDataV2>"
+            FROM journalist_to_user_dead_drops
+            WHERE created_at > $1
+            ORDER BY created_at ASC
+            LIMIT $2
+            "#,
+            created_after,
+            limit.get() as i64
+        )
+        .fetch_all(&mut *connection)
+        .await?;
+
+        Ok(dead_drops)
+    }
+
+    // TODO remove https://github.com/guardian/coverdrop-internal/issues/4202
+    #[deprecated(
+        note = "This function is deprecated, use `get_user_to_journalist_dead_drops` instead"
+    )]
+    pub async fn get_user_to_journalist_dead_drops_legacy(
         &self,
         ids_greater_than: DeadDropId,
         limit: NonZeroU32,
@@ -74,12 +111,42 @@ impl DeadDropQueries {
                 data       AS "data: SerializedUserToJournalistDeadDropMessages",
                 signature  AS "signature: Signature<UserToJournalistDeadDropSignatureDataV2>",
                 epoch      AS "epoch: Epoch"
-            FROM journalist_dead_drops
+            FROM user_to_journalist_dead_drops
             WHERE id > $1
             ORDER BY id ASC
             LIMIT $2
             "#,
             ids_greater_than,
+            limit.get() as i64
+        )
+        .fetch_all(&mut *connection)
+        .await?;
+
+        Ok(dead_drops)
+    }
+
+    pub async fn get_user_to_journalist_dead_drops(
+        &self,
+        created_after: DateTime<Utc>,
+        limit: NonZeroU32,
+    ) -> Result<Vec<UnverifiedUserToJournalistDeadDrop>, AppError> {
+        let mut connection = self.pool.acquire().await?;
+
+        let dead_drops = sqlx::query_as!(
+            UnverifiedUserToJournalistDeadDrop,
+            r#"
+            SELECT
+                id,
+                created_at AS "created_at: DateTime<Utc>",
+                data       AS "data: SerializedUserToJournalistDeadDropMessages",
+                signature  AS "signature: Signature<UserToJournalistDeadDropSignatureDataV2>",
+                epoch      AS "epoch: Epoch"
+            FROM user_to_journalist_dead_drops
+            WHERE created_at > $1
+            ORDER BY created_at ASC
+            LIMIT $2
+            "#,
+            created_after,
             limit.get() as i64
         )
         .fetch_all(&mut *connection)
@@ -101,7 +168,7 @@ impl DeadDropQueries {
 
         let id = sqlx::query_scalar!(
             r#"
-                INSERT INTO user_dead_drops (data, signature, created_at, published_at)
+                INSERT INTO journalist_to_user_dead_drops (data, signature, created_at, published_at)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT DO NOTHING
                 RETURNING id
@@ -131,7 +198,7 @@ impl DeadDropQueries {
 
         let id = sqlx::query_scalar!(
             r#"
-                INSERT INTO journalist_dead_drops (data, signature, created_at, epoch, published_at)
+                INSERT INTO user_to_journalist_dead_drops (data, signature, created_at, epoch, published_at)
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT DO NOTHING
                 RETURNING id
@@ -152,14 +219,14 @@ impl DeadDropQueries {
         let mut connection = self.pool.acquire().await?;
 
         let journalist_query = sqlx::query!(
-            "DELETE FROM journalist_dead_drops WHERE created_at + INTERVAL '14 days' < $1",
+            "DELETE FROM user_to_journalist_dead_drops WHERE created_at + INTERVAL '14 days' < $1",
             now,
         )
         .execute(&mut *connection)
         .await?;
 
         let user_query = sqlx::query!(
-            "DELETE FROM user_dead_drops WHERE created_at + INTERVAL '14 days' < $1",
+            "DELETE FROM journalist_to_user_dead_drops WHERE created_at + INTERVAL '14 days' < $1",
             now,
         )
         .execute(&mut *connection)
@@ -185,7 +252,7 @@ impl DeadDropQueries {
                 SELECT
                     id         AS "id: DeadDropId",
                     created_at AS "created_at: DateTime<Utc>"
-                FROM user_dead_drops
+                FROM journalist_to_user_dead_drops
                 ORDER BY id DESC
                 LIMIT 10
             "#
@@ -207,7 +274,7 @@ impl DeadDropQueries {
                 SELECT
                     id         AS "id: DeadDropId",
                     created_at AS "created_at: DateTime<Utc>"
-                FROM journalist_dead_drops
+                FROM user_to_journalist_dead_drops
                 ORDER BY id DESC
                 LIMIT 10
             "#

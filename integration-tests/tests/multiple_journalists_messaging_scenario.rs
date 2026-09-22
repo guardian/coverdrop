@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use client::commands::{
     journalist::{
         dead_drops::load_journalist_dead_drop_messages,
@@ -8,7 +9,10 @@ use client::commands::{
     },
 };
 use integration_tests::{
-    api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
+    api_wrappers::{
+        get_and_verify_public_keys, get_journalist_to_user_dead_drops,
+        get_user_to_journalist_dead_drops,
+    },
     dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
     stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
@@ -50,8 +54,16 @@ async fn multiple_journalists_messaging_scenario() {
     //
 
     {
-        let user_dead_drops = get_user_dead_drops(stack.api_client_cached(), 0).await;
-        let journalist_dead_drops = get_journalist_dead_drops(stack.api_client_cached(), 0).await;
+        let user_dead_drops = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
+        let journalist_dead_drops = get_user_to_journalist_dead_drops(
+            stack.api_client_cached(),
+            DateTime::<Utc>::UNIX_EPOCH,
+        )
+        .await;
         assert!(user_dead_drops.is_empty());
         assert!(journalist_dead_drops.is_empty());
     }
@@ -95,9 +107,9 @@ async fn multiple_journalists_messaging_scenario() {
     {
         let journalist_vault = stack.load_static_journalist_vault().await;
 
-        let dead_drop_list = get_journalist_dead_drops(
+        let dead_drop_list = get_user_to_journalist_dead_drops(
             stack.api_client_cached(),
-            journalist_vault.max_dead_drop_id().await.unwrap(),
+            journalist_vault.max_dead_drop_created_at().await.unwrap(),
         )
         .await;
 
@@ -209,8 +221,11 @@ async fn multiple_journalists_messaging_scenario() {
     {
         let mut user_mailbox = stack.mailboxes().user();
 
-        let dead_drop_list =
-            get_user_dead_drops(stack.api_client_cached(), user_mailbox.max_dead_drop_id()).await;
+        let dead_drop_list = get_journalist_to_user_dead_drops(
+            stack.api_client_cached(),
+            user_mailbox.max_dead_drop_created_at(),
+        )
+        .await;
 
         assert_eq!(dead_drop_list.len(), 2);
 

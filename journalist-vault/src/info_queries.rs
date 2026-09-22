@@ -1,6 +1,6 @@
-use common::api::models::{
-    dead_drops::DeadDropId, journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity,
-};
+use chrono::{DateTime, Utc};
+use common::api::models::dead_drops::DeadDropId;
+use common::api::models::{journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity};
 use common::clap::Stage;
 use sqlx::SqliteConnection;
 
@@ -57,13 +57,32 @@ pub(crate) async fn max_dead_drop_id(conn: &mut SqliteConnection) -> anyhow::Res
     Ok(row.max_dead_drop_id)
 }
 
-pub(crate) async fn set_max_dead_drop_id(
+pub(crate) async fn max_dead_drop_created_at(
     conn: &mut SqliteConnection,
-    dead_drop_id: DeadDropId,
+) -> anyhow::Result<DateTime<Utc>> {
+    let row = sqlx::query!(
+        r#"
+            SELECT
+                max_dead_drop_created_at AS "max_dead_drop_created_at: DateTime<Utc>"
+            FROM vault_info
+        "#
+    )
+    .fetch_one(conn)
+    .await?;
+
+    Ok(row.max_dead_drop_created_at)
+}
+
+pub(crate) async fn set_max_dead_drop_created_at(
+    conn: &mut SqliteConnection,
+    created_at: DateTime<Utc>,
 ) -> anyhow::Result<()> {
-    sqlx::query!("UPDATE vault_info SET max_dead_drop_id = ?1", dead_drop_id)
-        .execute(conn)
-        .await?;
+    sqlx::query!(
+        "UPDATE vault_info SET max_dead_drop_created_at = ?1",
+        created_at
+    )
+    .execute(conn)
+    .await?;
 
     Ok(())
 }

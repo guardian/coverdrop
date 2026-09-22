@@ -80,8 +80,10 @@ impl ToJournalistPublishingService {
             // Loop until we successfully publish the dead drop.
             // Waiting with a back off between failed attempts
             loop {
-                let post_dead_drop_attempt =
-                    self.api_client.post_journalist_dead_drop(&dead_drop).await;
+                let post_dead_drop_attempt = self
+                    .api_client
+                    .post_user_to_journalist_dead_drop(&dead_drop)
+                    .await;
 
                 match post_dead_drop_attempt {
                     Ok(()) => {

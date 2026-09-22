@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use common::api::api_client::ApiClient;
 use common::api::models::dead_drops::UnverifiedJournalistToUserDeadDropsList;
 
@@ -6,8 +7,11 @@ use journalist_vault::{JournalistVault, VaultMessage};
 
 pub async fn pull_user_dead_drops(
     api_client: &ApiClient,
+    created_after: DateTime<Utc>,
 ) -> anyhow::Result<UnverifiedJournalistToUserDeadDropsList> {
-    api_client.pull_user_dead_drops(0).await
+    api_client
+        .pull_journalist_to_user_dead_drops(created_after)
+        .await
 }
 
 pub fn print_user_dead_drops(mailbox: &UserMailbox) -> anyhow::Result<()> {

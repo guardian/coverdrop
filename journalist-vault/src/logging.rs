@@ -212,7 +212,7 @@ pub async fn delete_old_logs(
     // Use checked_sub to safely handle potential underflow
     let two_weeks_ago = now
         .checked_sub_signed(Duration::weeks(2))
-        .unwrap_or(DateTime::<Utc>::MIN_UTC);
+        .unwrap_or(DateTime::<Utc>::UNIX_EPOCH);
 
     // First delete log entries for old sessions (to maintain foreign key constraints)
     sqlx::query!(
