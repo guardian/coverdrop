@@ -1,9 +1,8 @@
 use api::cache_control::PUBLIC_KEYS_TTL;
 use chrono::{DateTime, Utc};
-use client::commands::user::{
-    dead_drops::load_user_dead_drop_messages, messages::send_user_to_journalist_real_message,
-};
+use client::commands::user::messages::send_user_to_journalist_real_message;
 use common::protocol::constants::COVERNODE_MSG_KEY_ROTATE_AFTER;
+use coverdrop_service::JournalistCoverDropService;
 use integration_tests::{
     api_wrappers::{
         get_and_verify_public_keys, get_journalist_to_user_dead_drops,
@@ -21,7 +20,7 @@ const SLEEP_DURATION: Duration = Duration::from_secs(5);
 /// Tests the following key consensus issue related to cached responses from the API:
 /// - A covernode rotates its messaging keys, creating key 2, and sends the public key to the API
 /// - The covernode encrypts C2J messages and publishes a dead drop using key 2
-/// - The signal bridge receives the dead drop and pulls the key hierarchy from the API, receiving
+/// - The journalist receives the dead drop and pulls the key hierarchy from the API, receiving
 ///   a cached response from before key 2 was created. Its initial attempt to
 ///   decrypt the C2J message is aborted, but a subsequent attempt receives the
 ///   new key and successfully decrypts the message.
@@ -156,42 +155,92 @@ async fn key_consensus() -> anyhow::Result<()> {
 
     tokio::time::sleep(SLEEP_DURATION).await;
 
+    //
+    // Wait for the covernode to publish the dead drop, which is encrypted with the covernode
+    // messaging key that is not yet visible in the cached key hierarchy.
+    //
+    let dead_drop_published = {
+        let mut published = false;
+        for _ in 0..PUBLIC_KEYS_TTL.num_seconds() {
+            let dead_drops = get_user_to_journalist_dead_drops(
+                stack.api_client_uncached(),
+                DateTime::<Utc>::UNIX_EPOCH,
+            )
+            .await;
+
+            if !dead_drops.dead_drops.is_empty() {
+                published = true;
+                break;
+            }
+
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+        published
+    };
+
+    assert!(dead_drop_published, "covernode published no u2j dead drop");
+
+    //
+    // Journalist pulls the dead drop. Dead drops are pulled from the uncached API so that the only
+    // stale data in play is the key hierarchy.
+    //
+    let journalist_vault = stack.load_static_journalist_vault().await;
+    let coverdrop_service =
+        JournalistCoverDropService::new(stack.api_client_uncached(), &journalist_vault);
+
+    //
+    // The cached key hierarchy does not contain the covernode messaging key the dead drop was
+    // encrypted with, so the journalist must abort without advancing its dead drop cursor,
+    // otherwise the message would be skipped once the new key becomes visible.
+    //
+    let stale_keys_and_profiles =
+        get_and_verify_public_keys(stack.api_client_cached(), &anchor_org_pks, stack.now()).await;
+
+    assert_eq!(
+        stale_keys_and_profiles.max_epoch, initial_epoch,
+        "cached key hierarchy refreshed before the stale key scenario could be exercised"
+    );
+
+    let stale_messages = coverdrop_service
+        .pull_and_decrypt_dead_drops(&stale_keys_and_profiles, None::<fn(usize)>, stack.now())
+        .await
+        .expect("Pull and decrypt dead drops with a stale key hierarchy");
+
+    assert!(stale_messages.is_empty());
+    assert_eq!(
+        journalist_vault
+            .max_dead_drop_created_at()
+            .await
+            .expect("Get max dead drop created at"),
+        DateTime::<Utc>::UNIX_EPOCH
+    );
+
+    //
+    // Once the cached key hierarchy catches up the same call decrypts the message.
+    //
     let success: bool = {
         let mut success = false;
         // Retry for the duration of the TTL, checking once per second
         for i in 0..PUBLIC_KEYS_TTL.num_seconds() {
-            let keys_and_profiles = get_and_verify_public_keys(
-                stack.api_client_uncached(),
-                &anchor_org_pks,
-                stack.now(),
-            )
-            .await;
+            let keys_and_profiles =
+                get_and_verify_public_keys(stack.api_client_cached(), &anchor_org_pks, stack.now())
+                    .await;
 
-            let dead_drop_list = get_journalist_to_user_dead_drops(
-                stack.api_client_cached(),
-                user_mailbox.max_dead_drop_created_at(),
-            )
-            .await;
+            let messages = coverdrop_service
+                .pull_and_decrypt_dead_drops(&keys_and_profiles, None::<fn(usize)>, stack.now())
+                .await
+                .expect("Pull and decrypt dead drops");
 
-            load_user_dead_drop_messages(
-                &dead_drop_list,
-                &keys_and_profiles.keys,
-                &mut user_mailbox,
-                stack.now(),
-            )
-            .expect("Save users's messages to mailbox");
+            let found = messages.iter().any(|message| {
+                message
+                    .u2j_message
+                    .message
+                    .to_string()
+                    .is_ok_and(|message| message.contains(INITIAL_USER_MESSAGE))
+            });
 
-            let messages = user_mailbox
-                .messages()
-                .iter()
-                .map(|mm| {
-                    mm.message
-                        .to_string()
-                        .expect("read mailbox message to string")
-                })
-                .collect::<Vec<_>>();
-
-            if messages.iter().any(|r| r.contains(INITIAL_USER_MESSAGE)) {
+            if found {
+                assert!(keys_and_profiles.max_epoch > initial_epoch);
                 success = true;
                 break;
             } else {
@@ -199,7 +248,7 @@ async fn key_consensus() -> anyhow::Result<()> {
                     "Message not found, attempts remaining: {}",
                     PUBLIC_KEYS_TTL.num_seconds() - i
                 );
-                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                tokio::time::sleep(Duration::from_secs(1)).await;
             }
         }
         success
