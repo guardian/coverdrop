@@ -4,5 +4,7 @@
 <dict>
   <key>BundleIsRelocatable</key>
   <string>false</string>
+  <key>BundleIsVersionChecked</key>
+  <string>false</string>
 </dict>
 </plist>

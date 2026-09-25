@@ -1,6 +1,6 @@
 [package]
 name = "journalist-client"
-version = "0.1.0"
+version = "1.0.0"
 description = "A desktop and mobile client for journalist users of the CoverDrop service"
 authors = ["The Guardian"]
 edition = "2021"
