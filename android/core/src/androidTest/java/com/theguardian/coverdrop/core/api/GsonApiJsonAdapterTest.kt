@@ -125,18 +125,19 @@ class GsonApiJsonAdapterTest {
         assertThat(testJournalist.sortName).isEqualTo("journalist static test")
         assertThat(testJournalist.description).isEqualTo("static test journalist")
         assertThat(testJournalist.isDesk).isEqualTo(false)
-        // assertThat(testJournalist.tag).isEqualTo("6a139e67") // currently missing; add once available
+        assertThat(testJournalist.tag).isEqualTo("6a139e67")
 
         // check one leaf key to verify our parsing of the key, certificate, and timestamp
         val key = testJournalistKeys.msgPks.single()
 
         // this has the draw back the we'll need to manually update the following code lines whenever
         // the test vector changes. but it's the easiest way to verify the parsing of the key
-        assertThat(key.key).isEqualTo("3a5ced20eff3ba9a44b3833111e72e6cba10c84d4b1611ffc810b7dd52e0bb6b")
-        assertThat(key.certificate).isEqualTo("119467ee73e9445cdfda35efbe1bc354d65889aa553ccd2df7c3d9e5491c7e545420cd4b412c5301977e58326f0a91b1aa285c18e663ba9db79fa1e4dd17660b")
+        assertThat(key.key).isEqualTo("435858525a712c99ea5c0172197ea7313f491d093b09260ea503c54837f51637")
+        assertThat(key.certificate).isEqualTo("ccb94722dc4bc9a0b6f0ff5cc46b38c148e2ea76584120c3cabe820a86856a55d0d04fb92ea27b69320a2ddf49d955da888e325732e2fcc960b265fc4d5e3003")
+        assertThat(key.signature).isEqualTo(key.certificate)
 
         // this should be tracking `keys_generated_at.txt` for the test vector updates
-        val expectedExpiryDate = ZonedDateTime.parse("2023-10-18T19:06:24Z").toInstant()
+        val expectedExpiryDate = ZonedDateTime.parse("2026-09-21T15:03:31Z").toInstant()
         InstantSubject.assertThat(expectedExpiryDate).isCloseTo(
             expected = key.notValidAfter,
             tolerance = Duration.ofSeconds(100)

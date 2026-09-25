@@ -105,6 +105,9 @@ data class PublishedSignedSigningKey(
 
     @SerializedName("not_valid_after")
     val notValidAfter: Instant,
+
+    @SerializedName("signature")
+    val signature: String? = null,
 )
 
 @Keep // required to survive R8
@@ -117,6 +120,9 @@ data class PublishedSignedEncryptionKey(
 
     @SerializedName("not_valid_after")
     val notValidAfter: Instant,
+
+    @SerializedName("signature")
+    val signature: String? = null,
 )
 
 @Keep // required to survive R8

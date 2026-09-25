@@ -114,8 +114,8 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
             now = now
         )
 
-        val coverNodes = coverNodeKeyHierarchy.coverNodes.mapValues { (_, keyFamilies) ->
-            verifyKeyFamilies(keyFamilies, provisioningPk, now)
+        val coverNodes = coverNodeKeyHierarchy.coverNodes.mapValues { (coverNodeId, keyFamilies) ->
+            verifyKeyFamilies(keyFamilies, provisioningPk, IdKeyRole.COVERNODE_ID, coverNodeId, now)
         }
 
         return VerifiedCoverNodeKeyHierarchy(
@@ -141,8 +141,8 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
             now = now
         )
 
-        val journalists = journalistsKeyHierarchy.journalists.mapValues { (_, keyFamilies) ->
-            verifyKeyFamilies(keyFamilies, provisioningPk, now)
+        val journalists = journalistsKeyHierarchy.journalists.mapValues { (journalistId, keyFamilies) ->
+            verifyKeyFamilies(keyFamilies, provisioningPk, IdKeyRole.JOURNALIST_ID, journalistId, now)
         }
 
         return VerifiedJournalistsKeyHierarchy(
@@ -154,18 +154,21 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
     /**
      * Verifies a list of [PublishedKeyFamily] under the given [provisioningKey]. The returned
      * list will only contain [VerifiedKeyFamily] items where the respective
-     * [VerifiedKeyFamily.idPk] verified under the [provisioningKey]. Also, each item in the
+     * [VerifiedKeyFamily.idPk] verified under the [provisioningKey] for the given [role] and
+     * [identity] (the key under which the families were published). Also, each item in the
      * [VerifiedKeyFamily.msgPks] list will only contain [VerifiedSignedEncryptionKey] items that
      * verified under the [VerifiedKeyFamily.idPk].
      */
     @VisibleForTesting
     fun verifyKeyFamilies(
-        journalistsKeys: List<PublishedKeyFamily>,
+        keyFamilies: List<PublishedKeyFamily>,
         provisioningKey: VerifiedSignedSigningKey,
+        role: IdKeyRole,
+        identity: String,
         now: Instant,
     ): List<VerifiedKeyFamily> {
-        return journalistsKeys.mapNotNull { keyFamily ->
-            verifyKeyFamily(keyFamily, provisioningKey, now)
+        return keyFamilies.mapNotNull { keyFamily ->
+            verifyKeyFamily(keyFamily, provisioningKey, role, identity, now)
         }
     }
 
@@ -178,11 +181,15 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
     private fun verifyKeyFamily(
         keyFamily: PublishedKeyFamily,
         provisioningKey: VerifiedSignedSigningKey,
+        role: IdKeyRole,
+        identity: String,
         now: Instant,
     ): VerifiedKeyFamily? {
-        val idPk = verifySigningKeyWithExpiryOrNull(
+        val idPk = verifyIdSigningKeyWithExpiryOrNull(
             candidate = keyFamily.idPk,
             parent = provisioningKey.pk,
+            role = role,
+            identity = identity,
             now = now
         ) ?: return null
 
@@ -236,7 +243,7 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
      * Verifies the [candidate] signing key by checking that the expiry date has not been passed
      * and the its certificate signs the key and the not-valid-after date using the [parent] key.
      *
-     * @return the [VerifiedSignedEncryptionKey] iff all checks pass; otherwise `null`
+     * @return the [VerifiedSignedSigningKey] iff all checks pass; otherwise `null`
      */
     fun verifySigningKeyWithExpiryOrNull(
         candidate: PublishedSignedSigningKey,
@@ -251,8 +258,9 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
     }
 
     /**
-     * Verifies the [candidate] singing key by checking that the expiry date has not been passed
+     * Verifies the [candidate] signing key by checking that the expiry date has not been passed
      * and the its certificate signs the key and the not-valid-after date using the [parent] key.
+     * If a `signature` is present, it must verify over the same data.
      *
      * @throws [KeyExpirationException] if the key has expired.
      * @throws [KeyVerificationException] if the key is not valid for any other reason.
@@ -264,23 +272,106 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
         now: Instant,
     ): VerifiedSignedSigningKey {
         val candidateKey = PublicSigningKey(candidate.key.hexDecode())
-        val candidateNotValidAfter = candidate.notValidAfter
-        val candidateCertificateData = SigningKeyCertificateData.from(
-            key = candidateKey,
-            notValidAfter = candidateNotValidAfter
+        return verifySigningKeyOrThrow(
+            candidate = candidate,
+            candidateKey = candidateKey,
+            parent = parent,
+            now = now,
+            signatureData = SigningKeyCertificateData.from(
+                key = candidateKey,
+                notValidAfter = candidate.notValidAfter
+            ),
         )
+    }
+
+    /**
+     * Like [verifySigningKeyWithExpiryOrNull], but for identity keys where a present `signature`
+     * must bind the key to the given [role] and [identity].
+     *
+     * @return the [VerifiedSignedSigningKey] iff all checks pass; otherwise `null`
+     */
+    fun verifyIdSigningKeyWithExpiryOrNull(
+        candidate: PublishedSignedSigningKey,
+        parent: PublicSigningKey,
+        role: IdKeyRole,
+        identity: String,
+        now: Instant,
+    ): VerifiedSignedSigningKey? {
+        return try {
+            verifyIdSigningKeyWithExpiryOrThrow(candidate, parent, role, identity, now)
+        } catch (e: KeyVerificationException) {
+            null
+        }
+    }
+
+    /**
+     * Like [verifySigningKeyWithExpiryOrThrow], but for identity keys where a present `signature`
+     * must bind the key to the given [role] and [identity].
+     *
+     * @throws [KeyExpirationException] if the key has expired.
+     * @throws [KeyVerificationException] if the key is not valid for any other reason.
+     */
+    @VisibleForTesting
+    fun verifyIdSigningKeyWithExpiryOrThrow(
+        candidate: PublishedSignedSigningKey,
+        parent: PublicSigningKey,
+        role: IdKeyRole,
+        identity: String,
+        now: Instant,
+    ): VerifiedSignedSigningKey {
+        val candidateKey = PublicSigningKey(candidate.key.hexDecode())
+        return verifySigningKeyOrThrow(
+            candidate = candidate,
+            candidateKey = candidateKey,
+            parent = parent,
+            now = now,
+            signatureData = IdKeyCertificateData.from(
+                key = candidateKey,
+                notValidAfter = candidate.notValidAfter,
+                role = role,
+                identity = identity
+            ),
+        )
+    }
+
+    private fun verifySigningKeyOrThrow(
+        candidate: PublishedSignedSigningKey,
+        candidateKey: PublicSigningKey,
+        parent: PublicSigningKey,
+        now: Instant,
+        signatureData: Signable,
+    ): VerifiedSignedSigningKey {
+        val candidateNotValidAfter = candidate.notValidAfter
 
         // CHECK 1: verify that the not-valid-after date has not passed
         if (now.isAfter(candidateNotValidAfter)) {
             throw KeyExpirationException("failed to verify signing key: expired on $candidateNotValidAfter")
         }
 
-        // CHECK 2: verify that the signature is valid
+        // CHECK 2: verify the signature (if present)
+        candidate.signature?.let { signature ->
+            try {
+                Signature.verifyOrThrow(
+                    libSodium = libSodium,
+                    signingPk = parent,
+                    data = signatureData,
+                    signature = Signature(signature.hexDecode())
+                )
+            } catch (e: Exception) {
+                throw KeyVerificationException("failed to verify signing key signature: ${e.message}", e)
+            }
+        }
+
+        // CHECK 3: verify that the certificate is valid
+        // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys carry a signature
         try {
             Signature.verifyOrThrow(
                 libSodium = libSodium,
                 signingPk = parent,
-                data = candidateCertificateData,
+                data = SigningKeyCertificateData.from(
+                    key = candidateKey,
+                    notValidAfter = candidateNotValidAfter
+                ),
                 signature = Signature(candidate.certificate.hexDecode())
             )
             return VerifiedSignedSigningKey(pk = candidateKey)
@@ -332,7 +423,21 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
             throw KeyExpirationException("failed to verify encryption key: expired on $candidateNotValidAfter")
         }
 
-        // CHECK 2: verify that the signature is valid
+        // CHECK 2: verify the signature (if present)
+        candidate.signature?.let { signature ->
+            try {
+                Signature.verifyOrThrow(
+                    libSodium = libSodium,
+                    signingPk = parent,
+                    data = candidateCertificateData,
+                    signature = Signature(signature.hexDecode())
+                )
+            } catch (e: Exception) {
+                throw KeyVerificationException("failed to verify encryption key signature: ${e.message}", e)
+            }
+        }
+
+        // CHECK 3: verify that the certificate is valid
         try {
             Signature.verifyOrThrow(
                 libSodium = libSodium,

@@ -31,13 +31,13 @@ class VerifiedKeysTest {
     @Test
     fun mostRecentMessagingKeyForEachCoverNode_whenTwoValidKeys_thenLatestReturned() {
         val (verifiedKeys, now) = getVerifiedKeysAndInstant(
-            testScenario = TestScenario.KeyRotations,
+            testScenario = TestScenario.CoverNodeKeyRotations,
             filename = "003_covernode_msg_rotated_2.json"
         )
 
         val actual = verifiedKeys.mostRecentMessagingKeyForEachCoverNode(TestClock(now))
         assertThat(actual.values).hasSize(1)
-        assertThat(actual.values.single().notValidAfter).isGreaterThan(Instant.parse("2023-10-27T00:00:00.0Z"))
+        assertThat(actual.values.single().notValidAfter).isGreaterThan(Instant.parse("2026-10-01T00:00:00.0Z"))
     }
 
     @Test
@@ -69,15 +69,41 @@ class VerifiedKeysTest {
     @Test
     fun mostRecentMessagingKeyForJournalist_whenThreeValidKeys_thenLatestReturned() {
         val (verifiedKeys, now) = getVerifiedKeysAndInstant(
-            testScenario = TestScenario.KeyRotations,
-            filename = "003_covernode_msg_rotated_2.json"
+            testScenario = TestScenario.Messaging,
+            filename = "003_journalist_replied_and_processed.json"
+        )
+        val journalistId = "static_test_journalist"
+
+        // the vectors only contain one journalist messaging key; add two rotated ones
+        val hierarchy = verifiedKeys.keys.single()
+        val journalistsHierarchy = hierarchy.journalistsHierarchies.single()
+        val family = journalistsHierarchy.journalists.getValue(journalistId).single()
+        val publishedKey = family.msgPks.single()
+        val latestExpiry = publishedKey.notValidAfter + Duration.ofDays(14)
+        val rotatedKeys = listOf(
+            publishedKey,
+            publishedKey.copy(notValidAfter = latestExpiry),
+            publishedKey.copy(notValidAfter = publishedKey.notValidAfter + Duration.ofDays(7)),
+        )
+        val withRotatedKeys = verifiedKeys.copy(
+            keys = listOf(
+                hierarchy.copy(
+                    journalistsHierarchies = listOf(
+                        journalistsHierarchy.copy(
+                            journalists = mapOf(
+                                journalistId to listOf(VerifiedKeyFamily(family.idPk, rotatedKeys))
+                            )
+                        )
+                    )
+                )
+            )
         )
 
-        val actual = verifiedKeys.mostRecentMessagingKeyForJournalist(
-            journalistId = "static_test_journalist",
+        val actual = withRotatedKeys.mostRecentMessagingKeyForJournalist(
+            journalistId = journalistId,
             clock = TestClock(now)
         )
-        assertThat(actual.notValidAfter).isGreaterThan(Instant.parse("2023-10-27T00:00:00.0Z"))
+        assertThat(actual.notValidAfter).isEqualTo(latestExpiry)
     }
 
     @Test(expected = IllegalStateException::class)

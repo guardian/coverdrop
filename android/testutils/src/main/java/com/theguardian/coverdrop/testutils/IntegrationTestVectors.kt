@@ -4,23 +4,26 @@ import android.content.Context
 import java.io.File
 import java.time.Instant
 
-enum class TestScenario(val path: String) {
+enum class TestScenario(val path: String, val keysPath: String = "integration-test-keys") {
     Minimal("minimal_scenario"),
-    MinimalLegacy("minimal_scenario_legacy"),
+    MinimalOldWithoutIdKeySignature(
+        path = "minimal_old_without_id_key_signature_scenario",
+        keysPath = "integration-test-vectors/minimal_old_without_id_key_signature_scenario/keys",
+    ),
     SetSystemStatus("set_system_status"),
     Messaging("messaging_scenario"),
-    KeyRotations("key_rotations"),
+    CoverNodeKeyRotations("covernode_key_rotations"),
 }
 
 open class IntegrationTestVectors(
     private val context: Context,
-    scenario: TestScenario,
+    private val scenario: TestScenario,
 ) {
     private val basePathFile = File(File("integration-test-vectors"), scenario.path)
 
     fun readJson(folder: String, filename: String? = null) = readString(folder, filename)
 
-    fun getKeys() = IntegrationTestKeys(context)
+    fun getKeys() = IntegrationTestKeys(context, scenario.keysPath)
 
     fun getNow(filename: String? = null): Instant {
         return when (filename) {

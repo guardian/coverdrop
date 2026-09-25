@@ -42,6 +42,12 @@
                     "certificate": "57cbd726b7d5533765adbfc3f47bbcf86f7498f65baed240f94f8f3a8f0ec82ca74ed577d7fbc4aebba1604c390d3a1e4fc0e169ef7c293072843bfc5d124608",
                     "not_valid_after": "2026-09-21T15:04:23.264653Z",
                     "signature": "57cbd726b7d5533765adbfc3f47bbcf86f7498f65baed240f94f8f3a8f0ec82ca74ed577d7fbc4aebba1604c390d3a1e4fc0e169ef7c293072843bfc5d124608"
+                  },
+                  {
+                    "key": "3775f4841e298d1fddd86a7e5b45bc03ee63077b345f15ea64723dead8dffe46",
+                    "certificate": "3da13106f979b250586bf000794f430f9c53f648973c89706cf92ec4891248b6ae2b98fcf4af6a6e4eeddcda31fb05d3e4494920ac872da647f728a8fb564500",
+                    "not_valid_after": "2026-09-29T15:04:35.576020756Z",
+                    "signature": "3da13106f979b250586bf000794f430f9c53f648973c89706cf92ec4891248b6ae2b98fcf4af6a6e4eeddcda31fb05d3e4494920ac872da647f728a8fb564500"
                   }
                 ]
               }
@@ -61,17 +67,17 @@
             "static_test_journalist": [
               {
                 "id_pk": {
-                  "key": "209917c30904c6017200fd7230711ce097abccef98a49302328849727041f0f9",
-                  "certificate": "709e5ffbc4ab511a8c8f5dcd8ca0819694e4f62149b8a705f399e28155280bc9414004ade85a6e4b0941ec99690dd4bafc74e2693e93e46635200b0a96655b0e",
+                  "key": "7b853504775f40b532417554db955faba1f5f9cb9f0c80cdb04d094dfcadff5c",
+                  "certificate": "74102b3eea864108c255dc7e3faa48b5e252d6f266942baaac2243ee23023cb4ac8b526fe99587ebb452ee4de1e1c35f4dc9fa8e3a5886bb223b37e8f1f47d0b",
                   "not_valid_after": "2026-11-02T15:03:31Z",
-                  "signature": "45e02965306e404c2a3eafe258f26d72f7861b57d26dc2e31273958f832efd0314f663e2a4ef3754659f103940850865f122ecb0bc6d76a47f0f38cf836ba909"
+                  "signature": "39dd1c637a0bdcdb54fc64c0adafd10ac2813a1bd63bb0d80ba01e7115fce75937b01a819942989a8f99e272e453b7b9a3b7a15300785114cfdd54833506de09"
                 },
                 "msg_pks": [
                   {
-                    "key": "435858525a712c99ea5c0172197ea7313f491d093b09260ea503c54837f51637",
-                    "certificate": "ccb94722dc4bc9a0b6f0ff5cc46b38c148e2ea76584120c3cabe820a86856a55d0d04fb92ea27b69320a2ddf49d955da888e325732e2fcc960b265fc4d5e3003",
+                    "key": "86ffc7bfe1276ce5070a0cfd5b3bb7eba74e13027c2d452d413ce802d2a5f236",
+                    "certificate": "ceabdc01a9201092599d4d42fd0e99b6891dc423115a1a71e0683688eb74b0728d00ee33354d7e80c87962c89a4ce9c58264f5f128b82557019c9633d1b8bd01",
                     "not_valid_after": "2026-09-21T15:03:31Z",
-                    "signature": "ccb94722dc4bc9a0b6f0ff5cc46b38c148e2ea76584120c3cabe820a86856a55d0d04fb92ea27b69320a2ddf49d955da888e325732e2fcc960b265fc4d5e3003"
+                    "signature": "ceabdc01a9201092599d4d42fd0e99b6891dc423115a1a71e0683688eb74b0728d00ee33354d7e80c87962c89a4ce9c58264f5f128b82557019c9633d1b8bd01"
                   }
                 ]
               }
@@ -80,10 +86,10 @@
           "sentinel": {
             "static_test_journalist_sentinel": [
               {
-                "key": "f09b33e250e6c0dc6f17b0310d2453b0092a5c8374ed51f0137244c03ba2fdc3",
-                "certificate": "3f92460c5d2ede768cd0c6d627f06378f5b57aea2ecd29625e5d1980ad3b31e9801304ade34783efd71625e77bbbef301f80e41bd1b9f00d68c62af8c11c1605",
+                "key": "1e560709bc670a8b7f7229c7545ee3c309e30a2741d6b291939da19c73bb8b6e",
+                "certificate": "e10f4a5e267ee33aac51d005609c4fce7ed5dd736b34b7bed730b6aa0b95251bd225c00ab2e87324d7aa1107d424c99c603afee698fb2a6175e4761ed9b5760d",
                 "not_valid_after": "2026-11-02T15:03:31Z",
-                "signature": "7f404911bde163b03855a4600377236db32cd90c0402e0ac2f79a1b3debdddf6b68146a87e1f4609340458f1b961618f7ba6d92601a03e25e75d99c73c319b09"
+                "signature": "44a0c7c0d4bcee4ba23f49761d4fc8dcf67ff3d5ce25d1e44846fa31ed99574fb9d8cb07af6c4a0ba79effb69cf99abcea254af69f3211d0fd0c3122781b6109"
               }
             ]
           }
@@ -92,7 +98,7 @@
       "backup": []
     }
   ],
-  "max_epoch": 9,
+  "max_epoch": 10,
   "sentinel_profiles": [
     {
       "id": "static_test_journalist_sentinel",

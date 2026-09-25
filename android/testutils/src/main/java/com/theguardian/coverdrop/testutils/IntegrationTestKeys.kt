@@ -12,8 +12,11 @@ import java.io.File
 import java.time.Instant
 
 
-class IntegrationTestKeys(private val context: Context) {
-    private val basePathFile = File("integration-test-keys")
+class IntegrationTestKeys(
+    private val context: Context,
+    keysPath: String = "integration-test-keys",
+) {
+    private val basePathFile = File(keysPath)
 
     @SuppressLint("VisibleForTests")
     private val gson = createGsonInstance()
@@ -24,17 +27,22 @@ class IntegrationTestKeys(private val context: Context) {
     }
 
     fun getOrganisationKey(): PublishedSignedSigningKey {
-        val organisationKeyJson = readString("organization-73ee6a1a.pub.json")
+        val organisationKeyJson = readString(findSingleFile("organization-", ".pub.json"))
         return gson.fromJson(organisationKeyJson, PublishedSignedSigningKey::class.java)
     }
 
     fun getUserKeyPair(): TestUserKeyPair {
-        val userKeyPairJson = readString("user-4511b55a.keypair.json")
+        val userKeyPairJson = readString(findSingleFile("user-", ".keypair.json"))
         return gson.fromJson(userKeyPairJson, TestUserKeyPair::class.java)
     }
 
     fun getTrustedOrganisationKeys(): List<PublicSigningKey> {
         return listOf(PublicSigningKey.fromHexEncodedString(getOrganisationKey().key))
+    }
+
+    private fun findSingleFile(prefix: String, suffix: String): String {
+        return context.assets.list(basePathFile.path)!!
+            .single { it.startsWith(prefix) && it.endsWith(suffix) }
     }
 
     private fun readString(filename: String): String {

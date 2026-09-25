@@ -29,28 +29,15 @@
             "covernode_001": [
               {
                 "id_pk": {
-                  "key": "a3604db7eeb3a7f1c3bb4257cea7fc8404d8d3887597951f92ecdc06b560887c",
-                  "certificate": "9dc6d11644aa0f4181ac25f081e39ccb098616b943c4464dd6ba7bfdce442f6649945afca70d41268bbdfe4cf58d9d1940edb23015b16dca10ca8ccc37b1dd03",
-                  "not_valid_after": "2023-11-17T19:06:41.887306543Z"
-                },
-                "msg_pks": []
-              },
-              {
-                "id_pk": {
                   "key": "504560a698983c7864b20fc1d4ee115901a38e7d958f5e40accbed0497ecad17",
                   "certificate": "a6d80476390948c98396fac7c401ffc6678065bb30e3e3ec3a58dc44982a742de0b06310303e3939dae0b428ed92d77bb61fb4d964d87b402fc4b1956c01310e",
                   "not_valid_after": "2023-11-01T19:06:21.976033Z"
                 },
                 "msg_pks": [
                   {
-                    "key": "2e8dee14ed603ddec18179b93f37e5241816a9a4abbc425848f8a81380f1f627",
-                    "certificate": "a660cdf8f5966030ac8b41a9791f11deb6f59263d7f1266e879565118e9c8f741bd67ab96f3d5520455458626c053b69ec68e6e21bd84bce8b9bbbc13652650c",
-                    "not_valid_after": "2023-11-01T19:06:21.976033Z"
-                  },
-                  {
-                    "key": "be00c0b4e05543d30a0667ccd897b3df7fe668bd99c965e00afc88eb6a5fa770",
-                    "certificate": "2c30f7e1d1359af64c310ec7e4dd4401ee5928dfd543a157e88a10b9ebd6bd770755eaa3c925a473e020316055b84eccb52ec826c76ab2f535a1a61cfa14170f",
-                    "not_valid_after": "2023-10-26T19:06:39.760511335Z"
+                    "key": "ce58c3b436382acb26b0e20d6d8599e6472893284e3d0f2dd9c844205ba9fd65",
+                    "certificate": "ba17a043967d30b20bded9e916b7e5baac52409aa650a8afec4358183d67561740ff740b4b3a5d3f1f1393e94c07c917d2a32a2b4a32e0bbb835dec8eb8dc30f",
+                    "not_valid_after": "2023-10-18T19:06:22.771214Z"
                   }
                 ]
               }
@@ -69,15 +56,15 @@
             "static_test_journalist": [
               {
                 "id_pk": {
-                  "key": "8abc860f468c9968f23b7b128e4cb77ca043a2f367c1a1a8806ad2a19c90a7eb",
-                  "certificate": "910e26c0e81e7ecb3e6f0b207ff427c6afbadec8e4c3f8499d5b894a4c7079497250e7b0c1825f4eeed89046f96c7315596c8fe9584403c49de730e415f40606",
+                  "key": "792638e4db6aa9b1b46516dcdb632e6364fe8149badadc11d2bbc3698880e082",
+                  "certificate": "9af651e8f8f4822abefc27ced4bc569d769d835571668cd4e218b5ad8130e94a6b7b6a66472c31b6818c13926b6669ea3010c2fa2339cc696c1efb90d9abe80a",
                   "not_valid_after": "2023-11-29T19:06:19Z"
                 },
                 "msg_pks": [
                   {
-                    "key": "3c9c29f0dfeae677ae6b46754b3550913158c574e426d238a2d5ade526484f05",
-                    "certificate": "9f6695f38a6403dc96c96e964d19c9009f484215688dfd48b19c8cd4e3b7e3afca05367d2e3d17662b4fe2f6d5f9f24df00523b67db469c48f4dc0cec91cd00e",
-                    "not_valid_after": "2023-11-03T19:06:40.525155209Z"
+                    "key": "3a5ced20eff3ba9a44b3833111e72e6cba10c84d4b1611ffc810b7dd52e0bb6b",
+                    "certificate": "119467ee73e9445cdfda35efbe1bc354d65889aa553ccd2df7c3d9e5491c7e545420cd4b412c5301977e58326f0a91b1aa285c18e663ba9db79fa1e4dd17660b",
+                    "not_valid_after": "2023-10-18T19:06:19Z"
                   }
                 ]
               }
@@ -87,5 +74,5 @@
       ]
     }
   ],
-  "max_epoch": 12
+  "max_epoch": 8
 }

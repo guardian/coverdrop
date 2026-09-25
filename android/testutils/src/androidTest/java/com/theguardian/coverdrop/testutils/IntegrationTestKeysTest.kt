@@ -38,4 +38,13 @@ class IntegrationTestKeysTest {
         assertThat(actual.publicKey.key).isNotEmpty()
         assertThat(actual.secretKey).isNotEmpty()
     }
+
+    @Test
+    fun testReadOrganizationKey_whenScenarioKeysPath_thenReadsScenarioKey() {
+        val testVectors = IntegrationTestKeys(
+            context,
+            TestScenario.MinimalOldWithoutIdKeySignature.keysPath
+        )
+        assertThat(testVectors.getOrganisationKey().key).startsWith("73ee6a1a")
+    }
 }

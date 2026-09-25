@@ -23,10 +23,10 @@ import java.time.Duration
 import java.time.Instant
 
 
-class KeyRotationsScenario {
+class CoverNodeKeyRotationsScenario {
 
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val scenario = TestScenario.KeyRotations
+    private val scenario = TestScenario.CoverNodeKeyRotations
 
     private val testVectors = IntegrationTestVectors(context, scenario)
     private val testClock = TestClock(nowOverride = testVectors.getNow())
@@ -63,7 +63,7 @@ class KeyRotationsScenario {
     }
 
     @Test
-    fun testKeyRotationsScenario(): Unit = runBlocking {
+    fun testCoverNodeKeyRotationsScenario(): Unit = runBlocking {
         suspend fun runAppStart(filename: String) {
             testClock.setNow(nowOverride = testVectors.getNow(filename))
             testApiCallProvider.setPublicKeysFileName(filename)
@@ -81,10 +81,10 @@ class KeyRotationsScenario {
                         testClock
                     ).notValidAfter
                 )
-                .isCloseTo(Instant.parse("2023-10-18T19:00:00Z"), tolerance = Duration.ofHours(1))
+                .isCloseTo(Instant.parse("2026-09-21T15:04:00Z"), tolerance = Duration.ofHours(1))
             InstantSubject
                 .assertThat(mostRecentMessagingKeyForEachCoverNode(testClock)["covernode_001"]?.notValidAfter)
-                .isCloseTo(Instant.parse("2023-10-18T19:00:00Z"), tolerance = Duration.ofHours(1))
+                .isCloseTo(Instant.parse("2026-09-21T15:04:00Z"), tolerance = Duration.ofHours(1))
         }
 
         // restarting after the first key rotation (covernode)
@@ -93,7 +93,7 @@ class KeyRotationsScenario {
         publicDataRepository.getVerifiedKeys().apply {
             InstantSubject
                 .assertThat(mostRecentMessagingKeyForEachCoverNode(testClock)["covernode_001"]?.notValidAfter)
-                .isCloseTo(Instant.parse("2023-10-26T19:00:00Z"), tolerance = Duration.ofHours(1))
+                .isCloseTo(Instant.parse("2026-09-29T15:04:00Z"), tolerance = Duration.ofHours(1))
         }
 
         // restarting after the second key rotation (journalist and covernode)
@@ -102,7 +102,7 @@ class KeyRotationsScenario {
         publicDataRepository.getVerifiedKeys().apply {
             InstantSubject
                 .assertThat(mostRecentMessagingKeyForEachCoverNode(testClock)["covernode_001"]?.notValidAfter)
-                .isCloseTo(Instant.parse("2023-11-01T19:00:00Z"), tolerance = Duration.ofHours(1))
+                .isCloseTo(Instant.parse("2026-10-05T15:04:00Z"), tolerance = Duration.ofHours(1))
         }
     }
 }
