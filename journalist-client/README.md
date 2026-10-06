@@ -14,8 +14,8 @@ Add the following content for staging
 ```
 {
   "STAGING": {
-    "apiUrl": "<staging-api-url>",
-    "deliveryServiceUrl": "<staging-delivery-service-url>"
+    "apiUrl": "https://secure-messaging-api-staging.guardianapis.com/",
+    "deliveryServiceUrl": "https://secure-messaging-delivery-service-staging.guardianapis.com/"
   }
 }
 ```
