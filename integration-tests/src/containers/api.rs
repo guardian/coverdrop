@@ -21,8 +21,8 @@ pub async fn start_api(
     delete_old_dead_drops_poll_seconds: Option<i64>,
     default_journalist_id: Option<String>,
     kinesis_ip: IpAddr,
-    minio_url: String,
-    minio_host: Host,
+    s3_url: String,
+    s3_host: Host,
 ) -> ContainerAsync<Api> {
     let api_image_args = ApiArgs::new(
         postgres_ip,
@@ -32,8 +32,8 @@ pub async fn start_api(
         default_journalist_id,
         kinesis_ip,
         KINESIS_PORT,
-        minio_url,
-        minio_host.clone(),
+        s3_url,
+        s3_host.clone(),
     );
     let cmd = api_image_args.into_cmd();
 
@@ -44,10 +44,10 @@ pub async fn start_api(
             .with_cmd(cmd.clone())
             .with_mount(keys_volume.clone())
             .with_network(network)
-            // We want to be able to issue presigned urls from minio on the `localhost` domain,
-            // This means we need to able to call minio on the localhost domain from the s3 client in the api
-            // This is why we have setup a local hosts entry to map localhost to the minio IP address.
-            .with_host("localhost", minio_host.clone())
+            // We want to be able to issue presigned urls from the S3-compatible store on the `localhost` domain,
+            // This means we need to able to call it on the localhost domain from the s3 client in the api
+            // This is why we have setup a local hosts entry to map localhost to the S3 container's IP address.
+            .with_host("localhost", s3_host.clone())
             .with_startup_timeout(Duration::from_secs(120))
     })
     .await

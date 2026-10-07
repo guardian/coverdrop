@@ -11,5 +11,5 @@ SCRIPT_PATH=$( cd "$(dirname "$0")" ; pwd -P )
 "$SCRIPT_PATH"/kinesis.sh
 "$SCRIPT_PATH"/delivery-service.sh
 "$SCRIPT_PATH"/postgres.sh
-"$SCRIPT_PATH"/minio.sh
+"$SCRIPT_PATH"/garage.sh
 "$SCRIPT_PATH"/varnish.sh

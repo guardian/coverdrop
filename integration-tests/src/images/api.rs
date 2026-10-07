@@ -21,9 +21,9 @@ pub struct ApiArgs {
     default_journalist_id: Option<String>,
     kinesis_ip: IpAddr,
     kinesis_port: u16,
-    minio_url: String,
+    s3_url: String,
     #[allow(dead_code)]
-    minio_host: Host,
+    s3_host: Host,
 }
 
 impl ApiArgs {
@@ -36,8 +36,8 @@ impl ApiArgs {
         default_journalist_id: Option<String>,
         kinesis_ip: IpAddr,
         kinesis_port: u16,
-        minio_url: String,
-        minio_host: Host,
+        s3_url: String,
+        s3_host: Host,
     ) -> Self {
         Self {
             db_ip,
@@ -47,8 +47,8 @@ impl ApiArgs {
             default_journalist_id,
             kinesis_ip,
             kinesis_port,
-            minio_url,
-            minio_host,
+            s3_url,
+            s3_host,
         }
     }
 }
@@ -77,13 +77,13 @@ impl ApiArgs {
             self.kinesis_ip, self.kinesis_port
         );
 
-        let minio_flags = format!("--s3-endpoint-url={}", self.minio_url);
+        let s3_flags = format!("--s3-endpoint-url={}", self.s3_url);
 
         let task_runner_mode = "--task-runner-mode=timer-and-manually-triggered";
         let command = format!(
             "{set_time_arg} && ./api --stage=dev --keys-path=/var/keys {postgres_arg} \
             {delete_old_dead_drops_poll_seconds_arg} {default_journalist_id_arg} \
-            {task_runner_mode} {kinesis_flags} {minio_flags}"
+            {task_runner_mode} {kinesis_flags} {s3_flags}"
         );
 
         println!("Starting API with: {command}");

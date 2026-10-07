@@ -31,12 +31,12 @@ use common::{
 use reqwest::Url;
 
 use crate::api_wrappers::trigger_load_org_pk_api;
-use crate::constants::{MINIO_PORT, U2J_APPENDER_PORT, VARNISH_PORT};
-use crate::containers::minio::start_minio;
+use crate::constants::{GARAGE_PORT, U2J_APPENDER_PORT, VARNISH_PORT};
+use crate::containers::garage::start_garage;
 use crate::containers::u2j_appender::start_u2j_appender;
 use crate::containers::varnish::start_varnish;
 use crate::images::DeliveryService;
-use crate::images::{Minio, U2JAppender, Varnish};
+use crate::images::{Garage, U2JAppender, Varnish};
 use crate::keys::{ensure_key_permissions, open_covernode_database, CoverNodeKeyMode};
 use crate::secrets::{
     do_secrets_exist_in_container_logs, API_AWS_ACCESS_KEY_ID_SECRET,
@@ -80,7 +80,7 @@ pub struct CoverDropStack {
     api: ContainerAsync<Api>,
     identity_api: Option<ContainerAsync<IdentityApi>>,
     _varnish_cache: Option<ContainerAsync<Varnish>>,
-    _minio: Option<ContainerAsync<Minio>>,
+    _garage: Option<ContainerAsync<Garage>>,
     delivery_service: Option<ContainerAsync<DeliveryService>>,
     _delivery_service_postgres: Option<ContainerAsync<Postgres>>,
 
@@ -133,7 +133,7 @@ pub struct CoverDropStackBuilder {
     enable_identity_api: bool,
     enable_kinesis: bool,
     enable_u2j_appender: bool,
-    enable_minio: bool,
+    enable_garage: bool,
     enable_varnish: bool,
 }
 
@@ -223,7 +223,7 @@ impl CoverDropStackBuilder {
 
         // We need to set some AWS credentials for this shell so that we
         // can modify the number of kinesis shards
-        // And these need to be set to minio credentials in order to create a bucket below
+        // And these need to be set to garage credentials in order to create a bucket below
         std::env::set_var("AWS_ACCESS_KEY_ID", API_AWS_ACCESS_KEY_ID_SECRET);
         std::env::set_var("AWS_SECRET_ACCESS_KEY", API_AWS_SECRET_ACCESS_KEY_SECRET);
 
@@ -233,28 +233,28 @@ impl CoverDropStackBuilder {
         };
 
         // ── Phase 1: Start independent containers in parallel ──
-        // Minio, Kinesis, and Postgres have no dependencies on each other.
+        // Garage, Kinesis, and Postgres have no dependencies on each other.
 
-        let minio_future = async {
-            if self.enable_minio {
-                let minio = start_minio(&self.network).await;
+        let garage_future = async {
+            if self.enable_garage {
+                let garage = start_garage(&self.network).await;
 
-                let minio_port = minio
-                    .get_host_port_ipv4(MINIO_PORT)
+                let garage_port = garage
+                    .get_host_port_ipv4(GARAGE_PORT)
                     .await
-                    .expect("Get minio port");
+                    .expect("Get garage port");
 
-                let minio_ip_address = minio
+                let garage_ip_address = garage
                     .get_bridge_ip_address()
                     .await
-                    .expect("Get minio bridge ip address");
+                    .expect("Get garage bridge ip address");
 
-                let minio_hostname = "localhost";
-                let minio_client_url = format!("http://{}:{}", minio_hostname, minio_port);
+                let garage_hostname = "localhost";
+                let garage_client_url = format!("http://{}:{}", garage_hostname, garage_port);
 
                 let s3_client = S3Client::new(
                     aws_config.clone(),
-                    Url::parse(&minio_client_url).expect("Parse minio URL"),
+                    Url::parse(&garage_client_url).expect("Parse garage URL"),
                 )
                 .await;
 
@@ -262,12 +262,12 @@ impl CoverDropStackBuilder {
                 s3_client
                     .create_bucket(&backup_bucket_name)
                     .await
-                    .expect("Create default minio bucket");
+                    .expect("Create default garage bucket");
 
                 (
-                    Some(minio),
-                    Some(minio_client_url),
-                    Some(minio_ip_address),
+                    Some(garage),
+                    Some(garage_client_url),
+                    Some(garage_ip_address),
                     Some(s3_client),
                 )
             } else {
@@ -314,14 +314,14 @@ impl CoverDropStackBuilder {
         let postgres_future = start_postgres(&self.network);
 
         let (
-            (minio, minio_client_url, minio_ip_address, s3_client),
+            (garage, garage_client_url, garage_ip_address, s3_client),
             (kinesis, kinesis_client, kinesis_ip),
             api_postgres,
-        ) = tokio::join!(minio_future, kinesis_future, postgres_future);
+        ) = tokio::join!(garage_future, kinesis_future, postgres_future);
 
         // ── Phase 2: Start U2J Appender and API in parallel ──
         // U2J Appender depends on Kinesis IP.
-        // API depends on Postgres IP, Kinesis IP, and Minio URL/IP.
+        // API depends on Postgres IP, Kinesis IP, and Garage URL/IP.
 
         let u2j_future = async {
             if self.enable_u2j_appender {
@@ -361,8 +361,8 @@ impl CoverDropStackBuilder {
             self.delete_old_dead_drops_poll_seconds,
             self.default_journalist_id,
             kinesis_ip.expect("Kinesis IP required for API"),
-            minio_client_url.expect("Minio URL required for API"),
-            Addr(minio_ip_address.expect("Minio IP required for API")),
+            garage_client_url.expect("Garage URL required for API"),
+            Addr(garage_ip_address.expect("Garage IP required for API")),
         );
 
         let ((u2j_appender, messaging_client), api) = tokio::join!(u2j_future, api_future);
@@ -674,7 +674,7 @@ impl CoverDropStackBuilder {
 
         let mut stack = CoverDropStack {
             _kinesis: kinesis,
-            _minio: minio,
+            _garage: garage,
             api_postgres,
             _u2j_appender: u2j_appender,
             covernode,
@@ -735,7 +735,7 @@ impl CoverDropStack {
             enable_identity_api: false,
             enable_kinesis: false,
             enable_u2j_appender: false,
-            enable_minio: false,
+            enable_garage: false,
             enable_varnish: false,
         };
 
@@ -745,7 +745,7 @@ impl CoverDropStack {
                 builder.enable_identity_api = true;
                 builder.enable_kinesis = true;
                 builder.enable_u2j_appender = true;
-                builder.enable_minio = true;
+                builder.enable_garage = true;
                 builder.enable_varnish = true;
                 builder.enable_delivery_service = true;
             }
@@ -757,7 +757,7 @@ impl CoverDropStack {
                 // so that tests that don't need them don't have to start them
                 builder.enable_kinesis = true;
                 builder.enable_u2j_appender = false;
-                builder.enable_minio = true;
+                builder.enable_garage = true;
                 // TODO prod infra should bypass cache
                 // or we need to handle stale keys
                 builder.enable_varnish = false;
@@ -768,7 +768,7 @@ impl CoverDropStack {
                 builder.enable_identity_api = true;
                 builder.enable_kinesis = true;
                 builder.enable_u2j_appender = true;
-                builder.enable_minio = true;
+                builder.enable_garage = true;
                 builder.enable_varnish = true;
                 builder.enable_delivery_service = false;
             }
@@ -829,7 +829,7 @@ impl CoverDropStack {
 
     pub fn s3_client(&self) -> &S3Client {
         self.s3_client.as_ref().expect(
-            "S3 client not available. Minio is only available when using an appropriate profile",
+            "S3 client not available. Garage is only available when using an appropriate profile",
         )
     }
 

@@ -1,0 +1,23 @@
+# Based on https://garagehq.deuxfleurs.fr/documentation/quick-start/ with random secrets
+
+metadata_dir = "/data/meta"
+data_dir = "/data/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+# This is a fixed secret because this config is only ever used for a single,
+# ephemeral, local test container. It is not used anywhere else.
+rpc_secret = "19300f763126d225297b2112b0db16854625bd75214cb0084b6bacd9f2aad25d"
+
+[s3_api]
+# Must match the region configured in the integration test's AWS client.
+s3_region = "eu-west-1"
+api_bind_addr = "[::]:3900"
+
+[admin]
+api_bind_addr = "0.0.0.0:3903"
+admin_token = "n4rttnkT0al/BHMi6HK92UAGmWo8S7/lNZWoZeGbxKA="
+metrics_token = "rG1UXo0kxBcqJdRdfd3kP9+vA3+VDhDNggZZ6nPrIec="

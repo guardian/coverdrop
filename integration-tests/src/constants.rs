@@ -35,8 +35,8 @@ pub const COVERNODE_DB_PASSWORD: &str = "covernode-db-password-secret";
 // the password for the identity-api sqlite db
 pub const IDENTITY_API_DB_PASSWORD: &str = "identity-api-db-password-secret";
 
-// default minio port
-pub const MINIO_PORT: u16 = 9000;
+// default garage s3 api port
+pub const GARAGE_PORT: u16 = 3900;
 
 // The port used by the delivery service in the test containers (group messaging)
 pub const DELIVERY_SERVICE_PORT: u16 = delivery_service::DEFAULT_PORT;
