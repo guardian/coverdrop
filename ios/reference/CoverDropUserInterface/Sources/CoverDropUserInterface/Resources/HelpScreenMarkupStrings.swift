@@ -1,4 +1,4 @@
-// As per https://github.com/guardian/coverdrop/issues/2680 we discovered that including these strings as .md
+// As per https://github.com/guardian/coverdrop-internal/issues/2680 we discovered that including these strings as .md
 // can cause issues with the final build process where they are removed from the final artifact. As a temporary
 // solution we include them as statically included strings.
 

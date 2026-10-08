@@ -21,4 +21,21 @@ ignore = [
     # As soon as this vuln is addressed we will apply the appropriate patches, but for now
     # it is mitigated by our Axum server having limits on the size of POST bodies to 2 MiB.
     "RUSTSEC-2024-0363",
+
+    # `libcrux-kem` 0.0.9 comes from `hpke-rs` 0.7.0, which declares `hpke-rs-libcrux`
+    # as an optional normal dependency gated behind hpke-rs's own "libcrux" feature,
+    # plus an unconditional dev-dependency (used only for hpke-rs's own test suite).
+    # `openmls_rust_crypto` only requests hpke-rs features = ["hazmat", "serialization",
+    # "experimental"] and never enables "libcrux", so the optional edge is never
+    # activated in our build; the dev-dependency is only compiled when testing
+    # hpke-rs itself. `cargo tree -i libcrux-kem` confirms it is unreachable from
+    # any of our workspace crates. There is currently no upgrade path: `hpke-rs-libcrux`
+    # 0.7.0 pins `libcrux-kem = "=0.0.9"` exactly, and the fixed `libcrux-kem` 0.0.10 is
+    # only available via `hpke-rs-libcrux` 0.8.0 / `hpke-rs` 0.8.0, which
+    # `openmls_rust_crypto`'s `hpke = "^0.7"` requirement does not permit.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0331.html
+    "RUSTSEC-2026-0331",
+    # Same unreachable dev-dependency issue as RUSTSEC-2026-0331 above.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0330.html
+    "RUSTSEC-2026-0330",
 ]

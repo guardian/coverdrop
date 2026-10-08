@@ -53,7 +53,7 @@ class StorageAuditTest {
      * is not on disk.
      */
     private val ignoredPathPrefixes = setOf(
-        // See: https://github.com/guardian/coverdrop/issues/1309 --- this file is a caching file
+        // See: https://github.com/guardian/coverdrop-internal/issues/1309 --- this file is a caching file
         // from `androidx.profileinstaller.ProfileVerifier`.
         "files/profileInstalled",
     )

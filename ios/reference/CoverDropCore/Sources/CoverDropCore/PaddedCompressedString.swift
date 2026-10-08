@@ -84,7 +84,7 @@ public struct PaddedCompressedString: Equatable, Encryptable {
         // The maximum compression ratio is ~1000:1. This is our (256 byte) messages would not
         // decode to output larger than 256 KiB. Nevertheless, we assume that everything with a
         // compression ratio larger than 100:1 is suspicious for natural text and we drop it.
-        // See: https://github.com/guardian/coverdrop/issues/112
+        // See: https://github.com/guardian/coverdrop-internal/issues/112
         let decompressionRatio = decoded.count / hostEndianSize
         if decompressionRatio > 100 {
             throw PaddedCompressedStringError.decompressionRatioTooHigh

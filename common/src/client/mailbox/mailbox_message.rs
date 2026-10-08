@@ -34,7 +34,7 @@ pub enum UserStatus {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct MailboxMessage {
-    // FIXME: https://github.com/guardian/coverdrop/issues/2649
+    // FIXME: https://github.com/guardian/coverdrop-internal/issues/2649
     pub id: i64,
     pub to: MessageSender,
     pub from: MessageSender,
@@ -126,7 +126,7 @@ impl CoverSerializable for MailboxMessage {
 
             Ok(Some(MailboxMessage {
                 // User mailbox messages don't have IDs:
-                // See https://github.com/guardian/coverdrop/issues/2649
+                // See https://github.com/guardian/coverdrop-internal/issues/2649
                 id: 0,
                 to,
                 from,

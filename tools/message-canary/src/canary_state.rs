@@ -94,7 +94,7 @@ impl CanaryState {
                 "New journalists added to message canary, sleeping until they appear in the API"
             );
             // This should come from a shared crate
-            // https://github.com/guardian/coverdrop/issues/2784
+            // https://github.com/guardian/coverdrop-internal/issues/2784
             sleep(Duration::from_secs(60)).await;
         }
 

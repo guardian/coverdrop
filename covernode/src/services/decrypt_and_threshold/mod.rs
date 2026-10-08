@@ -25,7 +25,7 @@ use paste::paste;
 /// time in order to see how often messages arrive which cannot be decrypted with valid keys, but
 /// are using invalid keys. This will help us tune the size of our clients outbound queues.
 ///
-/// See: https://github.com/guardian/coverdrop/issues/2974
+/// See: https://github.com/guardian/coverdrop-internal/issues/2974
 pub fn rank_to_label(rank: usize) -> &'static str {
     match rank {
         0 => "candidate",

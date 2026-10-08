@@ -58,7 +58,7 @@ public class CoverDropService: ObservableObject {
     /// Must only be called from the integrating application's `AppDelegate` during `application`.
     public func didLaunch(config: CoverDropConfig) throws {
         // We must ONLY register background tasks if we are actually in an app launch sequence. We msut not
-        // do so during any of the fallback mechanisms (https://github.com/guardian/coverdrop/issues/2899)
+        // do so during any of the fallback mechanisms (https://github.com/guardian/coverdrop-internal/issues/2899)
         if config.backgroundTaskEnabled {
             BackgroundTaskService.registerBackgroundSendJob(config: config)
         }

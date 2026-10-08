@@ -53,10 +53,10 @@ internal enum class DeprecatedCoverDropFiles(
     val filename: String,
     val migration: DeprecatedFileMigrationFunction,
 ) {
-    // See: https://github.com/guardian/coverdrop/issues/2114, migration to smaller queue length
+    // See: https://github.com/guardian/coverdrop-internal/issues/2114, migration to smaller queue length
     PRIVATE_SENDING_QUEUE_V0(filename = "private_sending_queue.blob", migration = ::deleteOldFile),
 
-    // See: https://github.com/guardian/coverdrop/issues/2349, migration to reliable persistence
+    // See: https://github.com/guardian/coverdrop-internal/issues/2349, migration to reliable persistence
     PRIVATE_SENDING_QUEUE_V1(
         filename = "private_sending_queue_v1.blob",
         migration = { oldFile, namespacedBaseDir ->
@@ -75,13 +75,13 @@ internal enum class DeprecatedCoverDropFiles(
         },
     ),
 
-    // See: https://github.com/guardian/coverdrop/issues/2349, migration to reliable persistence
+    // See: https://github.com/guardian/coverdrop-internal/issues/2349, migration to reliable persistence
     STATUS_EVENT(filename = "status_event.json", migration = ::deleteOldFile),
 
-    // See: https://github.com/guardian/coverdrop/issues/2349, migration to reliable persistence
+    // See: https://github.com/guardian/coverdrop-internal/issues/2349, migration to reliable persistence
     DEAD_DROPS(filename = "dead_drops.json", migration = ::deleteOldFile),
 
-    // See: https://github.com/guardian/coverdrop/issues/2349, migration to reliable persistence
+    // See: https://github.com/guardian/coverdrop-internal/issues/2349, migration to reliable persistence
     PUBLISHED_KEYS(filename = "published_keys.json", migration = ::deleteOldFile),
 }
 

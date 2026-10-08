@@ -10,7 +10,7 @@ import com.theguardian.coverdrop.core.crypto.PassphraseKdfParameters
  * availability of the Secure Element. We insert these parameters from the top (rather than
  * creating them in the storage implementations), so that we can inject special ones for testing.
  *
- * See https://github.com/guardian/coverdrop/issues/329 for details and discussion of these
+ * See https://github.com/guardian/coverdrop-internal/issues/329 for details and discussion of these
  * parameter choices.
  *
  * @param wordCount Number of words in the passphrase

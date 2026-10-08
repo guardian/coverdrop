@@ -84,7 +84,7 @@ internal object PassphraseKdf {
 
 }
 
-// See: https://github.com/guardian/coverdrop/issues/329 for discussion of this value
+// See: https://github.com/guardian/coverdrop-internal/issues/329 for discussion of this value
 private const val ARGON2ID_MEMLIMIT = 256 * 1024L * 1024L;
 
 internal enum class PassphraseKdfParameters(

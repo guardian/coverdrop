@@ -87,7 +87,7 @@ impl<const PAD_TO: LengthHeader> PaddedCompressedString<PAD_TO> {
         // The maximum compression ratio is ~1000:1. This is our (256 byte) messages would not
         // decode to output larger than 256 KiB. Nevertheless, we assume that everything with a
         // compression ratio larger than 100:1 is suspicious for natural text and we drop it.
-        // See: https://github.com/guardian/coverdrop/issues/112
+        // See: https://github.com/guardian/coverdrop-internal/issues/112
         let decompression_ratio = text.len() / compressed_size;
         if decompression_ratio > 100 {
             return Err(Error::DecompressionRatioTooHigh);
@@ -189,7 +189,7 @@ mod tests {
             Morbi et mollis libero, vitae vestibulum lorem.
             Etiam ornare enim vel sem placerat, nec tempus massa fringilla. Nam eu nibh at nulla aliquet mattis.
             Praesent hendrerit lacinia tempus. Vivamus molestie diam nisi, in finibus libero dictum et.
-            Quisque condimentum consequat elit, in tempor augue posuere non. 
+            Quisque condimentum consequat elit, in tempor augue posuere non.
             Nunc porttitor, leo eu mollis tincidunt, libero nisi fermentum libero, sed feugiat sem purus a ante.
             Donec condimentum aliquam augue, sit amet aliquet felis vehicula non.
             Quisque urna dolor, accumsan non ullamcorper sodales, fermentum ac mi."#;
