@@ -53,6 +53,10 @@ pub enum Command {
         /// The user subcommand
         #[clap(subcommand)]
         command: UserCommand,
+
+        /// The stage whose trust anchors should be used to verify the API's keys
+        #[clap(long, default_value = Stage::Staging.as_clap_str())]
+        stage: Stage,
     },
     /// Subcommands as a journalist
     Journalist {

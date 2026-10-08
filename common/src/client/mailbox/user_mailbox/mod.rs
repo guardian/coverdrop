@@ -14,9 +14,7 @@ use crate::{
         pbkdf::{derive_secret_box_key_with_configuration, generate_salt, Argon2Configuration},
         SecretBoxKey,
     },
-    protocol::keys::{
-        anchor_org_pk, AnchorOrganizationPublicKey, UntrustedOrganizationPublicKey, UserKeyPair,
-    },
+    protocol::keys::UserKeyPair,
     time, FixedBuffer, FixedSizeMessageText,
 };
 use chrono::{DateTime, Utc};
@@ -46,41 +44,19 @@ pub struct UserMailbox {
 
 impl UserMailbox {
     /// Create a new mailbox with a key derived from a password.
-    /// Also takes an organization public key which comes from the API you've first connected to.
-    /// We take a trust on first use approach to the organization public key - if the organization
-    /// key that comes back from a future server is different unexpectedly we will not allow the user
-    /// to interact with that server.
-    pub fn new<'a>(
-        password: &str,
-        tofu_org_pk_iter: impl Iterator<Item = &'a UntrustedOrganizationPublicKey>,
-        path: impl AsRef<Path>,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<Self> {
+    ///
+    /// The mailbox does not store any trust anchors - callers must supply the current
+    /// organization public keys (e.g. from `trust_anchors::get_trust_anchors`) whenever they
+    /// need to verify something, rather than relying on anchors pinned at mailbox creation time.
+    pub fn new(password: &str, path: impl AsRef<Path>) -> anyhow::Result<Self> {
         let user_key_pair = UnsignedEncryptionKeyPair::generate();
-        let salt = generate_salt();
-        let key =
-            derive_secret_box_key_with_configuration(password, &salt, Argon2Configuration::V1)?;
 
-        let org_pks = tofu_org_pk_iter
-            .flat_map(|org_pk| anchor_org_pk(&org_pk.to_tofu_anchor(), now))
-            .collect::<Vec<AnchorOrganizationPublicKey>>();
-
-        Ok(Self {
-            path: path.as_ref().to_path_buf(),
-            key,
-            secret: SecretMailboxData {
-                user_key_pair,
-                messages: FixedBuffer::default(),
-                max_dead_drop_created_at: DateTime::<Utc>::UNIX_EPOCH,
-            },
-            plain: PlainMailboxData { salt, org_pks },
-        })
+        Self::new_with_keys(password, user_key_pair, path)
     }
 
     pub fn new_with_keys(
         password: &str,
         user_key_pair: UserKeyPair,
-        org_pks: Vec<AnchorOrganizationPublicKey>,
         path: impl AsRef<Path>,
     ) -> anyhow::Result<Self> {
         let salt = generate_salt();
@@ -95,7 +71,7 @@ impl UserMailbox {
                 messages: FixedBuffer::default(),
                 max_dead_drop_created_at: DateTime::<Utc>::UNIX_EPOCH,
             },
-            plain: PlainMailboxData { salt, org_pks },
+            plain: PlainMailboxData { salt },
         })
     }
 
@@ -150,10 +126,6 @@ impl UserMailbox {
         self.secret.write(&mut file, &self.key)?;
 
         Ok(())
-    }
-
-    pub fn org_pks(&self) -> &[AnchorOrganizationPublicKey] {
-        &self.plain.org_pks
     }
 
     pub fn user_key_pair(&self) -> &UserKeyPair {
@@ -224,10 +196,7 @@ impl Drop for UserMailbox {
 mod tests {
     use tempfile::tempdir;
 
-    use crate::{
-        api::models::journalist_id::JournalistIdentity,
-        protocol::keys::generate_organization_key_pair, time, FixedSizeMessageText,
-    };
+    use crate::{api::models::journalist_id::JournalistIdentity, FixedSizeMessageText};
 
     use super::{
         plain_mailbox_data::PlainMailboxData, secret_mailbox_data::SecretMailboxData, UserMailbox,
@@ -238,14 +207,10 @@ mod tests {
 
     #[test]
     fn can_roundtrip() -> anyhow::Result<()> {
-        let now = time::now();
-
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
-        let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = [org_pk.to_untrusted()];
 
-        let mailbox_1 = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;
+        let mailbox_1 = UserMailbox::new("password", &test_file_path)?;
 
         mailbox_1.save()?;
 
@@ -273,22 +238,16 @@ mod tests {
 
         assert_eq!(mailbox_1.plain.salt, mailbox_2.plain.salt);
 
-        assert_eq!(mailbox_1.org_pks(), mailbox_2.org_pks());
-
         Ok(())
     }
 
     #[test]
     fn always_the_same_size() -> anyhow::Result<()> {
-        let now = time::now();
-
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
-        let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = [org_pk.to_untrusted()];
 
         // Create initial
-        let mailbox = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;
+        let mailbox = UserMailbox::new("password", &test_file_path)?;
 
         mailbox.save()?;
 
@@ -335,15 +294,11 @@ mod tests {
 
     #[test]
     fn overflowing_fixed_buffer_results_in_wrap_around() -> anyhow::Result<()> {
-        let now = time::now();
-
         let test_files_dir = tempdir()?;
         let test_file_path = test_files_dir.path().join("test-mailbox");
-        let org_pk = generate_organization_key_pair(now).public_key().clone();
-        let org_pks = [org_pk.to_untrusted()];
 
         // Create initial
-        let mailbox = UserMailbox::new("password", org_pks.iter(), &test_file_path, now)?;
+        let mailbox = UserMailbox::new("password", &test_file_path)?;
         mailbox.save()?;
 
         let file_size = test_file_path.metadata()?.len();

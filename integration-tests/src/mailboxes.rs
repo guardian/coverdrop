@@ -12,9 +12,8 @@ use common::{
     crypto::keys::{serde::StorableKeyMaterial, signing::traits},
     protocol::{
         keys::{
-            load_anchor_org_pks, JournalistIdKeyPair, JournalistMessagingKeyPair,
-            UntrustedJournalistIdKeyPair, UntrustedJournalistMessagingKeyPair,
-            UntrustedUserKeyPair, UserKeyPair,
+            JournalistIdKeyPair, JournalistMessagingKeyPair, UntrustedJournalistIdKeyPair,
+            UntrustedJournalistMessagingKeyPair, UntrustedUserKeyPair, UserKeyPair,
         },
         roles::{JournalistId, JournalistProvisioning},
     },
@@ -106,15 +105,9 @@ pub async fn load_mailboxes(
     // Wait for the journalists to be picked up by the CoverNode
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
-    let tofu_org_pks = load_anchor_org_pks(&keys_path, keys_generated_at).expect("Load org pks");
-
-    let user_mailbox = UserMailbox::new_with_keys(
-        MAILBOX_PASSWORD,
-        user_key_pair.clone(),
-        tofu_org_pks,
-        temp_dir.path(),
-    )
-    .expect("Create user mailbox");
+    let user_mailbox =
+        UserMailbox::new_with_keys(MAILBOX_PASSWORD, user_key_pair.clone(), temp_dir.path())
+            .expect("Create user mailbox");
 
     StackMailboxes {
         user_mailbox: RefCell::new(user_mailbox),

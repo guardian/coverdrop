@@ -5,7 +5,7 @@ use client::{
 };
 use common::{
     api::api_client::ApiClient, client::mailbox::user_mailbox::UserMailbox,
-    generators::PasswordGenerator, time, FixedSizeMessageText,
+    generators::PasswordGenerator, FixedSizeMessageText,
 };
 use common::{aws::kinesis::client::KinesisClient, crypto::pbkdf::DEFAULT_PASSPHRASE_WORDS};
 
@@ -49,10 +49,7 @@ async fn main() -> anyhow::Result<()> {
                 mailbox_path.set_extension("mailbox");
             }
 
-            let keys = api_client.get_public_keys().await?;
-            let org_pks = keys.untrusted_org_pk_iter();
-
-            UserMailbox::new(&password, org_pks, mailbox_path, time::now())?;
+            UserMailbox::new(&password, mailbox_path)?;
 
             Ok(())
         }
@@ -61,7 +58,18 @@ async fn main() -> anyhow::Result<()> {
             mailbox_path,
             password,
             password_path,
-        } => handle_user_commands(mailbox_path, password, password_path, command, api_client).await,
+            stage,
+        } => {
+            handle_user_commands(
+                mailbox_path,
+                password,
+                password_path,
+                command,
+                api_client,
+                stage,
+            )
+            .await
+        }
         Command::Journalist {
             command,
             vault_path,

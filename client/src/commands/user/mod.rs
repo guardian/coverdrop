@@ -4,9 +4,11 @@ pub mod messages;
 use std::path::PathBuf;
 
 use common::api::api_client::ApiClient;
+use common::clap::Stage;
 use common::time;
 use common::u2j_appender::messaging_client::MessagingClient;
 use hex::encode;
+use trust_anchors::get_trust_anchors;
 
 use crate::cli::UserCommand;
 use crate::commands::{load_user_mailbox_from_args, print_mailbox_messages};
@@ -23,13 +25,16 @@ pub async fn handle_user_commands(
     password_path: Option<PathBuf>,
     command: UserCommand,
     api_client: ApiClient,
+    stage: Stage,
 ) -> anyhow::Result<()> {
     let mut mailbox = load_user_mailbox_from_args(mailbox_path, password, password_path)?;
+
+    let org_pks = get_trust_anchors(&stage, time::now())?;
 
     let keys_and_profiles = api_client
         .get_public_keys()
         .await?
-        .into_trusted(mailbox.org_pks(), time::now());
+        .into_trusted(&org_pks, time::now());
 
     match command {
         UserCommand::ReadMailbox => {
