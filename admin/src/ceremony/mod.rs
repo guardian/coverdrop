@@ -1,3 +1,4 @@
+mod key_pair_encryption;
 pub mod public_key_forms_bundle;
 mod set_system_status_available_bundle;
 mod state_machine;
@@ -17,6 +18,7 @@ use common::{
     throttle::Throttle,
     time,
 };
+use key_pair_encryption::*;
 use public_key_forms_bundle::*;
 use serde::de::DeserializeOwned;
 use state_machine::*;

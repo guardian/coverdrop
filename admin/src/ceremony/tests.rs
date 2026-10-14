@@ -8,8 +8,8 @@ mod test {
     use common::api::models::covernode_id::CoverNodeIdentity;
     use common::backup::keys::{UntrustedBackupIdKeyPair, UntrustedBackupMsgKeyPair};
     use common::protocol::keys::{
-        UntrustedCoverNodeIdKeyPair, UntrustedCoverNodeProvisioningKeyPair,
-        UntrustedJournalistProvisioningKeyPair, UntrustedOrganizationPublicKey,
+        UntrustedCoverNodeIdKeyPair, UntrustedJournalistProvisioningKeyPair,
+        UntrustedOrganizationPublicKey,
     };
     use common::system::keys::UntrustedAdminKeyPair;
     use common::time;
@@ -29,6 +29,13 @@ mod test {
     {
         let reader = File::open(path).expect("Open file");
         serde_json::from_reader::<_, T>(reader).is_ok()
+    }
+
+    /// Utility function to check that a path in the ceremony state exists on disk.
+    ///
+    /// Used for files that are not plaintext JSON, e.g. age-encrypted key pairs.
+    fn exists_on_disk(path: impl AsRef<Path>) -> bool {
+        path.as_ref().is_file()
     }
 
     #[tokio::test]
@@ -58,6 +65,9 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                 }
                 CeremonyStep::GenerateCoverNodeProvisioningKeyPair => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
@@ -65,11 +75,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                 }
                 CeremonyStep::GenerateCoverNodeDatabase => {
                     assert!(state.journalist_provisioning_key_pair_file.is_some_and(
@@ -77,11 +88,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
 
                     for covernode_id in 1..=(state.covernode_count).unwrap().into() {
                         let covernode_identity = CoverNodeIdentity::from_node_id(covernode_id);
@@ -98,11 +110,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
@@ -113,11 +126,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
@@ -134,11 +148,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
@@ -158,11 +173,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));
@@ -185,11 +201,12 @@ mod test {
                             UntrustedJournalistProvisioningKeyPair,
                         >
                     ));
-                    assert!(state.covernode_provisioning_key_pair_file.is_some_and(
-                        exists_on_disk_and_can_be_deserialized::<
-                            UntrustedCoverNodeProvisioningKeyPair,
-                        >
-                    ));
+                    assert!(state
+                        .encrypted_journalist_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
+                    assert!(state
+                        .encrypted_covernode_provisioning_key_pair_file
+                        .is_some_and(exists_on_disk));
                     assert!(state.admin_key_pair_file.is_some_and(
                         exists_on_disk_and_can_be_deserialized::<UntrustedAdminKeyPair>
                     ));

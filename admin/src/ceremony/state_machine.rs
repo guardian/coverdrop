@@ -1,4 +1,3 @@
-use age::{secrecy::SecretString, Encryptor};
 use chrono::{DateTime, Utc};
 
 use common::{
@@ -7,14 +6,10 @@ use common::{
         generate_backup_id_key_pair, generate_backup_msg_key_pair, BackupIdKeyPair,
         BackupMsgKeyPair,
     },
-    crypto::{
-        keys::{
-            serde::{set_key_permissions, StorableKeyMaterial},
-            signing::{SignedPublicSigningKey, SigningKeyPair},
-        },
-        pbkdf::DEFAULT_PASSPHRASE_WORDS,
+    crypto::keys::{
+        serde::StorableKeyMaterial,
+        signing::{SignedPublicSigningKey, SigningKeyPair},
     },
-    generators::PasswordGenerator,
     protocol::{
         keys::{
             generate_covernode_id_key_pair, generate_covernode_provisioning_key_pair,
@@ -26,21 +21,14 @@ use common::{
     system::keys::{generate_admin_key_pair, AdminKeyPair},
 };
 use covernode_database::Database;
-use std::{
-    fmt::Display,
-    fs::{write, File},
-    io::Write,
-    num::NonZeroU8,
-    path::PathBuf,
-    vec,
-};
+use std::{fmt::Display, num::NonZeroU8, path::PathBuf, vec};
 use strum::EnumIter;
 
 use super::*;
 
 /// The copy of the organization key pair being handled
 #[derive(Clone)]
-enum Copy {
+pub(super) enum Copy {
     Primary,
     Secondary,
 }
@@ -54,7 +42,7 @@ impl Display for Copy {
     }
 }
 
-enum UsbDevice {
+pub(super) enum UsbDevice {
     OrgKeyPair(Copy),
     OrgKeyPairPassword(Copy),
     PublicKeysAndForms,
@@ -66,7 +54,7 @@ enum UsbDevice {
 }
 
 impl UsbDevice {
-    fn description(&self) -> &str {
+    pub(super) fn description(&self) -> &str {
         match self {
             UsbDevice::OrgKeyPair(Copy::Primary) => "Org key pair copy 1",
             UsbDevice::OrgKeyPairPassword(Copy::Primary) => "Org key pair password 1",
@@ -105,68 +93,6 @@ impl UsbDevice {
     }
 }
 
-/// Generate a passphrase, encrypt the org key pair with it using age and prompt
-/// the user to move the encrypted key pair and the passphrase to removable devices.
-///
-/// The unencrypted key pair is never written to disk.
-fn encrypt_org_key_pair(
-    org_key_pair_copy: Copy,
-    org_key_pair: &SigningKeyPair<Organization, SignedPublicSigningKey<Organization>>,
-    output_directory: &Path,
-    assume_yes: &AssumeYes,
-) -> anyhow::Result<()> {
-    let password_generator = PasswordGenerator::from_eff_large_wordlist()?;
-    let passphrase = password_generator.generate(DEFAULT_PASSPHRASE_WORDS);
-
-    let untrusted_org_key_pair = org_key_pair.to_untrusted();
-    let org_key_pair_json = serde_json::to_vec(&untrusted_org_key_pair)?;
-
-    let encrypted_org_key_pair_file = output_directory.join(format!(
-        "copy{}_{}.age",
-        org_key_pair_copy,
-        untrusted_org_key_pair.file_name()
-    ));
-
-    let encryptor = Encryptor::with_user_passphrase(SecretString::from(passphrase.clone()));
-
-    let mut writer = encryptor.wrap_output(File::create(&encrypted_org_key_pair_file)?)?;
-    writer.write_all(&org_key_pair_json)?;
-    writer.finish()?;
-
-    set_key_permissions(&encrypted_org_key_pair_file);
-
-    println!(
-        "Organization key pair {} encrypted with age and written to {}",
-        org_key_pair_copy,
-        encrypted_org_key_pair_file.to_str().unwrap()
-    );
-
-    // write passphrase to a file
-    let passphrase_file =
-        output_directory.join(format!("org_key_pair_passphrase_{}.txt", org_key_pair_copy));
-    write(&passphrase_file, &passphrase)?;
-    set_key_permissions(&passphrase_file);
-
-    println!(
-        "passphrase {} written to {}",
-        org_key_pair_copy,
-        passphrase_file.to_str().unwrap()
-    );
-
-    ask_user_to_confirm(
-        &format!(
-            "Move org key {} to removable device '{}' and passphrase {} to removable device '{}'",
-            encrypted_org_key_pair_file.to_str().unwrap(),
-            UsbDevice::OrgKeyPair(org_key_pair_copy.clone()).description(),
-            passphrase_file.to_str().unwrap(),
-            UsbDevice::OrgKeyPairPassword(org_key_pair_copy).description(),
-        ),
-        *assume_yes,
-    )?;
-
-    Ok(())
-}
-
 #[derive(Clone)]
 pub struct CeremonyState {
     pub ceremony_type: CeremonyType,
@@ -185,8 +111,9 @@ pub struct CeremonyState {
     pub backup_msg_key_pair: Option<BackupMsgKeyPair>,
 
     // Key pair files
+    pub encrypted_journalist_provisioning_key_pair_file: Option<PathBuf>,
     pub journalist_provisioning_key_pair_file: Option<PathBuf>,
-    pub covernode_provisioning_key_pair_file: Option<PathBuf>,
+    pub encrypted_covernode_provisioning_key_pair_file: Option<PathBuf>,
     pub admin_key_pair_file: Option<PathBuf>,
     pub backup_id_key_pair_file: Option<PathBuf>,
     pub backup_msg_key_pair_file: Option<PathBuf>,
@@ -244,8 +171,9 @@ impl CeremonyState {
             backup_id_key_pair: None,
             backup_msg_key_pair: None,
             // Files
+            encrypted_journalist_provisioning_key_pair_file: None,
             journalist_provisioning_key_pair_file: None,
-            covernode_provisioning_key_pair_file: None,
+            encrypted_covernode_provisioning_key_pair_file: None,
             admin_key_pair_file: None,
             backup_id_key_pair_file: None,
             backup_msg_key_pair_file: None,
@@ -385,8 +313,18 @@ impl CeremonyStep {
                 } else {
                     println!("Generated new organization key pair.");
                 }
-                encrypt_org_key_pair(Copy::Primary, &org_key_pair, output_directory, assume_yes)?;
-                encrypt_org_key_pair(Copy::Secondary, &org_key_pair, output_directory, assume_yes)?;
+                age_encrypt_org_key_pair(
+                    Copy::Primary,
+                    &org_key_pair,
+                    output_directory,
+                    assume_yes,
+                )?;
+                age_encrypt_org_key_pair(
+                    Copy::Secondary,
+                    &org_key_pair,
+                    output_directory,
+                    assume_yes,
+                )?;
 
                 Ok(())
             }
@@ -398,20 +336,28 @@ impl CeremonyStep {
                 state.journalist_provisioning_key_pair =
                     Some(journalist_provisioning_key_pair.clone());
 
-                let file_path = journalist_provisioning_key_pair
-                    .to_untrusted()
-                    .save_to_disk(output_directory)?;
-                state.journalist_provisioning_key_pair_file = Some(file_path);
+                let untrusted_key_pair = journalist_provisioning_key_pair.to_untrusted();
+
+                let encrypted_key_pair_file_path =
+                    age_encrypt_and_prompt_transfer_of_provisioning_key(
+                        &untrusted_key_pair,
+                        output_directory,
+                        &UsbDevice::IdentityAPI,
+                        assume_yes,
+                    )?;
+                state.encrypted_journalist_provisioning_key_pair_file =
+                    Some(encrypted_key_pair_file_path);
+
+                // Only write the plaintext copy to disk after the encrypted handoff above is confirmed.
+                let plaintext_file_path = untrusted_key_pair.save_to_disk(output_directory)?;
+                state.journalist_provisioning_key_pair_file = Some(plaintext_file_path.clone());
 
                 let prompt = [
-                    "The journalist provisioning key pair has been created.",
-                    "Make sure the following steps are completed:",
-                    &format!(
-                        "- Copy the journalist provisioning key pair to removable device '{}'.",
-                        UsbDevice::IdentityAPI.description()
+                    &format!("A plaintext copy of the journalist provisioning key pair has been created at the following location: \n'{}'",
+                        plaintext_file_path.to_str().unwrap()
                     ),
-                    &format!("- Copy the journalist provisioning key pair to removable device '{}'. This will be used by editorial staff to create journalist profiles and vaults.", UsbDevice::EditorialStaff.description()),
-                    "Have you completed both steps?",
+                    &format!("Copy the journalist provisioning key pair to removable device '{}'. This will be used by editorial staff to create journalist profiles and vaults.", UsbDevice::EditorialStaff.description()),
+                    "Have you completed this step?",
                 ]
                 .join("\n");
 
@@ -426,23 +372,14 @@ impl CeremonyStep {
                 state.covernode_provisioning_key_pair =
                     Some(covernode_provisioning_key_pair.clone());
 
-                let file_path = covernode_provisioning_key_pair
-                    .to_untrusted()
-                    .save_to_disk(output_directory)?;
-                state.covernode_provisioning_key_pair_file = Some(file_path);
+                let file_path = age_encrypt_and_prompt_transfer_of_provisioning_key(
+                    &covernode_provisioning_key_pair.to_untrusted(),
+                    output_directory,
+                    &UsbDevice::IdentityAPI,
+                    assume_yes,
+                )?;
+                state.encrypted_covernode_provisioning_key_pair_file = Some(file_path);
 
-                let prompt = [
-                    "The CoverNode provisioning key pair has been created.",
-                    "Make sure the following step is completed:",
-                    &format!(
-                        "- Move the CoverNode provisioning key pair to removable device '{}'.",
-                        UsbDevice::IdentityAPI.description()
-                    ),
-                    "Have you completed this step?",
-                ]
-                .join("\n");
-
-                ask_user_to_confirm(&prompt, *assume_yes)?;
                 Ok(())
             }
             CeremonyStep::GenerateCoverNodeDatabase => {
