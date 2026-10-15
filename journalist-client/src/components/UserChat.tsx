@@ -5,6 +5,7 @@ import {
   EuiButtonIcon,
   EuiFlexGroup,
   EuiFlexItem,
+  EuiIcon,
   EuiTextArea,
   useEuiTheme,
 } from "@elastic/eui";
@@ -247,6 +248,14 @@ export const UserChat = ({
                     >
                       {m.message}
                     </div>
+                    {m.type == "userToJournalistMessage" && m.authenticated && (
+                      <EuiIcon
+                        title="This message has been authenticated"
+                        type="checkInCircleFilled"
+                        size="s"
+                        color="success"
+                      />
+                    )}
                     <PerMessageMenu
                       isOpen={
                         uniqueMessageId === maybeContextMenuOpenForMessage

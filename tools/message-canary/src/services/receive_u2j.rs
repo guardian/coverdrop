@@ -43,13 +43,13 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
 
             // Process decrypted messages with canary-specific logic
             for decrypted_message in decrypted_messages {
-                let message = decrypted_message.u2j_message.message.to_string()?;
+                let message = decrypted_message.payload.to_string()?;
 
                 tracing::info!(
                     "journalist {} received message {} from user_id {} in dead drop {}",
                     journalist_id,
                     message,
-                    decrypted_message.u2j_message.reply_key.public_key_hex(),
+                    decrypted_message.reply_key.public_key_hex(),
                     decrypted_message.unsigned_dead_drop_id
                 );
 
@@ -71,7 +71,7 @@ pub async fn receive_u2j(canary_state: CanaryState) -> anyhow::Result<()> {
                         "journalist {} received duplicate message {} from user_id {} in dead drop {}",
                         journalist_id,
                         message,
-                        decrypted_message.u2j_message.reply_key.public_key_hex(),
+                        decrypted_message.reply_key.public_key_hex(),
                         decrypted_message.unsigned_dead_drop_id
                     );
                     metrics::counter!("DuplicateU2JMessage").increment(1);

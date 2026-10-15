@@ -33,7 +33,7 @@ const sampleContacts: SentinelProfile[] = [
 ];
 
 const withSampleProfiles: StoryDecorator = (Story) => {
-  const publicInfoStore = usePublicInfoStore();
+  const publicInfoStore = usePublicInfoStore.getState();
   publicInfoStore.setPublicInfo({
     journalist_profiles: [],
     sentinel_profiles: sampleContacts,

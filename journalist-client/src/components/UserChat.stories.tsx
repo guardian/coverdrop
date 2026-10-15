@@ -57,6 +57,7 @@ const mockU2JMessage = (
   id: BigInt(id),
   normalExpiry: normalExpiryOverride ?? normalExpiry,
   message,
+  authenticated: true,
 });
 const mockJ2UMessage = (
   id: number,

@@ -44,35 +44,43 @@ TPB = [Two Party Box](cryptography.md#two-party-box)
 ## User to Journalist Message
 
 For the messages from the user to the journalist we (1) do not require the journalist to know the user's public key
-beforehand and (2) we need to include the user's public key inside the ciphertext.
-The `UserToJournalistMessage` is an [Anonymous Box](cryptography.md#anonymous-box) around an inner struct containing the
-user's public key, and a [Padded Compressed String](cryptography.md#padded-compressed-string).
+beforehand and (2) we need to include the user's public key inside the ciphertext. The `UserToJournalistMessage` is
+an [Anonymous Box](cryptography.md#anonymous-box) around an inner struct containing the user's reply public key, a
+reserved byte, and the payload.
 
-Between the public key and padded compressed string there is a reserved byte which can serve as a flag if we ever need to
-add different kinds of user to journalist messages.
+The payload is a [Two Party Box](cryptography.md#two-party-box) around
+a [Padded Compressed String](cryptography.md#padded-compressed-string) of 472 Bytes, giving a payload of 512 Bytes.
 
-The padding length is set to 512 Bytes.
+The Two Party Box is encrypted with the DH shared secret derived from the journalist's messaging public key and the user's secret key. A successful decryption therefore proves to the journalist that the sender holds the secret key for
+the enclosed reply key.
 
 The encoded representation looks like the following:
 
 ```
-                             +---------------------+
-                             | User Message        |
-                             +---------------------+
+                                     +-------------------+
+                                     | User Message      |
+                                     +-------------------+
 
-                             +----------+----------+
-                                        v
+                                     +---------+---------+
+                                               v
 
-            +------------+---+--------------------------+
-            | Public Key | R | Padded Compressed String |
-            +------------+---+--------------------------+
+                              +-----+--------------------------+-------+
+                              | tag | Padded Compressed String | nonce |   Two Party Box
+                              +-----+--------------------------+-------+
 
-            +----------------+--------------------------+
-                             v
+                              +-------------------+--------------------+
+                                                  v
 
-+-----+-----+-------------------------------------------+
-| epk | tag |               Ciphertext                  |   Anonymous Box
-+-----+-----+-------------------------------------------+
+            +------------+---+------------------------------------------+
+            | Public Key | R |                 Payload                  |
+            +------------+---+------------------------------------------+
+
+            +-----------------------------+-----------------------------+
+                                          v
+
++-----+-----+-----------------------------------------------------------+
+| epk | tag |                        Ciphertext                         |   Anonymous Box
++-----+-----+-----------------------------------------------------------+
 ```
 
 ## User to CoverNode Message

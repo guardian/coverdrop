@@ -233,8 +233,7 @@ async fn key_consensus() -> anyhow::Result<()> {
 
             let found = messages.iter().any(|message| {
                 message
-                    .u2j_message
-                    .message
+                    .payload
                     .to_string()
                     .is_ok_and(|message| message.contains(INITIAL_USER_MESSAGE))
             });

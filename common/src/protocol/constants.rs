@@ -71,8 +71,17 @@ pub const CLIENT_DEFAULT_DOWNLOAD_RATE: Duration = Duration::hours(1);
 /// The maximum rate at which the client downloads status updated from the CoverNode API.
 pub const CLIENT_STATUS_DOWNLOAD_RATE: Duration = Duration::minutes(5);
 
-/// The size a message is padded to after compression.
+/// The size a J2U message is padded to after compression.
+///
+/// This message length is also used for [UserToJournalistPayload::LegacyUnauthenticated] messages
+/// during the migration to [UserToJournalistPayload::Authenticated]. Post migration it should no
+/// longer be used for U2J messages.
 pub const MESSAGE_PADDING_LEN: u16 = 512;
+
+/// The size an authenticated U2J message is padded to after compression.
+///
+/// TODO: We should split message padding lengths by direction. This was not done during migration to authenticated U2J messages due to the surface area of the change.
+pub const AUTHENTICATED_MESSAGE_PADDING_LEN: u16 = 472;
 
 /// The number of messaging keys from different CoverNodes used when encrypting a *_TO_COVERNODE message.
 pub const COVERNODE_WRAPPING_KEY_COUNT: usize = 2;
@@ -99,27 +108,39 @@ pub const COVERNODE_WRAPPING_KEY_COUNT: usize = 2;
 /// The follow test will verify our constant is correct:
 ///
 /// ```
-/// use common::time;
-/// use common::FixedSizeMessageText;
+/// use common::{time, FixedSizeAuthenticatedMessageText};
 /// use common::api::models::journalist_id::JournalistIdentity;
 /// use common::protocol::keys::test::generate_protocol_keys;
 /// use common::protocol::keys::test::ProtocolKeys;
-/// use common::protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode;
+/// #[allow(deprecated)]
+/// use common::protocol::user::{encrypt_real_message_from_user_to_journalist_via_covernode, encrypt_real_authenticated_message_from_user_to_journalist_via_covernode};
 /// use common::protocol::constants::USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
 ///
-/// let ProtocolKeys { user_pk, hierarchy, .. } = generate_protocol_keys(time::now());
+/// let ProtocolKeys { user_key_pair, hierarchy, .. } = generate_protocol_keys(time::now());
 ///
 /// let journalist_id = JournalistIdentity::new("test_journalist").unwrap();
-/// let message = FixedSizeMessageText::new("test message").unwrap();
-/// let message = encrypt_real_message_from_user_to_journalist_via_covernode(
+/// let message = FixedSizeAuthenticatedMessageText::new("test message").unwrap();
+///
+/// let new_message = encrypt_real_authenticated_message_from_user_to_journalist_via_covernode(
 ///     // The CoverDrop key hierarchy
 ///     &hierarchy,
-///     &user_pk,
+///     &user_key_pair,
 ///     &journalist_id,
-///     message,
+///     message.clone(),
 /// ).unwrap();
 ///
-/// assert_eq!(USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN, message.len());
+/// #[allow(deprecated)]
+/// let old_message = encrypt_real_message_from_user_to_journalist_via_covernode(
+///     // The CoverDrop key hierarchy
+///     &hierarchy,
+///     &user_key_pair.public_key(),
+///     &journalist_id,
+///     message.pad_to_plain(),
+/// ).unwrap();
+///
+/// assert_eq!(USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN, old_message.len());
+/// assert_eq!(USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN, new_message.len());
+/// assert_eq!(old_message.len(), new_message.len());
 /// ```
 pub const USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN: usize = COVERNODE_WRAPPING_KEY_COUNT
     * (X25519_PUBLIC_KEY_LEN + POLY1305_AUTH_TAG_LEN + MULTI_ANONYMOUS_BOX_SECRET_KEY_LEN)
@@ -143,7 +164,7 @@ pub const USER_TO_COVERNODE_MESSAGE_LEN: usize =
 /// use common::protocol::constants::*;
 /// assert_eq!(USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN, 593);
 /// assert_eq!(USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN,
-///     X25519_PUBLIC_KEY_LEN + POLY1305_AUTH_TAG_LEN + (USER_TO_JOURNALIST_MESSAGE_LEN));
+///     X25519_PUBLIC_KEY_LEN + POLY1305_AUTH_TAG_LEN + USER_TO_JOURNALIST_MESSAGE_LEN);
 /// ```
 pub const USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN: usize =
     X25519_PUBLIC_KEY_LEN + POLY1305_AUTH_TAG_LEN + USER_TO_JOURNALIST_MESSAGE_LEN;
@@ -154,11 +175,30 @@ pub const USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN: usize =
 /// use common::protocol::constants::*;
 /// assert_eq!(USER_TO_JOURNALIST_MESSAGE_LEN, 545);
 /// assert_eq!(USER_TO_JOURNALIST_MESSAGE_LEN,
-///     X25519_PUBLIC_KEY_LEN + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE + MESSAGE_PADDING_LEN as usize);
+///     X25519_PUBLIC_KEY_LEN + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN + MESSAGE_PADDING_LEN as usize);
+/// assert_eq!(USER_TO_JOURNALIST_MESSAGE_LEN,
+///     X25519_PUBLIC_KEY_LEN + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN + USER_TO_JOURNALIST_PAYLOAD_LEN as usize);
 /// ```
-pub const USER_TO_JOURNALIST_MESSAGE_LEN: usize =
-    X25519_PUBLIC_KEY_LEN + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE + MESSAGE_PADDING_LEN as usize;
-pub const USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE: usize = 1;
+pub const USER_TO_JOURNALIST_MESSAGE_LEN: usize = X25519_PUBLIC_KEY_LEN
+    + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN
+    + USER_TO_JOURNALIST_PAYLOAD_LEN;
+
+pub const USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN: usize = 1;
+
+// TODO: Remove usage migration is completed
+// Tracked in https://github.com/guardian/coverdrop-internal/issues/4240
+pub const AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE: u8 = 1;
+
+// The length of the inner message for the journalist or user.
+/// ```
+/// use common::protocol::constants::*;
+/// assert_eq!(USER_TO_JOURNALIST_PAYLOAD_LEN, 512);
+/// assert_eq!(USER_TO_JOURNALIST_PAYLOAD_LEN,
+///     POLY1305_AUTH_TAG_LEN + AUTHENTICATED_MESSAGE_PADDING_LEN as usize + TWO_PARTY_BOX_NONCE_LEN);
+/// assert_eq!(USER_TO_JOURNALIST_PAYLOAD_LEN, MESSAGE_PADDING_LEN as usize);
+/// ```
+pub const USER_TO_JOURNALIST_PAYLOAD_LEN: usize =
+    POLY1305_AUTH_TAG_LEN + AUTHENTICATED_MESSAGE_PADDING_LEN as usize + TWO_PARTY_BOX_NONCE_LEN;
 
 //
 // COVERNODE_TO_...

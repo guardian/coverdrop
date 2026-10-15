@@ -1,11 +1,11 @@
 use crate::crypto::keys::encryption::traits::PublicEncryptionKey;
 use crate::crypto::keys::encryption::UnsignedEncryptionKeyPair;
-use crate::crypto::{AnonymousBox, Encryptable};
+use crate::crypto::{AnonymousBox, Encryptable, TwoPartyBox};
 use crate::error::Error;
 use crate::protocol::constants::*;
-use crate::protocol::keys::UserPublicKey;
+use crate::protocol::keys::{UserKeyPair, UserPublicKey};
 use crate::protocol::roles::{JournalistMessaging, User};
-use crate::FixedSizeMessageText;
+use crate::{FixedSizeAuthenticatedMessageText, FixedSizeMessageText};
 use core::fmt;
 use serde::{Deserialize, Serialize};
 use serde_with::{
@@ -18,6 +18,9 @@ use serde_with::{
 /// [AnonymousBox].
 pub type EncryptedUserToJournalistMessage = AnonymousBox<SerializedUserToJournalistMessage>;
 
+/// A type alias for a [FixedSizeAuthenticatedMessageText] that's encrypted using [TwoPartyBox].
+pub type EncryptedUserToJournalistPayload = TwoPartyBox<FixedSizeAuthenticatedMessageText>;
+
 /// Generate a new fake encrypted inner message to be used as cover using a freshly generated
 /// recipient key pair. This temporary key pair is neither returned nor stored.
 ///
@@ -27,21 +30,37 @@ pub fn new_random_encrypted_user_to_journalist_message() -> EncryptedUserToJourn
     let journalist_msg_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
     let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
 
-    let plaintext = FixedSizeMessageText::new("")
-        .expect("FixedSizeMessageText::new should not fail for an empty input string.");
+    let plaintext = FixedSizeAuthenticatedMessageText::new("").expect(
+        "FixedSizeAuthenticatedMessageText::new should not fail for an empty input string.",
+    );
 
-    let message = UserToJournalistMessage::new(plaintext, user_key_pair.public_key()).serialize();
+    let message = UserToJournalistMessage::new_authenticated(
+        &user_key_pair,
+        journalist_msg_key_pair.public_key(),
+        plaintext,
+    )
+    .serialize();
 
     AnonymousBox::encrypt(journalist_msg_key_pair.public_key(), message)
         .expect("AnonymousBox::encrypt should not fail for known valid inputs")
 }
 
 const PLACEHOLDER_RESERVED_BYTE_VALUE: u8 = 0;
+const U2J_OFFSET_RESERVED_BYTE: usize = X25519_PUBLIC_KEY_LEN;
+
+/// Once the migration of authenticated messages is fully rolled out,
+/// we should be able to remove LegacyUnauthenticated messages and therefore [UserToJournalistPayload].
+// TODO: Tracked in https://github.com/guardian/coverdrop-internal/issues/4240
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum UserToJournalistPayload {
+    Authenticated(EncryptedUserToJournalistPayload),
+    LegacyUnauthenticated(FixedSizeMessageText),
+}
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct UserToJournalistMessage {
     pub reply_key: UserPublicKey,
-    pub message: FixedSizeMessageText,
+    pub payload: UserToJournalistPayload,
 }
 
 impl fmt::Debug for UserToJournalistMessage {
@@ -51,18 +70,42 @@ impl fmt::Debug for UserToJournalistMessage {
 }
 
 impl UserToJournalistMessage {
+    #[deprecated]
     pub fn new(message: FixedSizeMessageText, reply_key: impl Into<UserPublicKey>) -> Self {
         Self {
             reply_key: reply_key.into(),
-            message,
+            payload: UserToJournalistPayload::LegacyUnauthenticated(message),
+        }
+    }
+
+    pub fn new_authenticated(
+        user_key_pair: &UserKeyPair,
+        journalist_msg_pk: &impl PublicEncryptionKey<JournalistMessaging>,
+        message: FixedSizeAuthenticatedMessageText,
+    ) -> Self {
+        let payload = TwoPartyBox::encrypt(journalist_msg_pk, user_key_pair.secret_key(), message)
+            .expect("encrypt should not fail");
+
+        Self {
+            reply_key: user_key_pair.public_key().into(),
+            payload: UserToJournalistPayload::Authenticated(payload),
         }
     }
 
     pub fn serialize(&self) -> SerializedUserToJournalistMessage {
         let mut bytes = Vec::with_capacity(USER_TO_JOURNALIST_MESSAGE_LEN);
         bytes.extend(self.reply_key.as_bytes());
-        bytes.extend([PLACEHOLDER_RESERVED_BYTE_VALUE]);
-        bytes.extend(self.message.as_unencrypted_bytes());
+
+        match &self.payload {
+            UserToJournalistPayload::Authenticated(encrypted_message) => {
+                bytes.extend([AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE]);
+                bytes.extend(encrypted_message.as_bytes());
+            }
+            UserToJournalistPayload::LegacyUnauthenticated(message) => {
+                bytes.extend([PLACEHOLDER_RESERVED_BYTE_VALUE]);
+                bytes.extend(message.as_unencrypted_bytes());
+            }
+        }
 
         assert_eq!(bytes.len(), USER_TO_JOURNALIST_MESSAGE_LEN);
 
@@ -72,12 +115,13 @@ impl UserToJournalistMessage {
 
 /// The serialized representation of an [UserToJournalistMessage] using the following format:
 /// ```text
-/// ┌────────────┬──────────────────────────────────┐
-/// │ public_key │ padded_message                   │
-/// └────────────┴──────────────────────────────────┘
+/// ┌────────────┬───────────────┬──────────────────┐
+/// │ public_key │ reserved_byte │ payload          │
+/// └────────────┴───────────────┴──────────────────┘
 /// ```
 /// The public key is [X25519_PUBLIC_KEY_LEN] bytes in length.
-/// The padded message is [USER_TO_JOURNALIST_PADDED_MESSAGE_LEN] in length.
+/// The reserved_byte type is [USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN] bytes in length.
+/// The payload is [USER_TO_JOURNALIST_PAYLOAD_LEN] bytes in length.
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -101,14 +145,26 @@ impl SerializedUserToJournalistMessage {
         let reply_key = UserPublicKey::from_bytes(key_bytes)
             .expect("User key should be X25519_PUBLIC_KEY_LEN bytes");
 
-        // Skip over reserved byte
-        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v
-        let message_bytes = &self.bytes[X25519_PUBLIC_KEY_LEN + 1..];
+        let reserved_byte = &self.bytes[U2J_OFFSET_RESERVED_BYTE
+            ..U2J_OFFSET_RESERVED_BYTE + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN];
+
+        let message_bytes =
+            &self.bytes[U2J_OFFSET_RESERVED_BYTE + USER_TO_JOURNALIST_MESSAGE_RESERVED_BYTE_LEN..];
         let message = Vec::from(message_bytes);
 
-        UserToJournalistMessage {
-            reply_key,
-            message: FixedSizeMessageText::from_vec_unchecked(message),
+        match reserved_byte {
+            [AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE] => UserToJournalistMessage {
+                reply_key,
+                payload: UserToJournalistPayload::Authenticated(
+                    EncryptedUserToJournalistPayload::from_vec_unchecked(message),
+                ),
+            },
+            _ => UserToJournalistMessage {
+                reply_key,
+                payload: UserToJournalistPayload::LegacyUnauthenticated(
+                    FixedSizeMessageText::from_vec_unchecked(message),
+                ),
+            },
         }
     }
 }
@@ -132,6 +188,7 @@ mod tests_user_to_journalist {
     {
         let padded_string = FixedSizeMessageText::new("test")?;
         let reply_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        #[allow(deprecated)]
         let inner_message = UserToJournalistMessage::new(
             padded_string.clone(),
             reply_key_pair.public_key().clone(),
@@ -144,8 +201,48 @@ mod tests_user_to_journalist {
         let actual =
             SerializedUserToJournalistMessage::from_unencrypted_bytes(unencrypted_bytes.to_vec())?
                 .to_message();
-        assert_eq!(actual.message, padded_string);
+        assert_eq!(
+            actual.payload,
+            UserToJournalistPayload::LegacyUnauthenticated(padded_string)
+        );
         assert_eq!(actual.reply_key, *reply_key_pair.public_key());
+
+        Ok(())
+    }
+
+    #[test]
+    fn when_creating_authenticated_message_with_key_then_serializes_and_deserializes(
+    ) -> anyhow::Result<()> {
+        let padded_string = FixedSizeAuthenticatedMessageText::new("test")?;
+        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        let journalist_key_pair = UnsignedEncryptionKeyPair::<JournalistMessaging>::generate();
+
+        let inner_message = UserToJournalistMessage::new_authenticated(
+            &user_key_pair,
+            journalist_key_pair.public_key(),
+            padded_string.clone(),
+        );
+
+        let serialized_message = inner_message.serialize();
+        let unencrypted_bytes = serialized_message.as_unencrypted_bytes();
+        assert_eq!(unencrypted_bytes.len(), USER_TO_JOURNALIST_MESSAGE_LEN);
+
+        let actual =
+            SerializedUserToJournalistMessage::from_unencrypted_bytes(unencrypted_bytes.to_vec())?
+                .to_message();
+
+        let UserToJournalistPayload::Authenticated(encrypted) = actual.payload else {
+            panic!("expected an authenticated payload");
+        };
+
+        let decrypted = TwoPartyBox::decrypt(
+            &actual.reply_key,
+            journalist_key_pair.secret_key(),
+            &encrypted,
+        )?;
+
+        assert_eq!(decrypted, padded_string);
+        assert_eq!(actual.reply_key, *user_key_pair.public_key());
 
         Ok(())
     }

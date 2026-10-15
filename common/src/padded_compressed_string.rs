@@ -7,11 +7,14 @@ use serde::{Deserialize, Serialize};
 use sodiumoxide::randombytes::randombytes;
 
 use crate::crypto::Encryptable;
-use crate::protocol::constants::MESSAGE_PADDING_LEN;
+use crate::protocol::constants::{AUTHENTICATED_MESSAGE_PADDING_LEN, MESSAGE_PADDING_LEN};
 use crate::Error;
 
 /// The default size of `PaddedCompressedString` for use in the CoverDrop protocol
 pub type FixedSizeMessageText = PaddedCompressedString<MESSAGE_PADDING_LEN>;
+
+pub type FixedSizeAuthenticatedMessageText =
+    PaddedCompressedString<AUTHENTICATED_MESSAGE_PADDING_LEN>;
 
 /// A string of UTF-8 which has been compressed using GZip then padded to a specified length.
 ///
@@ -133,9 +136,28 @@ impl<const PAD_TO: LengthHeader> Encryptable for PaddedCompressedString<PAD_TO> 
     }
 }
 
+impl PaddedCompressedString<AUTHENTICATED_MESSAGE_PADDING_LEN> {
+    /// Copy this message into a longer buffer, filling the additional space with fresh random
+    /// padding. The target length must be at least as long as the current buffer, so a message can
+    /// never be truncated by this operation.
+    pub fn pad_to_plain(&self) -> PaddedCompressedString<MESSAGE_PADDING_LEN> {
+        let new_total_len = PaddedCompressedString::<MESSAGE_PADDING_LEN>::TOTAL_LEN;
+
+        let additional_padding_len = new_total_len - self.0.len();
+
+        let mut buf = Vec::with_capacity(new_total_len);
+        buf.extend_from_slice(&self.0);
+        buf.append(&mut randombytes(additional_padding_len));
+
+        PaddedCompressedString(buf)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{Error, FixedSizeMessageText, PaddedCompressedString};
+    use crate::{
+        Error, FixedSizeAuthenticatedMessageText, FixedSizeMessageText, PaddedCompressedString,
+    };
 
     #[test]
     fn successfully_roundtrip() -> Result<(), Error> {
@@ -221,6 +243,19 @@ mod tests {
         let suffix = &pcs.as_bytes()[100..];
         assert!(suffix.len() >= 100);
         assert!(suffix.iter().filter(|&&x| x == 0).count() < 10);
+
+        Ok(())
+    }
+
+    #[test]
+    fn pad_to_plain_preserves_message() -> Result<(), Error> {
+        let expected = "hello world";
+
+        let pcs = FixedSizeAuthenticatedMessageText::new(expected)?;
+        let padded = pcs.pad_to_plain();
+
+        assert_eq!(padded.total_len(), FixedSizeMessageText::TOTAL_LEN);
+        assert_eq!(padded.to_string()?, expected);
 
         Ok(())
     }

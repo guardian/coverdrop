@@ -51,6 +51,7 @@ const u2jMessage = {
   normalExpiry: normalExpiry,
   customExpiry: null,
   read: true,
+  authenticated: true,
 } satisfies Message;
 
 const users = [
@@ -85,6 +86,7 @@ const mockU2JMessage = (
   userPk,
   message,
   normalExpiry: messageExpiry,
+  authenticated: true,
 });
 
 const messages = [

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use client::commands::user::messages::send_user_to_journalist_cover_message;
-use common::protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode;
-use common::FixedSizeMessageText;
+use common::protocol::user::encrypt_real_authenticated_message_from_user_to_journalist_via_covernode;
+use common::FixedSizeAuthenticatedMessageText;
 use coverdrop_service::JournalistCoverDropService;
 use integration_tests::api_wrappers::get_user_to_journalist_dead_drops;
 use integration_tests::{
@@ -39,17 +39,18 @@ async fn covernode_u2j_deduplication_scenario() {
             .await
             .expect("Get the journalist ID");
 
-        let user_pk = user_mailbox.user_key_pair().public_key();
+        let user_key_pair = user_mailbox.user_key_pair();
 
-        let message = FixedSizeMessageText::new(USER_MESSAGE).unwrap();
+        let message = FixedSizeAuthenticatedMessageText::new(USER_MESSAGE).unwrap();
 
-        let encrypted_outer_msg = encrypt_real_message_from_user_to_journalist_via_covernode(
-            &keys_and_profiles.keys,
-            user_pk,
-            &journalist_id,
-            message,
-        )
-        .expect("Encrypt real message from user to journalist");
+        let encrypted_outer_msg =
+            encrypt_real_authenticated_message_from_user_to_journalist_via_covernode(
+                &keys_and_profiles.keys,
+                user_key_pair,
+                &journalist_id,
+                message,
+            )
+            .expect("Encrypt real message from user to journalist");
 
         // Send many duplicates
 
@@ -148,10 +149,10 @@ async fn covernode_u2j_deduplication_scenario() {
             pulled_and_decrypted_messages.len()
         );
 
-        let u2j_message = &pulled_and_decrypted_messages[0].u2j_message;
+        let u2j_message = &pulled_and_decrypted_messages[0];
 
         assert_eq!(
-            u2j_message.message.to_string().expect("Unpack U2J message"),
+            u2j_message.payload.to_string().expect("Unpack U2J message"),
             USER_MESSAGE
         );
 

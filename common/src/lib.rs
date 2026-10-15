@@ -37,4 +37,6 @@ pub mod u2j_appender;
 pub use argon2::password_hash::SaltString as Argon2Salt;
 pub use error::Error;
 pub use fixed_buffer::FixedBuffer;
-pub use padded_compressed_string::{FixedSizeMessageText, PaddedCompressedString};
+pub use padded_compressed_string::{
+    FixedSizeAuthenticatedMessageText, FixedSizeMessageText, PaddedCompressedString,
+};

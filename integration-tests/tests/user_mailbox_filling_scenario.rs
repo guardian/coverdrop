@@ -7,13 +7,10 @@ use client::commands::{
     },
     user::dead_drops::load_user_dead_drop_messages,
 };
+use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use common::{
-    api::models::messages::{
-        user_to_journalist_message::UserToJournalistMessage,
-        user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
-    },
-    client::mailbox::user_mailbox::MAX_MAILBOX_MESSAGES,
-    FixedSizeMessageText,
+    api::models::messages::decrypted_user_to_journalist_message_with_metadata::DecryptedUserToJournalistMessageWithMetadata,
+    client::mailbox::user_mailbox::MAX_MAILBOX_MESSAGES, FixedSizeMessageText,
 };
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_to_user_dead_drops},
@@ -53,11 +50,11 @@ async fn user_mailbox_filling_scenario() {
     let journalist_vault = stack.load_static_journalist_vault().await;
     let mut user_mailbox = stack.mailboxes().user();
 
-    let messages = vec![U2JMessageWithMetadata {
-        u2j_message: UserToJournalistMessage::new(
+    let messages = vec![DecryptedUserToJournalistMessageWithMetadata {
+        payload: UserToJournalistMessagePayload::LegacyUnauthenticated(
             FixedSizeMessageText::new("Seeding journalist vault with user to reply to").unwrap(),
-            user_mailbox.user_key_pair().public_key(),
         ),
+        reply_key: user_mailbox.user_key_pair().public_key().clone(),
         unsigned_dead_drop_id: 0,
         dead_drop_created_at: stack.now(),
     }];

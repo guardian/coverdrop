@@ -3,6 +3,7 @@ use crate::{
     EncryptedJournalistToCoverNodeMessageWithId,
 };
 use chrono::{DateTime, Duration, Utc};
+use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use common::{
     api::models::{
         dead_drops::DeadDropId, message_id::MessageId,
@@ -17,7 +18,7 @@ use sqlx::SqliteConnection;
 pub(crate) async fn add_u2j_message(
     conn: &mut SqliteConnection,
     user_pk: &UserPublicKey,
-    message: &FixedSizeMessageText,
+    message: &UserToJournalistMessagePayload,
     received_at: DateTime<Utc>,
     dead_drop_id: DeadDropId,
     dead_drop_created_at: DateTime<Utc>,
@@ -140,9 +141,9 @@ pub(crate) async fn messages(conn: &mut SqliteConnection) -> anyhow::Result<Vec<
         let user_pk = UserPublicKey::from_bytes(&row.user_pk)
             .expect("Parse user_pk into byte array in journalist vault");
 
-        let message = FixedSizeMessageText::from_vec_unchecked(row.message);
-
         if row.is_from_user {
+            let message = UserToJournalistMessagePayload::from_vec_unchecked(row.message);
+
             Ok(VaultMessage::U2J(
                 U2JMessage::new(
                     row.id,
@@ -155,6 +156,8 @@ pub(crate) async fn messages(conn: &mut SqliteConnection) -> anyhow::Result<Vec<
                 .expect("Initialize u2j message"),
             ))
         } else {
+            let message = FixedSizeMessageText::from_vec_unchecked(row.message);
+
             Ok(VaultMessage::J2U(
                 J2UMessage::new(
                     row.id,
@@ -344,6 +347,7 @@ mod test {
     use crate::VaultMessage;
     use chrono::{DateTime, Utc};
     use common::api::models::message_id::MessageId;
+    use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
     use common::api::models::messages::journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage;
     use common::crypto::keys::encryption::UnsignedEncryptionKeyPair;
     use common::protocol::constants::JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
@@ -411,7 +415,9 @@ mod test {
         let outbound_queue_id = None;
         let dead_drop_id = 1;
 
-        let message = FixedSizeMessageText::new("test message").unwrap();
+        let message_pcs = FixedSizeMessageText::new("test message").unwrap();
+        let message_payload =
+            UserToJournalistMessagePayload::LegacyUnauthenticated(message_pcs.clone());
 
         let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
         let user_pk = user_key_pair.public_key();
@@ -422,7 +428,7 @@ mod test {
         let _u2j_1 = add_u2j_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_payload,
             before_cutoff,
             dead_drop_id,
             before_cutoff,
@@ -432,7 +438,7 @@ mod test {
         let _u2j_2 = add_u2j_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_payload,
             after_cutoff,
             dead_drop_id,
             after_cutoff,
@@ -442,7 +448,7 @@ mod test {
         let u2j_3 = add_u2j_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_payload,
             after_cutoff,
             dead_drop_id,
             after_cutoff - ONE_HOUR,
@@ -462,7 +468,7 @@ mod test {
         let u2j_4 = add_u2j_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_payload,
             before_cutoff,
             dead_drop_id,
             before_cutoff - ONE_HOUR,
@@ -481,7 +487,7 @@ mod test {
         let _j2u_1 = add_j2u_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_pcs,
             before_cutoff,
             outbound_queue_id,
         )
@@ -490,7 +496,7 @@ mod test {
         let _j2u_2 = add_j2u_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_pcs,
             after_cutoff,
             outbound_queue_id,
         )
@@ -499,7 +505,7 @@ mod test {
         let j2u_3 = add_j2u_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_pcs,
             after_cutoff,
             outbound_queue_id,
         )
@@ -517,7 +523,7 @@ mod test {
         let j2u_4 = add_j2u_message(
             &mut conn,
             user_pk,
-            &message,
+            &message_pcs,
             before_cutoff,
             outbound_queue_id,
         )
@@ -609,7 +615,9 @@ mod test {
     async fn test_u2j_message_deduplication(mut conn: PoolConnection<Sqlite>) -> sqlx::Result<()> {
         let now: DateTime<Utc> = "2025-07-28T10:30:00Z".parse().unwrap();
         let dead_drop_id = 1;
-        let message = FixedSizeMessageText::new("test message").unwrap();
+        let message = UserToJournalistMessagePayload::LegacyUnauthenticated(
+            FixedSizeMessageText::new("test message").unwrap(),
+        );
 
         let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
         let user_pk = user_key_pair.public_key();

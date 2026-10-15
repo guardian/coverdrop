@@ -42,8 +42,8 @@ use common::{
         models::{
             journalist_id::JournalistIdentity,
             messages::{
+                decrypted_user_to_journalist_message_with_metadata::DecryptedUserToJournalistMessageWithMetadata,
                 journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage,
-                user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
             },
             sentinel_id::SentinelIdentity,
         },
@@ -668,7 +668,7 @@ impl JournalistVault {
 
     pub async fn add_messages_from_user_to_journalist_and_update_max_dead_drop_created_at(
         &self,
-        messages: &[U2JMessageWithMetadata],
+        messages: &[DecryptedUserToJournalistMessageWithMetadata],
         max_dead_drop_created_at: DateTime<Utc>,
         now: DateTime<Utc>,
     ) -> anyhow::Result<()> {
@@ -676,12 +676,12 @@ impl JournalistVault {
 
         for message in messages {
             // insert into users table if not already present
-            user_queries::add_user(&mut tx, &message.u2j_message.reply_key, now).await?;
+            user_queries::add_user(&mut tx, &message.reply_key, now).await?;
 
             message_queries::add_u2j_message(
                 &mut tx,
-                &message.u2j_message.reply_key,
-                &message.u2j_message.message,
+                &message.reply_key,
+                &message.payload,
                 now,
                 message.unsigned_dead_drop_id,
                 message.dead_drop_created_at,

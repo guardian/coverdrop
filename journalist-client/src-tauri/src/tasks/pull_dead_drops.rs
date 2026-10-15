@@ -78,7 +78,7 @@ impl Task for PullDeadDrops {
 
             let num_messages_from_active_users = decrypted_messages
                 .iter()
-                .filter(|m| active_users.contains(&&m.u2j_message.reply_key))
+                .filter(|m| active_users.contains(&&m.reply_key))
                 .count();
 
             if num_messages_from_active_users > 0 {

@@ -4,7 +4,7 @@ use common::crypto::keys::role::Test;
 use common::crypto::keys::signing::traits::PublicSigningKey;
 use common::crypto::keys::signing::UnsignedSigningKeyPair;
 use common::crypto::{AnonymousBox, MultiAnonymousBox, Signable, TwoPartyBox};
-use common::FixedSizeMessageText;
+use common::FixedSizeAuthenticatedMessageText;
 
 use chrono::{TimeZone, Utc};
 use common::api::models::dead_drops::UserToJournalistDeadDropMessages;
@@ -165,13 +165,16 @@ fn generate_test_vectors_journalist_dead_drop(path: &Path) -> anyhow::Result<()>
         &covernode_msg_key_pair.raw_public_key().to_bytes(),
     )?;
 
-    let message = FixedSizeMessageText::new("こんにちは")?;
+    let message = FixedSizeAuthenticatedMessageText::new("こんにちは")?;
 
     let mut messages: Vec<EncryptedCoverNodeToJournalistMessage> = vec![];
 
     for _ in 0..5 {
-        let inner_message =
-            UserToJournalistMessage::new(message.clone(), user_key_pair.public_key());
+        let inner_message = UserToJournalistMessage::new_authenticated(
+            &user_key_pair,
+            journalist_key_pair.public_key(),
+            message.clone(),
+        );
         let inner_message = inner_message.serialize();
         let inner_message = EncryptedUserToJournalistMessage::encrypt(
             journalist_key_pair.public_key(),
@@ -189,8 +192,11 @@ fn generate_test_vectors_journalist_dead_drop(path: &Path) -> anyhow::Result<()>
     }
 
     for _ in 0..5 {
-        let inner_message =
-            UserToJournalistMessage::new(message.clone(), user_key_pair.public_key());
+        let inner_message = UserToJournalistMessage::new_authenticated(
+            &user_key_pair,
+            journalist_key_pair.public_key(),
+            message.clone(),
+        );
         let inner_message = inner_message.serialize();
         let inner_message = EncryptedUserToJournalistMessage::encrypt(
             other_journalist_key_pair.public_key(),

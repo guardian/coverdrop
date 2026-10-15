@@ -176,12 +176,9 @@ fn test_journalist_dead_drop() -> anyhow::Result<()> {
         )
         .unwrap();
 
-        assert_eq!(u2j_message_with_dead_drop_id.u2j_message.reply_key, user_pk);
+        assert_eq!(u2j_message_with_dead_drop_id.reply_key, user_pk);
         assert_eq!(
-            u2j_message_with_dead_drop_id
-                .u2j_message
-                .message
-                .to_string()?,
+            u2j_message_with_dead_drop_id.payload.to_string()?,
             "こんにちは"
         );
     }

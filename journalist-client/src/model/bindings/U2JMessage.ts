@@ -9,4 +9,5 @@ export type U2JMessage = {
   normalExpiry: string;
   customExpiry: string | null;
   read: boolean;
+  authenticated: boolean;
 };

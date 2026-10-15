@@ -1,6 +1,6 @@
 use common::{
-    protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode, throttle::Throttle,
-    time, FixedSizeMessageText,
+    protocol::user::encrypt_real_authenticated_message_from_user_to_journalist_via_covernode,
+    throttle::Throttle, time, FixedSizeAuthenticatedMessageText,
 };
 use rand::seq::SliceRandom;
 use std::time::Duration;
@@ -38,11 +38,11 @@ pub async fn send_u2j(canary_state: CanaryState, mph_u2j: u32) -> anyhow::Result
                 journalist
             );
 
-            let u2j_msg = encrypt_real_message_from_user_to_journalist_via_covernode(
+            let u2j_msg = encrypt_real_authenticated_message_from_user_to_journalist_via_covernode(
                 &keys,
-                user.key_pair.public_key(),
+                &user.key_pair,
                 journalist,
-                FixedSizeMessageText::new(&message).unwrap(),
+                FixedSizeAuthenticatedMessageText::new(&message).unwrap(),
             )?;
 
             canary_state

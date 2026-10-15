@@ -3,19 +3,19 @@ use crate::api::models::messages::user_to_covernode_message::{
     EncryptedUserToCoverNodeMessage, UserToCoverNodeMessage,
 };
 use crate::api::models::messages::user_to_journalist_message::UserToJournalistMessage;
-use crate::Error;
+use crate::{Error, FixedSizeAuthenticatedMessageText};
 
 use crate::api::models::messages::journalist_to_user_message::{
     EncryptedJournalistToUserMessage, JournalistToUserMessage,
 };
 
+use super::covernode::covernode_msg_pks_from_hierarchy;
+use super::keys::{CoverDropPublicKeyHierarchy, UserKeyPair, UserPublicKey};
 use crate::crypto::TwoPartyBox;
 use crate::protocol::recipient_tag::RecipientTag;
 use crate::{crypto::AnonymousBox, protocol::constants::*, FixedSizeMessageText};
 
-use super::covernode::covernode_msg_pks_from_hierarchy;
-use super::keys::{CoverDropPublicKeyHierarchy, UserKeyPair, UserPublicKey};
-
+#[deprecated]
 pub fn encrypt_real_message_from_user_to_journalist_via_covernode(
     keys: &CoverDropPublicKeyHierarchy,
     user_pk: &UserPublicKey,
@@ -26,6 +26,7 @@ pub fn encrypt_real_message_from_user_to_journalist_via_covernode(
         Err(Error::JournalistMessagingKeyNotFound(journalist_id.clone()))?
     };
 
+    #[allow(deprecated)]
     let user_to_journalist_message = UserToJournalistMessage::new(message, user_pk);
 
     let encrypted_user_to_journalist_message =
@@ -43,7 +44,15 @@ pub fn encrypt_real_message_from_user_to_journalist_via_covernode(
         encrypted_user_to_journalist_message,
     );
 
-    encrypt_from_user_for_covernode(keys, user_to_covernode_message)
+    let encrypted_user_to_covernode_message =
+        encrypt_from_user_for_covernode(keys, user_to_covernode_message)?;
+
+    assert_eq!(
+        encrypted_user_to_covernode_message.len(),
+        USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN
+    );
+
+    Ok(encrypted_user_to_covernode_message)
 }
 
 pub fn new_encrypted_cover_message_from_user_via_covernode(
@@ -87,4 +96,43 @@ pub fn get_decrypted_user_dead_drop_message(
     }
 
     Ok(None)
+}
+
+pub fn encrypt_real_authenticated_message_from_user_to_journalist_via_covernode(
+    keys: &CoverDropPublicKeyHierarchy,
+    user_key_pair: &UserKeyPair,
+    journalist_id: &JournalistIdentity,
+    message: FixedSizeAuthenticatedMessageText,
+) -> anyhow::Result<EncryptedUserToCoverNodeMessage> {
+    let Some(journalist_msg_pk) = keys.latest_journalist_msg_pk(journalist_id) else {
+        Err(Error::JournalistMessagingKeyNotFound(journalist_id.clone()))?
+    };
+
+    let user_to_journalist_message =
+        UserToJournalistMessage::new_authenticated(user_key_pair, journalist_msg_pk, message);
+
+    let encrypted_user_to_journalist_message =
+        AnonymousBox::encrypt(journalist_msg_pk, user_to_journalist_message.serialize())?;
+
+    assert_eq!(
+        encrypted_user_to_journalist_message.len(),
+        USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN
+    );
+
+    let recipient_tag = RecipientTag::from_journalist_id(journalist_id);
+
+    let user_to_covernode_message = UserToCoverNodeMessage::new_real_message(
+        recipient_tag,
+        encrypted_user_to_journalist_message,
+    );
+
+    let encrypted_user_to_covernode_message =
+        encrypt_from_user_for_covernode(keys, user_to_covernode_message)?;
+
+    assert_eq!(
+        encrypted_user_to_covernode_message.len(),
+        USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN
+    );
+
+    Ok(encrypted_user_to_covernode_message)
 }

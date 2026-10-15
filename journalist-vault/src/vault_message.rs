@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use common::{
     protocol::{constants::MESSAGE_VALID_FOR_DURATION, keys::UserPublicKey},
     FixedSizeMessageText,
@@ -17,6 +18,7 @@ pub struct U2JMessage {
     pub normal_expiry: DateTime<Utc>,
     pub custom_expiry: Option<DateTime<Utc>>,
     pub read: bool,
+    pub authenticated: bool,
 }
 
 #[derive(Clone, Serialize, Deserialize, TS)]
@@ -37,7 +39,7 @@ impl U2JMessage {
     pub fn new(
         id: i64,
         from: UserPublicKey,
-        message: FixedSizeMessageText,
+        message: UserToJournalistMessagePayload,
         received_at: DateTime<Utc>,
         custom_expiry: Option<DateTime<Utc>>,
         read: bool,
@@ -50,6 +52,7 @@ impl U2JMessage {
             normal_expiry: received_at + MESSAGE_VALID_FOR_DURATION,
             custom_expiry,
             read,
+            authenticated: matches!(message, UserToJournalistMessagePayload::Authenticated(_)),
         })
     }
 }

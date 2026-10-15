@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use common::crypto::keys::encryption::traits::PublicEncryptionKey;
 use common::crypto::keys::encryption::UnsignedEncryptionKeyPair;
 use common::protocol::keys::UserPublicKey;
@@ -83,7 +84,7 @@ async fn get_u2j_messages(conn: &mut PoolConnection<Sqlite>) -> anyhow::Result<V
             .expect("Parse user_pk into byte array in journalist vault");
 
         let message_bytes: Vec<u8> = row.get("message");
-        let message = FixedSizeMessageText::from_vec_unchecked(message_bytes);
+        let message = UserToJournalistMessagePayload::from_vec_unchecked(message_bytes);
 
         let id: i64 = row.get("id");
         let timestamp: DateTime<Utc> = row.get("timestamp");

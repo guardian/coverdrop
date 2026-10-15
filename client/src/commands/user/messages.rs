@@ -2,7 +2,7 @@ use common::api::models::journalist_id::JournalistIdentity;
 use common::client::mailbox::user_mailbox::UserMailbox;
 use common::protocol::keys::CoverDropPublicKeyHierarchy;
 use common::u2j_appender::messaging_client::MessagingClient;
-use common::{protocol, FixedSizeMessageText};
+use common::{protocol, FixedSizeAuthenticatedMessageText};
 
 pub async fn send_user_to_journalist_real_message(
     messaging_client: &MessagingClient,
@@ -11,15 +11,16 @@ pub async fn send_user_to_journalist_real_message(
     journalist_id: &JournalistIdentity,
     message: &str,
 ) -> anyhow::Result<()> {
-    let message = FixedSizeMessageText::new(message)?;
-    mailbox.add_message_to_journalist_from_user(journalist_id, &message);
+    let message = FixedSizeAuthenticatedMessageText::new(message)?;
 
-    let user_pk = mailbox.user_key_pair().public_key();
+    mailbox.add_message_to_journalist_from_user(journalist_id, &message.pad_to_plain());
+
+    let user_key_pair = mailbox.user_key_pair();
 
     let encrypted_outer_msg =
-        protocol::user::encrypt_real_message_from_user_to_journalist_via_covernode(
+        protocol::user::encrypt_real_authenticated_message_from_user_to_journalist_via_covernode(
             keys,
-            user_pk,
+            user_key_pair,
             journalist_id,
             message,
         )?;

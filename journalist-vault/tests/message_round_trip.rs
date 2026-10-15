@@ -1,12 +1,10 @@
 use chrono::Utc;
+use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use common::clap::Stage;
 use common::{
     api::models::{
         journalist_id::JournalistIdentity,
-        messages::{
-            user_to_journalist_message::UserToJournalistMessage,
-            user_to_journalist_message_with_metadata::U2JMessageWithMetadata,
-        },
+        messages::decrypted_user_to_journalist_message_with_metadata::DecryptedUserToJournalistMessageWithMetadata,
         sentinel_id::SentinelIdentity,
     },
     crypto::keys::encryption::UnsignedEncryptionKeyPair,
@@ -38,13 +36,13 @@ async fn message_round_trip() {
     let journalist_provisioning_key_pair =
         generate_journalist_provisioning_key_pair(&org_key_pair, now);
 
-    let message = FixedSizeMessageText::new("Hello").unwrap();
+    let message = UserToJournalistMessagePayload::LegacyUnauthenticated(
+        FixedSizeMessageText::new("Hello").unwrap(),
+    );
 
-    let u2j_message_with_dead_drop_id = U2JMessageWithMetadata {
-        u2j_message: UserToJournalistMessage::new(
-            message.clone(),
-            user_key_pair.public_key().clone(),
-        ),
+    let u2j_message_with_dead_drop_id = DecryptedUserToJournalistMessageWithMetadata {
+        payload: message.clone(),
+        reply_key: user_key_pair.public_key().clone(),
         unsigned_dead_drop_id: 1,
         dead_drop_created_at: now,
     };
