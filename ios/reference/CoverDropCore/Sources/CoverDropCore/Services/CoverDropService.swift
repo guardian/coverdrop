@@ -192,8 +192,10 @@ public class CoverDropService: ObservableObject {
                 true,
                 fallbackResolver: .https(secureDNS.httpsURL, serverAddresses: secureDNS.serverAddresses)
             )
+            // Fastly (our CDN) does not support DNSSEC, so don't require validation.
+            // See https://docs.fastly.com/products/fastly-dns
             if #available(iOS 16.0, *) {
-                urlSession.requiresDNSSECValidation = true
+                urlSession.requiresDNSSECValidation = false
             }
         }
 
