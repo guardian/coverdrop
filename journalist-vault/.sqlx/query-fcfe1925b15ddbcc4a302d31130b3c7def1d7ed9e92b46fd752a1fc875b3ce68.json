@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT COUNT() FROM u2j_messages",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT()",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fcfe1925b15ddbcc4a302d31130b3c7def1d7ed9e92b46fd752a1fc875b3ce68"
+}

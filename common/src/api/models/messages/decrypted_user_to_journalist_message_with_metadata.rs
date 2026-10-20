@@ -15,6 +15,18 @@ pub enum UserToJournalistMessagePayload {
 }
 
 impl UserToJournalistMessagePayload {
+    pub fn from_vec_checked(bytes: Vec<u8>) -> Result<Self, Error> {
+        if bytes.len() == MESSAGE_PADDING_LEN as usize {
+            Ok(UserToJournalistMessagePayload::LegacyUnauthenticated(
+                FixedSizeMessageText::from_vec_checked(bytes)?,
+            ))
+        } else {
+            Ok(UserToJournalistMessagePayload::Authenticated(
+                FixedSizeAuthenticatedMessageText::from_vec_checked(bytes)?,
+            ))
+        }
+    }
+
     pub fn from_vec_unchecked(bytes: Vec<u8>) -> Self {
         if bytes.len() == MESSAGE_PADDING_LEN as usize {
             UserToJournalistMessagePayload::LegacyUnauthenticated(
@@ -38,6 +50,15 @@ impl UserToJournalistMessagePayload {
         match self {
             UserToJournalistMessagePayload::Authenticated(pcs) => pcs.as_bytes(),
             UserToJournalistMessagePayload::LegacyUnauthenticated(pcs) => pcs.as_bytes(),
+        }
+    }
+
+    pub fn check_is_valid_string(&self) -> bool {
+        match self {
+            UserToJournalistMessagePayload::Authenticated(pcs) => pcs.check_is_valid_string(),
+            UserToJournalistMessagePayload::LegacyUnauthenticated(pcs) => {
+                pcs.check_is_valid_string()
+            }
         }
     }
 }

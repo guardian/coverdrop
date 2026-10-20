@@ -20,7 +20,7 @@ pushd "${SCRIPT_PATH}/.."
 
     echo "VACUUM;" | sqlite3 "$DB_PATH"
     DATABASE_URL="sqlite://${DB_PATH}" cargo sqlx migrate run
-    cargo sqlx prepare --database-url "sqlite://${DB_PATH}" -- -p journalist-vault --all-features
+    cargo sqlx prepare --database-url "sqlite://${DB_PATH}" -- -p journalist-vault --all-features --tests
 
     rm "$DB_PATH"
 

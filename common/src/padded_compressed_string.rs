@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 use sodiumoxide::randombytes::randombytes;
 
 use crate::crypto::Encryptable;
-use crate::protocol::constants::{AUTHENTICATED_MESSAGE_PADDING_LEN, MESSAGE_PADDING_LEN};
+use crate::protocol::constants::{
+    AUTHENTICATED_MESSAGE_PADDING_LEN, GZIP_MINIMUM_BYTE_LEN, MESSAGE_PADDING_LEN,
+};
 use crate::Error;
 
 /// The default size of `PaddedCompressedString` for use in the CoverDrop protocol
@@ -77,8 +79,26 @@ impl<const PAD_TO: LengthHeader> PaddedCompressedString<PAD_TO> {
         PaddedCompressedString(bytes)
     }
 
+    /// Construct a `PaddedCompressedString` from a given vector of bytes.
+    /// Performs an expensive check to confirm validity.
+    pub fn from_vec_checked(bytes: Vec<u8>) -> Result<PaddedCompressedString<PAD_TO>, Error> {
+        let pcs = PaddedCompressedString(bytes);
+        match pcs.to_string() {
+            Ok(_) => Ok(pcs),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn check_is_valid_string(&self) -> bool {
+        self.to_string().is_ok()
+    }
+
     pub fn to_string(&self) -> Result<String, Error> {
         let buf: &[u8] = &self.0;
+
+        if buf.len() != Self::TOTAL_LEN {
+            return Err(Error::InvalidPaddedCompressedString);
+        }
 
         let compressed_size = self.compressed_data_len()?;
         let compressed_bytes = &buf[Self::HEADER_SIZE..compressed_size + Self::HEADER_SIZE];
@@ -106,10 +126,21 @@ impl<const PAD_TO: LengthHeader> PaddedCompressedString<PAD_TO> {
     pub fn compressed_data_len(&self) -> Result<usize, Error> {
         let buf: &[u8] = &self.0;
 
+        if buf.len() != Self::TOTAL_LEN {
+            return Err(Error::InvalidPaddedCompressedString);
+        }
+
         let compressed_size_bytes: [u8; size_of::<LengthHeader>()] = buf[..Self::HEADER_SIZE]
             .try_into()
             .map_err(|_| Error::InvalidPaddedCompressedString)?;
-        Ok(LengthHeader::from_be_bytes(compressed_size_bytes) as usize)
+
+        let length = LengthHeader::from_be_bytes(compressed_size_bytes) as usize;
+
+        if length > Self::TOTAL_LEN - Self::HEADER_SIZE || length < GZIP_MINIMUM_BYTE_LEN {
+            return Err(Error::InvalidPaddedCompressedString);
+        }
+
+        Ok(length)
     }
 
     pub fn padding_len(&self) -> Result<usize, Error> {
@@ -158,6 +189,7 @@ mod tests {
     use crate::{
         Error, FixedSizeAuthenticatedMessageText, FixedSizeMessageText, PaddedCompressedString,
     };
+    use std::assert_matches;
 
     #[test]
     fn successfully_roundtrip() -> Result<(), Error> {
@@ -248,6 +280,30 @@ mod tests {
     }
 
     #[test]
+    fn empty_string_successful_roundtrip() -> Result<(), Error> {
+        let expected = "";
+
+        const TARGET_LEN: u16 = 64;
+
+        let pcs = PaddedCompressedString::<TARGET_LEN>::new(expected)?;
+
+        assert_eq!(
+            TARGET_LEN as usize,
+            pcs.total_len(),
+            "Check expected length"
+        );
+
+        let actual = pcs.to_string()?;
+
+        assert_eq!(
+            expected, actual,
+            "Check the text is the same after roundtripping"
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn pad_to_plain_preserves_message() -> Result<(), Error> {
         let expected = "hello world";
 
@@ -258,5 +314,70 @@ mod tests {
         assert_eq!(padded.to_string()?, expected);
 
         Ok(())
+    }
+
+    #[test]
+    fn malformed_min_padded_compressed_string_to_string_handles_errors() -> Result<(), Error> {
+        let malformed_pcs = PaddedCompressedString::<512>::from_vec_unchecked(vec![u8::MIN; 512]);
+
+        let result = malformed_pcs.to_string();
+
+        // This test should fail due to header length being less than a valid gzip
+        assert_matches!(result, Err(Error::InvalidPaddedCompressedString));
+
+        Ok(())
+    }
+
+    #[test]
+    fn malformed_max_padded_compressed_string_to_string_handles_errors() -> Result<(), Error> {
+        let malformed_pcs = PaddedCompressedString::<512>::from_vec_unchecked(vec![u8::MAX; 512]);
+
+        let result = malformed_pcs.to_string();
+
+        // This test should fail due to header length being greater than the total length the PCS
+        assert_matches!(result, Err(Error::InvalidPaddedCompressedString));
+
+        Ok(())
+    }
+
+    #[test]
+    fn malformed_padded_compressed_string_to_string_handles_errors() -> Result<(), Error> {
+        let malformed_pcs = PaddedCompressedString::<512>::from_vec_unchecked(vec![1_u8; 512]);
+
+        let result = malformed_pcs.to_string();
+
+        assert_matches!(result, Err(_));
+
+        Ok(())
+    }
+
+    #[test]
+    fn short_padded_compressed_string_to_string_handles_errors() {
+        let short_pcs = PaddedCompressedString::<512> { 0: vec![1_u8; 511] };
+
+        let result = short_pcs.to_string();
+
+        assert_matches!(result, Err(Error::InvalidPaddedCompressedString));
+    }
+
+    #[test]
+    fn long_padded_compressed_string_to_string_handles_errors() {
+        let long_pcs = PaddedCompressedString::<512> { 0: vec![1_u8; 513] };
+
+        let result = long_pcs.to_string();
+
+        assert_matches!(result, Err(Error::InvalidPaddedCompressedString));
+    }
+
+    #[test]
+    #[should_panic]
+    fn short_padded_compressed_string_from_vec_unchecked_panics() {
+        let _ = PaddedCompressedString::<512>::from_vec_unchecked(vec![1_u8; 511]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn long_padded_compressed_string_from_vec_unchecked_panics() {
+        let _ = PaddedCompressedString::<512>::from_vec_unchecked(vec![1_u8; 513]);
     }
 }

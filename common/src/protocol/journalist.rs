@@ -1,18 +1,13 @@
 use crate::api::models::dead_drops::DeadDropId;
 use crate::api::models::messages::covernode_to_journalist_message::EncryptedCoverNodeToJournalistMessage;
-use crate::api::models::messages::decrypted_user_to_journalist_message_with_metadata::{
-    DecryptedUserToJournalistMessageWithMetadata, UserToJournalistMessagePayload,
-};
+use crate::api::models::messages::decrypted_user_to_journalist_message_with_metadata::DecryptedUserToJournalistMessageWithMetadata;
 use crate::api::models::messages::journalist_to_covernode_message::{
     EncryptedJournalistToCoverNodeMessage, JournalistToCoverNodeMessage,
 };
 use crate::api::models::messages::journalist_to_user_message::{
     EncryptedJournalistToUserMessage, JournalistToUserMessage,
 };
-use crate::api::models::messages::user_to_journalist_message::{
-    EncryptedUserToJournalistMessage, EncryptedUserToJournalistPayload, UserToJournalistMessage,
-    UserToJournalistPayload,
-};
+use crate::api::models::messages::user_to_journalist_message::EncryptedUserToJournalistMessage;
 use crate::protocol::constants::JOURNALIST_TO_USER_ENCRYPTED_MESSAGE_LEN;
 use crate::FixedSizeMessageText;
 use chrono::{DateTime, Utc};
@@ -100,13 +95,16 @@ pub fn get_decrypted_journalist_dead_drop_message(
         journalist_msg_key_pairs
             .iter()
             .find_map(|journalist_msg_key_pair| {
-                let decrypted_message = EncryptedUserToJournalistMessage::decrypt(
+                let u2j_message = EncryptedUserToJournalistMessage::decrypt(
                     journalist_msg_key_pair,
                     &outer_decrypted.payload,
                 )
                 .ok()?
                 .to_message();
-                try_decrypt_u2j_message(journalist_msg_key_pair, &decrypted_message)
+                let payload = u2j_message
+                    .try_decrypt_payload(journalist_msg_key_pair)
+                    .ok()?;
+                Some((u2j_message.reply_key, payload))
             })?;
 
     Some(DecryptedUserToJournalistMessageWithMetadata {
@@ -117,39 +115,6 @@ pub fn get_decrypted_journalist_dead_drop_message(
     })
 }
 
-/// During migration to authenticated U2J messages we need to support both types i.e.
-/// [UserToJournalistPayload::Authenticated] and [serToJournalistPayload::LegacyUnauthenticated].
-/// This function takes a U2J messages and normalises the payload to a [UserToJournalistMessagePayload].
-/// This normalisation allows both message types to co-exist during migration but will be removed
-/// once authenticated messages are fully rolled-out.
-pub fn try_decrypt_u2j_message(
-    journalist_msg_key_pair: &JournalistMessagingKeyPair,
-    user_to_journalist_message: &UserToJournalistMessage,
-) -> Option<(UserPublicKey, UserToJournalistMessagePayload)> {
-    let reply_key = &user_to_journalist_message.reply_key;
-
-    match &user_to_journalist_message.payload {
-        UserToJournalistPayload::Authenticated(encrypted_payload) => {
-            EncryptedUserToJournalistPayload::decrypt(
-                reply_key,
-                journalist_msg_key_pair.secret_key(),
-                encrypted_payload,
-            )
-            .map(|fixed_size_message_text| {
-                (
-                    reply_key.clone(),
-                    UserToJournalistMessagePayload::Authenticated(fixed_size_message_text),
-                )
-            })
-            .ok()
-        }
-        UserToJournalistPayload::LegacyUnauthenticated(message) => Some((
-            reply_key.clone(),
-            UserToJournalistMessagePayload::LegacyUnauthenticated(message.clone()),
-        )),
-    }
-}
-
 #[cfg(test)]
 mod test {
     use crate::{
@@ -157,9 +122,7 @@ mod test {
             covernode_to_journalist_message::{
                 CoverNodeToJournalistMessage, EncryptedCoverNodeToJournalistMessage,
             },
-            user_to_journalist_message::{
-                EncryptedUserToJournalistPayload, UserToJournalistMessage,
-            },
+            user_to_journalist_message::UserToJournalistMessage,
         },
         crypto::{keys::encryption::UnsignedEncryptionKeyPair, AnonymousBox},
         protocol::{
@@ -172,30 +135,10 @@ mod test {
         time, FixedSizeAuthenticatedMessageText,
     };
 
-    use super::{get_decrypted_journalist_dead_drop_message, try_decrypt_u2j_message};
-    use crate::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
-    use crate::api::models::messages::user_to_journalist_message::UserToJournalistPayload;
+    use super::get_decrypted_journalist_dead_drop_message;
     use crate::crypto::keys::encryption::traits::PublicEncryptionKey as _;
-    use crate::crypto::TwoPartyBox;
     use crate::protocol::keys::{CoverNodeMessagingKeyPair, JournalistMessagingKeyPair};
-    use crate::FixedSizeMessageText;
     use chrono::Utc;
-
-    /// Build an authenticated U2J message from `user_key_pair` addressed to `journalist_msg_key_pair`.
-    fn new_authenticated_u2j_message(
-        journalist_msg_key_pair: &JournalistMessagingKeyPair,
-        user_key_pair: &UnsignedEncryptionKeyPair<User>,
-        message_text: &str,
-    ) -> UserToJournalistMessage {
-        let message = FixedSizeAuthenticatedMessageText::new(message_text)
-            .expect("Create fixed size authenticated message text");
-
-        UserToJournalistMessage::new_authenticated(
-            user_key_pair,
-            journalist_msg_key_pair.public_key(),
-            message,
-        )
-    }
 
     /// Build a dead drop message as the CoverNode would. The U2J and innermost layers are
     /// encrypted to `u2j_msg_key_pair`, which may differ from the key the CoverNode wraps with.
@@ -206,8 +149,12 @@ mod test {
         user_key_pair: &UnsignedEncryptionKeyPair<User>,
         message_text: &str,
     ) -> EncryptedCoverNodeToJournalistMessage {
-        let u2j_message =
-            new_authenticated_u2j_message(u2j_msg_key_pair, user_key_pair, message_text);
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            u2j_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new(message_text)
+                .expect("Create fixed size authenticated message text"),
+        );
 
         let encrypted_u2j_message =
             AnonymousBox::encrypt(u2j_msg_key_pair.public_key(), u2j_message.serialize())
@@ -220,181 +167,6 @@ mod test {
         )
         .expect("Encrypt C2J message")
     }
-
-    // Test unpack_inner_u2j_message functionality
-
-    #[test]
-    fn authenticated_message_unpacks_with_matching_key_pair() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let u2j_message =
-            new_authenticated_u2j_message(&journalist_msg_key_pair, &user_key_pair, "hello");
-
-        let (reply_key, payload) = try_decrypt_u2j_message(&journalist_msg_key_pair, &u2j_message)
-            .expect("Unpack authenticated message");
-
-        assert_eq!(payload.to_string().unwrap(), "hello");
-        assert_eq!(reply_key.as_bytes(), user_key_pair.public_key().as_bytes());
-    }
-
-    #[test]
-    fn authenticated_message_round_trips_an_empty_message() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let u2j_message =
-            new_authenticated_u2j_message(&journalist_msg_key_pair, &user_key_pair, "");
-
-        let (reply_key, payload) = try_decrypt_u2j_message(&journalist_msg_key_pair, &u2j_message)
-            .expect("Unpack authenticated message");
-
-        assert_eq!(payload.to_string().unwrap(), "");
-        assert_eq!(reply_key.as_bytes(), user_key_pair.public_key().as_bytes());
-    }
-
-    #[test]
-    fn authenticated_message_round_trips_multi_byte_characters() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let message_text = "héllo 👋 世界";
-        let u2j_message =
-            new_authenticated_u2j_message(&journalist_msg_key_pair, &user_key_pair, message_text);
-
-        let (reply_key, payload) = try_decrypt_u2j_message(&journalist_msg_key_pair, &u2j_message)
-            .expect("Unpack authenticated message");
-
-        assert_eq!(payload.to_string().unwrap(), message_text);
-        assert_eq!(reply_key.as_bytes(), user_key_pair.public_key().as_bytes());
-    }
-
-    #[test]
-    fn authenticated_message_returns_none_for_a_non_matching_key_pair() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let recipient_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let other_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let u2j_message =
-            new_authenticated_u2j_message(&recipient_msg_key_pair, &user_key_pair, "hello");
-
-        assert!(try_decrypt_u2j_message(&other_msg_key_pair, &u2j_message).is_none());
-    }
-
-    #[test]
-    fn authenticated_message_returns_none_when_reply_key_does_not_match_sender() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-        let attacker_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let u2j_message =
-            new_authenticated_u2j_message(&journalist_msg_key_pair, &user_key_pair, "hello");
-
-        // Swapping the reply key must invalidate the inner message's authentication tag
-        let tampered_message = UserToJournalistMessage {
-            reply_key: attacker_key_pair.public_key().clone(),
-            payload: u2j_message.payload,
-        };
-
-        assert!(try_decrypt_u2j_message(&journalist_msg_key_pair, &tampered_message).is_none());
-    }
-
-    #[test]
-    fn authenticated_message_returns_none_when_ciphertext_is_tampered_with() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-
-        let u2j_message =
-            new_authenticated_u2j_message(&journalist_msg_key_pair, &user_key_pair, "hello");
-
-        let UserToJournalistPayload::Authenticated(inner_message) = u2j_message.payload else {
-            panic!("Expected an authenticated message");
-        };
-        let mut bytes = inner_message.as_bytes().to_vec();
-        let last = bytes.len() - 1;
-        bytes[last] ^= 0xff;
-
-        let tampered_message = UserToJournalistMessage {
-            reply_key: user_key_pair.public_key().clone(),
-            payload: UserToJournalistPayload::Authenticated(
-                EncryptedUserToJournalistPayload::from_vec_unchecked(bytes),
-            ),
-        };
-
-        assert!(try_decrypt_u2j_message(&journalist_msg_key_pair, &tampered_message).is_none());
-    }
-
-    #[test]
-    fn plain_message_is_returned_without_a_matching_key_pair() {
-        let now = time::now();
-        let ProtocolKeys {
-            journalist_id_key_pair,
-            ..
-        } = generate_protocol_keys(now);
-
-        let journalist_msg_key_pair =
-            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
-        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
-        let message = FixedSizeMessageText::new("hello").expect("Create fixed size message text");
-
-        #[allow(deprecated)]
-        let u2j_message = UserToJournalistMessage::new(message.clone(), user_key_pair.public_key());
-
-        let (reply_key, payload) = try_decrypt_u2j_message(&journalist_msg_key_pair, &u2j_message)
-            .expect("Unpack plain message");
-
-        assert_eq!(
-            payload,
-            UserToJournalistMessagePayload::LegacyUnauthenticated(message)
-        );
-        assert_eq!(payload.to_string().unwrap(), "hello");
-        assert_eq!(reply_key.as_bytes(), user_key_pair.public_key().as_bytes());
-    }
-
-    // Test get_decrypted_journalist_dead_drop_message functionality
 
     #[test]
     fn dead_drop_message_decrypts_when_matching_key_pairs_are_not_first() {

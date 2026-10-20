@@ -1,9 +1,10 @@
+use crate::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
 use crate::crypto::keys::encryption::traits::PublicEncryptionKey;
 use crate::crypto::keys::encryption::UnsignedEncryptionKeyPair;
 use crate::crypto::{AnonymousBox, Encryptable, TwoPartyBox};
 use crate::error::Error;
 use crate::protocol::constants::*;
-use crate::protocol::keys::{UserKeyPair, UserPublicKey};
+use crate::protocol::keys::{JournalistMessagingKeyPair, UserKeyPair, UserPublicKey};
 use crate::protocol::roles::{JournalistMessaging, User};
 use crate::{FixedSizeAuthenticatedMessageText, FixedSizeMessageText};
 use core::fmt;
@@ -111,6 +112,40 @@ impl UserToJournalistMessage {
 
         SerializedUserToJournalistMessage { bytes }
     }
+
+    /// During migration to authenticated U2J messages we need to support both types i.e.
+    /// [UserToJournalistPayload::Authenticated] and [UserToJournalistPayload::LegacyUnauthenticated].
+    /// This function takes a U2J messages and normalises the payload to a [UserToJournalistMessagePayload].
+    /// This normalisation allows both message types to co-exist during migration but will be removed
+    /// once authenticated messages are fully rolled-out.
+    pub fn try_decrypt_payload(
+        &self,
+        journalist_msg_key_pair: &JournalistMessagingKeyPair,
+    ) -> Result<UserToJournalistMessagePayload, Error> {
+        match &self.payload {
+            UserToJournalistPayload::Authenticated(encrypted_payload) => {
+                EncryptedUserToJournalistPayload::decrypt(
+                    &self.reply_key,
+                    journalist_msg_key_pair.secret_key(),
+                    encrypted_payload,
+                )
+                .map(|fixed_size_message_text| {
+                    UserToJournalistMessagePayload::Authenticated(fixed_size_message_text)
+                })
+            }
+            UserToJournalistPayload::LegacyUnauthenticated(message) => Ok(
+                UserToJournalistMessagePayload::LegacyUnauthenticated(message.clone()),
+            ),
+        }
+        .and_then(|payload| {
+            if payload.check_is_valid_string() {
+                Ok(payload)
+            } else {
+                tracing::warn!("Decrypted then dropped a malformed message.");
+                Err(Error::InvalidPaddedCompressedString)
+            }
+        })
+    }
 }
 
 /// The serialized representation of an [UserToJournalistMessage] using the following format:
@@ -175,13 +210,16 @@ impl Encryptable for SerializedUserToJournalistMessage {
     }
 
     fn from_unencrypted_bytes(bytes: Vec<u8>) -> Result<Self, Error> {
-        Ok(Self { bytes })
+        Ok(Self::from_vec_unchecked(bytes))
     }
 }
 
 #[cfg(test)]
 mod tests_user_to_journalist {
     use super::*;
+    use crate::protocol::keys::generate_journalist_messaging_key_pair;
+    use crate::protocol::keys::test::{generate_protocol_keys, ProtocolKeys};
+    use crate::time;
 
     #[test]
     fn when_creating_inner_message_with_key_then_serializes_and_deserializes() -> anyhow::Result<()>
@@ -261,5 +299,214 @@ mod tests_user_to_journalist {
         let encrypted_message_1 = new_random_encrypted_user_to_journalist_message();
         let encrypted_message_2 = new_random_encrypted_user_to_journalist_message();
         assert_ne!(encrypted_message_1, encrypted_message_2)
+    }
+
+    #[test]
+    fn authenticated_message_unpacks_with_matching_key_pair() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            journalist_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new("hello").unwrap(),
+        );
+
+        let payload = u2j_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .expect("Unpack authenticated message");
+
+        assert_eq!(payload.to_string().unwrap(), "hello");
+        assert_eq!(
+            u2j_message.reply_key.as_bytes(),
+            user_key_pair.public_key().as_bytes()
+        );
+    }
+
+    #[test]
+    fn authenticated_message_round_trips_an_empty_message() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            journalist_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new("").unwrap(),
+        );
+
+        let payload = u2j_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .expect("Unpack authenticated message");
+
+        assert_eq!(payload.to_string().unwrap(), "");
+        assert_eq!(
+            u2j_message.reply_key.as_bytes(),
+            user_key_pair.public_key().as_bytes()
+        );
+    }
+
+    #[test]
+    fn authenticated_message_round_trips_multi_byte_characters() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+
+        let message_text = "héllo 👋 世界";
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            journalist_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new(message_text).unwrap(),
+        );
+
+        let payload = u2j_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .expect("Unpack authenticated message");
+
+        assert_eq!(payload.to_string().unwrap(), message_text);
+        assert_eq!(
+            u2j_message.reply_key.as_bytes(),
+            user_key_pair.public_key().as_bytes()
+        );
+    }
+
+    #[test]
+    fn authenticated_message_returns_none_for_a_non_matching_key_pair() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let recipient_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let other_msg_key_pair =
+            &generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            recipient_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new("hello").unwrap(),
+        );
+
+        assert!(u2j_message.try_decrypt_payload(other_msg_key_pair).is_err());
+    }
+
+    #[test]
+    fn authenticated_message_returns_none_when_reply_key_does_not_match_sender() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+        let attacker_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            journalist_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new("hello").unwrap(),
+        );
+
+        // Swapping the reply key must invalidate the inner message's authentication tag
+        let tampered_message = UserToJournalistMessage {
+            reply_key: attacker_key_pair.public_key().clone(),
+            payload: u2j_message.payload.clone(),
+        };
+
+        assert!(tampered_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .is_err());
+    }
+
+    #[test]
+    fn authenticated_message_returns_none_when_ciphertext_is_tampered_with() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = &UnsignedEncryptionKeyPair::<User>::generate();
+
+        let u2j_message = UserToJournalistMessage::new_authenticated(
+            user_key_pair,
+            journalist_msg_key_pair.public_key(),
+            FixedSizeAuthenticatedMessageText::new("hello").unwrap(),
+        );
+
+        let UserToJournalistPayload::Authenticated(inner_message) = u2j_message.payload else {
+            panic!("Expected an authenticated message");
+        };
+        let mut bytes = inner_message.as_bytes().to_vec();
+        let last = bytes.len() - 1;
+        bytes[last] ^= 0xff;
+
+        let tampered_message = UserToJournalistMessage {
+            reply_key: user_key_pair.public_key().clone(),
+            payload: UserToJournalistPayload::Authenticated(
+                EncryptedUserToJournalistPayload::from_vec_unchecked(bytes),
+            ),
+        };
+
+        assert!(tampered_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .is_err());
+    }
+
+    #[test]
+    fn plain_message_is_returned_without_a_matching_key_pair() {
+        let now = time::now();
+        let ProtocolKeys {
+            journalist_id_key_pair,
+            ..
+        } = generate_protocol_keys(now);
+
+        let journalist_msg_key_pair =
+            generate_journalist_messaging_key_pair(&journalist_id_key_pair, now);
+        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        let message = FixedSizeMessageText::new("hello").expect("Create fixed size message text");
+
+        #[allow(deprecated)]
+        let u2j_message = UserToJournalistMessage::new(message.clone(), user_key_pair.public_key());
+
+        let payload = u2j_message
+            .try_decrypt_payload(&journalist_msg_key_pair)
+            .expect("Unpack plain message");
+
+        assert_eq!(
+            payload,
+            UserToJournalistMessagePayload::LegacyUnauthenticated(message)
+        );
+        assert_eq!(payload.to_string().unwrap(), "hello");
+        assert_eq!(
+            u2j_message.reply_key.as_bytes(),
+            user_key_pair.public_key().as_bytes()
+        );
     }
 }

@@ -25,6 +25,12 @@ pub(crate) async fn add_u2j_message(
 ) -> anyhow::Result<Option<VaultMessage>> {
     let user_pk_bytes = &user_pk.as_bytes()[..];
 
+    // Prevent invalid messages from being inserted into the DB.
+    if !message.check_is_valid_string() {
+        tracing::warn!("Prevented malformed message from being inserted into the DB. Dead Drop created at {dead_drop_created_at}");
+        return Ok(None);
+    }
+
     let message_bytes = message.as_bytes();
 
     let message_id = sqlx::query_scalar!(
@@ -141,38 +147,50 @@ pub(crate) async fn messages(conn: &mut SqliteConnection) -> anyhow::Result<Vec<
         let user_pk = UserPublicKey::from_bytes(&row.user_pk)
             .expect("Parse user_pk into byte array in journalist vault");
 
-        if row.is_from_user {
-            let message = UserToJournalistMessagePayload::from_vec_unchecked(row.message);
-
-            Ok(VaultMessage::U2J(
-                U2JMessage::new(
-                    row.id,
-                    user_pk,
-                    message,
-                    row.timestamp,
-                    row.custom_expiry,
-                    row.read.unwrap_or(false),
-                )
-                .expect("Initialize u2j message"),
-            ))
+        match if row.is_from_user {
+            UserToJournalistMessagePayload::from_vec_checked(row.message)
+                .map_err(anyhow::Error::new)
+                .and_then(|message| {
+                    U2JMessage::new(
+                        row.id,
+                        user_pk,
+                        message,
+                        row.timestamp,
+                        row.custom_expiry,
+                        row.read.unwrap_or(false),
+                    )
+                })
+                .map(VaultMessage::U2J)
         } else {
-            let message = FixedSizeMessageText::from_vec_unchecked(row.message);
-
-            Ok(VaultMessage::J2U(
-                J2UMessage::new(
-                    row.id,
-                    user_pk,
-                    message,
-                    row.is_sent,
-                    row.timestamp,
-                    row.custom_expiry,
-                )
-                .expect("Initialize j2u message"),
-            ))
+            FixedSizeMessageText::from_vec_checked(row.message)
+                .map_err(anyhow::Error::new)
+                .and_then(|message| {
+                    J2UMessage::new(
+                        row.id,
+                        user_pk,
+                        message,
+                        row.is_sent,
+                        row.timestamp,
+                        row.custom_expiry,
+                    )
+                })
+                .map(VaultMessage::J2U)
+        } {
+            Ok(message) => Ok(Some(message)),
+            Err(error) => {
+                tracing::warn!(
+                    "filtered malformed message when reading from DB {:?}",
+                    error
+                );
+                Ok(None)
+            }
         }
     })
     .fetch_all(conn)
-    .await?;
+    .await?
+    .into_iter()
+    .flatten()
+    .collect();
 
     Ok(messages)
 }
@@ -349,13 +367,82 @@ mod test {
     use common::api::models::message_id::MessageId;
     use common::api::models::messages::decrypted_user_to_journalist_message_with_metadata::UserToJournalistMessagePayload;
     use common::api::models::messages::journalist_to_covernode_message::EncryptedJournalistToCoverNodeMessage;
+    use common::crypto::keys::encryption::traits::PublicEncryptionKey;
     use common::crypto::keys::encryption::UnsignedEncryptionKeyPair;
     use common::protocol::constants::JOURNALIST_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN;
+    use common::protocol::keys::UserPublicKey;
     use common::protocol::roles::User;
-    use common::FixedSizeMessageText;
+    use common::{FixedSizeAuthenticatedMessageText, FixedSizeMessageText};
     use itertools::Itertools;
     use sqlx::pool::PoolConnection;
     use sqlx::Sqlite;
+
+    /// Correctly sized bytes which are not a valid u2j compressed string, so cannot be decoded.
+    fn malformed_u2j_message() -> FixedSizeAuthenticatedMessageText {
+        FixedSizeAuthenticatedMessageText::from_vec_unchecked(vec![
+            0;
+            FixedSizeAuthenticatedMessageText::TOTAL_LEN
+        ])
+    }
+
+    /// Correctly sized bytes which are not a valid j2u compressed string, so cannot be decoded.
+    fn malformed_j2u_message() -> FixedSizeMessageText {
+        FixedSizeMessageText::from_vec_unchecked(vec![0; FixedSizeMessageText::TOTAL_LEN])
+    }
+
+    /// Writes directly to the table, bypassing the validation performed by [`add_u2j_message`].
+    /// Takes raw bytes so that BLOBs of the wrong length can be inserted.
+    async fn insert_u2j_message_unchecked(
+        conn: &mut PoolConnection<Sqlite>,
+        user_pk: &UserPublicKey,
+        message_bytes: &[u8],
+        received_at: DateTime<Utc>,
+        dead_drop_created_at: DateTime<Utc>,
+    ) -> sqlx::Result<()> {
+        let user_pk_bytes = &user_pk.as_bytes()[..];
+        let dead_drop_id = 1;
+
+        sqlx::query!(
+            r#"
+            INSERT INTO u2j_messages
+                (user_pk, message, received_at, dead_drop_id, dead_drop_created_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)"#,
+            user_pk_bytes,
+            message_bytes,
+            received_at,
+            dead_drop_id,
+            dead_drop_created_at
+        )
+        .execute(&mut **conn)
+        .await?;
+
+        Ok(())
+    }
+
+    /// Writes directly to the table, bypassing the validation performed when constructing a [`VaultMessage`].
+    /// Takes raw bytes so that BLOBs of the wrong length can be inserted.
+    async fn insert_j2u_message_unchecked(
+        conn: &mut PoolConnection<Sqlite>,
+        user_pk: &UserPublicKey,
+        message_bytes: &[u8],
+        sent_at: DateTime<Utc>,
+    ) -> sqlx::Result<()> {
+        let user_pk_bytes = &user_pk.as_bytes()[..];
+
+        sqlx::query!(
+            r#"
+            INSERT INTO j2u_messages
+                (user_pk, message, sent_at)
+            VALUES (?1, ?2, ?3)"#,
+            user_pk_bytes,
+            message_bytes,
+            sent_at
+        )
+        .execute(&mut **conn)
+        .await?;
+
+        Ok(())
+    }
 
     #[sqlx::test]
     async fn test_message_queue_order(mut conn: PoolConnection<Sqlite>) -> sqlx::Result<()> {
@@ -680,6 +767,126 @@ mod test {
 
         let all_messages = messages(&mut conn).await.unwrap();
         assert_eq!(all_messages.len(), 2, "should have exactly 2 messages");
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_add_u2j_message_rejects_malformed_message(
+        mut conn: PoolConnection<Sqlite>,
+    ) -> sqlx::Result<()> {
+        let now: DateTime<Utc> = "2025-07-28T10:30:00Z".parse().unwrap();
+        let dead_drop_id = 1;
+
+        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        let user_pk = user_key_pair.public_key();
+        add_user(&mut conn, user_pk, now)
+            .await
+            .expect("test user added to DB");
+
+        let malformed = UserToJournalistMessagePayload::Authenticated(malformed_u2j_message());
+
+        let result = add_u2j_message(&mut conn, user_pk, &malformed, now, dead_drop_id, now)
+            .await
+            .expect("adding a malformed message should not error");
+        assert!(
+            result.is_none(),
+            "malformed message should not be returned as a vault message"
+        );
+
+        let u2j_message_count = sqlx::query_scalar!(r#"SELECT COUNT() FROM u2j_messages"#)
+            .fetch_one(&mut *conn)
+            .await?;
+        assert_eq!(
+            u2j_message_count, 0,
+            "malformed message should not be inserted into the DB"
+        );
+
+        // A valid message is still accepted afterwards.
+        let valid = UserToJournalistMessagePayload::Authenticated(
+            FixedSizeAuthenticatedMessageText::new("valid u2j message").unwrap(),
+        );
+        let result = add_u2j_message(&mut conn, user_pk, &valid, now, dead_drop_id, now)
+            .await
+            .expect("adding a valid message should not error");
+        assert!(result.is_some(), "valid message should be added to the DB");
+
+        let u2j_message_count = sqlx::query_scalar!(r#"SELECT COUNT() FROM u2j_messages"#)
+            .fetch_one(&mut *conn)
+            .await?;
+        assert_eq!(
+            u2j_message_count, 1,
+            "only the valid message should be in the DB"
+        );
+
+        Ok(())
+    }
+
+    #[sqlx::test]
+    async fn test_read_messages_drops_malformed_messages(
+        mut conn: PoolConnection<Sqlite>,
+    ) -> sqlx::Result<()> {
+        let now: DateTime<Utc> = "2025-07-28T10:30:00Z".parse().unwrap();
+        let dead_drop_id = 1;
+
+        let user_key_pair = UnsignedEncryptionKeyPair::<User>::generate();
+        let user_pk = user_key_pair.public_key();
+        add_user(&mut conn, user_pk, now)
+            .await
+            .expect("test user added to DB");
+
+        let valid_u2j = UserToJournalistMessagePayload::Authenticated(
+            FixedSizeAuthenticatedMessageText::new("valid u2j message").unwrap(),
+        );
+        let valid_j2u = FixedSizeMessageText::new("valid j2u message").unwrap();
+
+        add_u2j_message(&mut conn, user_pk, &valid_u2j, now, dead_drop_id, now)
+            .await
+            .expect("add valid u2j message")
+            .expect("message should not be a duplicate");
+        add_j2u_message(&mut conn, user_pk, &valid_j2u, now, None)
+            .await
+            .expect("add valid j2u message");
+
+        let malformed_u2j = malformed_u2j_message();
+        let too_short_u2j = vec![0_u8; FixedSizeAuthenticatedMessageText::TOTAL_LEN - 1];
+        let too_long_u2j = vec![0_u8; FixedSizeAuthenticatedMessageText::TOTAL_LEN + 1];
+
+        insert_u2j_message_unchecked(
+            &mut conn,
+            user_pk,
+            malformed_u2j.as_bytes(),
+            now,
+            now + ONE_HOUR,
+        )
+        .await?;
+        insert_u2j_message_unchecked(&mut conn, user_pk, &too_short_u2j, now, now + ONE_HOUR * 2)
+            .await?;
+        insert_u2j_message_unchecked(&mut conn, user_pk, &too_long_u2j, now, now + ONE_HOUR * 3)
+            .await?;
+
+        let malformed_j2u = malformed_j2u_message();
+        let too_short_j2u = vec![0_u8; FixedSizeMessageText::TOTAL_LEN - 1];
+        let too_long_j2u = vec![0_u8; FixedSizeMessageText::TOTAL_LEN + 1];
+
+        insert_j2u_message_unchecked(&mut conn, user_pk, malformed_j2u.as_bytes(), now).await?;
+        insert_j2u_message_unchecked(&mut conn, user_pk, &too_short_j2u, now).await?;
+        insert_j2u_message_unchecked(&mut conn, user_pk, &too_long_j2u, now).await?;
+
+        let all_messages = messages(&mut conn).await.unwrap();
+
+        assert_eq!(
+            all_messages
+                .iter()
+                .map(|msg| match msg {
+                    VaultMessage::U2J(msg) => msg.message.clone(),
+                    VaultMessage::J2U(msg) => msg.message.clone(),
+                })
+                .sorted()
+                .collect_vec(),
+            vec!["valid j2u message", "valid u2j message"],
+            "malformed and incorrectly sized messages should be dropped, valid messages should be returned"
+        );
 
         Ok(())
     }

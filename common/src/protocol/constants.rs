@@ -86,6 +86,12 @@ pub const AUTHENTICATED_MESSAGE_PADDING_LEN: u16 = 472;
 /// The number of messaging keys from different CoverNodes used when encrypting a *_TO_COVERNODE message.
 pub const COVERNODE_WRAPPING_KEY_COUNT: usize = 2;
 
+/// A gzip must have at least 18 bytes.
+/// A 10 byte header and 8 byte trailer.
+/// A [PaddedCompressedString] header length should be at least 18.
+/// Details available: https://en.wikipedia.org/wiki/Gzip
+pub const GZIP_MINIMUM_BYTE_LEN: usize = 18;
+
 //
 // USER_TO_...
 //

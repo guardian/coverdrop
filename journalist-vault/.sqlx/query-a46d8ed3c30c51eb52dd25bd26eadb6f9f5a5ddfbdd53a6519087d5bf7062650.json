@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO u2j_messages\n                (user_pk, message, received_at, dead_drop_id, dead_drop_created_at)\n            VALUES (?1, ?2, ?3, ?4, ?5)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "a46d8ed3c30c51eb52dd25bd26eadb6f9f5a5ddfbdd53a6519087d5bf7062650"
+}
