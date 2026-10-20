@@ -267,12 +267,10 @@ export const GroupChat = ({
           direction="column"
           gutterSize="s"
           style={{
-            margin: size.m,
+            padding: size.m,
             height: "100%",
             overflowY: "scroll", // Make messages scrollable
-            overflowX: "visible", // important for horizontal popover room
             zIndex: 0, // establish predictable stacking context
-            paddingBottom: size.base, // Add some padding at the bottom
           }}
         >
           {messages

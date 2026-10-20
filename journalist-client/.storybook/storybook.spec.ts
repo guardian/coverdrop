@@ -57,7 +57,6 @@ for (const story of nonSkippedStories) {
       [".storybook", "screenshots", story.title, `${story.id}.png`],
       {
         threshold: 0.2,
-        fullPage: true,
         animations: "disabled",
       },
     );

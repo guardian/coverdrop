@@ -55,6 +55,16 @@ const messages: GroupMessage[] = [
     },
   },
   {
+    id: "three-and-a-half",
+    sender: you.id,
+    read: true,
+    group_id,
+    published_at: moment(fakeNow).subtract(14, "seconds").toISOString(),
+    content: {
+      Text: "hello Anna",
+    },
+  },
+  {
     id: "four",
     sender: "sentinel-bob",
     read: true,
@@ -81,7 +91,7 @@ const messages: GroupMessage[] = [
     group_id,
     published_at: moment(fakeNow).subtract(55, "seconds").toISOString(),
     content: {
-      Text: "ready when you are\n(this is a multiline message)",
+      Text: "ready when you are\n(this is a multiline message)\n(and another for good measure)",
     },
   },
   {
