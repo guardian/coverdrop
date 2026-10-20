@@ -1,4 +1,5 @@
 use app_state::AppStateHandle;
+use chrono::{DateTime, Utc};
 use clap::Parser as _;
 use commands::{
     admin::{
@@ -30,7 +31,10 @@ use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _
 use cli::Cli;
 
 use crate::commands::{
-    admin::{fully_exit_app, launch_new_instance, update_journalist_status},
+    admin::{
+        exit_app, get_created_timestamp_of_executable, launch_new_instance,
+        update_journalist_status,
+    },
     backup::{
         get_backup_contacts, get_backup_history, set_backup_contacts, unwrap_backup_secret_share,
     },
@@ -79,6 +83,17 @@ pub fn launch_tauri_instance() -> Child {
         .arg("--launch-tauri-instance") // very important (TODO ideally use the definition in cli.rs)
         .spawn()
         .expect("failed to launch another Sentinel instance")
+}
+
+/// We use created timestamp (i.e. when the app was released not when the users machine
+/// picked it up, which would be modified()) to ensure that we as developers only have 48 hours
+/// to wait before we can safely release breaking API changes etc. Otherwise, we'd be at the
+/// mercy of when users operate their machines.
+pub fn get_created_timestamp_of_exe() -> anyhow::Result<DateTime<Utc>> {
+    let current_executable_path = std::env::current_exe()?;
+    let metadata = std::fs::metadata(current_executable_path)?;
+    let created = metadata.created()?;
+    Ok(created.into())
 }
 
 fn run_tauri(cli: Cli) {
@@ -221,7 +236,8 @@ fn run_tauri(cli: Cli) {
             send_notification,
             soft_lock_vault,
             unlock_soft_locked_vault,
-            fully_exit_app,
+            exit_app,
+            get_created_timestamp_of_executable,
             // Group messaging
             send_group_message,
             user_typing,

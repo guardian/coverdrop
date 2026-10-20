@@ -53,6 +53,13 @@ export const getTrustAnchorDigests = (): Promise<
   return invokeWithErrorMessage("get_trust_anchor_digests");
 };
 
+export const getCreatedTimeOfExecutable = (): Promise<Date> => {
+  return invokeWithErrorMessage("get_created_timestamp_of_executable");
+};
+
+export const softExitApp = (): Promise<void> =>
+  invokeWithErrorMessage("exit_app", { isFullExit: false });
+
 export const fullyExitApp = async (): Promise<void> => {
   if (
     !(await ask(
@@ -65,7 +72,7 @@ export const fullyExitApp = async (): Promise<void> => {
       },
     ))
   ) {
-    return await invokeWithErrorMessage("fully_exit_app");
+    return await invokeWithErrorMessage("exit_app", { isFullExit: true });
   }
 };
 

@@ -477,3 +477,30 @@ export const GroupConversation: Story = {
     });
   },
 };
+
+const buildUpdateAvailableStory = (hoursUpdateAvailable: number): Story => ({
+  decorators: [defaultDecorator, autoClickFirstInboxChat],
+  beforeEach: () => {
+    clearMocks();
+    mockWindows("main");
+    let hasCapturedCreatedTimestampAtLaunch = false;
+    mockIPC((cmd) => {
+      switch (cmd) {
+        case "exit_app":
+          return; // do nothing, just in case
+        case "get_created_timestamp_of_executable":
+          if (!hasCapturedCreatedTimestampAtLaunch) {
+            hasCapturedCreatedTimestampAtLaunch = true;
+            return moment().subtract(7, "days").toDate();
+          }
+          return moment().subtract(hoursUpdateAvailable, "hours").toDate();
+        default:
+          return defaultIpcMock(cmd);
+      }
+    });
+  },
+});
+
+export const UpdateAvailableBanner: Story = buildUpdateAvailableStory(1); // 1 hour since update available
+
+export const UpdateAvailableUiLock: Story = buildUpdateAvailableStory(25); // 25 hours since update available

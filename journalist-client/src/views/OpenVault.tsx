@@ -80,7 +80,7 @@ export const OpenVault = ({ setVaultState }: OpenVaultProps) => {
         <EuiPanel
           paddingSize="l"
           title="Unlock your vault"
-          style={{ width: "400px", margin: "auto" }}
+          style={{ width: "400px", margin: "auto", marginBottom: "20px" }}
           grow={false}
         >
           <EuiTitle>

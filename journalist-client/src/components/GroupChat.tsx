@@ -227,7 +227,8 @@ export const GroupChat = ({
       direction="column"
       gutterSize="none"
       style={{
-        height: "100vh",
+        flex: 1,
+        minHeight: 0,
         zIndex: 0, // establish predictable stacking context
       }}
     >

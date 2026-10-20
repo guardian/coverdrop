@@ -759,7 +759,10 @@ export const ChatsSideBar = ({
         aria-label="Search vault"
       />
       <EuiTabs size="s">{renderTabs()}</EuiTabs>
-      <EuiFlexItem grow style={{ overflowY: "scroll", maxHeight: "100%" }}>
+      <EuiFlexItem
+        grow
+        style={{ overflowY: "scroll", overflowX: "hidden", maxHeight: "100%" }}
+      >
         {selectedTabContent}
       </EuiFlexItem>
       {lastBackupTime !== undefined && (

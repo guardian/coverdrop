@@ -1,6 +1,7 @@
 import { ReactElement, useEffect, useState } from "react";
 
 import {
+  EuiButton,
   EuiGlobalToastList,
   EuiModal,
   EuiModalBody,
@@ -9,6 +10,7 @@ import {
   EuiPageTemplate,
   EuiPageTemplateProps,
   useEuiTheme,
+  EuiPanel,
 } from "@elastic/eui";
 import { ChatsSideBar } from "./components/ChatsSideBar";
 import { OpenVault } from "./views/OpenVault";
@@ -26,7 +28,7 @@ import { EditUserModal } from "./components/EditUserModal.tsx";
 import { CopyToClipboardModal } from "./components/CopyToClipboardModal.tsx";
 import { JournalistStatus } from "./model/bindings/JournalistStatus.ts";
 import { ToggleJournalistStatusModal } from "./components/ToggleJournalistStatusModal.tsx";
-import { getPublicInfo } from "./commands/admin.ts";
+import { getPublicInfo, softExitApp } from "./commands/admin.ts";
 import { JournalistProfile } from "./model/bindings/JournalistProfile.ts";
 import { JournalistIdentity } from "./model/bindings/JournalistIdentity.ts";
 import { IdleTimeoutMonitor } from "./components/IdleTimeoutMonitor.tsx";
@@ -41,6 +43,8 @@ import { getBackupHistory } from "./commands/backups.ts";
 import { CreateOrEditGroupModal } from "./components/CreateOrEditGroupModal.tsx";
 import { GroupChat } from "./components/GroupChat.tsx";
 import { GroupWithComputed, useGroups } from "./state/groups.ts";
+import { useMaybeNewVersionAvailable } from "./hooks/useMaybeNewVersionAvailable.ts";
+import { NewVersionAvailableMustRestart } from "./components/NewVersionAvaialbleMustRestart.tsx";
 
 const App = ({
   panelled,
@@ -245,6 +249,21 @@ const App = ({
 
   const toasts = [...customToasts, ...errorToasts];
 
+  const maybeNewVersionAvailable = useMaybeNewVersionAvailable();
+
+  useEffect(() => {
+    if (maybeNewVersionAvailable && vaultState === null) {
+      // new version available, but we're not logged into a vault, just relaunch immediately
+      softExitApp();
+    }
+  }, [
+    // vaultState intentionally not in this list, because it always starts null
+    // when App is mounted (so it would always trigger the effect), and we only
+    // want to relaunch if a new version becomes available while the app is
+    // already running and not logged into a vault
+    maybeNewVersionAvailable,
+  ]);
+
   // Fetch initial messages and users and set interval to refresh them
   // every 5 seconds
   const refreshUsersAndChats = async () => {
@@ -294,9 +313,16 @@ const App = ({
     }
   }, [messageStore.messages.length]);
 
+  if (maybeNewVersionAvailable && maybeNewVersionAvailable.shouldLockUi) {
+    return <NewVersionAvailableMustRestart />;
+  }
+
   return (
     <IdleTimeoutMonitor vaultState={vaultState} setVaultState={setVaultState}>
-      <div>
+      <div
+        style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      >
+        {" "}
         {vaultState === null ? (
           <OpenVault setVaultState={setVaultState} />
         ) : (
@@ -305,6 +331,10 @@ const App = ({
             bottomBorder={bottomBorder}
             grow={grow}
             offset={offset}
+            // NOTE: EUI converts minHeight to minBlockSize (logical CSS), so only set one.
+            // Must be 0 (not "auto") so this flex item can shrink below its content height,
+            // allowing children (e.g. GroupChat) to scroll internally rather than growing the page.
+            style={{ flex: 1, minHeight: 0 }}
           >
             {maybeHungAt && (
               <EuiModal
@@ -335,7 +365,6 @@ const App = ({
             )}
             <EuiPageTemplate.Sidebar
               style={{
-                height: sizes.chatsSideBar.height,
                 padding: size.s,
               }}
               minWidth={sizes.chatsSideBar.minWidth}
@@ -446,7 +475,6 @@ const App = ({
             )}
           </EuiPageTemplate>
         )}
-
         <EuiGlobalToastList
           toasts={toasts}
           dismissToast={(t: Toast) => {
@@ -455,6 +483,32 @@ const App = ({
           }}
           toastLifeTimeMs={60_000}
         />
+        {maybeNewVersionAvailable && !maybeNewVersionAvailable.shouldLockUi && (
+          <EuiPanel
+            color="primary"
+            paddingSize="s"
+            style={{
+              gap: "5px",
+              maxHeight: "50px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            hasShadow
+          >
+            <strong>New version available!</strong>
+            Please re-launch the application at a convenient moment, as soon as
+            possible.
+            <EuiButton
+              size="s"
+              iconType="launch"
+              iconSide="right"
+              onClick={softExitApp}
+            >
+              Re-launch now
+            </EuiButton>
+          </EuiPanel>
+        )}
       </div>
     </IdleTimeoutMonitor>
   );

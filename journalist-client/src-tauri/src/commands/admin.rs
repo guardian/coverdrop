@@ -4,7 +4,7 @@ use crate::{
         AnyhowSnafu, ApiClientUnavailableSnafu, CommandError, GenericSnafu, JsonSerializeSnafu,
         VaultLockedSnafu, VaultSnafu,
     },
-    launch_tauri_instance,
+    get_created_timestamp_of_exe, launch_tauri_instance,
     model::TrustedOrganizationPublicKeyAndDigest,
 };
 use chrono::{DateTime, Utc};
@@ -205,6 +205,13 @@ pub async fn launch_new_instance() -> Result<(), CommandError> {
 }
 
 #[tauri::command]
-pub async fn fully_exit_app() -> Result<(), CommandError> {
-    std::process::exit(1)
+pub fn get_created_timestamp_of_executable() -> Result<DateTime<Utc>, CommandError> {
+    get_created_timestamp_of_exe().context(AnyhowSnafu {
+        failed_to: "get the 'created' timestamp of the executable",
+    })
+}
+
+#[tauri::command]
+pub async fn exit_app(is_full_exit: bool) -> Result<(), CommandError> {
+    std::process::exit(if is_full_exit { 1 } else { 0 });
 }
