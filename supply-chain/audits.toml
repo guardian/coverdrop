@@ -2640,6 +2640,12 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-10-29"
 end = "2027-04-23"
 
+[[trusted.rustls-webpki]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2023-01-09"
+end = "2027-10-26"
+
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -3341,6 +3347,12 @@ criteria = "safe-to-deploy"
 user-id = 95389 # tauri (tauri-bot)
 start = "2021-10-05"
 end = "2027-08-14"
+
+[[trusted.webpki-roots]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2019-07-21"
+end = "2027-10-26"
 
 [[trusted.webview2-com]]
 criteria = "safe-to-deploy"

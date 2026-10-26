@@ -2538,6 +2538,13 @@ user-id = 95389
 user-login = "tauri-bot"
 user-name = "tauri"
 
+[[publisher.webpki-roots]]
+version = "1.0.11"
+when = "2026-10-23"
+user-id = 2751
+user-login = "ctz"
+user-name = "Joe Birr-Pixton"
+
 [[publisher.webview2-com]]
 version = "0.38.2"
 when = "2026-01-07"
@@ -3757,6 +3764,12 @@ version = "0.100.1"
 who = "Pat Hickey <phickey@fastly.com>"
 criteria = "safe-to-deploy"
 delta = "0.100.1 -> 0.101.4"
+
+[[audits.bytecode-alliance.audits.rustls-webpki]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.103.15 -> 0.103.16"
+notes = "Updated with new certificates"
 
 [[audits.bytecode-alliance.audits.schannel]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -10147,26 +10160,8 @@ notes = "Baseline check by Light Squares' Dependency Canary: https://app.lightsq
 [[audits.lightsquares-canary.audits.webpki-roots]]
 who = "Dependency Canary (automated)"
 criteria = "safe-to-deploy"
-version = "1.0.1"
-notes = "Baseline check by Light Squares' Dependency Canary: https://app.lightsquares.dev/canary/audit/b3249261-91fe-4f84-b527-679c48ca984f"
-
-[[audits.lightsquares-canary.audits.webpki-roots]]
-who = "Dependency Canary (automated)"
-criteria = "safe-to-deploy"
 delta = "0.26.10 -> 0.26.11"
 notes = "Baseline check by Light Squares' Dependency Canary: https://app.lightsquares.dev/canary/audit/02e4b8cc-8f5b-4ce2-a516-ddf36fe1976e"
-
-[[audits.lightsquares-canary.audits.webpki-roots]]
-who = "Dependency Canary (automated)"
-criteria = "safe-to-deploy"
-delta = "1.0.1 -> 1.0.2"
-notes = "Baseline check by Light Squares' Dependency Canary: https://app.lightsquares.dev/canary/audit/5bf4e7cd-ac75-4109-a4dd-24ba7bd5e7f0"
-
-[[audits.lightsquares-canary.audits.webpki-roots]]
-who = "Dependency Canary (automated)"
-criteria = "safe-to-deploy"
-delta = "1.0.2 -> 1.0.9"
-notes = "Baseline check by Light Squares' Dependency Canary: https://app.lightsquares.dev/canary/audit/d68c52ce-690c-4c37-875a-294e5a6d01c1"
 
 [[audits.lightsquares-canary.audits.whoami]]
 who = "Dependency Canary (automated)"
