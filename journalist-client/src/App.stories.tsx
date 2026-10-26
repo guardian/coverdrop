@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { clearMocks, mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import moment from "moment";
-import { useEffect } from "react";
+import { expect, waitFor, within } from "storybook/test";
 
 import App from "./App";
 import { Group } from "./model/bindings/Group";
@@ -145,6 +145,7 @@ const publicInfo: UntrustedKeysAndJournalistProfiles = {
 
 const meta = {
   component: App,
+  tags: ["screenshot-ready"],
   parameters: {
     layout: "fullscreen",
   },
@@ -324,34 +325,70 @@ const manyChatsSeed = {
   publicInfo: UntrustedKeysAndJournalistProfiles;
 };
 
-const autoClickFirstInboxChat = (StoryComponent: () => JSX.Element) => {
-  useEffect(() => {
-    setTimeout(() => {
-      document
-        .querySelectorAll<HTMLElement>(".euiSideNavItemButton__content")[0]
-        ?.click();
-    }, 75);
-  }, []);
+type Play = NonNullable<Story["play"]>;
+const interactionWait = { timeout: 10_000 };
 
-  return <StoryComponent />;
+// The screenshot harness knows only this signal, not how to prepare each story.
+// Failed interactions must not mark the story ready.
+const screenshotReady =
+  (interact: Play): Play =>
+  async (context) => {
+    delete context.canvasElement.dataset.screenshotReady;
+    await interact(context);
+    context.canvasElement.dataset.screenshotReady = "true";
+  };
+
+const selectInboxChat =
+  (name: string, message: string): Play =>
+  async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitFor(() => {
+      const sidebar = canvas.getByRole("navigation", { name: "inbox" });
+      // Lookup and click together: refreshes can replace sidebar items across awaits.
+      within(sidebar).getByText(name, { exact: true }).click();
+    }, interactionWait);
+    // Scope to the chat panel so a sidebar preview cannot satisfy this check.
+    await waitFor(async () => {
+      await expect(
+        within(canvas.getByRole("main")).getByText(message, { exact: true }),
+      ).toBeVisible();
+    }, interactionWait);
+  };
+
+const selectDefaultChat = selectInboxChat(
+  "Callout user",
+  "Hi, I'm a very important source. I have a lead for you.",
+);
+const selectLongChat = selectInboxChat("Long chat user", "test nineteen");
+
+const selectMlsTab: Play = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await waitFor(() => {
+    canvas.getByRole("tab", { name: /MLS/ }).click();
+  }, interactionWait);
+  await waitFor(() => {
+    const sidebar = canvas.getByRole("navigation", { name: "MLS" });
+    within(sidebar)
+      .getByText(longGroupSeed[0].display_name, { exact: true })
+      .click();
+  }, interactionWait);
+  await waitFor(async () => {
+    await expect(
+      within(canvas.getByRole("main")).getByText("group test nineteen", {
+        exact: true,
+      }),
+    ).toBeVisible();
+  }, interactionWait);
 };
 
-const selectMlsTab = (StoryComponent: () => JSX.Element) => {
-  useEffect(() => {
-    setTimeout(() => {
-      Array.from(document.querySelectorAll<HTMLElement>("[role='tab']"))
-        .find((element) => element.textContent?.includes("MLS"))
-        ?.click();
-    }, 75);
-
-    setTimeout(() => {
-      document
-        .querySelectorAll<HTMLElement>(".euiSideNavItemButton__content")[0]
-        ?.click();
-    }, 150);
-  }, []);
-
-  return <StoryComponent />;
+const waitForUpdateLock: Play = async ({ canvasElement }) => {
+  await expect(
+    await within(canvasElement).findByRole(
+      "button",
+      { name: "Restart now" },
+      interactionWait,
+    ),
+  ).toBeVisible();
 };
 
 const defaultIpcMock = (cmd: string) => {
@@ -375,6 +412,41 @@ const defaultIpcMock = (cmd: string) => {
   }
 };
 
+const manyChatsIpcMock = (cmd: string) => {
+  switch (cmd) {
+    case "get_users":
+      return manyChatsSeed.users;
+    case "get_chats":
+      return manyChatsSeed.messages;
+    case "get_public_info":
+      return manyChatsSeed.publicInfo;
+    default:
+      return defaultIpcMock(cmd);
+  }
+};
+
+const longConversationIpcMock = (cmd: string) => {
+  switch (cmd) {
+    case "get_users":
+      return longConversationSeed.users;
+    case "get_chats":
+      return longConversationSeed.messages;
+    case "get_public_info":
+      return longConversationSeed.publicInfo;
+    default:
+      return defaultIpcMock(cmd);
+  }
+};
+
+const groupChatIpcMock = (cmd: string) => {
+  switch (cmd) {
+    case "get_groups_and_messages":
+      return longGroupSeed;
+    default:
+      return defaultIpcMock(cmd);
+  }
+};
+
 const defaultDecorator = (StoryComponent: () => JSX.Element) => {
   const messageStore = useMessageStore();
   const userStore = useUserStore();
@@ -387,8 +459,21 @@ const defaultDecorator = (StoryComponent: () => JSX.Element) => {
   return <StoryComponent />;
 };
 
+const manyChatsDecorator = (StoryComponent: () => JSX.Element) => {
+  const messageStore = useMessageStore();
+  const userStore = useUserStore();
+  const publicInfoStore = usePublicInfoStore();
+
+  messageStore.setMessages(manyChatsSeed.messages);
+  userStore.setUsers(manyChatsSeed.users);
+  publicInfoStore.setPublicInfo(manyChatsSeed.publicInfo);
+
+  return <StoryComponent />;
+};
+
 export const Default: Story = {
-  decorators: [defaultDecorator, autoClickFirstInboxChat],
+  decorators: [defaultDecorator],
+  play: screenshotReady(selectDefaultChat),
   beforeEach: () => {
     clearMocks();
     mockWindows("main");
@@ -409,77 +494,54 @@ export const LongConversation: Story = {
 
       return <StoryComponent />;
     },
-    autoClickFirstInboxChat,
   ],
+  play: screenshotReady(selectLongChat),
   beforeEach: () => {
     clearMocks();
     mockWindows("main");
-    mockIPC((cmd) => {
-      switch (cmd) {
-        case "get_users":
-          return longConversationSeed.users;
-        case "get_chats":
-          return longConversationSeed.messages;
-        case "get_public_info":
-          return longConversationSeed.publicInfo;
-        default:
-          return defaultIpcMock(cmd);
-      }
-    });
+    mockIPC(longConversationIpcMock);
   },
 };
 
 export const ManyChats: Story = {
-  decorators: [
-    (StoryComponent) => {
-      const messageStore = useMessageStore();
-      const userStore = useUserStore();
-      const publicInfoStore = usePublicInfoStore();
-
-      messageStore.setMessages(manyChatsSeed.messages);
-      userStore.setUsers(manyChatsSeed.users);
-      publicInfoStore.setPublicInfo(manyChatsSeed.publicInfo);
-
-      return <StoryComponent />;
-    },
-    autoClickFirstInboxChat,
-  ],
+  decorators: [manyChatsDecorator],
+  play: screenshotReady(selectLongChat),
   beforeEach: () => {
     clearMocks();
     mockWindows("main");
-    mockIPC((cmd) => {
-      switch (cmd) {
-        case "get_users":
-          return manyChatsSeed.users;
-        case "get_chats":
-          return manyChatsSeed.messages;
-        case "get_public_info":
-          return manyChatsSeed.publicInfo;
-        default:
-          return defaultIpcMock(cmd);
-      }
-    });
+    mockIPC(manyChatsIpcMock);
   },
 };
 
 export const GroupConversation: Story = {
-  decorators: [defaultDecorator, selectMlsTab],
+  decorators: [defaultDecorator],
+  play: screenshotReady(selectMlsTab),
   beforeEach: () => {
     clearMocks();
     mockWindows("main");
-    mockIPC((cmd) => {
-      switch (cmd) {
-        case "get_groups_and_messages":
-          return longGroupSeed;
-        default:
-          return defaultIpcMock(cmd);
-      }
-    });
+    mockIPC(groupChatIpcMock);
   },
 };
 
-const buildUpdateAvailableStory = (hoursUpdateAvailable: number): Story => ({
-  decorators: [defaultDecorator, autoClickFirstInboxChat],
+const buildUpdateAvailableStory = (
+  hoursUpdateAvailable: number,
+  interact: Play,
+  ipcMock: (cmd: string) => unknown,
+  seedDecorator = defaultDecorator,
+): Story => ({
+  decorators: [seedDecorator],
+  play: screenshotReady(async (context) => {
+    await interact(context);
+    if (hoursUpdateAvailable <= 24) {
+      await expect(
+        await within(context.canvasElement).findByText(
+          "New version available!",
+          {},
+          interactionWait,
+        ),
+      ).toBeVisible();
+    }
+  }),
   beforeEach: () => {
     clearMocks();
     mockWindows("main");
@@ -495,12 +557,23 @@ const buildUpdateAvailableStory = (hoursUpdateAvailable: number): Story => ({
           }
           return moment().subtract(hoursUpdateAvailable, "hours").toDate();
         default:
-          return defaultIpcMock(cmd);
+          return ipcMock(cmd);
       }
     });
   },
 });
 
-export const UpdateAvailableBanner: Story = buildUpdateAvailableStory(1); // 1 hour since update available
+export const UpdateAvailableBannerOnUserChat: Story = buildUpdateAvailableStory(
+  1,
+  selectLongChat,
+  manyChatsIpcMock,
+  manyChatsDecorator,
+); // 1 hour since update available
+export const UpdateAvailableBannerOnGroupChat: Story =
+  buildUpdateAvailableStory(1, selectMlsTab, groupChatIpcMock); // 1 hour since update available
 
-export const UpdateAvailableUiLock: Story = buildUpdateAvailableStory(25); // 25 hours since update available
+export const UpdateAvailableUiLock: Story = buildUpdateAvailableStory(
+  25,
+  waitForUpdateLock,
+  defaultIpcMock,
+); // 25 hours since update available

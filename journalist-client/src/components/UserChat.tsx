@@ -158,7 +158,9 @@ export const UserChat = ({
       direction="column"
       gutterSize="none"
       style={{
-        height: "100vh",
+        // height: "100%",
+        flex: 1,
+        minHeight: 0,
         zIndex: 0,
       }}
     >

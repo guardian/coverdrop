@@ -53,6 +53,15 @@ for (const story of nonSkippedStories) {
     await page.waitForURL(url, { waitUntil: "networkidle" });
     await page.locator("body.sb-show-main").waitFor({ state: "visible" });
 
+    if (story.tags.includes("screenshot-ready")) {
+      // Each story owns its interactions and final-state assertions.
+      await expect(
+        page.locator('#storybook-root[data-screenshot-ready="true"]'),
+      ).toBeVisible({ timeout: 15_000 });
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for rendering to settle
+    }
+
     await expect(page).toHaveScreenshot(
       [".storybook", "screenshots", story.title, `${story.id}.png`],
       {
