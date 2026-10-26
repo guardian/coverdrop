@@ -1,5 +1,7 @@
-# keep this in line with .nvmrc
-nodejs 22.16.0
+# keep these in line with .nvmrc, GitHub workflows and the journalist client package.json
+nodejs 22.23.4
+npm 11.11.1
+
 # Note - rust version specified in rust-toolchain.toml (respected by rustup which is what mise uses)
 rust
 github:guardian/devenv 20260721-123412
