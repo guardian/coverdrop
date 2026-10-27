@@ -90,4 +90,7 @@ jq -s . $KEYS_PATH/organization-*.pub.json > "${SCRIPT_PATH}/../../trust-anchors
 
 rm "$KEYS_PATH/static_test_journalist.vault"
 
+# These forms are only needed to post the keys to an API and aren't used by the integration tests
+rm -f "$KEYS_PATH"/*_form.json
+
 popd

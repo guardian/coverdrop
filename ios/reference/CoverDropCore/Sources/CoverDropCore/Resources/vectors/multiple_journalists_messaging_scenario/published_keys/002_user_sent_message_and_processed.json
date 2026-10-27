@@ -23,30 +23,34 @@
   "keys": [
     {
       "org_pk": {
-        "key": "73ee6a1a04bcb962b95feb5396932550de8ed29320103bd62356d482f6eb2d5c",
-        "certificate": "6a083e504c149df7bef6cd420ba13a2f7dcb6664d0dc5ade80121dcfa8311bd5cb8fe9accfb6cb07e0c1fac11c2dc621680a1accead5cd660759b7b7b015a400",
-        "not_valid_after": "2024-10-02T19:06:19.921207Z"
+        "key": "3ce5c70d38ae02228f436696826f3cb146d8a2ef591f008f28a648b7a5ec4e81",
+        "certificate": "ae14ce21422a5c46239e42ab52ca0bbae853a0a4c948cbe0dc851721ba42202c6610847f4329032ff0526b21bd82bb2a8996bdbe006d1ae553c695f5674de40d",
+        "not_valid_after": "2027-09-06T15:04:16.291269Z",
+        "signature": "ae14ce21422a5c46239e42ab52ca0bbae853a0a4c948cbe0dc851721ba42202c6610847f4329032ff0526b21bd82bb2a8996bdbe006d1ae553c695f5674de40d"
       },
       "covernodes": [
         {
           "provisioning_pk": {
-            "key": "1c704cad39284b8a9269a3d6357f21e596b2eeed820ba3524df2544174b4f70f",
-            "certificate": "3f9a8a7345dcd5ffe96beab355e3662a3da70d60bc70971f0f4e3ca312f211d99f95d9164ff668fd402df2baa508d0d7d4817c3692756d65b52cab296dc7c008",
-            "not_valid_after": "2024-03-20T19:06:21.272197Z"
+            "key": "70fed69777371832f824e75b0ae34f57cc130403594b9812a833bab4bdc89573",
+            "certificate": "8c28a90496a638875cf63bd784aa92eccee876ff3b848d2d0539a425c92a7269fe1ccae1edeb14df52598c64377ccb2871570268afcbea146285352d0d6b6006",
+            "not_valid_after": "2027-09-06T15:04:16.291269Z",
+            "signature": "8c28a90496a638875cf63bd784aa92eccee876ff3b848d2d0539a425c92a7269fe1ccae1edeb14df52598c64377ccb2871570268afcbea146285352d0d6b6006"
           },
           "covernodes": {
             "covernode_001": [
               {
                 "id_pk": {
-                  "key": "504560a698983c7864b20fc1d4ee115901a38e7d958f5e40accbed0497ecad17",
-                  "certificate": "a6d80476390948c98396fac7c401ffc6678065bb30e3e3ec3a58dc44982a742de0b06310303e3939dae0b428ed92d77bb61fb4d964d87b402fc4b1956c01310e",
-                  "not_valid_after": "2023-11-01T19:06:21.976033Z"
+                  "key": "7399b73bd0d23b55f287342d2aa7de33d28cd2ba9b6422ffbad375f8b03d3832",
+                  "certificate": "eaf18c25f8a2fdb3664b9ce2f68a29b68a4754da9ca323e06b51fa3a04c4793368ccc51e8585fe1b4fa734b8fa586afa4b1e81b256d60f304b6db3fd2ee11700",
+                  "not_valid_after": "2026-10-05T15:04:21.472567Z",
+                  "signature": "abfb5d7d7362ed51eea07a1294dd4c333e79a6f1d0409cea6053fdb0fa3640c183730c6af9ad3d8ae1126309918a9279ae5ce3dc4db314cbb41dc962ceffdc0c"
                 },
                 "msg_pks": [
                   {
-                    "key": "ce58c3b436382acb26b0e20d6d8599e6472893284e3d0f2dd9c844205ba9fd65",
-                    "certificate": "ba17a043967d30b20bded9e916b7e5baac52409aa650a8afec4358183d67561740ff740b4b3a5d3f1f1393e94c07c917d2a32a2b4a32e0bbb835dec8eb8dc30f",
-                    "not_valid_after": "2023-10-18T19:06:22.771214Z"
+                    "key": "d327a7323f7417730d54e9d150e228b016658004f3188bcf222c55fac6673373",
+                    "certificate": "57cbd726b7d5533765adbfc3f47bbcf86f7498f65baed240f94f8f3a8f0ec82ca74ed577d7fbc4aebba1604c390d3a1e4fc0e169ef7c293072843bfc5d124608",
+                    "not_valid_after": "2026-09-21T15:04:23.264653Z",
+                    "signature": "57cbd726b7d5533765adbfc3f47bbcf86f7498f65baed240f94f8f3a8f0ec82ca74ed577d7fbc4aebba1604c390d3a1e4fc0e169ef7c293072843bfc5d124608"
                   }
                 ]
               }
@@ -57,23 +61,26 @@
       "journalists": [
         {
           "provisioning_pk": {
-            "key": "947d712a3ce4758b6313630696d3d8e18d635a0ecfb64f8c4e90fbf8a339356d",
-            "certificate": "7fcbc31ff56e10c7515bf517763675a3df2079f3da62ee2e408fb4bb7174062bcc74a70df9102bf440a879c2f3f4c2c83f88226228d540fa09067911a2a11d00",
-            "not_valid_after": "2024-03-20T19:06:20.603185Z"
+            "key": "da64407e9159f94705f3f246244cf2257e21faca94131000e6a68b60bd3690a4",
+            "certificate": "be66db288a2dd8b5b9e9a39a218e557ef8e04ae2f16c0c607ba5fa4655e3d9157f71defc4c64d31ebb2b83591edafc9c8f924ffa174259aae321bdb35b191007",
+            "not_valid_after": "2027-09-06T15:04:16.291269Z",
+            "signature": "be66db288a2dd8b5b9e9a39a218e557ef8e04ae2f16c0c607ba5fa4655e3d9157f71defc4c64d31ebb2b83591edafc9c8f924ffa174259aae321bdb35b191007"
           },
           "journalists": {
             "additional_test_journalist_1": [
               {
                 "id_pk": {
-                  "key": "f69d64b79af48dbc94e6b33f020eee913c0af2af6fd3c4045d8ad5cdbaea8f13",
-                  "certificate": "1faf9cf66f6f77326b075fc6e040086ead42aff0454771368021cea94f663fad00b2394b23cf6119bd0cf0c7b6144726fc39d05749afa70d116782cd895d420b",
-                  "not_valid_after": "2023-11-29T19:06:19Z"
+                  "key": "a5b647a1897ca2090cc0da5413f2042728835741d526d950dbc0eca33517eee0",
+                  "certificate": "8e22293a48914a0b4fe4bd763e4150c402f4d47c6d850ac450de3cad3f4b58ba260124644f580d021cc2963e4f601c6323d3e639e977d346b6dab4bf3d73a30f",
+                  "not_valid_after": "2026-11-02T15:03:31Z",
+                  "signature": "c04d04135381936017d441b9bc37b74f9c4b7b50c04ec3349b050928c316205d6b3b1a1129f668b89fc244a3ff4f3103ab7b63e905c8ca84feb7bfa25de0e506"
                 },
                 "msg_pks": [
                   {
-                    "key": "4d872a2b4494cf99ab0b3263e52c1166535fdd4b76425eba721491c653028239",
-                    "certificate": "70de16724103f68dcf2d838e356a7c59d97b1e8cdd79e95b3b61aedefa87ffe7448bc9164562e0910b98983a39a583dd5e7fbe120f7a791a7bc3f3a89f450a0c",
-                    "not_valid_after": "2023-10-18T19:06:19Z"
+                    "key": "446f18a5098ce2b1700045774d1a24104e8ba9465de40a458fc88f8868316674",
+                    "certificate": "ab7517fabf7d14e2570df1e8d4cb7c43378336095b57779eb7b859f8fef64d3da886614c768f5dd641a4385b17a7bf14fc365b300c5da4093804d69b910ef00f",
+                    "not_valid_after": "2026-09-21T15:03:31Z",
+                    "signature": "ab7517fabf7d14e2570df1e8d4cb7c43378336095b57779eb7b859f8fef64d3da886614c768f5dd641a4385b17a7bf14fc365b300c5da4093804d69b910ef00f"
                   }
                 ]
               }
@@ -81,23 +88,54 @@
             "static_test_journalist": [
               {
                 "id_pk": {
-                  "key": "861a3c0e7f8b61d9a33692be41e821fbf6fd5873a8a6a6b5666938ce6f44a02e",
-                  "certificate": "45843655bc008decb90554c27e1368496e2fe335d9595649163e3761be11ddef67b0f3104b8c845a44179513912da5988a3c9816e2e6ac1cf8b722da270b090d",
-                  "not_valid_after": "2023-11-29T19:06:19Z"
+                  "key": "2c8763bd4e34e463fe9f0bb10a60a9b2705d40d2846d9fc34098818a1c7c585b",
+                  "certificate": "88be7774fec5331d58c76925f0b2589559f9c37d15ceb3a9d4f9ae724d0e8ebfe208e2e904d5e38cbea35423c77a571968ba670f75a6598d3843cef7350e4b09",
+                  "not_valid_after": "2026-11-02T15:03:31Z",
+                  "signature": "cca734c8e927881e912548a989a09562eceba51f3508962b76415d84d0b809d9b7ab685e1008d533d41908b85d2650b81647f426349f08ccc446eb0fba998c04"
                 },
                 "msg_pks": [
                   {
-                    "key": "28334788839bca1cad9c6a581f8e9c88088e514bcf779e671f9a736d5aca3406",
-                    "certificate": "37f3441a627bfc69da1f8968c5b502eda447a1e470d0f785c62093aad4784641c5da76c2c7ef29a3d82dd4a45ae256cb96b627f7a7def49ccf8b5fa91b852802",
-                    "not_valid_after": "2023-10-18T19:06:19Z"
+                    "key": "0afb8cfe4df34585974765e91116337a85fccb9f819dc9290a99d2c237f0eb63",
+                    "certificate": "764b24f2f970f7bfc1cb1db3abdffc3dc740c1403c7127eaf50742b7b0bc944c6b1ed603b6983871517df44f6803ac6456d1277b882b0c0ca47c81147634270d",
+                    "not_valid_after": "2026-09-21T15:03:31Z",
+                    "signature": "764b24f2f970f7bfc1cb1db3abdffc3dc740c1403c7127eaf50742b7b0bc944c6b1ed603b6983871517df44f6803ac6456d1277b882b0c0ca47c81147634270d"
                   }
                 ]
               }
             ]
+          },
+          "sentinel": {
+            "static_test_journalist_sentinel": [
+              {
+                "key": "8a6b699186bbc9a6b5fdb3d78cd60ac6546e04b3905115d01a14c45c6d906994",
+                "certificate": "8914a62dbea23f544158b1d7f7fe87f3de2a047e3d2d9f5904137c5b79c3ccb480bd366cb2e8d12347e9e0665b67b7270ad5fb137782f6c4221bc83ad6004f03",
+                "not_valid_after": "2026-11-02T15:03:31Z",
+                "signature": "d28838bba16441949f943882bfc91dd3f928305899fb20442147d7f9a2f7d0cf3aff020ca1e359d0985a9a1df50dc0f47584d7719a8bc0abc6e084f25c3cd103"
+              }
+            ],
+            "additional_test_journalist_1_sentinel": [
+              {
+                "key": "d57496f0e8b79d3dd93b0e735b4bcc41082e1fb5a52e7f2d53875d8c85fa51de",
+                "certificate": "615687c14dde4e3a18ecfd95c22f6b28f22bd60acb30d886e7302970896e31ad4cb4a29fcfdb425a0869fd103ec98eb1d8c2b971eb042cdfa210debea16b1502",
+                "not_valid_after": "2026-11-02T15:03:31Z",
+                "signature": "ed074b11ac56c0acd47ea6281af658a3c142c221a093980a21fdbff0661451168e1a2bfe61b34640920a9600b58cd3bc2660b2a3c75f779ab1c2e72f9491690d"
+              }
+            ]
           }
         }
-      ]
+      ],
+      "backup": []
     }
   ],
-  "max_epoch": 10
+  "max_epoch": 12,
+  "sentinel_profiles": [
+    {
+      "id": "static_test_journalist_sentinel",
+      "display_name": "Static Test Journalist Sentinel"
+    },
+    {
+      "id": "additional_test_journalist_1_sentinel",
+      "display_name": "Additional Test Journalist 1 Sentinel"
+    }
+  ]
 }

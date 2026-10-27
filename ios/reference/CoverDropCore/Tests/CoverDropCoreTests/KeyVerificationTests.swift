@@ -2,200 +2,118 @@
 import Sodium
 import XCTest
 
-// swiftlint:disable identifier_name
-// swiftlint:disable line_length
 final class KeyVerificationTests: XCTestCase {
-    func testSuccessfullVerification() throws {
-        let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
-        let certificate =
-            "a05beac4862a73bc56243c91686bad92bf209131d34d0225f1c7832c96931f3cdeed011203ffe95a9fea74428735c22f2f3a8092ca65f1521192b38be8060d0c"
-                .hexStringToBytes()!
-        let notValidAfter = "2024-09-02T17:16:49.896447Z"
-
-        let date = try XCTUnwrap(DateFormats.validateDate(date: notValidAfter))
-
-        let now = date.advanced(by: TimeInterval(-50))
-
-        let organizationSigningKey = try XCTUnwrap(try OrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<Organization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
-            now: now
+    func testSuccessfulVerification() throws {
+        let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
+        let organizationSigningKey = try XCTUnwrap(OrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<Organization>.fromBytes(bytes: orgPublicKey.certificate.bytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
+            now: orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
         ))
 
-        let journalistProvisioningKey = "452bd05993423cff2e63dc625885d230c9b9cdfb7e703bc7671875d4d0d39fe9"
-            .hexStringToBytes()
-
-        let journalistProvisioningcertificate =
-            "3c19fa5031f50156029d3f4ec54cf547009300095cc4258a05f736f055ddabd224d5d60e253e2e04d4fbba9c885b5d160e6282911ab32c685b7a04f9d0d7390a"
-                .hexStringToBytes()
-        let journalistProvisioningCertObj = try Signature<JournalistProvisioning>
-            .fromBytes(bytes: XCTUnwrap(journalistProvisioningcertificate))
-
-        let journalistProvisioningCertNotValidAfter = "2024-02-19T17:16:50.908728Z"
-
-        let journalistProvisioningCertNotValidAfterDate = try XCTUnwrap(DateFormats
-            .validateDate(date: journalistProvisioningCertNotValidAfter))
-
-        let journalistProvisioningKeyObj = try JournalistProvisioningKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(journalistProvisioningKey)),
-            certificate: journalistProvisioningCertObj,
+        let journalistProvisioningPublicKey = try PublicKeysHelper
+            .readLocalKeypairFile(path: "journalist_provisioning").publicKey
+        let journalistProvisioningKeyObj = try XCTUnwrap(JournalistProvisioningKey(
+            key: Sign.KeyPair.PublicKey(journalistProvisioningPublicKey.key.bytes),
+            certificate: Signature<JournalistProvisioning>
+                .fromBytes(bytes: journalistProvisioningPublicKey.certificate.bytes),
             signingKey: organizationSigningKey,
-            notValidAfter: journalistProvisioningCertNotValidAfterDate,
-            now: journalistProvisioningCertNotValidAfterDate.advanced(by: TimeInterval(-20))
+            notValidAfter: journalistProvisioningPublicKey.notValidAfter.date,
+            now: journalistProvisioningPublicKey.notValidAfter.date.advanced(by: TimeInterval(-20))
+        ))
+
+        let journalistIdPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_id").publicKey
+        let journoKey = JournalistIdPublicKey(
+            key: Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes),
+            certificate: Signature<JournalistId>.fromBytes(bytes: journalistIdPublicKey.certificate.bytes),
+            signingKey: journalistProvisioningKeyObj,
+            notValidAfter: journalistIdPublicKey.notValidAfter.date,
+            now: journalistIdPublicKey.notValidAfter.date.advanced(by: TimeInterval(-20))
         )
 
-        let journalistIdKey = "a836d25394e1275fdb4256e9b37be79bd08fd68bf0ab07f573a9e8ae29681cef".hexStringToBytes()
-
-        let journalistIdcertificate =
-            "f1ee98fdbb51c72e8eeb53de091bf14a03bc34214cc7a0ef84b0c24683a979a697608db5117854e7b7e451496e28495c64650ea511e48068635f06060ba4ce02"
-                .hexStringToBytes()
-        let journalistIdCertObj = try Signature<JournalistId>.fromBytes(bytes: XCTUnwrap(journalistIdcertificate))
-
-        let journalistIdCertNotValidAfter = "2023-10-30T17:16:54.810680Z"
-
-        let journalistIdCertNotValidAfterDate = try XCTUnwrap(DateFormats
-            .validateDate(date: journalistIdCertNotValidAfter))
-
-        let journoKey = try JournalistIdPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(journalistIdKey)),
-            certificate: journalistIdCertObj,
-            signingKey: XCTUnwrap(journalistProvisioningKeyObj),
-            notValidAfter: journalistIdCertNotValidAfterDate,
-            now: journalistIdCertNotValidAfterDate.advanced(by: TimeInterval(-20))
-        )
-
-        XCTAssertTrue(journoKey != nil)
+        XCTAssertEqual(journoKey?.key, Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes))
+        XCTAssertEqual(journoKey?.notValidAfter, journalistIdPublicKey.notValidAfter.date)
     }
 
-    func testUnSuccessfullOrgKeyInitialisation() throws {
-        let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
-        let certificate =
-            "a05beac4862a73bc56243c91686bad92bf209131d34d0225f1c7832c96931f3cdeed011203ffe95a9fea74428735c22f2f3a8092ca65f1521192b38be8060d0d"
-                .hexStringToBytes()!
-        let notValidAfter = "2024-09-02T17:16:49.896447Z"
+    func testUnsuccessfulOrgKeyInitialization() throws {
+        let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
 
-        let date = try XCTUnwrap(DateFormats.validateDate(date: notValidAfter))
+        // Corrupt the last byte of an otherwise-valid certificate so the signature fails to verify.
+        var invalidCertificateBytes = orgPublicKey.certificate.bytes
+        invalidCertificateBytes[invalidCertificateBytes.count - 1] ^= 0xFF
 
-        let now = date.advanced(by: TimeInterval(-50))
-
-        XCTAssertNil(try OrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<Organization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
-            now: now
+        XCTAssertNil(OrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<Organization>.fromBytes(bytes: invalidCertificateBytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
+            now: orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
         ))
     }
 
-    // really long testUnSuccessfullInitialisation testUnSuccessfullInitialisation --- IGNORE --- // really long
-    // testUnSuccessfullInitialisation testUnSuccessfullInitialisation --- IGNORE ---
-
-    func testUnSuccessfullInitialisation() throws {
-        let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
-        let certificate =
-            "a05beac4862a73bc56243c91686bad92bf209131d34d0225f1c7832c96931f3cdeed011203ffe95a9fea74428735c22f2f3a8092ca65f1521192b38be8060d0c"
-                .hexStringToBytes()!
-        let notValidAfter = "2024-09-02T17:16:49.896447Z"
-
-        let date = try XCTUnwrap(DateFormats.validateDate(date: notValidAfter))
-
-        let now = date.advanced(by: TimeInterval(-50))
-
-        let organizationSigningKey = try XCTUnwrap(try OrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<Organization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
-            now: now
+    func testUnsuccessfulInitialization() throws {
+        let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
+        let organizationSigningKey = try XCTUnwrap(OrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<Organization>.fromBytes(bytes: orgPublicKey.certificate.bytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
+            now: orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
         ))
 
-        let journalistIdKey = "c098c0ee644534b310683165dee4f1551081cad1ee579acf2dc3c277144d97fa".hexStringToBytes()
-
-        let journalistIdcertificate =
-            "615094f7fbb47dbdde1f97a8197388ed0005a20a438be93a2462dd1c4c8a668a4381004f8d97f6de20739ade7d60a67487c193511dd5a0b86a2baff94822990b"
-                .hexStringToBytes()
-        let journalistIdCertObj = try Signature<JournalistId>.fromBytes(bytes: XCTUnwrap(journalistIdcertificate))
-
-        let journoKey = try JournalistIdPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(journalistIdKey)),
-            certificate: journalistIdCertObj,
+        // The journalist id key's certificate is signed by the journalist provisioning key, not the
+        // organization key directly, so verifying it against `organizationSigningKey` must fail.
+        let journalistIdPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_id").publicKey
+        let journoKey = JournalistIdPublicKey(
+            key: Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes),
+            certificate: Signature<JournalistId>.fromBytes(bytes: journalistIdPublicKey.certificate.bytes),
             signingKey: organizationSigningKey,
-            notValidAfter: DateFunction.currentTime(),
-            now: DateFunction.currentTime()
+            notValidAfter: journalistIdPublicKey.notValidAfter.date,
+            now: journalistIdPublicKey.notValidAfter.date.advanced(by: TimeInterval(-20))
         )
 
         XCTAssertTrue(journoKey == nil)
     }
 
     func testVerifyingOrganizationKeyFromTrustedRootKeys() throws {
-        let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
-        let certificate =
-            "a05beac4862a73bc56243c91686bad92bf209131d34d0225f1c7832c96931f3cdeed011203ffe95a9fea74428735c22f2f3a8092ca65f1521192b38be8060d0c"
-                .hexStringToBytes()!
-        let notValidAfter = "2024-09-02T17:16:49.896447Z"
+        let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
+        let now = orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
 
-        let date = try XCTUnwrap(DateFormats.validateDate(date: notValidAfter))
-
-        let now = date.advanced(by: TimeInterval(-50))
-
-        let organizationSigningKey = try XCTUnwrap(try OrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<Organization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
+        let organizationSigningKey = try XCTUnwrap(OrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<Organization>.fromBytes(bytes: orgPublicKey.certificate.bytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
             now: now
         ))
 
-        let organizationSigningKey1 = try XCTUnwrap(try TrustedOrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<TrustedOrganization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
+        let trustedOrganizationKey = try XCTUnwrap(TrustedOrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<TrustedOrganization>.fromBytes(bytes: orgPublicKey.certificate.bytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
             now: now
         ))
-
-        let trustedOrgPks = [organizationSigningKey1]
 
         let verifiedOrgPk = VerifiedPublicKeysHierarchy.verifyOrganizationPublicKey(
             orgPk: organizationSigningKey,
-            trustedOrgPks: trustedOrgPks
+            trustedOrgPks: [trustedOrganizationKey]
         )
 
         XCTAssertTrue(verifiedOrgPk?.key == organizationSigningKey.key)
     }
 
     func testVerifyingOrganizationKeyFailsIfNotInTrustedRootKeys() throws {
-        let orgIdKey = "f9162ddd3609f1985b9d00c1701c2dfa046c819eefc81d5b3a8b6799c27827ee".hexStringToBytes()
-        let certificate =
-            "a05beac4862a73bc56243c91686bad92bf209131d34d0225f1c7832c96931f3cdeed011203ffe95a9fea74428735c22f2f3a8092ca65f1521192b38be8060d0c"
-                .hexStringToBytes()!
-        let notValidAfter = "2024-09-02T17:16:49.896447Z"
+        let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
 
-        let date = try XCTUnwrap(DateFormats.validateDate(date: notValidAfter))
-
-        let now = date.advanced(by: TimeInterval(-50))
-
-        let organizationSigningKey = try XCTUnwrap(try OrganizationPublicKey(
-            key: Sign.KeyPair.PublicKey(XCTUnwrap(orgIdKey)),
-            certificate: Signature<Organization>.fromBytes(
-                bytes: certificate
-            ),
-            notValidAfter: XCTUnwrap(DateFormats.validateDate(date: notValidAfter)),
-            now: now
+        let organizationSigningKey = try XCTUnwrap(OrganizationPublicKey(
+            key: Sign.KeyPair.PublicKey(orgPublicKey.key.bytes),
+            certificate: Signature<Organization>.fromBytes(bytes: orgPublicKey.certificate.bytes),
+            notValidAfter: orgPublicKey.notValidAfter.date,
+            now: orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
         ))
-
-        let trustedOrgPks: [TrustedOrganizationPublicKey] = []
 
         XCTAssertNil(VerifiedPublicKeysHierarchy.verifyOrganizationPublicKey(
             orgPk: organizationSigningKey,
-            trustedOrgPks: trustedOrgPks
+            // pass in an empty array of trust anchors
+            trustedOrgPks: []
         ))
     }
 
@@ -225,7 +143,45 @@ final class KeyVerificationTests: XCTestCase {
             )
         ) { error in XCTAssertEqual(error as! VerificationError, VerificationError.missingTrustAnchor) }
     }
-}
 
-// swiftlint:enable line_length
-// swiftlint:enable identifier_name
+    func testVerifiedKeys_whenMinimalScenario_thenVerifies() throws {
+        try verifyAndAssertMinimalScenario(scenario: .minimal)
+    }
+
+    /// The old vectors predate the `signature` field on identity keys; verification must succeed either way
+    /// since the field is currently ignored.
+    func testVerifiedKeys_whenMinimalScenarioWithoutIdKeySignature_thenVerifies() throws {
+        try verifyAndAssertMinimalScenario(scenario: .minimalOldWithoutIdKeySignature)
+    }
+
+    private func verifyAndAssertMinimalScenario(scenario: IntegrationTestScenario) throws {
+        let context = IntegrationTestScenarioContext(scenario: scenario)
+        let publicKeysData = try context.loadKeys()
+        let now = try context.loadNow()
+
+        // Bypass loadKeysVerified's convenience wrapper since it always checks anchor expiry against the
+        // shared, continuously-refreshed keys_generated_at.txt rather than this scenario's own vector dates.
+        let trustedOrganizationKeys = try context.readTrustedOrganizationKeys(now: now)
+        let verifiedKeys = try VerifiedPublicKeys(
+            publicKeysData: publicKeysData,
+            trustedOrganizationPublicKeys: trustedOrganizationKeys,
+            currentTime: now
+        )
+
+        let keyHierarchy = try XCTUnwrap(verifiedKeys.verifiedHierarchies.first)
+        XCTAssertFalse(keyHierarchy.organizationPublicKey.key.isEmpty)
+
+        let coverNodeKeyHierarchy = try XCTUnwrap(keyHierarchy.verifiedCoverNodeKeyHierarchies.first)
+        XCTAssertFalse(coverNodeKeyHierarchy.provisioningKey.key.isEmpty)
+        XCTAssertEqual(coverNodeKeyHierarchy.idPublicKeys.count, 1)
+
+        let journalists = keyHierarchy.allPublicKeysForJournalists()
+        XCTAssertEqual(journalists.count, 1)
+
+        for (_, journalistKeysGroups) in journalists {
+            let journalistKeys = try XCTUnwrap(journalistKeysGroups.first)
+            XCTAssertFalse(journalistKeys.id.key.isEmpty)
+            XCTAssertFalse(journalistKeys.msg.isEmpty)
+        }
+    }
+}

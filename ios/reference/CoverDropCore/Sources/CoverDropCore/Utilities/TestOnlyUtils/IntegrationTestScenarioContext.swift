@@ -3,7 +3,7 @@ import Sodium
 
 public enum IntegrationTestScenario: String {
     case minimal = "minimal_scenario"
-    case minimalLegacy = "minimal_scenario_legacy"
+    case minimalOldWithoutIdKeySignature = "minimal_old_without_id_key_signature_scenario"
     case messaging = "messaging_scenario"
     case multipleJournalists = "multiple_journalists_messaging_scenario"
 }
@@ -47,6 +47,25 @@ public class IntegrationTestScenarioContext {
         ) else { throw IntegrationTestError.cannotFindFile }
         let data = try Data(contentsOf: resourceUrl)
         return try JSONDecoder().decode(PublicKeysData.self, from: data)
+    }
+
+    /// The exact moment this scenario/step's vectors were generated - guaranteed to fall within the
+    /// validity window of every key in the snapshot, unlike the shared, continuously-refreshed
+    /// `keys_generated_at.txt`.
+    /// This can be removed when we get rid of minimal_old_without_id_key_signature_scenario
+    /// as part of https://github.com/guardian/coverdrop-internal/issues/4200
+    public func loadNow(step: String = "001_default") throws -> Date {
+        guard let resourceUrl = Bundle.module.url(
+            forResource: step,
+            withExtension: ".json",
+            subdirectory: "vectors/\(scenario.rawValue)/timestamp"
+        ) else { throw IntegrationTestError.cannotFindFile }
+        let data = try Data(contentsOf: resourceUrl)
+        let dateString = try JSONDecoder().decode(String.self, from: data)
+        guard let date = DateFormats.validateDate(date: dateString) else {
+            throw IntegrationTestError.badDate
+        }
+        return date
     }
 
     public func loadKeysVerified(step: String = "001_default") throws -> VerifiedPublicKeys {

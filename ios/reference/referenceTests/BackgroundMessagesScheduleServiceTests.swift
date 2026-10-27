@@ -53,7 +53,7 @@ public struct ConfigWithoutBackgroundTask: CoverDropConfig {
 
 final class BackgroundMessageScheduleServiceTests: XCTestCase {
     override func setUp() async throws {
-        // remove UserDefaults keys so they do not intefer with future test runs
+        // remove UserDefaults keys so they do not interfere with future test runs
         BackgroundMessageSendState.clearAllState()
         BackgroundTaskService.hasBeenRegistered = false
     }
