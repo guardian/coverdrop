@@ -114,7 +114,7 @@ class ApiResponseCacheTest {
             instance.downloadAndUpdateNewDeadDrops()
         }
 
-        val expected = runBlocking { apiClient.getDeadDrops(0) }
+        val expected = runBlocking { apiClient.getDeadDrops(Instant.EPOCH) }
 
         assertThat(publicStorage.readDeadDrops()).isEqualTo(expected)
         InstantSubject.assertThat(publicStorage.readPublishedDeadDropsLastUpdate())
@@ -193,6 +193,46 @@ class ApiResponseCacheTest {
             deadDropJune01,
             deadDropJune07,
         )
+    }
+
+    @Test
+    fun testDiscardDeadDropsAtOrBeforeCursor_discardsDeadDropsNotAfterCursor() {
+        val cursor = Instant.parse("2023-04-10T00:00:00Z")
+        val deadDropBeforeCursor = fakeUserFacingDeadDrop(1, Instant.parse("2023-04-09T00:00:00Z"))
+        val deadDropAtCursor = fakeUserFacingDeadDrop(2, cursor)
+        val deadDropAfterCursor = fakeUserFacingDeadDrop(3, Instant.parse("2023-04-11T00:00:00Z"))
+
+        val filtered = instance.filterKeepOnlyDeadDropsAfterCursor(
+            deadDrops = PublishedJournalistToUserDeadDropsList(
+                listOf(deadDropBeforeCursor, deadDropAtCursor, deadDropAfterCursor)
+            ),
+            cursor = cursor,
+        )
+
+        assertThat(filtered.deadDrops).containsExactly(deadDropAfterCursor)
+    }
+
+    @Test
+    fun testDeadDrops_whenApiReplaysDeadDropsNotAfterCursor_thenDiscardedAndStorageUnchanged() {
+        val existingDeadDrop = fakeUserFacingDeadDrop(1, Instant.parse("2023-04-10T00:00:00Z"))
+        val existing = PublishedJournalistToUserDeadDropsList(listOf(existingDeadDrop))
+        publicStorage.writeDeadDrops(existing)
+
+        // a misbehaving API ignores the cursor and replays two dead drops, one before and one at the cursor
+        val replayedBefore = fakeUserFacingDeadDrop(2, Instant.parse("2023-04-09T00:00:00Z"))
+        val replayedAtCursor = fakeUserFacingDeadDrop(3, existingDeadDrop.createdAt)
+        val replayingApiClient = CoverDropApiClientMock(
+            mockedGetDeadDrops = {
+                PublishedJournalistToUserDeadDropsList(listOf(replayedBefore, replayedAtCursor))
+            }
+        )
+        val replayingInstance = ApiResponseCache(replayingApiClient, publicStorage, configuration, clock)
+
+        runBlocking {
+            replayingInstance.downloadAndUpdateNewDeadDrops()
+        }
+
+        assertThat(publicStorage.readDeadDrops()).isEqualTo(existing)
     }
 
     private val testLastDownload = Instant.now()

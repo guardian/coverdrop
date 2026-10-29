@@ -106,10 +106,11 @@ internal class ApiResponseCache(
         val existingDeadDrops = publicStorage.readDeadDrops()
 
         // download new dead-drops
-        val largestExistingId = existingDeadDrops.deadDrops.maxOfOrNull { it.id }
+        val largestExistingCreatedAt = existingDeadDrops.deadDrops.maxOfOrNull { it.createdAt }
+            ?: Instant.EPOCH
 
         val publishedDeadDrops = try {
-            apiClient.getDeadDrops(idsGreaterThan = largestExistingId ?: 0)
+            apiClient.getDeadDrops(createdAfter = largestExistingCreatedAt)
         } catch (e: ApiCallProviderException) {
             if (configuration.localTestMode) {
                 // This log statement is safe because it is test-mode only and independent of usage
@@ -118,19 +119,39 @@ internal class ApiResponseCache(
             return
         }
 
+        // a malicious or buggy API could replay dead drops we've already processed by serving
+        // them again at or before the requested cursor, so discard any that don't satisfy
+        // `createdAt > cursor`
+        val filteredDeadDrops = filterKeepOnlyDeadDropsAfterCursor(
+            deadDrops = publishedDeadDrops,
+            cursor = largestExistingCreatedAt,
+        )
+
         // if there are none, we can finish early
-        if (publishedDeadDrops.deadDrops.isEmpty()) {
+        if (filteredDeadDrops.deadDrops.isEmpty()) {
             return
         }
 
         // merge the existing and new dead-drops; this involves combining them and then removing
         // those who are older than the set cache TTL based on the most-recent timestamp in the
         // combined set
-        val mergedTrimmedDeadDropList = mergeAndTrimDeadDrops(existingDeadDrops, publishedDeadDrops)
+        val mergedTrimmedDeadDropList = mergeAndTrimDeadDrops(existingDeadDrops, filteredDeadDrops)
 
         // write back to disk
         publicStorage.writeDeadDrops(mergedTrimmedDeadDropList)
         publicStorage.writePublishedDeadDropsUpdate(clock.now())
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun filterKeepOnlyDeadDropsAfterCursor(
+        deadDrops: PublishedJournalistToUserDeadDropsList,
+        cursor: Instant,
+    ): PublishedJournalistToUserDeadDropsList {
+        val filteredDeadDrops = deadDrops.deadDrops.filter { deadDrop ->
+            deadDrop.createdAt > cursor
+        }
+
+        return PublishedJournalistToUserDeadDropsList(filteredDeadDrops)
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)

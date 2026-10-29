@@ -17,7 +17,7 @@ internal class CoverDropApiClientMock(
     private val mockedGetPublishedKeysAndProfiles: suspend () -> PublishedKeysAndProfiles = {
         TODO("not mocked")
     },
-    private val mockedGetDeadDrops: suspend (Int) -> PublishedJournalistToUserDeadDropsList = {
+    private val mockedGetDeadDrops: suspend (Instant) -> PublishedJournalistToUserDeadDropsList = {
         TODO("not mocked")
     },
     private val mockedPostMessage: suspend (UserMessage) -> Unit = {
@@ -31,8 +31,8 @@ internal class CoverDropApiClientMock(
     override suspend fun getPublishedKeys() =
         mockedGetPublishedKeysAndProfiles()
 
-    override suspend fun getDeadDrops(idsGreaterThan: Int): PublishedJournalistToUserDeadDropsList =
-        mockedGetDeadDrops(idsGreaterThan)
+    override suspend fun getDeadDrops(createdAfter: Instant): PublishedJournalistToUserDeadDropsList =
+        mockedGetDeadDrops(createdAfter)
 
     override suspend fun postMessage(message: UserMessage) =
         mockedPostMessage(message)
@@ -55,8 +55,8 @@ internal class CoverDropApiClientMock(
                     GsonApiJsonAdapter().parsePublishedDeadDrops(
                         apiCallProvider.getJsonApi(
                             apiConfiguration = apiConfiguration,
-                            path = "/v1/user/dead-drops",
-                            queryParameters = listOf(Pair("ids_greater_than", "0")),
+                            path = "/v1/journalist-to-user/dead-drops",
+                            queryParameters = listOf(Pair("created_after", Instant.EPOCH.toString())),
                         )
                     )
                 },

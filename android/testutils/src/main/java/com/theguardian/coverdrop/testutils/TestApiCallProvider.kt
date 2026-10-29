@@ -5,6 +5,7 @@ import com.theguardian.coverdrop.core.api.ApiConfiguration
 import com.theguardian.coverdrop.core.api.IApiCallProvider
 import com.theguardian.coverdrop.core.api.createGsonInstance
 import com.theguardian.coverdrop.core.api.models.PublishedJournalistToUserDeadDropsList
+import java.time.Instant
 
 class TestApiCallProvider(private val testVectors: IntegrationTestVectors) : IApiCallProvider {
 
@@ -24,7 +25,7 @@ class TestApiCallProvider(private val testVectors: IntegrationTestVectors) : IAp
     ): String {
         return when (path) {
             "/v1/public-keys" -> testVectors.readJson("published_keys", publishedKeysFileName)
-            "/v1/user/dead-drops" -> getUserDeadDrops(queryParameters!!.toMap())
+            "/v1/journalist-to-user/dead-drops" -> getUserDeadDrops(queryParameters!!.toMap())
             "/v1/status" -> testVectors.readJson("system_status")
             else -> TODO("not yet implemented: $path")
         }
@@ -62,7 +63,7 @@ class TestApiCallProvider(private val testVectors: IntegrationTestVectors) : IAp
     }
 
     /**
-     * Simulate back-end logic returning only dead-drops past a certain ID
+     * Simulate back-end logic returning only dead-drops created after a certain timestamp
      */
     @SuppressLint("VisibleForTests")
     private fun getUserDeadDrops(queryParameters: Map<String, String>): String {
@@ -74,9 +75,9 @@ class TestApiCallProvider(private val testVectors: IntegrationTestVectors) : IAp
             PublishedJournalistToUserDeadDropsList::class.java
         )
 
-        val idsGreaterThan = queryParameters["ids_greater_than"]!!.toInt()
+        val createdAfter = Instant.parse(queryParameters["created_after"]!!)
         val filteredVectors = PublishedJournalistToUserDeadDropsList(
-            deadDrops = inputDeadDrops.deadDrops.filter { it.id > idsGreaterThan }
+            deadDrops = inputDeadDrops.deadDrops.filter { it.createdAt > createdAfter }
         )
 
         return gson.toJson(filteredVectors)

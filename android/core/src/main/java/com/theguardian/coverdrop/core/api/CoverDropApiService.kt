@@ -5,6 +5,7 @@ import com.theguardian.coverdrop.core.api.models.PublishedJournalistToUserDeadDr
 import com.theguardian.coverdrop.core.api.models.PublishedKeysAndProfiles
 import com.theguardian.coverdrop.core.api.models.PublishedStatusEvent
 import com.theguardian.coverdrop.core.api.models.UserMessage
+import java.time.Instant
 
 
 data class ApiConfiguration(
@@ -65,7 +66,7 @@ internal interface ICoverDropApiClient {
     suspend fun getPublishedKeys(): PublishedKeysAndProfiles
 
     @Throws(ApiCallProviderException::class)
-    suspend fun getDeadDrops(idsGreaterThan: Int = 0): PublishedJournalistToUserDeadDropsList
+    suspend fun getDeadDrops(createdAfter: Instant): PublishedJournalistToUserDeadDropsList
 
     @Throws(ApiCallProviderException::class)
     suspend fun postMessage(message: UserMessage)
@@ -87,11 +88,10 @@ internal class CoverDropApiClient(coverDropLib: ICoverDropLibInternal) : ICoverD
         return apiJsonAdapter.parsePublishedPublicKeys(json)
     }
 
-    override suspend fun getDeadDrops(idsGreaterThan: Int): PublishedJournalistToUserDeadDropsList {
-        require(idsGreaterThan >= 0)
-        val params = listOf(Pair("ids_greater_than", idsGreaterThan.toString()))
+    override suspend fun getDeadDrops(createdAfter: Instant): PublishedJournalistToUserDeadDropsList {
+        val params = listOf(Pair("created_after", createdAfter.toString()))
 
-        val json = apiCallProvider.getJsonApi(apiConfiguration, "/v1/user/dead-drops", params)
+        val json = apiCallProvider.getJsonApi(apiConfiguration, "/v1/journalist-to-user/dead-drops", params)
         return apiJsonAdapter.parsePublishedDeadDrops(json)
     }
 
