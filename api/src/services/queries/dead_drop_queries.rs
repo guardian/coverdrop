@@ -62,6 +62,11 @@ impl DeadDropQueries {
         Ok(dead_drops)
     }
 
+    /// Returns dead drops created after `created_after`, compared at millisecond precision.
+    ///
+    /// Some clients only retain millisecond precision of `created_at`, so a cursor taken from the most
+    /// recent dead drop they hold would otherwise sort before that same dead drop and cause it to be
+    /// returned again on every request. Written as a `>=` comparison to keep the `created_at` index usable.
     pub async fn get_journalist_to_user_dead_drops(
         &self,
         created_after: DateTime<Utc>,
@@ -78,7 +83,7 @@ impl DeadDropQueries {
                 data       AS "data: SerializedJournalistToUserDeadDropMessages",
                 signature  AS "signature: Signature<JournalistToUserDeadDropSignatureDataV2>"
             FROM journalist_to_user_dead_drops
-            WHERE created_at > $1
+            WHERE created_at >= date_trunc('milliseconds', $1::timestamptz) + interval '1 millisecond'
             ORDER BY created_at ASC
             LIMIT $2
             "#,
@@ -125,6 +130,11 @@ impl DeadDropQueries {
         Ok(dead_drops)
     }
 
+    /// Returns dead drops created after `created_after`, compared at millisecond precision.
+    ///
+    /// Some clients only retain millisecond precision of `created_at`, so a cursor taken from the most
+    /// recent dead drop they hold would otherwise sort before that same dead drop and cause it to be
+    /// returned again on every request. Written as a `>=` comparison to keep the `created_at` index usable.
     pub async fn get_user_to_journalist_dead_drops(
         &self,
         created_after: DateTime<Utc>,
@@ -142,7 +152,7 @@ impl DeadDropQueries {
                 signature  AS "signature: Signature<UserToJournalistDeadDropSignatureDataV2>",
                 epoch      AS "epoch: Epoch"
             FROM user_to_journalist_dead_drops
-            WHERE created_at > $1
+            WHERE created_at >= date_trunc('milliseconds', $1::timestamptz) + interval '1 millisecond'
             ORDER BY created_at ASC
             LIMIT $2
             "#,
