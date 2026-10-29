@@ -203,6 +203,8 @@ public struct VerifiedPublicKeysHierarchy {
             certificate: Signature<Organization>.fromBytes(
                 bytes: keyHierarchy.organizationPublicKey.certificate.bytes
             ),
+            signature: keyHierarchy.organizationPublicKey.signature
+                .map { Signature<Organization>.fromBytes(bytes: $0.bytes) },
             notValidAfter: keyHierarchy.organizationPublicKey.notValidAfter.date,
             now: currentTime
         )
@@ -278,6 +280,7 @@ public struct VerifiedPublicKeysHierarchy {
                     let verifiedCoverNodeIdKey: CoverNodeIdPublicKey = try CoverNodeIdPublicKey.fromUnverified(
                         unverifiedKey: family.idPk,
                         signingKey: verifiedCoverNodeProvisioningKey,
+                        identity: coverNodeId,
                         now: currentTime
                     )
                     let coverNodeMessageKeys: [CoverNodeMessagingPublicKey] = try extractCoverNodeMessageKeys(
@@ -325,6 +328,7 @@ public struct VerifiedPublicKeysHierarchy {
                     try verifyJournalistPublicKeys(
                         keysGroup: journalistKeysFamily,
                         journalistProvisioningKey: verifiedJournalistProvisioningKey,
+                        journalistId: journalistId,
                         now: currentTime
                     )
                 journalists.updateValue(verifiedJournalistPublicKeysGroup, forKey: journalistId)
@@ -358,12 +362,14 @@ public struct VerifiedPublicKeysHierarchy {
     /// - Parameters:
     ///   - keysGroup: A list of `JournalistProvisioningKey`
     ///   - journalistProvisioningKey: A `JournalistProvisioningKey`
+    ///   - journalistId: the id of the journalist whose keys are being verified
     ///   - now: the current time in the app
     /// - Returns: a list of `VerifiedJournalistPublicKeysGroup`
     /// - Throws: if verification was unsuccesful
     private static func verifyJournalistPublicKeys(
         keysGroup: [JournalistKeysFamily],
         journalistProvisioningKey: JournalistProvisioningKey,
+        journalistId: String,
         now: Date
     ) throws -> [VerifiedJournalistPublicKeysGroup] {
         return try keysGroup.map { key in
@@ -371,6 +377,7 @@ public struct VerifiedPublicKeysHierarchy {
             let verifiedIdKey: JournalistIdPublicKey = try JournalistIdPublicKey.fromUnverified(
                 unverifiedKey: unverifiedIdKey,
                 signingKey: journalistProvisioningKey,
+                identity: journalistId,
                 now: now
             )
 

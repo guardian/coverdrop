@@ -111,6 +111,7 @@ public class IntegrationTestScenarioContext {
                 return SelfSignedPublicSigningKey<TrustedOrganization>(
                     key: Sign.KeyPair.PublicKey(keyData.key.bytes),
                     certificate: Signature<TrustedOrganization>.fromBytes(bytes: keyData.certificate.bytes),
+                    signature: keyData.signature.map { Signature<TrustedOrganization>.fromBytes(bytes: $0.bytes) },
                     notValidAfter: keyData.notValidAfter.date,
                     now: now
                 )

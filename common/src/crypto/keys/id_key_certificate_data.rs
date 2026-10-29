@@ -15,8 +15,10 @@ const ID_KEY_CERT_DATA_TAG: &[u8; 16] = b"ID_KEY_CERT_DATA";
 ///     "ID_KEY_CERT_DATA" (16B) |
 ///     key (32B) |
 ///     not_valid_after_be_i64 (8B) |
-///     role_len_be_u32 (4B) | role_name |
-///     id_len_be_u32 (4B) | id_utf8
+///     role_len_be_u32 (4B) |
+///     role_name_utf8 |
+///     id_len_be_u32 (4B) |
+///     id_utf8
 /// ]
 /// ```
 ///

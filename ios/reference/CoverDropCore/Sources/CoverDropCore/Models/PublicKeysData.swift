@@ -107,37 +107,53 @@ public struct JournalistProfile: Codable, Equatable {
 }
 
 public struct UnverifiedSignedPublicEncryptionKeyData: Codable, Equatable {
-    public init(key: HexEncodedString, certificate: HexEncodedString, notValidAfter: RFC3339DateTimeString) {
+    public init(
+        key: HexEncodedString,
+        certificate: HexEncodedString,
+        signature: HexEncodedString?,
+        notValidAfter: RFC3339DateTimeString
+    ) {
         self.key = key
         self.certificate = certificate
+        self.signature = signature
         self.notValidAfter = notValidAfter
     }
 
     public var key: HexEncodedString
     public var certificate: HexEncodedString
+    public var signature: HexEncodedString?
     public var notValidAfter: RFC3339DateTimeString
 
     enum CodingKeys: String, CodingKey {
         case key
         case certificate
+        case signature
         case notValidAfter = "not_valid_after"
     }
 }
 
 public struct UnverifiedSignedPublicSigningKeyData: Codable, Equatable {
-    public init(key: HexEncodedString, certificate: HexEncodedString, notValidAfter: RFC3339DateTimeString) {
+    public init(
+        key: HexEncodedString,
+        certificate: HexEncodedString,
+        signature: HexEncodedString?,
+        notValidAfter: RFC3339DateTimeString
+    ) {
         self.key = key
         self.certificate = certificate
+        self.signature = signature
         self.notValidAfter = notValidAfter
     }
 
     var key: HexEncodedString
     var certificate: HexEncodedString
+    var signature: HexEncodedString?
     public var notValidAfter: RFC3339DateTimeString
 
     enum CodingKeys: String, CodingKey {
         case key
         case certificate
+        case signature
         case notValidAfter = "not_valid_after"
     }
 }
