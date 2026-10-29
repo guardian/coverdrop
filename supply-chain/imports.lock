@@ -568,8 +568,8 @@ user-login = "newpavlov"
 user-name = "Artyom Pavlov"
 
 [[publisher.ctutils]]
-version = "0.4.2"
-when = "2026-04-02"
+version = "0.4.4"
+when = "2026-10-23"
 trusted-publisher = "github:RustCrypto/utils"
 
 [[publisher.curve25519-dalek]]
@@ -3754,6 +3754,11 @@ notes = "no unsafe code, ambient capabilities only used in tests"
 who = "Pat Hickey <phickey@fastly.com>"
 criteria = "safe-to-deploy"
 delta = "0.21.0 -> 0.21.6"
+
+[[audits.bytecode-alliance.audits.rustls]]
+who = "Pat Hickey <p.hickey@f5.com>"
+criteria = "safe-to-deploy"
+delta = "0.23.45 -> 0.23.46"
 
 [[audits.bytecode-alliance.audits.rustls-webpki]]
 who = "Pat Hickey <phickey@fastly.com>"

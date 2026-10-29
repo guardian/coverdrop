@@ -38,4 +38,14 @@ ignore = [
     # Same unreachable dev-dependency issue as RUSTSEC-2026-0331 above.
     # https://rustsec.org/advisories/RUSTSEC-2026-0330.html
     "RUSTSEC-2026-0330",
+
+    # `crypto-bigint` 0.5.5 has timing variability issues in operations intended to be
+    # constant-time. It comes from `elliptic-curve` 0.13, which is pinned by `p256`/`p384`
+    # 0.13 used by `openmls_rust_crypto` 0.6.0 and `openmls_basic_credential` 0.6.0.
+    # The fix requires `crypto-bigint` >=0.7.6, which needs the `elliptic-curve` 0.14 chain;
+    # there is currently no upgrade path as openmls does not yet support it.
+    # The MLS (group messaging) code is not yet run in production, so this is
+    # accepted for now. Revisit once openmls moves to `p256` 0.14.
+    # https://rustsec.org/advisories/RUSTSEC-2026-0387
+    "RUSTSEC-2026-0387",
 ]
