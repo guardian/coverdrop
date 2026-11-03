@@ -6,7 +6,7 @@
       "location" : "https://github.com/guardian/fonts.git",
       "state" : {
         "branch" : "main",
-        "revision" : "2b3e4145c773e7cc9409cc92adbe197ee93856bb"
+        "revision" : "590dcf632b2205699646cfe864265ecbd9e5841d"
       }
     },
     {
@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/1024jp/GzipSwift",
       "state" : {
-        "revision" : "7a7f17761c76a932662ab77028a4329f67d645a4",
-        "version" : "5.2.0"
+        "revision" : "41d37421fe2cbbfae4a5593dc29d12999fb73cd7",
+        "version" : "7.0.0"
       }
     },
     {
