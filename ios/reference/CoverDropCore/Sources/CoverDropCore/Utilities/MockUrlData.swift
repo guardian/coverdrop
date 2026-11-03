@@ -24,7 +24,15 @@ enum MockUrlData {
                 statusData = MockUrlData.getStatusUnavailableData()
             }
         #endif
-        return [
+
+        // Subsequent dead drop fetches use the `createdAt` of the highest dead drop in the active fixture as the
+        // cursor,
+        // so this is derived from the fixture rather than hardcoded, to stay valid if the test vectors are regenerated.
+        let epochCreatedAfter = Date(timeIntervalSince1970: 0).rfc3339MicrosecondString
+        let subsequentFetchCreatedAfter = MockUrlData.highestCreatedAtCursor(for: deadDropData)
+            ?? epochCreatedAfter
+
+        var mockUrls: [URL?: MockResponse] = [
             URL(string: "http://localhost:3000/v1/public-keys")!: MockResponse(
                 error: nil,
                 data: publicKeysData,
@@ -35,39 +43,12 @@ enum MockUrlData {
                     headerFields: nil
                 )!
             ),
-            // In our mock data, we are using dead-drop id 19 ... just because
-            URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=19")!: MockResponse(
-                error: nil,
-                data: deadDropData,
-                response: HTTPURLResponse(
-                    url: URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=19")!,
-                    statusCode: 200,
-                    httpVersion: nil,
-                    headerFields: nil
-                )!
-            ),
-            // In our mock data, we are using dead-drop id 0 ... just because
-            URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=0")!: MockResponse(
-                error: nil,
-                data: deadDropData,
-                response: HTTPURLResponse(
-                    url: URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=0")!,
-                    statusCode: 200,
-                    httpVersion: nil,
-                    headerFields: nil
-                )!
-            ),
-            // In our mock data, we are using dead-drop id 0 ... just because
-            URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=1")!: MockResponse(
-                error: nil,
-                data: deadDropData,
-                response: HTTPURLResponse(
-                    url: URL(string: "http://localhost:3000/v1/user/dead-drops?ids_greater_than=0")!,
-                    statusCode: 200,
-                    httpVersion: nil,
-                    headerFields: nil
-                )!
-            ),
+            // The first ever fetch has no cache, so the client defaults the cursor to the epoch
+            MockUrlData.deadDropsUrl(createdAfter: epochCreatedAfter):
+                MockUrlData.deadDropsMockResponse(data: deadDropData, createdAfter: epochCreatedAfter),
+            // Subsequent fetches use the `createdAt` of the highest dead drop in the active fixture as the cursor
+            MockUrlData.deadDropsUrl(createdAfter: subsequentFetchCreatedAfter):
+                MockUrlData.deadDropsMockResponse(data: deadDropData, createdAfter: subsequentFetchCreatedAfter),
             URL(string: "http://localhost:7676/user/messages")!: MockResponse(
                 error: nil,
                 data: Data(),
@@ -89,6 +70,34 @@ enum MockUrlData {
                 )!
             )
         ]
+
+        // Some tests seed the dead drop cache using our test keys' generated-at timestamp, so we also need
+        // a mock response for a fetch cursored from that date
+        if let keysGeneratedAt = (try? PublicKeysHelper.readLocalGeneratedAtFile()) ?? nil {
+            let keysGeneratedAtCreatedAfter = keysGeneratedAt.rfc3339MicrosecondString
+            mockUrls[MockUrlData.deadDropsUrl(createdAfter: keysGeneratedAtCreatedAfter)] =
+                MockUrlData.deadDropsMockResponse(data: deadDropData, createdAfter: keysGeneratedAtCreatedAfter)
+        }
+
+        return mockUrls
+    }
+
+    static func deadDropsUrl(createdAfter: String) -> URL {
+        URL(string: "http://localhost:3000/v1/journalist-to-user/dead-drops?created_after=\(createdAfter)")!
+    }
+
+    static func deadDropsMockResponse(data: Data, createdAfter: String) -> MockResponse {
+        let url = MockUrlData.deadDropsUrl(createdAfter: createdAfter)
+        return MockResponse(
+            error: nil,
+            data: data,
+            response: HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            )!
+        )
     }
 
     static func getDeadDrops() -> Data {
@@ -97,6 +106,14 @@ enum MockUrlData {
         } catch {
             return Data()
         }
+    }
+
+    static func highestCreatedAtCursor(for deadDropJson: Data) -> String? {
+        guard let deadDropData = try? JSONDecoder().decode(DeadDropData.self, from: deadDropJson),
+              let highestCreatedAt = deadDropData.deadDrops.max(by: { $0.createdAt < $1.createdAt })?.createdAt else {
+            return nil
+        }
+        return highestCreatedAt.rfc3339MicrosecondString
     }
 
     static func getStatusData() -> Data {

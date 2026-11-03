@@ -208,11 +208,17 @@ final class DeadDropRepositoryTests: XCTestCase {
         }
 
         // This sets up the mock api response
-        // In the DeadDropWebRepository we use the highest dead drop Id from the cache as the `ids_greater_than`
-        // So this sets up a mock response for that specific request
+        // In the DeadDropWebRepository we use the `createdAt` of the highest cached dead drop as the `created_after`
+        // cursor, so this sets up a mock response for that specific request
+        guard let highestCachedCreatedAt = cachedDeadDropFromFile.deadDrops.max(by: { $0.createdAt < $1.createdAt })?
+            .createdAt else {
+            XCTFail("Could not get highest cached createdAt")
+            return
+        }
+        let createdAfter = highestCachedCreatedAt.rfc3339MicrosecondString
         let baseUrl = DevConfig().apiBaseUrl
         guard let deadDropAPIPath = DeadDropWebRepository.API
-            .allDeadDrops(params: ["ids_greater_than": String(maxDeadDropId)]).path else {
+            .allDeadDrops(params: ["created_after": createdAfter]).path else {
             XCTFail("Could not get path")
             return
         }
@@ -367,5 +373,27 @@ final class DeadDropRepositoryTests: XCTestCase {
             [deadDropJune01,
              deadDropJune07]
         ))
+    }
+
+    func testDiscardDeadDropsAtOrBeforeCursor_discardsDeadDropsNotAfterCursor() {
+        let cursor = RFC3339DateTimeString(
+            date: DateFormats.validateDate(date: "2023-04-10T00:00:00Z") ?? DateFunction.currentTime()
+        )
+        let deadDropBeforeCursor = fakeUserFacingDeadDrop(
+            id: 1,
+            createdAt: DateFormats.validateDate(date: "2023-04-09T00:00:00Z") ?? DateFunction.currentTime()
+        )
+        let deadDropAtCursor = fakeUserFacingDeadDrop(id: 2, createdAt: cursor.date)
+        let deadDropAfterCursor = fakeUserFacingDeadDrop(
+            id: 3,
+            createdAt: DateFormats.validateDate(date: "2023-04-11T00:00:00Z") ?? DateFunction.currentTime()
+        )
+
+        let filtered = DeadDropRepository.discardDeadDropsAtOrBeforeCursor(
+            deadDrops: DeadDropData(deadDrops: [deadDropBeforeCursor, deadDropAtCursor, deadDropAfterCursor]),
+            cursor: cursor
+        )
+
+        XCTAssertTrue(filtered.deadDrops.containsExactly([deadDropAfterCursor]))
     }
 }

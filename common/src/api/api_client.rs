@@ -746,7 +746,7 @@ impl ApiClient {
     ) -> anyhow::Result<UnverifiedUserToJournalistDeadDropsList> {
         let mut url = self.base_url.clone();
 
-        // During the migration from using ids_greater_than to created_since, use ids_greater_than one time
+        // During the migration from using ids_greater_than to created_after, use ids_greater_than one time
         // if the value of created_after is 1970-01-01T00:00:00Z', the column's default value.
         // This prevents the request from leaking any information about u2j messages in previous dead drops.
         // TODO: use `created_after` exclusively https://github.com/guardian/coverdrop-internal/issues/4202

@@ -29,10 +29,10 @@ extension DeadDropWebRepository.API: APICall {
         switch self {
         case let .allDeadDrops(params: params):
             guard let params,
-                  let id = params["ids_greater_than"] else {
+                  let createdAfter = params["created_after"] else {
                 return nil
             }
-            return "/user/dead-drops?ids_greater_than=\(id)"
+            return "/journalist-to-user/dead-drops?created_after=\(createdAfter)"
         }
     }
 

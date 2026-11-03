@@ -1,7 +1,7 @@
 import Foundation
 
 /// This repository is for managing dead drops published from the API `/users/dead-drops`
-/// 1. This repository tries to load the last succesfull dead drop ID from disk, if this fails it will then try and get
+/// 1. This repository tries to load the last successful dead drop ID from disk, if this fails it will then try and get
 /// dead drops from id 0
 class DeadDropRepository: CacheableApiRepository<DeadDropData> {
     init(now: Date = DateFunction.currentTime(), config: CoverDropConfig, urlSession: URLSession) {
@@ -17,10 +17,10 @@ class DeadDropRepository: CacheableApiRepository<DeadDropData> {
         )
     }
 
-    /// This loads dead drops from the `/user/dead-drops/` endpoint and caches the response.
+    /// This loads dead drops from the `/journalist-to-user/dead-drops/` endpoint and caches the response.
     /// Each dead drop will only be kept in cache for 2 weeks, and will be removed during a merge and trim operation,
     /// once the dead drop `createdAt` date  falls outside that period.
-    /// A merge and trim only happens when new dead drops have been got from the api.
+    /// A merge and trim only happens when new dead drops have been fetched from the api.
     /// At any point in time, the dead drop api only has the last 2 weeks worth of dead drops, so inital loading will
     /// generally have a fixed size.
     override func getFromApiAndCache() async -> DeadDropData? {
@@ -31,13 +31,20 @@ class DeadDropRepository: CacheableApiRepository<DeadDropData> {
                 availableCachedData = localCachedData
             }
 
-            let highestCachedDeadDropId = availableCachedData.deadDrops.max(by: { $0.id < $1.id })?.id ?? 0
-            let params = ["ids_greater_than": String(highestCachedDeadDropId)]
+            let highestCachedDeadDropCreatedAt = availableCachedData.deadDrops.max(by: { $0.createdAt < $1.createdAt })?
+                .createdAt ??
+                RFC3339DateTimeString(date: Date(timeIntervalSince1970: 0))
+            let params = ["created_after": highestCachedDeadDropCreatedAt.rfc3339MicrosecondString]
             let webData: DeadDropData = try await cacheableWebRepository.get(params: params)
+
+            let filteredWebData = DeadDropRepository.discardDeadDropsAtOrBeforeCursor(
+                deadDrops: webData,
+                cursor: highestCachedDeadDropCreatedAt
+            )
 
             let mergedDeadDrops = DeadDropRepository.mergeAndTrim(
                 existingDeadDrops: availableCachedData,
-                newDeadDrops: webData
+                newDeadDrops: filteredWebData
             )
 
             try await localRepository.save(data: mergedDeadDrops)
@@ -48,12 +55,24 @@ class DeadDropRepository: CacheableApiRepository<DeadDropData> {
     }
 
     override func getFromApiOnly() async -> DeadDropData? {
-        let params = ["ids_greater_than": "0"]
+        let minimumDate = Date(timeIntervalSince1970: 0).rfc3339MicrosecondString
+        let params = ["created_after": minimumDate]
         if let webData: DeadDropData = try? await cacheableWebRepository.get(params: params) {
             return webData
         } else {
             return nil
         }
+    }
+
+    /// A malicious API could replay dead drops the client has already processed by serving them again
+    /// at or before the requested cursor, so we discard any that don't satisfy `createdAt > cursor`.
+    static func discardDeadDropsAtOrBeforeCursor(deadDrops: DeadDropData,
+                                                 cursor: RFC3339DateTimeString) -> DeadDropData {
+        let filteredDeadDrops = deadDrops.deadDrops.filter { deadDrop in
+            deadDrop.createdAt > cursor
+        }
+
+        return DeadDropData(deadDrops: filteredDeadDrops)
     }
 
     /// Merges two sets of dead drops, with duplicate entries being merged.
