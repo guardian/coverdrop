@@ -19,6 +19,8 @@ enum AppendOutcome {
     Success,
     /// The message could not be parsed
     ParseFailed,
+    /// The decoded message had an unexpected size
+    BadMessageSize,
     /// The message was rejected by the kinesis service due to back pressure
     AppendBackPressure,
     /// The message failed to be put on the kinesis stream for another reason
@@ -30,6 +32,7 @@ impl AppendOutcome {
         match self {
             AppendOutcome::Success => "success",
             AppendOutcome::ParseFailed => "parse_failed",
+            AppendOutcome::BadMessageSize => "bad_message_size",
             AppendOutcome::AppendBackPressure => "append_back_pressure",
             AppendOutcome::AppendFailed => "append_failed",
         }
@@ -114,15 +117,14 @@ pub async fn post_u2j_message(
     kinesis_client
         .encode_and_put_u2j_message(u2j_message)
         .await
-        .map_err(|e| match e.as_service_error() {
-            Some(se) if se.is_provisioned_throughput_exceeded_exception() => {
-                put_metrics(&user_agent, AppendOutcome::AppendBackPressure);
-                AppError::AppendBackPressure(e)
-            }
-            _ => {
-                put_metrics(&user_agent, AppendOutcome::AppendFailed);
-                AppError::AppendFailed(e)
-            }
+        .inspect_err(|e| {
+            let outcome = match e {
+                AppError::JsonParse(_) => AppendOutcome::ParseFailed,
+                AppError::BadMessageSize => AppendOutcome::BadMessageSize,
+                AppError::AppendBackPressure(_) => AppendOutcome::AppendBackPressure,
+                AppError::AppendFailed(_) => AppendOutcome::AppendFailed,
+            };
+            put_metrics(&user_agent, outcome);
         })?;
 
     put_metrics(&user_agent, AppendOutcome::Success);
