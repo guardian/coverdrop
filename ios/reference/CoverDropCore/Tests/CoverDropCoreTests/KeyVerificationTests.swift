@@ -517,6 +517,79 @@ final class KeyVerificationTests: XCTestCase {
         try verifyAndAssertMinimalScenario(scenario: .minimalOldWithoutIdKeySignature)
     }
 
+    func testVerifiedKeys_dropsInvalidIdentityAndMessageKeys() throws {
+        let scenario = try loadVerifiedMinimalScenario()
+        var publicKeysData = scenario.publicKeysData
+        var keyHierarchy = try XCTUnwrap(publicKeysData.keys.first)
+
+        var journalistHierarchy = try XCTUnwrap(keyHierarchy.journalists.first)
+        let journalistFamilies = try XCTUnwrap(
+            journalistHierarchy.journalists["static_test_journalist"]
+        )
+        let validJournalistFamily = try XCTUnwrap(journalistFamilies.first)
+        var invalidJournalistIdFamily = validJournalistFamily
+        invalidJournalistIdFamily.idPk = try corruptSignature(of: validJournalistFamily.idPk)
+        var journalistFamilyWithInvalidMessage = validJournalistFamily
+        try journalistFamilyWithInvalidMessage.msgPks.insert(
+            corruptSignature(of: XCTUnwrap(validJournalistFamily.msgPks.first)),
+            at: 0
+        )
+        journalistHierarchy.journalists["static_test_journalist"] = [
+            invalidJournalistIdFamily,
+            journalistFamilyWithInvalidMessage
+        ]
+        keyHierarchy.journalists[0] = journalistHierarchy
+
+        var coverNodeHierarchy = try XCTUnwrap(keyHierarchy.coverNodes.first)
+        let coverNodeFamilies = try XCTUnwrap(coverNodeHierarchy.covernodes["covernode_001"])
+        let validCoverNodeFamily = try XCTUnwrap(coverNodeFamilies.first)
+        var invalidCoverNodeIdFamily = validCoverNodeFamily
+        invalidCoverNodeIdFamily.idPk = try corruptSignature(of: validCoverNodeFamily.idPk)
+        var coverNodeFamilyWithInvalidMessage = validCoverNodeFamily
+        try coverNodeFamilyWithInvalidMessage.msgPks.insert(
+            corruptSignature(of: XCTUnwrap(validCoverNodeFamily.msgPks.first)),
+            at: 0
+        )
+        coverNodeHierarchy.covernodes["covernode_001"] = [
+            invalidCoverNodeIdFamily,
+            coverNodeFamilyWithInvalidMessage
+        ]
+        keyHierarchy.coverNodes[0] = coverNodeHierarchy
+        publicKeysData.keys[0] = keyHierarchy
+
+        let verifiedKeys = try VerifiedPublicKeys(
+            publicKeysData: publicKeysData,
+            trustedOrganizationPublicKeys: IntegrationTestScenarioContext(scenario: .minimal)
+                .readTrustedOrganizationKeys(now: scenario.now),
+            currentTime: scenario.now
+        )
+        let verifiedHierarchy = try XCTUnwrap(verifiedKeys.verifiedHierarchies.first)
+        let verifiedJournalistFamilies = try XCTUnwrap(
+            verifiedHierarchy.allPublicKeysForJournalists()["static_test_journalist"]
+        )
+        let verifiedCoverNodeFamilies = try XCTUnwrap(
+            verifiedHierarchy.verifiedCoverNodeKeyHierarchies.first?
+                .idPublicKeys["covernode_001"]
+        )
+        let verifiedJournalistFamily = try XCTUnwrap(
+            verifiedJournalistFamilies.first
+        )
+        let verifiedCoverNodeFamily = try XCTUnwrap(
+            verifiedCoverNodeFamilies.first
+        )
+
+        XCTAssertEqual(verifiedJournalistFamilies.count, 1)
+        XCTAssertEqual(verifiedCoverNodeFamilies.count, 1)
+        XCTAssertEqual(
+            verifiedJournalistFamily.msg.count,
+            validJournalistFamily.msgPks.count
+        )
+        XCTAssertEqual(
+            verifiedCoverNodeFamily.msg.count,
+            validCoverNodeFamily.msgPks.count
+        )
+    }
+
     private func verifyAndAssertMinimalScenario(scenario: IntegrationTestScenario) throws {
         let verifiedKeys = try loadVerifiedMinimalScenario(scenario: scenario).verifiedKeys
 

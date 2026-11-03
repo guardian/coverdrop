@@ -276,14 +276,16 @@ public struct VerifiedPublicKeysHierarchy {
             var coverNodeInstances: [CoverNodeIdentity: [VerifiedCoverNodeKeysFamily]] = [:]
 
             for (coverNodeId, coverNodeKeysFamilies) in coverNodeHierarchy.covernodes {
-                let coverNodeKeys = try coverNodeKeysFamilies.map { family in
-                    let verifiedCoverNodeIdKey: CoverNodeIdPublicKey = try CoverNodeIdPublicKey.fromUnverified(
+                let coverNodeKeys = coverNodeKeysFamilies.compactMap { family -> VerifiedCoverNodeKeysFamily? in
+                    guard let verifiedCoverNodeIdKey = try? CoverNodeIdPublicKey.fromUnverified(
                         unverifiedKey: family.idPk,
                         signingKey: verifiedCoverNodeProvisioningKey,
                         identity: coverNodeId,
                         now: currentTime
-                    )
-                    let coverNodeMessageKeys: [CoverNodeMessagingPublicKey] = try extractCoverNodeMessageKeys(
+                    ) else {
+                        return nil
+                    }
+                    let coverNodeMessageKeys: [CoverNodeMessagingPublicKey] = extractCoverNodeMessageKeys(
                         keysGroup: family.msgPks,
                         verifiedCoverNodeIdKey: verifiedCoverNodeIdKey,
                         now: currentTime
@@ -325,7 +327,7 @@ public struct VerifiedPublicKeysHierarchy {
 
             for (journalistId, journalistKeysFamily) in journalistHierarchy.journalists {
                 let verifiedJournalistPublicKeysGroup: [VerifiedJournalistPublicKeysGroup] =
-                    try verifyJournalistPublicKeys(
+                    verifyJournalistPublicKeys(
                         keysGroup: journalistKeysFamily,
                         journalistProvisioningKey: verifiedJournalistProvisioningKey,
                         journalistId: journalistId,
@@ -371,17 +373,19 @@ public struct VerifiedPublicKeysHierarchy {
         journalistProvisioningKey: JournalistProvisioningKey,
         journalistId: String,
         now: Date
-    ) throws -> [VerifiedJournalistPublicKeysGroup] {
-        return try keysGroup.map { key in
+    ) -> [VerifiedJournalistPublicKeysGroup] {
+        return keysGroup.compactMap { key in
             let unverifiedIdKey: UnverifiedSignedPublicSigningKeyData = key.idPk
-            let verifiedIdKey: JournalistIdPublicKey = try JournalistIdPublicKey.fromUnverified(
+            guard let verifiedIdKey = try? JournalistIdPublicKey.fromUnverified(
                 unverifiedKey: unverifiedIdKey,
                 signingKey: journalistProvisioningKey,
                 identity: journalistId,
                 now: now
-            )
+            ) else {
+                return nil
+            }
 
-            let verifiedMessageKeys: [JournalistMessagingPublicKey] = try verifyJournalistMessageKeys(
+            let verifiedMessageKeys: [JournalistMessagingPublicKey] = verifyJournalistMessageKeys(
                 keysGroup: key.msgPks,
                 verifiedJournalistIdPublicKey: verifiedIdKey,
                 now: now
@@ -402,9 +406,9 @@ public struct VerifiedPublicKeysHierarchy {
         keysGroup: [UnverifiedSignedPublicEncryptionKeyData],
         verifiedJournalistIdPublicKey: JournalistIdPublicKey,
         now: Date
-    ) throws -> [JournalistMessagingPublicKey] {
-        return try keysGroup.map { messageKey in
-            try JournalistMessagingPublicKey.fromUnverified(
+    ) -> [JournalistMessagingPublicKey] {
+        return keysGroup.compactMap { messageKey in
+            try? JournalistMessagingPublicKey.fromUnverified(
                 unverifiedMessageKey: messageKey,
                 signingKey: verifiedJournalistIdPublicKey,
                 now: now
@@ -422,9 +426,9 @@ public struct VerifiedPublicKeysHierarchy {
         keysGroup: [UnverifiedSignedPublicEncryptionKeyData],
         verifiedCoverNodeIdKey: CoverNodeIdPublicKey,
         now: Date
-    ) throws -> [CoverNodeMessagingPublicKey] {
-        return try keysGroup.map { messageKey in
-            try CoverNodeMessagingPublicKey.fromUnverified(
+    ) -> [CoverNodeMessagingPublicKey] {
+        return keysGroup.compactMap { messageKey in
+            try? CoverNodeMessagingPublicKey.fromUnverified(
                 unverifiedMessageKey: messageKey,
                 signingKey: verifiedCoverNodeIdKey,
                 now: now
