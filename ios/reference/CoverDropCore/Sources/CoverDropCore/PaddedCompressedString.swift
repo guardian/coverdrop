@@ -12,7 +12,23 @@ public enum PaddedCompressedStringError: Error {
     case failedToGenerateRandomBytes
 }
 
-public struct PaddedCompressedString: Equatable, Encryptable {
+public protocol PaddedLength {
+    static var bytes: Int { get }
+}
+
+public struct U2JPaddedLength: PaddedLength {
+    public static var bytes: Int {
+        Constants.authenticatedMessagePaddingLen
+    }
+}
+
+public struct J2UPaddedLength: PaddedLength {
+    public static var bytes: Int {
+        Constants.messagePaddingLen
+    }
+}
+
+public struct PaddedCompressedString<Length: PaddedLength>: Equatable, Encryptable {
     public func asUnencryptedBytes() -> [UInt8] {
         value
     }
@@ -23,14 +39,15 @@ public struct PaddedCompressedString: Equatable, Encryptable {
 
     public let value: [UInt8]
 
-    /// this is a UInt16 expressed as maximum number of bytes, which is 2
-    static let headerSize = 2
+    static var headerSize: Int {
+        return 2
+    }
 
     /// The first step of constructing a `PaddedCompressedString`, but can also be called externally to check whether a
     /// user's message exceeds the allowed size
     @discardableResult
     public static func compressCheckingLength(from text: String) throws -> (compressedData: Data, compressedSize: Int) {
-        let padToSize = Constants.messagePaddingLen
+        let padToSize = Length.bytes
 
         guard let data = text.data(using: .utf8) else {
             throw PaddedCompressedStringError.invaidUTF8StringConversion
@@ -46,7 +63,7 @@ public struct PaddedCompressedString: Equatable, Encryptable {
     }
 
     public static func fromString(text: String) throws -> PaddedCompressedString {
-        let padToSize = Constants.messagePaddingLen
+        let padToSize = Length.bytes
 
         let (compressedData, compressedSize) = try compressCheckingLength(from: text)
 
@@ -66,6 +83,10 @@ public struct PaddedCompressedString: Equatable, Encryptable {
             throw PaddedCompressedStringError.failedToGenerateRandomBytes
         }
         buffer.append(contentsOf: Array(paddingBytes))
+
+        if buffer.count != Length.bytes {
+            throw PaddedCompressedStringError.paddedCompressedStringTooLong
+        }
 
         return PaddedCompressedString(value: buffer)
     }
@@ -94,7 +115,7 @@ public struct PaddedCompressedString: Equatable, Encryptable {
     }
 
     public static func fromUncheckedBytes(bytes: [UInt8]) throws -> PaddedCompressedString {
-        if bytes.count != Constants.messagePaddingLen {
+        if bytes.count != Length.bytes {
             throw PaddedCompressedStringError.incorrectByteLength
         }
         return PaddedCompressedString(value: bytes)

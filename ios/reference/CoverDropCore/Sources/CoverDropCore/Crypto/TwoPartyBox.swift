@@ -17,7 +17,7 @@ import Sodium
 ///
 /// Please read `https://github.com/guardian/coverdrop/blob/main/docs/cryptography.md` for details on `TwoPartyBox`
 /// functions
-public struct TwoPartyBox<T> {
+public struct TwoPartyBox<T>: Equatable {
     var tagCiphertextAndNonce: [UInt8]
 }
 
@@ -55,9 +55,9 @@ public extension TwoPartyBox {
         }
     }
 
-    static func decrypt<S: Encryptable>(
-        senderPk: PublicEncryptionKey<JournalistMessaging>,
-        recipientSk: SecretEncryptionKey<User>,
+    static func decrypt<S: Encryptable, SenderRole: Role, RecipientRole: Role>(
+        senderPk: PublicEncryptionKey<SenderRole>,
+        recipientSk: SecretEncryptionKey<RecipientRole>,
         data: TwoPartyBox<S>
     ) throws -> S {
         let bytes = data.tagCiphertextAndNonce

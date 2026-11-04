@@ -45,7 +45,7 @@ final class SecretDataRepositoryTests: XCTestCase {
             message: "hey",
             messageRecipient: recipient,
             verifiedPublicKeys: verifiedPublicKeys,
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
 
         let hint = HintHmac(hint: PrivateSendingQueueHmac.hmac(
@@ -122,7 +122,7 @@ final class SecretDataRepositoryTests: XCTestCase {
             message: "hey",
             messageRecipient: recipient,
             verifiedPublicKeys: verifiedPublicKeys,
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
         let hint = HintHmac(hint: PrivateSendingQueueHmac.hmac(
             secretKey: privateSendingQueueSecret.bytes,
@@ -167,7 +167,7 @@ final class SecretDataRepositoryTests: XCTestCase {
             message: "another message",
             messageRecipient: recipient,
             verifiedPublicKeys: verifiedPublicKeys,
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
         let hint2 = HintHmac(hint: PrivateSendingQueueHmac.hmac(
             secretKey: privateSendingQueueSecret.bytes,
@@ -242,7 +242,7 @@ final class SecretDataRepositoryTests: XCTestCase {
             message: "hey",
             messageRecipient: recipient,
             verifiedPublicKeys: verifiedPublicKeys,
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
         let hint = HintHmac(hint: PrivateSendingQueueHmac.hmac(
             secretKey: privateSendingQueueSecret.bytes,

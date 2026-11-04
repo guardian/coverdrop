@@ -31,14 +31,14 @@ public struct UserToCoverNodeMessageData: Equatable, Encryptable {
         message: String,
         messageRecipient: JournalistData,
         verifiedPublicKeys: VerifiedPublicKeys,
-        userPublicKey: UserPublicKey
+        userKeyPair: EncryptionKeypair<User>
     ) async throws -> MultiAnonymousBox<UserToCoverNodeMessageData> {
         if let messageKey = verifiedPublicKeys.getLatestMessagingKey(journalistId: messageRecipient.recipientId) {
             return try UserToCoverNodeMessage.createMessage(
                 message: message,
                 recipientPublicKey: messageKey,
                 verifiedPublicKeys: verifiedPublicKeys,
-                userPublicKey: userPublicKey,
+                userKeyPair: userKeyPair,
                 tag: messageRecipient.tag
             )
         } else {
@@ -56,20 +56,20 @@ public enum UserToCoverNodeMessage {
     ///   - message: The plain text message composed by the user
     ///   - recipientPublicKey: The recipient journalist or desks Public Key
     ///   - covernodeMessagePublicKey: The public key for covernode
-    ///   - userPublicKey: The current users public key, this is generated and stored in the Apps secret data storage
+    ///   - userKeyPair: The current user's key pair, this is generated and stored in the Apps secret data storage
     /// - Returns: an AnonymousBox of byte array which is the ciphertext for the outer covernode message. This can be
     /// sent as is to the covernode service.
     public static func createMessage(
         message: String,
         recipientPublicKey: JournalistMessagingPublicKey,
         verifiedPublicKeys: VerifiedPublicKeys,
-        userPublicKey: PublicEncryptionKey<User>,
+        userKeyPair: EncryptionKeypair<User>,
         tag: RecipientTag
     ) throws -> MultiAnonymousBox<UserToCoverNodeMessageData> {
         let innerMessage: AnonymousBox<UserToJournalistMessageData> = try UserToJournalistMessage
             .encryptRealMessageFromUserToJournalist(
                 recipentPublicKeyData: recipientPublicKey,
-                userPublicKey: userPublicKey,
+                userKeyPair: userKeyPair,
                 message: message
             )
         let keys = verifiedPublicKeys.mostRecentCoverNodeMessagingKeysFromAllHierarchies()

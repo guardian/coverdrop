@@ -141,7 +141,7 @@ public class SecretDataRepository: ObservableObject, SecretDataRepositoryProtoco
             message: message,
             messageRecipient: recipient,
             verifiedPublicKeys: lib.publicDataRepository.getVerifiedKeys(),
-            userPublicKey: unlockedData.userKey.publicKey
+            userKeyPair: unlockedData.userKey
         )
 
         let hint = try await PrivateSendingQueueRepository.shared.enqueue(

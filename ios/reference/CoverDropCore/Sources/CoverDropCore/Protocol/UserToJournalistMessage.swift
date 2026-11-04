@@ -1,27 +1,38 @@
 import Foundation
 
+enum UserToJournalistMessageError: Error {
+    case doesNotMatchU2JEncryptedMessageLength
+    case doesNotMatchU2JMessageLength
+    case doesNotMatchU2JMessagePayloadLength
+}
+
 public struct UserToJournalistMessageData: Equatable, Encryptable {
     let publicKey: PublicEncryptionKey<User>
-    let reservedByte: UInt8
-    let paddedCompressedString: PaddedCompressedString
+    let payload: TwoPartyBox<PaddedCompressedString<U2JPaddedLength>>
 
     public func asUnencryptedBytes() -> [UInt8] {
         let publicKeyBytes = publicKey.toBytes()
-        let paddedCompressedStringBytes = paddedCompressedString.value
-        return publicKeyBytes + [reservedByte] + paddedCompressedStringBytes
+        return publicKeyBytes + [UInt8(Constants.authenticatedMessageReservedByteValue)] + payload.asBytes()
     }
 
     public static func fromUnencryptedBytes(bytes: [UInt8]) throws -> UserToJournalistMessageData {
-        let publicKey = PublicEncryptionKey<User>(key: Array(bytes.prefix(Constants.x25519PublicKeyLen)))
-        let reservedByte = bytes[Constants.x25519PublicKeyLen]
-        let plainTextPaddedCompresssedStringBytes = Array(bytes.suffix(Constants.messagePaddingLen))
+        if bytes.count != Constants.userToJournalistMessageLen {
+            throw UserToJournalistMessageError.doesNotMatchU2JMessageLength
+        }
 
-        let plainTextPaddedCompresssedString = try PaddedCompressedString
-            .fromUncheckedBytes(bytes: plainTextPaddedCompresssedStringBytes)
+        let publicKey = PublicEncryptionKey<User>(key: Array(bytes.prefix(Constants.x25519PublicKeyLen)))
+
+        // Skip reserved byte as it's unused
+
+        let payloadBytes = Array(bytes
+            .suffix(Constants.userToJournalistPayloadLen))
+        let payload: TwoPartyBox<PaddedCompressedString<U2JPaddedLength>> =
+            TwoPartyBox<PaddedCompressedString<U2JPaddedLength>>
+                .fromVecUnchecked(bytes: payloadBytes)
+
         return UserToJournalistMessageData(
             publicKey: publicKey,
-            reservedByte: reservedByte,
-            paddedCompressedString: plainTextPaddedCompresssedString
+            payload: payload
         )
     }
 }
@@ -38,21 +49,28 @@ public enum UserToJournalistMessage {
     /// - Returns: an AnonymousBox of byte array which is the ciphertext for the inner  message.
     static func encryptRealMessageFromUserToJournalist(
         recipentPublicKeyData: JournalistMessagingPublicKey,
-        userPublicKey: PublicEncryptionKey<User>,
+        userKeyPair: EncryptionKeypair<User>,
         message: String
     ) throws -> AnonymousBox<UserToJournalistMessageData> {
         // compress and pad the plaintext message
-        let compressedMessage = try PaddedCompressedString.fromString(text: message)
-        if compressedMessage.totalLength() != Constants.messagePaddingLen {
+        let compressedMessage = try PaddedCompressedString<U2JPaddedLength>.fromString(text: message)
+        if compressedMessage.totalLength() != Constants.authenticatedMessagePaddingLen {
             throw PaddedCompressedStringError.paddedCompressedStringTooLong
         }
+        let twoPartyBox = try TwoPartyBox<UserToJournalistMessageData>.encrypt(
+            recipientPk: recipentPublicKeyData.key,
+            senderSk: userKeyPair.secretKey,
+            data: compressedMessage
+        )
+        if twoPartyBox.asBytes().count != Constants.userToJournalistPayloadLen {
+            throw UserToJournalistMessageError.doesNotMatchU2JMessagePayloadLength
+        }
         // append the compressed the user public key
-        let publicKeysBytes = PublicEncryptionKey<User>(key: userPublicKey.toBytes())
+        let publicKeysBytes = PublicEncryptionKey<User>(key: userKeyPair.publicKey.toBytes())
 
-        let userToJournalistPlaintext = UserToJournalistMessageData(
+        let userToJournalistData = UserToJournalistMessageData(
             publicKey: publicKeysBytes,
-            reservedByte: 0x00,
-            paddedCompressedString: compressedMessage
+            payload: twoPartyBox
         )
 
         // create a PublicEncryptionKey instance from the recipient key bytes and
@@ -60,12 +78,12 @@ public enum UserToJournalistMessage {
         let encrypted: AnonymousBox<UserToJournalistMessageData> = try AnonymousBox<UserToJournalistMessageData>
             .encrypt(
                 recipientPk: recipentPublicKeyData.key,
-                data: userToJournalistPlaintext
+                data: userToJournalistData
             )
 
         // prepend recipient_tag to make cover node message
         if encrypted.pkTagAndCiphertext.count != Constants.userToJournalistEncryptedMessageLen {
-            throw EncryptionError.failedToEncrypt
+            throw UserToJournalistMessageError.doesNotMatchU2JEncryptedMessageLength
         }
 
         return encrypted

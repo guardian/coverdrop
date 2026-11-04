@@ -54,7 +54,7 @@ internal sealed class DecryptedDeadDropMessage(
                 remoteId: JournalistId,
                 timestamp: Instant
             ): Text {
-                val paddedCompressedString = PaddedCompressedString(bytes)
+                val paddedCompressedString = PaddedCompressedString.journalistToUser(bytes)
                 return Text(
                     remoteId = remoteId,
                     timestamp = timestamp,

@@ -30,7 +30,8 @@ enum DeadDropMessageParser {
             Debug.println("message bytes did not match messagePaddingLen")
             return nil
         }
-        guard let extractedMessage = try? PaddedCompressedString(value: Array(messageBytes)).toString() else {
+        guard let extractedMessage = try? PaddedCompressedString<J2UPaddedLength>(value: Array(messageBytes))
+            .toString() else {
             return nil
         }
         return .incomingMessage(message: .textMessage(message: IncomingMessageData(

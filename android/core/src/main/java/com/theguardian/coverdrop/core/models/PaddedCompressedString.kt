@@ -1,6 +1,8 @@
 package com.theguardian.coverdrop.core.models
 
 import com.lambdapioneer.sloth.utils.secureRandomBytes
+import com.theguardian.coverdrop.core.crypto.Encryptable
+import com.theguardian.coverdrop.core.generated.AUTHENTICATED_MESSAGE_PADDING_LEN
 import com.theguardian.coverdrop.core.generated.MESSAGE_PADDING_LEN
 import com.theguardian.coverdrop.core.utils.getByteArray
 import java.io.ByteArrayOutputStream
@@ -10,11 +12,27 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
 // The header for the padded string is a `short` (aka 2 bytes)
-internal const val HEADER_SIZE = 2;
+internal const val HEADER_SIZE = 2
 
-class PaddedCompressedString(internal val bytes: ByteArray) {
+sealed interface PaddedLength {
+    val bytes: Int
+    object U2J : PaddedLength { override val bytes = AUTHENTICATED_MESSAGE_PADDING_LEN }
+    object J2U : PaddedLength { override val bytes = MESSAGE_PADDING_LEN }
+}
+
+
+
+class PaddedCompressedString<L : PaddedLength> private constructor (
+    internal val bytes: ByteArray
+) : Encryptable {
     companion object {
-        fun fromString(text: String): PaddedCompressedString {
+        fun userToJournalist(text: String) = fromString(text, PaddedLength.U2J)
+        fun userToJournalist(bytes: ByteArray) = fromBytes(bytes, PaddedLength.U2J)
+
+        fun journalistToUser(bytes: ByteArray) = fromBytes(bytes, PaddedLength.J2U)
+
+
+        private fun <L: PaddedLength> fromString(text: String, length: L): PaddedCompressedString<L> {
             val outputStream = ByteArrayOutputStream();
 
             GZIPOutputStream(outputStream).bufferedWriter(UTF_8).use {
@@ -26,18 +44,18 @@ class PaddedCompressedString(internal val bytes: ByteArray) {
 
             val lengthHeader = compressedText.size.toShort()
 
-            val arr = secureRandomBytes(MESSAGE_PADDING_LEN)
+            val arr = secureRandomBytes(length.bytes)
             ByteBuffer.wrap(arr).apply {
                 putShort(lengthHeader)
                 // Throws buffer overflow is the message is too long for the allocated buffer
                 put(compressedText)
             }
 
-            return fromBytes(arr)
+            return fromBytes(arr, length)
         }
 
-        private fun fromBytes(bytes: ByteArray): PaddedCompressedString {
-            require(bytes.size == MESSAGE_PADDING_LEN)
+        private fun <L: PaddedLength> fromBytes(bytes: ByteArray, length: L): PaddedCompressedString<L> {
+            require(bytes.size == length.bytes)
             return PaddedCompressedString(bytes)
         }
     }
@@ -78,4 +96,11 @@ class PaddedCompressedString(internal val bytes: ByteArray) {
         val buffer = ByteBuffer.wrap(bytes)
         return buffer.short.toInt()
     }
+
+    override fun asUnencryptedBytes(): ByteArray {
+        return bytes;
+    }
 }
+
+internal typealias U2JPaddedCompressedString = PaddedCompressedString<PaddedLength.U2J>
+internal typealias J2UPaddedCompressedString = PaddedCompressedString<PaddedLength.J2U>

@@ -124,6 +124,13 @@ fn generate_constants_file_android(path: &Path) -> anyhow::Result<()> {
     ))?;
     writer.write_fmt(format_android_constant_val!(JOURNALIST_TO_USER_MESSAGE_LEN))?;
     writer.write_fmt(format_android_constant_val!(MESSAGE_PADDING_LEN))?;
+    writer.write_fmt(format_android_constant_val!(
+        AUTHENTICATED_MESSAGE_PADDING_LEN
+    ))?;
+    writer.write_fmt(format_android_constant_val!(
+        AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE
+    ))?;
+    writer.write_fmt(format_android_constant_val!(USER_TO_JOURNALIST_PAYLOAD_LEN))?;
     writer.write_fmt(format_android_constant_val!(RECIPIENT_TAG_LEN))?;
 
     writer.write_fmt(format_android_val_constant_duration!(
@@ -262,6 +269,11 @@ fn generate_constants_file_ios(path: &Path) -> anyhow::Result<()> {
     ))?;
     writer.write_fmt(format_ios_let_constant!(JOURNALIST_TO_USER_MESSAGE_LEN))?;
     writer.write_fmt(format_ios_let_constant!(MESSAGE_PADDING_LEN))?;
+    writer.write_fmt(format_ios_let_constant!(AUTHENTICATED_MESSAGE_PADDING_LEN))?;
+    writer.write_fmt(format_ios_let_constant!(
+        AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE
+    ))?;
+    writer.write_fmt(format_ios_let_constant!(USER_TO_JOURNALIST_PAYLOAD_LEN))?;
     writer.write_fmt(format_ios_let_constant!(RECIPIENT_TAG_LEN))?;
 
     writer.write_fmt(format_ios_let_constant!(REAL_OR_COVER_BYTE_LEN))?;

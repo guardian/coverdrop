@@ -5,7 +5,8 @@ import XCTest
 final class DeadDropDecryptionTests: XCTestCase {
     func testDecryptMessageParsesTextMessage() throws {
         let initalMessage = "This is a test message"
-        let textMessage = try PaddedCompressedString.fromString(text: initalMessage).asUnencryptedBytes()
+        let textMessage = try PaddedCompressedString<J2UPaddedLength>.fromString(text: initalMessage)
+            .asUnencryptedBytes()
 
         let journalistData = try XCTUnwrap(PublicKeysHelper.shared.testDefaultJournalist)
 

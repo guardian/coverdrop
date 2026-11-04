@@ -15,6 +15,7 @@ import com.theguardian.coverdrop.core.models.JournalistVisibility
 import com.theguardian.coverdrop.core.models.Message
 import com.theguardian.coverdrop.core.models.MessageThread
 import com.theguardian.coverdrop.core.models.PaddedCompressedString
+import com.theguardian.coverdrop.core.models.PaddedLength
 import com.theguardian.coverdrop.core.persistence.MailboxContent
 import com.theguardian.coverdrop.core.persistence.StoredMessage
 import com.theguardian.coverdrop.core.persistence.StoredMessageThread
@@ -359,8 +360,8 @@ class CoverDropPrivateDataRepository internal constructor(lib: ICoverDropLibInte
         val encryptedMessage = protocol.encryptUserToJournalistMessageViaCoverNode(
             coverNodesToMostRecentKey = coverNodesToMostRecentKey,
             journalistMsgKey = journalistMsgKey,
-            userMsgKey = mailbox.encryptionKeyPair.publicEncryptionKey,
-            paddedMessage = PaddedCompressedString.fromString(message.text),
+            userMsgKeyPair = mailbox.encryptionKeyPair,
+            paddedMessage = PaddedCompressedString.userToJournalist(message.text),
             journalistTag = journalistTag
         )
 

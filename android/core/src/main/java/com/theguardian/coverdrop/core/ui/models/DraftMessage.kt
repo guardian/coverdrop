@@ -1,6 +1,7 @@
 package com.theguardian.coverdrop.core.ui.models
 
 import com.theguardian.coverdrop.core.models.PaddedCompressedString
+import com.theguardian.coverdrop.core.models.PaddedLength
 import java.nio.BufferOverflowException
 import kotlin.math.min
 
@@ -15,7 +16,7 @@ data class DraftMessage(val text: String) {
      * @throws [BufferOverflowException] if the message is too long
      */
     fun validateOrThrow() {
-        PaddedCompressedString.fromString(text)
+        PaddedCompressedString.userToJournalist(text)
     }
 
     /**
@@ -28,7 +29,7 @@ data class DraftMessage(val text: String) {
      */
     fun getFillLevel(): Float {
         return try {
-            val pcs = PaddedCompressedString.fromString(text)
+            val pcs = PaddedCompressedString.userToJournalist(text)
 
             if (pcs.bytes.isEmpty()) {
                 return 0f

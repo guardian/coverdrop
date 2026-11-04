@@ -1,6 +1,7 @@
 package com.theguardian.coverdrop.core.models
 
 import com.google.common.truth.Truth.assertThat
+import com.theguardian.coverdrop.core.generated.AUTHENTICATED_MESSAGE_PADDING_LEN
 import com.theguardian.coverdrop.core.generated.MESSAGE_PADDING_LEN
 import org.junit.Test
 import java.nio.BufferOverflowException
@@ -10,8 +11,8 @@ class PaddedCompressedStringTest {
     fun successfullyRoundTrip() {
         val expected = "hello world"
 
-        val pcs = PaddedCompressedString.fromString(expected)
-        assertThat(pcs.totalLength()).isEqualTo(MESSAGE_PADDING_LEN)
+        val pcs = PaddedCompressedString.userToJournalist(expected)
+        assertThat(pcs.totalLength()).isEqualTo(AUTHENTICATED_MESSAGE_PADDING_LEN)
 
         val actual = pcs.toPayloadString()
 
@@ -26,10 +27,10 @@ class PaddedCompressedStringTest {
             "this is a longer message with a few extra words",
         )
 
-        val targetLength = 512
+        val targetLength = AUTHENTICATED_MESSAGE_PADDING_LEN
 
         for (message in messages) {
-            val pcs = PaddedCompressedString.fromString(message)
+            val pcs = PaddedCompressedString.userToJournalist(message)
             assertThat(pcs.totalLength()).isEqualTo(targetLength)
         }
     }
@@ -49,19 +50,19 @@ class PaddedCompressedStringTest {
             aliquam nibh nibh, ac faucibus felis aliquam at. Pellentesque egestas enim sem, eu
             tempor urna posuere eget. Cras fermentum commodo neque ac gravida."""
 
-        PaddedCompressedString.fromString(message)
+        PaddedCompressedString.userToJournalist(message)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testToPayloadString_whenCompressionRatioTooHigh_thenThrows() {
         val message = "a".repeat(10000)
-        val pcs = PaddedCompressedString.fromString(message)
+        val pcs = PaddedCompressedString.userToJournalist(message)
         pcs.toPayloadString()
     }
 
     @Test
     fun testPaddingLength_whenNonEmptyPayload_thenInExpectedRange() {
-        val pcs = PaddedCompressedString.fromString("Hello World")
+        val pcs = PaddedCompressedString.userToJournalist("Hello World")
         val paddingLength = pcs.paddingLength()
 
         assertThat(paddingLength).isLessThan(pcs.totalLength() - HEADER_SIZE)
@@ -70,7 +71,7 @@ class PaddedCompressedStringTest {
 
     @Test
     fun testFillLevel_whenNonEmptyPayload_thenInExpectedRange() {
-        val pcs = PaddedCompressedString.fromString("Hello World")
+        val pcs = PaddedCompressedString.userToJournalist("Hello World")
         val fillLevel = pcs.fillLevel()
 
         assertThat(fillLevel).isLessThan(1f)
@@ -79,7 +80,7 @@ class PaddedCompressedStringTest {
 
     @Test
     fun nondeterministicTestPaddingIsNonZero() {
-        val pcs = PaddedCompressedString.fromString("")
+        val pcs = PaddedCompressedString.userToJournalist("")
 
         val suffix = pcs.bytes.takeLast(MESSAGE_PADDING_LEN - 100)
         assertThat(suffix.count()).isAtLeast(100)

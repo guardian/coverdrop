@@ -106,7 +106,7 @@ public struct VerifiedDeadDrop {
             if unverifiedDeadDrop.count != Constants.journalistToUserEncryptedMessageLen {
                 throw VerificationDeadDropError.deadDropDataWrongSize
             }
-            return TwoPartyBox<PaddedCompressedString>
+            return TwoPartyBox<PaddedCompressedString<J2UPaddedLength>>
                 .fromVecUnchecked(bytes: unverifiedDeadDrop)
         }
     }

@@ -29,7 +29,7 @@ final class UserToJournalistMessageTests: XCTestCase {
             message: message,
             recipientPublicKey: recipientEncryptionPublicKey,
             verifiedPublicKeys: PublicKeysHelper.shared.testKeys,
-            userPublicKey: userMessageEncryptionKeyPair.publicKey,
+            userKeyPair: userMessageEncryptionKeyPair,
             tag: RecipientTag(tag: [1, 2, 3, 4])
         )
 
@@ -59,7 +59,16 @@ final class UserToJournalistMessageTests: XCTestCase {
                 data: ciphertextWithoutRecipientTag
             )
 
-            let plainText = try decryptedInnerMessage.paddedCompressedString.toString()
+            let payload = decryptedInnerMessage.payload
+
+            let pcs = try TwoPartyBox<PaddedCompressedString<U2JPaddedLength>>.decrypt(
+                senderPk: decryptedInnerMessage.publicKey,
+                recipientSk: recipientEncryptionSecretKey,
+                data: payload
+            )
+
+            let plainText = try pcs.toString()
+
             XCTAssertEqual(plainText, message)
         }
     }

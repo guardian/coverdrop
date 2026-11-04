@@ -90,7 +90,7 @@ public enum CoverDropServiceHelper {
             message: "Hey this is pending",
             messageRecipient: testDefaultJournalist,
             verifiedPublicKeys: lib.publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
 
         let hint = HintHmac(hint: PrivateSendingQueueHmac.hmac(
@@ -173,7 +173,7 @@ public enum CoverDropServiceHelper {
             message: "Hey this is pending",
             messageRecipient: testDefaultJournalist,
             verifiedPublicKeys: verifiedKeys,
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
 
         let hint = try await PrivateSendingQueueRepository.shared.enqueue(
@@ -212,14 +212,13 @@ public enum CoverDropServiceHelper {
             )))
         ]
 
-        if TestingBridge.isEnabled(.mockedDataMultipleJournalists) {
-            if let additionalJournalist = PublicKeysHelper.shared.testAdditionalJournalist {
-                messages.insert(.incomingMessage(message: .textMessage(message: IncomingMessageData(
-                    sender: additionalJournalist,
-                    messageText: "Hey this was sent today from additional journalist",
-                    dateReceived: DateFunction.currentTime()
-                ))))
-            }
+        if TestingBridge.isEnabled(.mockedDataMultipleJournalists),
+           let additionalJournalist = PublicKeysHelper.shared.testAdditionalJournalist {
+            messages.insert(.incomingMessage(message: .textMessage(message: IncomingMessageData(
+                sender: additionalJournalist,
+                messageText: "Hey this was sent today from additional journalist",
+                dateReceived: DateFunction.currentTime()
+            ))))
         }
 
         let data = UnlockedSecretData(

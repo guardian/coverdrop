@@ -131,7 +131,7 @@ public enum MessageComposeError: Error {
 
     var messageIsTooLong: Bool {
         do {
-            try PaddedCompressedString.compressCheckingLength(from: message)
+            try PaddedCompressedString<U2JPaddedLength>.compressCheckingLength(from: message)
             return false
         } catch PaddedCompressedStringError.compressedStringTooLong {
             return true
@@ -144,9 +144,9 @@ public enum MessageComposeError: Error {
     /// return this as a percentage of the total padded message length
     /// otherwise return 0
     var messageLengthProgressPercentage: Result<Double, MessageComposeError> {
-        let padToSize = Constants.messagePaddingLen
+        let padToSize = Constants.authenticatedMessagePaddingLen
         do {
-            let (_, compressedSize) = try PaddedCompressedString.compressCheckingLength(from: message)
+            let (_, compressedSize) = try PaddedCompressedString<U2JPaddedLength>.compressCheckingLength(from: message)
             // Check the size is greater than 0 to avoid returning `Infinity`
             if compressedSize > 0 {
                 if message.count < 30 {

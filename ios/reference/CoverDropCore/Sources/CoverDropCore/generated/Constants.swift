@@ -20,6 +20,9 @@ public enum Constants {
     public static let journalistToUserEncryptedMessageLen = 553
     public static let journalistToUserMessageLen = 513
     public static let messagePaddingLen = 512
+    public static let authenticatedMessagePaddingLen = 472
+    public static let authenticatedMessageReservedByteValue = 1
+    public static let userToJournalistPayloadLen = 512
     public static let recipientTagLen = 4
     public static let realOrCoverByteLen = 1
     public static let x25519PublicKeyLen = 32

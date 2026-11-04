@@ -21,7 +21,7 @@ final class PrivateSendingQueueTests: XCTestCase {
             message: message,
             recipientPublicKey: recipientPublicKey,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey,
+            userKeyPair: userKeyPair,
             tag: RecipientTag(tag: [2, 3, 3, 3])
         )
     }

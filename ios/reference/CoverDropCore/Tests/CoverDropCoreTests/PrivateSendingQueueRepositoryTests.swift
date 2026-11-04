@@ -31,7 +31,7 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
             message: message,
             recipientPublicKey: recipientPublicKey,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey,
+            userKeyPair: userKeyPair,
             tag: RecipientTag(tag: [2, 3, 3, 3])
         )
     }
@@ -44,7 +44,7 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
             message: "message 1",
             recipientPublicKey: getJournalistMessagingKey(),
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey,
+            userKeyPair: userKeyPair,
             tag: RecipientTag(tag: [1, 2, 3, 4])
         )
 
@@ -168,13 +168,18 @@ final class PrivateSendingQueueRepositoryTests: XCTestCase {
 
         try await addTwoMessagesConcurrentlyReturningErrorCount(to: testableRepo)
 
+        // Given the queue has 2 messages left
+        let queueBefore = try await testableRepo.loadOrInitialiseQueue(coverMessageFactory)
+        let fillLevelBefore = queueBefore.getFillLevel(secret: secret)
+        XCTAssertEqual(fillLevelBefore, 2)
+
         // WHEN dequeue is called
         _ = try await testableRepo.dequeue(coverMessageFactory)
 
         // THEN the queue should have 1 message left
-        let queue = try await testableRepo.loadOrInitialiseQueue(coverMessageFactory)
-        let fillLevel = queue.getFillLevel(secret: secret)
-        XCTAssertEqual(fillLevel, 1)
+        let queueAfter = try await testableRepo.loadOrInitialiseQueue(coverMessageFactory)
+        let fillLevelAfter = queueAfter.getFillLevel(secret: secret)
+        XCTAssertEqual(fillLevelAfter, 1)
     }
 
     func testPeek() async throws {

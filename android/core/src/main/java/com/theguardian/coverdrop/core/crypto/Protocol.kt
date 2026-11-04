@@ -3,16 +3,19 @@ package com.theguardian.coverdrop.core.crypto
 import com.goterl.lazysodium.SodiumAndroid
 import com.theguardian.coverdrop.core.api.models.CoverNodeId
 import com.theguardian.coverdrop.core.api.models.VerifiedSignedEncryptionKey
+import com.theguardian.coverdrop.core.generated.AUTHENTICATED_MESSAGE_PADDING_LEN
+import com.theguardian.coverdrop.core.generated.AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE
 import com.theguardian.coverdrop.core.generated.COVERNODE_WRAPPING_KEY_COUNT
-import com.theguardian.coverdrop.core.generated.MESSAGE_PADDING_LEN
 import com.theguardian.coverdrop.core.generated.RECIPIENT_TAG_BYTES_U2J_COVER
 import com.theguardian.coverdrop.core.generated.RECIPIENT_TAG_LEN
 import com.theguardian.coverdrop.core.generated.USER_TO_COVERNODE_ENCRYPTED_MESSAGE_LEN
 import com.theguardian.coverdrop.core.generated.USER_TO_COVERNODE_MESSAGE_LEN
 import com.theguardian.coverdrop.core.generated.USER_TO_JOURNALIST_ENCRYPTED_MESSAGE_LEN
 import com.theguardian.coverdrop.core.generated.USER_TO_JOURNALIST_MESSAGE_LEN
+import com.theguardian.coverdrop.core.generated.USER_TO_JOURNALIST_PAYLOAD_LEN
 import com.theguardian.coverdrop.core.models.JournalistTag
-import com.theguardian.coverdrop.core.models.PaddedCompressedString
+import com.theguardian.coverdrop.core.models.PaddedLength
+import com.theguardian.coverdrop.core.models.U2JPaddedCompressedString
 import com.theguardian.coverdrop.core.utils.hexDecode
 import com.theguardian.coverdrop.core.utils.nextByteArray
 import java.security.SecureRandom
@@ -61,18 +64,29 @@ internal class Protocol(private val libSodium: SodiumAndroid) {
     fun encryptUserToJournalistMessageViaCoverNode(
         coverNodesToMostRecentKey: Map<CoverNodeId, VerifiedSignedEncryptionKey>,
         journalistMsgKey: VerifiedSignedEncryptionKey,
-        userMsgKey: PublicEncryptionKey,
-        paddedMessage: PaddedCompressedString,
+        userMsgKeyPair: EncryptionKeyPair,
+        paddedMessage: U2JPaddedCompressedString,
         journalistTag: JournalistTag,
     ): ByteArray {
-        require(paddedMessage.bytes.size == MESSAGE_PADDING_LEN)
+        require(paddedMessage.bytes.size == AUTHENTICATED_MESSAGE_PADDING_LEN)
+
+        val twoPartyBox = TwoPartyBox.encrypt(
+            libSodium = libSodium,
+            recipientPk = journalistMsgKey.pk,
+            senderSk = userMsgKeyPair.secretEncryptionKey,
+            data = paddedMessage
+        )
+
+        require(twoPartyBox.bytes.size == USER_TO_JOURNALIST_PAYLOAD_LEN)
 
         val journalistTagBytes = journalistTag.hexDecode()
         require(journalistTagBytes.size == RECIPIENT_TAG_LEN)
 
+        // set reserved byte to 1: indicating an authenticated u2j message during migration
+        val reservedByte = ByteArray(1){AUTHENTICATED_MESSAGE_RESERVED_BYTE_VALUE.toByte()}
+
         // build payload of inner message (to be read by the journalist after decryption)
-        val reservedByte = ByteArray(1)
-        val payloadForInnerMessage = userMsgKey.bytes + reservedByte + paddedMessage.bytes
+        val payloadForInnerMessage = userMsgKeyPair.publicEncryptionKey.bytes + reservedByte + twoPartyBox.bytes
         check(payloadForInnerMessage.size == USER_TO_JOURNALIST_MESSAGE_LEN)
 
         // encrypt inner message to journalist

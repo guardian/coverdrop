@@ -6,10 +6,13 @@ final class PaddiedCompressedStringTests: XCTestCase {
         // let expected = "hello world"
         let expected = "hello world"
 
-        let pcs = try PaddedCompressedString.fromString(text: expected)
+        let pcs = try PaddedCompressedString<U2JPaddedLength>.fromString(text: expected)
 
         XCTAssertTrue(
-            Constants.messagePaddingLen == pcs.value.count
+            U2JPaddedLength.bytes == pcs.value.count
+        )
+        XCTAssertTrue(
+            pcs.value.count == Constants.authenticatedMessagePaddingLen
         )
 
         let actual: String = try pcs.toString()
@@ -25,9 +28,14 @@ final class PaddiedCompressedStringTests: XCTestCase {
         ]
 
         for message in messages {
-            let pcs = try PaddedCompressedString.fromString(text: message)
+            let pcs = try PaddedCompressedString<U2JPaddedLength>.fromString(text: message)
 
-            XCTAssertTrue(pcs.value.count == Constants.messagePaddingLen)
+            XCTAssertTrue(
+                U2JPaddedLength.bytes == pcs.value.count
+            )
+            XCTAssertTrue(
+                pcs.value.count == Constants.authenticatedMessagePaddingLen
+            )
         }
     }
 
@@ -47,14 +55,14 @@ final class PaddiedCompressedStringTests: XCTestCase {
             tempor urna posuere eget. Cras fermentum commodo neque ac gravida.
         """
 
-        XCTAssertThrowsError(try PaddedCompressedString.fromString(text: message)) { error in
+        XCTAssertThrowsError(try PaddedCompressedString<U2JPaddedLength>.fromString(text: message)) { error in
             XCTAssertEqual(error as! PaddedCompressedStringError, PaddedCompressedStringError.compressedStringTooLong)
         }
     }
 
     func testIfDecompressionRatioTooHighThenError() throws {
         let message = String(repeating: "a", count: 10000)
-        let pcs = try PaddedCompressedString.fromString(text: message)
+        let pcs = try PaddedCompressedString<U2JPaddedLength>.fromString(text: message)
 
         XCTAssertThrowsError(try pcs.toString()) { error in
             XCTAssertEqual(error as! PaddedCompressedStringError, PaddedCompressedStringError.decompressionRatioTooHigh)
@@ -62,10 +70,52 @@ final class PaddiedCompressedStringTests: XCTestCase {
     }
 
     func nondeterministicTestPaddingIsNonZero() throws {
-        let pcs = try PaddedCompressedString.fromString(text: "")
+        let pcs = try PaddedCompressedString<U2JPaddedLength>.fromString(text: "")
 
         let suffix = pcs.asUnencryptedBytes().suffix(Constants.messagePaddingLen - 100)
         XCTAssertGreaterThanOrEqual(suffix.count, 100)
         XCTAssertLessThan(suffix.filter { $0 == 0x00 }.count, 10)
+    }
+
+    func testWillErrorIfBytesAreWrongLengthU2J() throws {
+        let j2uPcsBytes = try PaddedCompressedString<J2UPaddedLength>.fromString(text: "").asUnencryptedBytes()
+
+        XCTAssertThrowsError(try PaddedCompressedString<U2JPaddedLength>
+            .fromUncheckedBytes(bytes: j2uPcsBytes)) { error in
+                XCTAssertEqual(error as! PaddedCompressedStringError, PaddedCompressedStringError.incorrectByteLength)
+            }
+    }
+
+    func testWillErrorIfBytesAreWrongLengthJ2U() throws {
+        let u2jPcsBytes = try PaddedCompressedString<U2JPaddedLength>.fromString(text: "").asUnencryptedBytes()
+
+        XCTAssertThrowsError(try PaddedCompressedString<J2UPaddedLength>
+            .fromUncheckedBytes(bytes: u2jPcsBytes)) { error in
+                XCTAssertEqual(error as! PaddedCompressedStringError, PaddedCompressedStringError.incorrectByteLength)
+            }
+    }
+
+    func testWillChainedRoundTripU2J() throws {
+        let message = "Hello!"
+
+        let u2jPcsBytes = try PaddedCompressedString<U2JPaddedLength>.fromString(text: message).asUnencryptedBytes()
+
+        let u2jRoundTripPcs = try PaddedCompressedString<U2JPaddedLength>.fromUncheckedBytes(bytes: u2jPcsBytes)
+
+        XCTAssertEqual(message, try u2jRoundTripPcs.toString())
+        XCTAssertEqual(u2jRoundTripPcs.asUnencryptedBytes(), u2jPcsBytes)
+        XCTAssertEqual(u2jRoundTripPcs.asUnencryptedBytes().count, Constants.authenticatedMessagePaddingLen)
+    }
+
+    func testWillChainedRoundTripJ2U() throws {
+        let message = "Hi!"
+
+        let j2uPcsBytes = try PaddedCompressedString<J2UPaddedLength>.fromString(text: message).asUnencryptedBytes()
+
+        let j2uRoundTripPcs = try PaddedCompressedString<J2UPaddedLength>.fromUncheckedBytes(bytes: j2uPcsBytes)
+
+        XCTAssertEqual(message, try j2uRoundTripPcs.toString())
+        XCTAssertEqual(j2uRoundTripPcs.asUnencryptedBytes(), j2uPcsBytes)
+        XCTAssertEqual(j2uRoundTripPcs.asUnencryptedBytes().count, Constants.messagePaddingLen)
     }
 }

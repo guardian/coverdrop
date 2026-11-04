@@ -30,7 +30,7 @@ enum MessageHelperError: Error {
             message: "hey \(recipientUnwrapped.displayName)",
             messageRecipient: recipientUnwrapped,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
 
         let hint = HintHmac(hint: PrivateSendingQueueHmac.hmac(
@@ -65,7 +65,7 @@ enum MessageHelperError: Error {
             message: "hey \(recipientUnwrapped.displayName)",
             messageRecipient: recipientUnwrapped,
             verifiedPublicKeys: publicDataRepository.getVerifiedKeys(),
-            userPublicKey: userKeyPair.publicKey
+            userKeyPair: userKeyPair
         )
 
         let hint2 = HintHmac(hint: PrivateSendingQueueHmac.hmac(
