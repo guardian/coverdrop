@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 660" width="900" height="660" font-family="Helvetica, Arial, sans-serif">
+  <title>Message Canary: user to journalist messages</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="660" rx="12" fill="#ffffff"/>
+
+  <!-- AWS -->
+  <rect x="20" y="20" width="860" height="460" rx="16" fill="#f8fafc" stroke="#64748b" stroke-width="2"/>
+  <text x="44" y="52" font-size="20" font-weight="700" fill="#0f172a">AWS</text>
+
+  <!-- Canary -->
+  <rect x="60" y="70" width="780" height="150" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="80" y="96" font-size="15" font-weight="700" fill="#1e3a8a">Message Canary</text>
+
+  <rect x="100" y="140" width="160" height="56" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="180" y="174" font-size="16" font-weight="600" fill="#1e3a8a" text-anchor="middle">Users</text>
+
+  <rect x="640" y="140" width="160" height="56" rx="10" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="720" y="165" font-size="16" font-weight="600" fill="#1e3a8a" text-anchor="middle">Journalists</text>
+  <text x="720" y="183" font-size="12" fill="#1e3a8a" text-anchor="middle">(vaults)</text>
+
+  <path d="M390,132 V188 A60,12 0 0 0 510,188 V132 Z" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <ellipse cx="450" cy="132" rx="60" ry="12" fill="#ddd6fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="450" y="170" font-size="16" font-weight="700" fill="#4c1d95" text-anchor="middle">DB</text>
+
+  <!-- AWS services -->
+  <rect x="100" y="340" width="160" height="56" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="180" y="374" font-size="16" font-weight="600" fill="#78350f" text-anchor="middle">U2J Appender</text>
+
+  <rect x="360" y="340" width="160" height="56" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="440" y="374" font-size="16" font-weight="600" fill="#4c1d95" text-anchor="middle">Kinesis</text>
+
+  <rect x="640" y="340" width="160" height="56" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+  <text x="720" y="374" font-size="16" font-weight="600" fill="#78350f" text-anchor="middle">API</text>
+
+  <!-- On-prem -->
+  <rect x="20" y="510" width="860" height="130" rx="16" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="44" y="542" font-size="20" font-weight="700" fill="#14532d">On-prem</text>
+
+  <rect x="360" y="550" width="160" height="60" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="440" y="586" font-size="16" font-weight="600" fill="#14532d" text-anchor="middle">CoverNode</text>
+
+  <!-- Message flow -->
+  <g fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)">
+    <path d="M180,196 V338"/>
+    <path d="M260,368 H358"/>
+    <path d="M440,396 V548"/>
+    <path d="M520,580 H720 V398"/>
+    <path d="M720,340 V198"/>
+  </g>
+
+  <!-- Database bookkeeping -->
+  <g fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow)">
+    <path d="M260,165 H388"/>
+    <path d="M640,165 H512"/>
+  </g>
+
+  <!-- Step numbers -->
+  <g fill="#334155">
+    <circle cx="180" cy="270" r="11"/>
+    <circle cx="309" cy="368" r="11"/>
+    <circle cx="440" cy="470" r="11"/>
+    <circle cx="560" cy="580" r="11"/>
+    <circle cx="720" cy="268" r="11"/>
+  </g>
+  <g font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <text x="180" y="274">1</text>
+    <text x="309" y="372">2</text>
+    <text x="440" y="474">3</text>
+    <text x="560" y="584">4</text>
+    <text x="720" y="272">5</text>
+  </g>
+
+  <!-- Labels -->
+  <g font-size="13" fill="#0f172a">
+    <text x="204" y="266">U2J messages</text>
+    <text x="204" y="284">(synthetic real)</text>
+    <text x="640" y="568" text-anchor="middle">U2J dead drops</text>
+    <text x="740" y="273">U2J dead drops</text>
+  </g>
+  <g font-size="12" fill="#475569" text-anchor="middle">
+    <text x="324" y="156">record sent</text>
+    <text x="576" y="156">record received</text>
+  </g>
+</svg>
