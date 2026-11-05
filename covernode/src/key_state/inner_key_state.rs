@@ -4,7 +4,7 @@ use common::{
         api_client::ApiClient, forms::PostCoverNodeIdPublicKeyForm,
         models::covernode_id::CoverNodeIdentity,
     },
-    crypto::keys::signed::SignedKey,
+    crypto::keys::{signed::SignedKey, KeyVerification},
     epoch::Epoch,
     protocol::{
         keys::{
@@ -336,6 +336,7 @@ impl InnerKeyState {
                     provisioning_key_pairs,
                     now,
                     &self.covernode_id,
+                    KeyVerification::STRICT_REQUIRE_SIGNATURE,
                 )?;
 
             self.insert_covernode_id_key_pair(trusted_signed_id_key_pair, epoch, now)

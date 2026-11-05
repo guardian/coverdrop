@@ -7,6 +7,30 @@ final class KeyVerificationTests: XCTestCase {
 
     // Corrupt the legacy certificate or use the wrong signer; independent of the new signature check.
 
+    private func signJournalistIdKey(
+        idKey: Sign.KeyPair.PublicKey,
+        notValidAfter: Date,
+        identity: String = "journalist_id"
+    ) throws -> Signature<JournalistId> {
+        let provisioningSecretBytes = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_provisioning")
+            .secretKey.bytes
+        let idCertData = IdKeyCertificateData.newForSigningKey(
+            key: idKey,
+            notValidAfter: notValidAfter,
+            role: .journalistId,
+            identity: identity
+        )
+        let sodium = Sodium()
+        let signingSecretKey: Sign.KeyPair.SecretKey = try XCTUnwrap(
+            sodium.sign.keyPair(seed: provisioningSecretBytes)?.secretKey
+        )
+        let signatureBytes = try XCTUnwrap(sodium.sign.signature(
+            message: idCertData.data,
+            secretKey: signingSecretKey
+        ))
+        return Signature<JournalistId>.fromBytes(bytes: signatureBytes)
+    }
+
     func testSuccessfulVerification() throws {
         let orgPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "organization").publicKey
         let organizationSigningKey = try XCTUnwrap(OrganizationPublicKey(
@@ -32,18 +56,24 @@ final class KeyVerificationTests: XCTestCase {
         ))
 
         let journalistIdPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_id").publicKey
-        let journoKey = JournalistIdPublicKey(
-            key: Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes),
+        let journalistSigningKey = Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes)
+        let journalistSignature = try signJournalistIdKey(
+            idKey: journalistSigningKey,
+            notValidAfter: journalistIdPublicKey.notValidAfter.date,
+            identity: "journalist_id"
+        )
+        let journalistKey = JournalistIdPublicKey(
+            key: journalistSigningKey,
             certificate: Signature<JournalistId>.fromBytes(bytes: journalistIdPublicKey.certificate.bytes),
-            signature: journalistIdPublicKey.signature.map { Signature<JournalistId>.fromBytes(bytes: $0.bytes) },
+            signature: journalistSignature,
             signingKey: journalistProvisioningKeyObj,
             identity: "journalist_id",
             notValidAfter: journalistIdPublicKey.notValidAfter.date,
             now: journalistIdPublicKey.notValidAfter.date.advanced(by: TimeInterval(-20))
         )
 
-        XCTAssertEqual(journoKey?.key, Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes))
-        XCTAssertEqual(journoKey?.notValidAfter, journalistIdPublicKey.notValidAfter.date)
+        XCTAssertEqual(journalistKey?.key, Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes))
+        XCTAssertEqual(journalistKey?.notValidAfter, journalistIdPublicKey.notValidAfter.date)
     }
 
     func testUnsuccessfulOrgKeyInitialization() throws {
@@ -72,20 +102,26 @@ final class KeyVerificationTests: XCTestCase {
             now: orgPublicKey.notValidAfter.date.advanced(by: TimeInterval(-50))
         ))
 
-        // The journalist id key's certificate is signed by the journalist provisioning key, not the
+        // The journalist id key's signature is signed by the journalist provisioning key, not the
         // organization key directly, so verifying it against `organizationSigningKey` must fail.
         let journalistIdPublicKey = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_id").publicKey
-        let journoKey = JournalistIdPublicKey(
-            key: Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes),
+        let journalistSigningKey = Sign.KeyPair.PublicKey(journalistIdPublicKey.key.bytes)
+        let journalistSignature = try signJournalistIdKey(
+            idKey: journalistSigningKey,
+            notValidAfter: journalistIdPublicKey.notValidAfter.date,
+            identity: "journalist_id"
+        )
+        let journalistKey = JournalistIdPublicKey(
+            key: journalistSigningKey,
             certificate: Signature<JournalistId>.fromBytes(bytes: journalistIdPublicKey.certificate.bytes),
-            signature: journalistIdPublicKey.signature.map { Signature<JournalistId>.fromBytes(bytes: $0.bytes) },
+            signature: journalistSignature,
             signingKey: organizationSigningKey,
             identity: "journalist_id",
             notValidAfter: journalistIdPublicKey.notValidAfter.date,
             now: journalistIdPublicKey.notValidAfter.date.advanced(by: TimeInterval(-20))
         )
 
-        XCTAssertTrue(journoKey == nil)
+        XCTAssertTrue(journalistKey == nil)
     }
 
     // MARK: - signature checks
@@ -142,6 +178,19 @@ final class KeyVerificationTests: XCTestCase {
             key: key.key,
             certificate: key.certificate,
             signature: HexEncodedString(bytes: signatureBytes),
+            notValidAfter: key.notValidAfter
+        )
+    }
+
+    private func corruptCertificate(
+        of key: UnverifiedSignedPublicSigningKeyData
+    ) throws -> UnverifiedSignedPublicSigningKeyData {
+        var certificateBytes = key.certificate.bytes
+        certificateBytes[certificateBytes.count - 1] ^= 0xFF
+        return UnverifiedSignedPublicSigningKeyData(
+            key: key.key,
+            certificate: HexEncodedString(bytes: certificateBytes),
+            signature: key.signature,
             notValidAfter: key.notValidAfter
         )
     }
@@ -376,10 +425,16 @@ final class KeyVerificationTests: XCTestCase {
     private func makeJournalistIdKey(now: Date) throws -> JournalistIdPublicKey? {
         let data = try PublicKeysHelper.readLocalKeypairFile(path: "journalist_id").publicKey
         let provisioningKey = try loadJournalistProvisioningKey()
+        let idKey = Sign.KeyPair.PublicKey(data.key.bytes)
+        let idSignature = try signJournalistIdKey(
+            idKey: idKey,
+            notValidAfter: data.notValidAfter.date,
+            identity: "journalist_id"
+        )
         return JournalistIdPublicKey(
-            key: Sign.KeyPair.PublicKey(data.key.bytes),
+            key: idKey,
             certificate: Signature<JournalistId>.fromBytes(bytes: data.certificate.bytes),
-            signature: data.signature.map { Signature<JournalistId>.fromBytes(bytes: $0.bytes) },
+            signature: idSignature,
             signingKey: provisioningKey,
             identity: "journalist_id",
             notValidAfter: data.notValidAfter.date,
@@ -511,10 +566,97 @@ final class KeyVerificationTests: XCTestCase {
         try verifyAndAssertMinimalScenario(scenario: .minimal)
     }
 
-    /// The old vectors predate the `signature` field on identity keys; verification must succeed either way
-    /// since the field is currently ignored.
-    func testVerifiedKeys_whenMinimalScenarioWithoutIdKeySignature_thenVerifies() throws {
-        try verifyAndAssertMinimalScenario(scenario: .minimalOldWithoutIdKeySignature)
+    func testVerifiedKeys_whenMinimalScenarioWithoutIdKeySignatures_thenDropsIdKeys() throws {
+        let scenario = try loadVerifiedMinimalScenario(scenario: .minimalOldWithoutIdKeySignature)
+        let keyHierarchy = try XCTUnwrap(scenario.verifiedKeys.verifiedHierarchies.first)
+        XCTAssertFalse(keyHierarchy.organizationPublicKey.key.isEmpty)
+
+        let coverNodeKeyHierarchy = try XCTUnwrap(keyHierarchy.verifiedCoverNodeKeyHierarchies.first)
+        XCTAssertFalse(coverNodeKeyHierarchy.provisioningKey.key.isEmpty)
+        XCTAssertEqual(coverNodeKeyHierarchy.idPublicKeys["covernode_001"]?.count, 0)
+
+        let journalists = keyHierarchy.allPublicKeysForJournalists()
+        XCTAssertEqual(journalists["static_test_journalist"]?.count, 0)
+    }
+
+    func testIdentityKeysWithCorruptedCertificate_thenRejected() throws {
+        let scenario = try loadVerifiedMinimalScenario()
+        let keyHierarchy = try XCTUnwrap(scenario.publicKeysData.keys.first)
+        let verifiedHierarchy = try XCTUnwrap(scenario.verifiedKeys.verifiedHierarchies.first)
+        let coverNodeProvisioningKey = try XCTUnwrap(
+            verifiedHierarchy.verifiedCoverNodeKeyHierarchies.first?.provisioningKey
+        )
+        let journalistProvisioningKey = try XCTUnwrap(
+            verifiedHierarchy.verifiedJournalistKeyHierarchies.first?.provisioningKey
+        )
+
+        let coverNodeIdKey = try XCTUnwrap(
+            keyHierarchy.coverNodes.first?.covernodes["covernode_001"]?.first?.idPk
+        )
+        XCTAssertThrowsError(try CoverNodeIdPublicKey.fromUnverified(
+            unverifiedKey: corruptCertificate(of: coverNodeIdKey),
+            signingKey: coverNodeProvisioningKey,
+            identity: "covernode_001",
+            now: scenario.now
+        ))
+
+        let journalistIdKey = try XCTUnwrap(
+            keyHierarchy.journalists.first?.journalists["static_test_journalist"]?.first?.idPk
+        )
+        XCTAssertThrowsError(try JournalistIdPublicKey.fromUnverified(
+            unverifiedKey: corruptCertificate(of: journalistIdKey),
+            signingKey: journalistProvisioningKey,
+            identity: "static_test_journalist",
+            now: scenario.now
+        ))
+    }
+
+    func testIdentityKey_whenCertificateMissingAndSignatureValid_thenAccepted() throws {
+        let scenario = try loadVerifiedMinimalScenario()
+        let keyHierarchy = try XCTUnwrap(scenario.publicKeysData.keys.first)
+        let verifiedHierarchy = try XCTUnwrap(scenario.verifiedKeys.verifiedHierarchies.first)
+        let journalistProvisioningKey = try XCTUnwrap(
+            verifiedHierarchy.verifiedJournalistKeyHierarchies.first?.provisioningKey
+        )
+        let journalistIdKey = try XCTUnwrap(
+            keyHierarchy.journalists.first?.journalists["static_test_journalist"]?.first?.idPk
+        )
+        let keyWithoutCertificate = UnverifiedSignedPublicSigningKeyData(
+            key: journalistIdKey.key,
+            certificate: HexEncodedString(bytes: []),
+            signature: journalistIdKey.signature,
+            notValidAfter: journalistIdKey.notValidAfter
+        )
+        XCTAssertNoThrow(try JournalistIdPublicKey.fromUnverified(
+            unverifiedKey: keyWithoutCertificate,
+            signingKey: journalistProvisioningKey,
+            identity: "static_test_journalist",
+            now: scenario.now
+        ))
+    }
+
+    func testIdentityKey_whenCertificateMissingAndSignatureMissing_thenRejected() throws {
+        let scenario = try loadVerifiedMinimalScenario()
+        let keyHierarchy = try XCTUnwrap(scenario.publicKeysData.keys.first)
+        let verifiedHierarchy = try XCTUnwrap(scenario.verifiedKeys.verifiedHierarchies.first)
+        let journalistProvisioningKey = try XCTUnwrap(
+            verifiedHierarchy.verifiedJournalistKeyHierarchies.first?.provisioningKey
+        )
+        let journalistIdKey = try XCTUnwrap(
+            keyHierarchy.journalists.first?.journalists["static_test_journalist"]?.first?.idPk
+        )
+        let keyWithoutBoth = UnverifiedSignedPublicSigningKeyData(
+            key: journalistIdKey.key,
+            certificate: HexEncodedString(bytes: []),
+            signature: nil,
+            notValidAfter: journalistIdKey.notValidAfter
+        )
+        XCTAssertThrowsError(try JournalistIdPublicKey.fromUnverified(
+            unverifiedKey: keyWithoutBoth,
+            signingKey: journalistProvisioningKey,
+            identity: "static_test_journalist",
+            now: scenario.now
+        ))
     }
 
     func testVerifiedKeys_dropsInvalidIdentityAndMessageKeys() throws {

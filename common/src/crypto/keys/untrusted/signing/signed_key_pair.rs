@@ -13,6 +13,7 @@ use crate::{
         serde::{SigningKeyPairHex, StorableKeyMaterial, StorableKeyMaterialType},
         signing::{traits, PublicSigningKey, SignedSigningKeyPair},
         untrusted::UntrustedKeyError,
+        KeyVerification,
     },
 };
 
@@ -86,10 +87,11 @@ impl<KeyRole: Role<CertData = IdKeyCertificateData>> UntrustedSignedSigningKeyPa
         signing_pk: &impl traits::PublicSigningKey<SigningKeyRole>,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> anyhow::Result<SignedSigningKeyPair<KeyRole>> {
-        let pk = self
-            .public_key
-            .to_trusted_with_identity(signing_pk, now, identity)?;
+        let pk =
+            self.public_key
+                .to_trusted_with_identity(signing_pk, now, identity, verification)?;
 
         Ok(SignedSigningKeyPair::new(pk, self.secret_key.clone()))
     }
@@ -101,10 +103,11 @@ impl<KeyRole: Role<CertData = IdKeyCertificateData>> UntrustedSignedSigningKeyPa
         >,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> anyhow::Result<SignedSigningKeyPair<KeyRole>> {
         let Some(pk) = signing_pk_iter.find_map(|signing_pk| {
             self.public_key
-                .to_trusted_with_identity(signing_pk, now, identity)
+                .to_trusted_with_identity(signing_pk, now, identity, verification)
                 .ok()
         }) else {
             anyhow::bail!(UntrustedKeyError::ParentKeyNotFound)

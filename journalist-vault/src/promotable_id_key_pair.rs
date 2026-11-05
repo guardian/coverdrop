@@ -3,7 +3,7 @@ use common::{
     api::models::{
         identity::Identity, journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity,
     },
-    crypto::keys::{public_key::PublicKey, signing::UnsignedSigningKeyPair},
+    crypto::keys::{public_key::PublicKey, signing::UnsignedSigningKeyPair, KeyVerification},
     epoch::Epoch,
     identity_api::models::{
         UntrustedJournalistIdPublicKeyWithEpoch, UntrustedSentinelIdPublicKeyWithEpoch,
@@ -210,7 +210,12 @@ impl PromotableIdKeyPair for JournalistIdKeyPair {
     ) -> Option<Self::VerifiedPublicKey> {
         signed_with_epoch
             .key
-            .to_trusted_with_identity(provisioning_pk, now, identity)
+            .to_trusted_with_identity(
+                provisioning_pk,
+                now,
+                identity,
+                KeyVerification::STRICT_REQUIRE_SIGNATURE,
+            )
             .ok()
     }
 
@@ -313,7 +318,12 @@ impl PromotableIdKeyPair for SentinelIdKeyPair {
     ) -> Option<Self::VerifiedPublicKey> {
         signed_with_epoch
             .key
-            .to_trusted_with_identity(provisioning_pk, now, identity)
+            .to_trusted_with_identity(
+                provisioning_pk,
+                now,
+                identity,
+                KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+            )
             .ok()
     }
 

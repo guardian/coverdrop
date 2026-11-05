@@ -9,6 +9,7 @@ use crate::{
         id_key_certificate_data::IdKeyCertificateData,
         role::Role,
         signing::{traits, SignedPublicSigningKey},
+        KeyVerification,
     },
 };
 
@@ -52,10 +53,14 @@ impl<
         id_verifying_key: &impl traits::PublicSigningKey<VerifyingRole>,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> anyhow::Result<Self> {
-        let id_pk = untrusted
-            .id_pk
-            .to_trusted_with_identity(id_verifying_key, now, identity)?;
+        let id_pk = untrusted.id_pk.to_trusted_with_identity(
+            id_verifying_key,
+            now,
+            identity,
+            verification,
+        )?;
 
         let msg_pks = untrusted
             .msg_pks

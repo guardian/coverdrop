@@ -2,6 +2,7 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
     api::models::journalist_id::JournalistIdentity,
+    crypto::keys::KeyVerification,
     epoch::Epoch,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
@@ -115,7 +116,12 @@ pub(crate) async fn published_journalist_id_key_pairs(
 
         let id_key_pair =
             serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.id_key_pair_json)?
-                .to_trusted_with_identity(&provisioning_pk, now, &journalist_id)?;
+                .to_trusted_with_identity(
+                    &provisioning_pk,
+                    now,
+                    &journalist_id,
+                    KeyVerification::STRICT_REQUIRE_SIGNATURE,
+                )?;
 
         let key_pair_row = PublishedJournalistIdKeyPairRow::new(id_key_pair_id, id_key_pair, epoch);
 

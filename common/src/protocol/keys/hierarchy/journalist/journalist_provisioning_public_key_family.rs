@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 
 use crate::api::models::journalist_id::JournalistIdentity;
 use crate::api::models::sentinel_id::SentinelIdentity;
+use crate::crypto::keys::KeyVerification;
 use crate::protocol::keys::{
     verify_journalist_provisioning_pk, JournalistIdPublicKeyFamily,
     JournalistIdPublicKeyFamilyList, JournalistProvisioningPublicKey, OrganizationPublicKey,
@@ -53,6 +54,7 @@ impl JournalistProvisioningPublicKeyFamily {
                     &journalist_provisioning_pk,
                     now,
                     &journalist_id,
+                    KeyVerification::STRICT_REQUIRE_SIGNATURE,
                 );
 
                 (journalist_id, id_pk_family)

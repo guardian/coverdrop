@@ -5,7 +5,7 @@ use common::{
         api_client::ApiClient, forms::PostCoverNodeMessagingPublicKeyForm,
         models::covernode_id::CoverNodeIdentity,
     },
-    crypto::keys::{public_key::PublicKey, signing::SignedSigningKeyPair},
+    crypto::keys::{public_key::PublicKey, signing::SignedSigningKeyPair, KeyVerification},
     identity_api::{
         client::IdentityApiClient, forms::post_rotate_covernode_id::RotateCoverNodeIdPublicKeyForm,
     },
@@ -220,7 +220,12 @@ impl PublishedKeysTask {
         // Confirm we trust the key that has just been given to us
         let signed_id_pk = signed_id_pk_with_epoch
             .key
-            .to_trusted_with_identity(covernode_provisioning_pk, now, &self.covernode_id)
+            .to_trusted_with_identity(
+                covernode_provisioning_pk,
+                now,
+                &self.covernode_id,
+                KeyVerification::STRICT_REQUIRE_SIGNATURE,
+            )
             .inspect_err(|e| {
                 tracing::warn!(
                     "identity service returned covernode id key pair which we cannot validate: {}",

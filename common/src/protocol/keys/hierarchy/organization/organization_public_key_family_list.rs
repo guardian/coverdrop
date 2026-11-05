@@ -7,6 +7,7 @@ use crate::{
     },
     backup::keys::BackupMsgPublicKey,
     crypto::keys::Ed25519PublicKey,
+    crypto::keys::KeyVerification,
     protocol::keys::{
         AnchorOrganizationPublicKey, CoverNodeIdPublicKey, CoverNodeMessagingKeyPair,
         CoverNodeMessagingPublicKey, CoverNodeProvisioningPublicKey, JournalistIdPublicKey,
@@ -609,7 +610,12 @@ impl OrganizationPublicKeyFamilyList {
         self.covernode_provisioning_pk_iter()
             .find_map(|covernode_provisioning_pk| {
                 untrusted
-                    .to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
+                    .to_trusted_with_identity(
+                        covernode_provisioning_pk,
+                        now,
+                        covernode_id,
+                        KeyVerification::STRICT_REQUIRE_SIGNATURE,
+                    )
                     .ok()
             })
     }
@@ -641,7 +647,12 @@ impl OrganizationPublicKeyFamilyList {
         self.journalist_provisioning_pk_iter()
             .find_map(|journalist_provisioning_pk| {
                 untrusted
-                    .to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
+                    .to_trusted_with_identity(
+                        journalist_provisioning_pk,
+                        now,
+                        journalist_id,
+                        KeyVerification::STRICT_REQUIRE_SIGNATURE,
+                    )
                     .ok()
             })
     }

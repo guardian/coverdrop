@@ -19,7 +19,7 @@ use crate::{
             },
             signing::{traits, SignedPublicSigningKey},
             untrusted::UntrustedKeyError,
-            Ed25519PublicKey,
+            Ed25519PublicKey, KeyVerification,
         },
         Signature,
     },
@@ -102,17 +102,27 @@ impl<KeyRole: Role<CertData = IdKeyCertificateData>> UntrustedSignedPublicSignin
         signing_pk: &impl traits::PublicSigningKey<R>,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> anyhow::Result<SignedPublicSigningKey<KeyRole>> {
         if now > self.not_valid_after {
             Err(UntrustedKeyError::CertificateExpired.into())
         } else {
-            // Verify new signature with identity if it is present
-            if let Some(ref signature) = self.signature {
-                let new_cert_data =
-                    IdKeyCertificateData::new::<KeyRole>(&self.key, self.not_valid_after, identity);
-                signing_pk.verify(&new_cert_data, signature, now)?;
+            match (&self.signature, verification) {
+                (Some(signature), _) => {
+                    let certificate_data = IdKeyCertificateData::new::<KeyRole>(
+                        &self.key,
+                        self.not_valid_after,
+                        identity,
+                    );
+                    signing_pk.verify(&certificate_data, signature, now)?;
+                }
+                (None, KeyVerification::STRICT_REQUIRE_SIGNATURE) => {
+                    anyhow::bail!("Identity key signature is missing");
+                }
+                (None, KeyVerification::ACCEPT_LEGACY_CERTIFICATE) => {}
             }
-            // Also verify the legacy certificate until its removed
+
+            // Always verify the legacy certificate if present until it is removed.
             // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove legacy certificate verification
             let legacy_certificate_data =
                 KeyCertificateData::new_for_signing_key(&self.key, self.not_valid_after);

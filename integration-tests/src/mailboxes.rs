@@ -9,7 +9,7 @@ use common::clap::Stage;
 use common::{
     api::{api_client::ApiClient, models::journalist_id::JournalistIdentity},
     client::{mailbox::user_mailbox::UserMailbox, JournalistStatus},
-    crypto::keys::{serde::StorableKeyMaterial, signing::traits},
+    crypto::keys::{serde::StorableKeyMaterial, signing::traits, KeyVerification},
     protocol::{
         keys::{
             JournalistIdKeyPair, JournalistMessagingKeyPair, UntrustedJournalistIdKeyPair,
@@ -178,7 +178,12 @@ pub fn load_journalist_id_key_pair(
 ) -> JournalistIdKeyPair {
     UntrustedJournalistIdKeyPair::load_from_directory(&keys_path)
         .expect("Should load journalist ID key pair")[0]
-        .to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
+        .to_trusted_with_identity(
+            journalist_provisioning_pk,
+            now,
+            journalist_id,
+            KeyVerification::STRICT_REQUIRE_SIGNATURE,
+        )
         .expect("Verify signing key pair")
 }
 

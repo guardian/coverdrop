@@ -40,6 +40,19 @@ internal class KeyMissingTrustAnchorException(
     cause: Exception? = null,
 ) : KeyVerificationException(message, cause)
 
+/**
+ * Strategy used to verify a public key against its parent signing key.
+ *
+ * - [STRICT_REQUIRE_SIGNATURE]: Enforces that a valid signature is present and verifies it,
+ *   as well as verifying the legacy certificate if present. Used for covernode and journalist identity keys.
+ * - [ACCEPT_LEGACY_CERTIFICATE]: Verifies the legacy certificate if present, and verifies the
+ *   signature if present. If no signature is present, the certificate is strictly required.
+ *   Used for organization, provisioning, and messaging keys.
+ */
+internal enum class KeyVerification {
+    STRICT_REQUIRE_SIGNATURE,
+    ACCEPT_LEGACY_CERTIFICATE,
+}
 
 /**
  * The methods of the [KeyVerifier] take [PublishedKeysAndProfiles] and its members and return verified keys.
@@ -281,12 +294,13 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
                 key = candidateKey,
                 notValidAfter = candidate.notValidAfter
             ),
+            verification = KeyVerification.ACCEPT_LEGACY_CERTIFICATE,
         )
     }
 
     /**
-     * Like [verifySigningKeyWithExpiryOrNull], but for identity keys where a present `signature`
-     * must bind the key to the given [role] and [identity].
+     * Like [verifySigningKeyWithExpiryOrNull], but for identity keys that require a `signature`
+     * binding the key to the given [role] and [identity], without checking the legacy certificate.
      *
      * @return the [VerifiedSignedSigningKey] iff all checks pass; otherwise `null`
      */
@@ -305,8 +319,8 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
     }
 
     /**
-     * Like [verifySigningKeyWithExpiryOrThrow], but for identity keys where a present `signature`
-     * must bind the key to the given [role] and [identity].
+     * Like [verifySigningKeyWithExpiryOrThrow], but for identity keys that require a `signature`
+     * binding the key to the given [role] and [identity], without checking the legacy certificate.
      *
      * @throws [KeyExpirationException] if the key has expired.
      * @throws [KeyVerificationException] if the key is not valid for any other reason.
@@ -331,6 +345,7 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
                 role = role,
                 identity = identity
             ),
+            verification = KeyVerification.STRICT_REQUIRE_SIGNATURE,
         )
     }
 
@@ -340,6 +355,7 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
         parent: PublicSigningKey,
         now: Instant,
         signatureData: Signable,
+        verification: KeyVerification,
     ): VerifiedSignedSigningKey {
         val candidateNotValidAfter = candidate.notValidAfter
 
@@ -348,7 +364,10 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
             throw KeyExpirationException("failed to verify signing key: expired on $candidateNotValidAfter")
         }
 
-        // CHECK 2: verify the signature (if present)
+        // CHECK 2: verify the signature
+        if (verification == KeyVerification.STRICT_REQUIRE_SIGNATURE && candidate.signature == null) {
+            throw KeyVerificationException("failed to verify signing key: signature is missing")
+        }
         candidate.signature?.let { signature ->
             try {
                 Signature.verifyOrThrow(
@@ -362,22 +381,27 @@ internal class KeyVerifier(private val libSodium: SodiumAndroid) {
             }
         }
 
-        // CHECK 3: verify that the certificate is valid
+        // CHECK 3: verify the legacy certificate if present, or require it if no signature is present
         // TODO (https://github.com/guardian/coverdrop-internal/issues/4200) remove once all keys carry a signature
-        try {
-            Signature.verifyOrThrow(
-                libSodium = libSodium,
-                signingPk = parent,
-                data = SigningKeyCertificateData.from(
-                    key = candidateKey,
-                    notValidAfter = candidateNotValidAfter
-                ),
-                signature = Signature(candidate.certificate.hexDecode())
-            )
-            return VerifiedSignedSigningKey(pk = candidateKey)
-        } catch (e: Exception) {
-            throw KeyVerificationException("failed to verify signing key: ${e.message}", e)
+        if (candidate.signature == null && candidate.certificate.isEmpty()) {
+            throw KeyVerificationException("failed to verify signing key: certificate is required when signature is missing")
         }
+        if (candidate.certificate.isNotEmpty()) {
+            try {
+                Signature.verifyOrThrow(
+                    libSodium = libSodium,
+                    signingPk = parent,
+                    data = SigningKeyCertificateData.from(
+                        key = candidateKey,
+                        notValidAfter = candidateNotValidAfter
+                    ),
+                    signature = Signature(candidate.certificate.hexDecode())
+                )
+            } catch (e: Exception) {
+                throw KeyVerificationException("failed to verify signing key: ${e.message}", e)
+            }
+        }
+        return VerifiedSignedSigningKey(pk = candidateKey)
     }
 
     /**

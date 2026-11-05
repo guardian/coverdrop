@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     api::models::identity::Identity,
+    crypto::keys::KeyVerification,
     protocol::keys::{JournalistProvisioningPublicKey, SentinelIdPublicKey},
 };
 
@@ -32,7 +33,12 @@ impl SentinelIdPublicKeyList {
         let keys = keys
             .into_iter()
             .flat_map(|untrusted_pk| {
-                untrusted_pk.to_trusted_with_identity(verifying_pk, now, identity)
+                untrusted_pk.to_trusted_with_identity(
+                    verifying_pk,
+                    now,
+                    identity,
+                    KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+                )
             })
             .collect();
 

@@ -13,6 +13,7 @@ use crate::{
             encryption::UntrustedSignedPublicEncryptionKey,
             signing::UntrustedSignedPublicSigningKey,
         },
+        KeyVerification,
     },
 };
 
@@ -51,6 +52,7 @@ impl<
         verifying_pk: &SignedPublicSigningKey<VerifyingRole>,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> Self {
         let keys = keys
             .into_iter()
@@ -60,6 +62,7 @@ impl<
                     verifying_pk,
                     now,
                     identity,
+                    verification,
                 )
             })
             .collect();
@@ -74,11 +77,14 @@ impl<
         msg_pks: Vec<UntrustedSignedPublicEncryptionKey<MessagingRole>>,
         now: DateTime<Utc>,
         identity: &impl Identity,
+        verification: KeyVerification,
     ) -> anyhow::Result<Self> {
         let mut keys = vec![];
 
         for id_pk in id_pks {
-            if let Ok(id_pk) = id_pk.to_trusted_with_identity(verifying_pk, now, identity) {
+            if let Ok(id_pk) =
+                id_pk.to_trusted_with_identity(verifying_pk, now, identity, verification)
+            {
                 let id_and_msg = IdentityPublicKeyFamily::<
                     VerifyingRole,
                     IdentityRole,

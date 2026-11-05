@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     api::models::covernode_id::CoverNodeIdentity,
+    crypto::keys::KeyVerification,
     protocol::keys::{
         verify_covernode_provisioning_pk, CoverNodeIdPublicKeyFamily,
         CoverNodeIdPublicKeyFamilyList, CoverNodeProvisioningPublicKey, OrganizationPublicKey,
@@ -50,6 +51,7 @@ impl CoverNodeProvisioningPublicKeyFamily {
                     &covernode_provisioning_pk,
                     now,
                     &covernode_id,
+                    KeyVerification::STRICT_REQUIRE_SIGNATURE,
                 );
 
                 (covernode_id, id_pk_family_list)

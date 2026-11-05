@@ -2,6 +2,7 @@ use anyhow::Context;
 use chrono::{DateTime, Utc};
 use common::{
     api::models::sentinel_id::SentinelIdentity,
+    crypto::keys::KeyVerification,
     epoch::Epoch,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, SentinelIdKeyPair,
@@ -106,7 +107,12 @@ pub(crate) async fn published_sentinel_id_key_pairs(
             ))?;
 
         let key_pair = serde_json::from_str::<UntrustedSentinelIdKeyPair>(&row.key_pair_json)?
-            .to_trusted_with_identity(&provisioning_pk, now, &sentinel_id)?;
+            .to_trusted_with_identity(
+                &provisioning_pk,
+                now,
+                &sentinel_id,
+                KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+            )?;
 
         let key_pair_row = PublishedSentinelIdKeyPairRow::new(row.id, key_pair, row.epoch);
 

@@ -17,6 +17,7 @@ use crate::crypto::keys::untrusted::encryption::{
 use crate::crypto::keys::untrusted::signing::{
     UntrustedSignedPublicSigningKey, UntrustedSignedSigningKeyPair,
 };
+use crate::crypto::keys::KeyVerification;
 use crate::protocol::keys::{OrganizationKeyPair, OrganizationPublicKey};
 use crate::protocol::roles::AnchorOrganization;
 use chrono::{DateTime, Utc};
@@ -52,7 +53,12 @@ pub fn verify_backup_id_pk(
     org_pk: &OrganizationPublicKey,
     now: DateTime<Utc>,
 ) -> anyhow::Result<BackupIdPublicKey> {
-    untrusted.to_trusted_with_identity(org_pk, now, &BackupIdentity::new(BACKUP_IDENTITY_STR))
+    untrusted.to_trusted_with_identity(
+        org_pk,
+        now,
+        &BackupIdentity::new(BACKUP_IDENTITY_STR),
+        KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+    )
 }
 
 pub fn generate_backup_msg_key_pair(
@@ -87,6 +93,7 @@ pub fn load_backup_signing_key_pair(
                     org_pk,
                     now,
                     &BackupIdentity::new(BACKUP_IDENTITY_STR),
+                    KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
                 )
             })
         })

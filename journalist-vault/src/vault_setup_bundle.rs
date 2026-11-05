@@ -8,6 +8,7 @@ use common::{
         },
         models::{journalist_id::JournalistIdentity, sentinel_id::SentinelIdentity},
     },
+    crypto::keys::KeyVerification,
     protocol::keys::{
         verify_journalist_provisioning_pk, AnchorOrganizationPublicKeys, JournalistIdKeyPair,
         SentinelIdKeyPair, UntrustedJournalistIdKeyPair, UntrustedJournalistProvisioningPublicKey,
@@ -140,7 +141,12 @@ where
             serde_json::from_str::<PostJournalistIdPublicKeyForm>(&row.journalist_id_pk_upload_form_json)?;
 
         let key_pair = serde_json::from_str::<UntrustedJournalistIdKeyPair>(&row.journalist_id_keypair_json)?;
-        let key_pair = key_pair.to_trusted_with_identity(&provisioning_pk, now, journalist_id)?;
+        let key_pair = key_pair.to_trusted_with_identity(
+            &provisioning_pk,
+            now,
+            journalist_id,
+            KeyVerification::STRICT_REQUIRE_SIGNATURE,
+        )?;
 
         let register_journalist_form = row
             .register_journalist_form_json
@@ -162,7 +168,12 @@ where
                     "Vault setup bundle contains sentinel data but no sentinel ID found in vault",
                 )?;
                 let untrusted = serde_json::from_str::<UntrustedSentinelIdKeyPair>(&json)?;
-                let trusted = untrusted.to_trusted_with_identity(&provisioning_pk, now, sentinel_id)?;
+                let trusted = untrusted.to_trusted_with_identity(
+                    &provisioning_pk,
+                    now,
+                    sentinel_id,
+                    KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+                )?;
                 Ok(trusted)
             })
             .transpose()?;

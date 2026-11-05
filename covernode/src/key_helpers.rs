@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use common::{
     api::models::covernode_id::CoverNodeIdentity,
-    crypto::keys::public_key::PublicKey,
+    crypto::keys::{public_key::PublicKey, KeyVerification},
     protocol::keys::{
         CoverNodeIdKeyPairWithEpoch, CoverNodeMessagingKeyPairWithEpoch,
         CoverNodeProvisioningPublicKey,
@@ -26,7 +26,12 @@ pub async fn get_and_verify_covernode_id_key_pairs(
                 .flat_map(|covernode_provisioning_pk| {
                     key_pair
                         .key_pair
-                        .to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
+                        .to_trusted_with_identity(
+                            covernode_provisioning_pk,
+                            now,
+                            covernode_id,
+                            KeyVerification::STRICT_REQUIRE_SIGNATURE,
+                        )
                         .map(|signed_encrypted_key_pair| {
                             CoverNodeIdKeyPairWithEpoch::new(
                                 signed_encrypted_key_pair,

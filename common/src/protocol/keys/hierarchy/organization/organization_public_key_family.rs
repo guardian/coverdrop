@@ -6,6 +6,7 @@ use crate::{
         constants::BACKUP_IDENTITY_STR,
         roles::{BackupId, BackupMsg},
     },
+    crypto::keys::KeyVerification,
     protocol::{
         keys::{
             verify_organization_pk, AnchorOrganizationPublicKey, BackupIdPublicKeyFamilyList,
@@ -69,6 +70,7 @@ impl OrganizationPublicKeyFamily {
                     &org_pk,
                     now,
                     &BackupIdentity::new(BACKUP_IDENTITY_STR),
+                    KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
                 ))
             } else {
                 None

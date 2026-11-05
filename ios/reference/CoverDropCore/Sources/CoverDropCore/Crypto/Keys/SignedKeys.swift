@@ -21,14 +21,25 @@ public typealias JournalistMessagingPublicKey = SignedPublicEncryptionKey<Journa
 public typealias UserPublicKey = PublicEncryptionKey<User>
 public typealias UserSecretKey = SecretEncryptionKey<User>
 
+/// Strategy used to verify a public key against its parent signing key.
+///
+/// - `strictRequireSignature`: Enforces that a valid signature is present and verifies it,
+///   as well as verifying the legacy certificate if present. Used for covernode and journalist identity keys.
+/// - `acceptLegacyCertificate`: Verifies the legacy certificate if present, and verifies the
+///   signature if present. If no signature is present, the certificate is strictly required.
+///   Used for organization, provisioning, and messaging keys.
+private enum KeyVerification: Equatable {
+    case strictRequireSignature
+    case acceptLegacyCertificate
+}
+
 public protocol SigningKey: Codable {
     var key: Sign.KeyPair.PublicKey { get set }
 }
 
-/// Shared core of all `verify()` implementations below: checks expiry, verifies the legacy
-/// `legacyCertificate` against `legacyCertificateData`, and, if present, verifies `signature` against
-/// `signatureCertificateData`. The two data payloads are only ever different for identity keys, where the
-/// signature additionally binds the role and identity.
+/// Shared core of all `verify()` implementations below: checks expiry, verifies the legacy certificate
+/// if present (or requires it when no signature is present), and verifies a present signature. Identity keys
+/// require the identity-bound signature.
 private func verifyCertificateAndSignature(
     now: Date,
     notValidAfter: Date,
@@ -36,23 +47,36 @@ private func verifyCertificateAndSignature(
     legacyCertificateData: [UInt8],
     legacyCertificate: [UInt8],
     signatureData: [UInt8],
-    signature: [UInt8]?
+    signature: [UInt8]?,
+    verification: KeyVerification
 ) -> Bool {
     let isDateValid = notValidAfter >= now
 
-    let isCertificateValid = Sodium().sign.verify(
-        message: legacyCertificateData,
-        publicKey: signingKey,
-        signature: legacyCertificate
-    )
+    let hasCertificate = !legacyCertificate.isEmpty
+    let hasSignature = signature != nil
 
-    let isSignatureValid = signature.map {
-        Sodium().sign.verify(
+    let isCertificateValid: Bool
+    if hasCertificate {
+        isCertificateValid = Sodium().sign.verify(
+            message: legacyCertificateData,
+            publicKey: signingKey,
+            signature: legacyCertificate
+        )
+    } else {
+        // If no signature is present, the certificate is required.
+        isCertificateValid = hasSignature
+    }
+
+    let isSignatureValid: Bool
+    if let signature {
+        isSignatureValid = Sodium().sign.verify(
             message: signatureData,
             publicKey: signingKey,
-            signature: $0
+            signature: signature
         )
-    } ?? true
+    } else {
+        isSignatureValid = verification == .acceptLegacyCertificate
+    }
 
     return isDateValid && isCertificateValid && isSignatureValid
 }
@@ -95,7 +119,8 @@ public struct SelfSignedPublicSigningKey<T: Role>: SigningKey, Codable, Equatabl
             legacyCertificateData: validationCertificate.data,
             legacyCertificate: certificate.certificate,
             signatureData: validationCertificate.data,
-            signature: signature?.certificate
+            signature: signature?.certificate,
+            verification: .acceptLegacyCertificate
         )
     }
 }
@@ -133,7 +158,8 @@ public class SignedPublicSigningKey<T: Role, S: SigningKey>: SigningKey, Codable
             legacyCertificateData: validationCertificate.data,
             legacyCertificate: certificate.certificate,
             signatureData: validationCertificate.data,
-            signature: signature?.certificate
+            signature: signature?.certificate,
+            verification: .acceptLegacyCertificate
         )
     }
 
@@ -199,7 +225,8 @@ public class SignedIdentityPublicSigningKey<T: IdentityRole, S: SigningKey>: Sig
             legacyCertificateData: legacyCertificate.data,
             legacyCertificate: certificate.certificate,
             signatureData: idKeyCertificate.data,
-            signature: signature?.certificate
+            signature: signature?.certificate,
+            verification: .strictRequireSignature
         )
     }
 
@@ -260,7 +287,8 @@ public class SignedPublicEncryptionKey<T: Role, S: SigningKey>: Codable {
             legacyCertificateData: validationCertificate.data,
             legacyCertificate: certificate.certificate,
             signatureData: validationCertificate.data,
-            signature: signature?.certificate
+            signature: signature?.certificate,
+            verification: .acceptLegacyCertificate
         )
     }
 

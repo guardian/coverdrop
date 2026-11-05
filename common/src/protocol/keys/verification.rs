@@ -6,7 +6,7 @@ use crate::{
         covernode_id::CoverNodeIdentity, journalist_id::JournalistIdentity,
         sentinel_id::SentinelIdentity,
     },
-    crypto::keys::{signing::PublicSigningKey, untrusted::UntrustedKeyError},
+    crypto::keys::{signing::PublicSigningKey, untrusted::UntrustedKeyError, KeyVerification},
 };
 
 use super::*;
@@ -57,7 +57,12 @@ pub fn verify_covernode_id_pk(
     now: DateTime<Utc>,
     identity: &CoverNodeIdentity,
 ) -> anyhow::Result<CoverNodeIdPublicKey> {
-    untrusted.to_trusted_with_identity(covernode_provisioning_pk, now, identity)
+    untrusted.to_trusted_with_identity(
+        covernode_provisioning_pk,
+        now,
+        identity,
+        KeyVerification::STRICT_REQUIRE_SIGNATURE,
+    )
 }
 
 pub fn verify_covernode_messaging_pk(
@@ -82,7 +87,12 @@ pub fn verify_journalist_id_pk(
     now: DateTime<Utc>,
     identity: &JournalistIdentity,
 ) -> anyhow::Result<JournalistIdPublicKey> {
-    untrusted.to_trusted_with_identity(journalist_provisioning_pk, now, identity)
+    untrusted.to_trusted_with_identity(
+        journalist_provisioning_pk,
+        now,
+        identity,
+        KeyVerification::STRICT_REQUIRE_SIGNATURE,
+    )
 }
 
 pub fn verify_journalist_messaging_pk(
@@ -99,13 +109,19 @@ pub fn verify_sentinel_id_pk(
     now: DateTime<Utc>,
     identity: &SentinelIdentity,
 ) -> anyhow::Result<SentinelIdPublicKey> {
-    untrusted.to_trusted_with_identity(journalist_provisioning_pk, now, identity)
+    untrusted.to_trusted_with_identity(
+        journalist_provisioning_pk,
+        now,
+        identity,
+        KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
+    )
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
 
+    use crate::crypto::Signature;
     use crate::protocol::keys::{
         generation::test::generate_protocol_keys, OrganizationPublicKeyFamilyList,
         UntrustedOrganizationPublicKeyFamilyList,
@@ -210,11 +226,11 @@ mod tests {
 
         assert!(hierarchy.latest_org_pk().is_some());
         assert!(hierarchy.latest_covernode_provisioning_pk().is_some());
-        assert!(hierarchy.latest_covernode_id_pk_iter().next().is_some());
-        assert!(hierarchy.latest_covernode_msg_pk_iter().next().is_some());
+        assert!(hierarchy.latest_covernode_id_pk_iter().next().is_none());
+        assert!(hierarchy.latest_covernode_msg_pk_iter().next().is_none());
         assert!(hierarchy.latest_journalist_provisioning_pk().is_some());
-        assert!(hierarchy.latest_journalist_id_pk_iter().next().is_some());
-        assert!(hierarchy.latest_journalist_msg_pk_iter().next().is_some());
+        assert!(hierarchy.latest_journalist_id_pk_iter().next().is_none());
+        assert!(hierarchy.latest_journalist_msg_pk_iter().next().is_none());
         assert!(hierarchy.latest_sentinel_id_pk_iter().next().is_some());
     }
 
@@ -237,8 +253,11 @@ mod tests {
             let untrusted: UntrustedOrganizationPublicKeyFamilyList =
                 serde_json::from_value(json).unwrap();
 
-            let hierarchy =
-                OrganizationPublicKeyFamilyList::from_untrusted(untrusted, &[anchor.clone()], now);
+            let hierarchy = OrganizationPublicKeyFamilyList::from_untrusted(
+                untrusted,
+                std::slice::from_ref(&anchor),
+                now,
+            );
 
             assert!(
                 hierarchy.latest_org_pk().is_some(),
@@ -248,25 +267,19 @@ mod tests {
                 hierarchy.latest_covernode_provisioning_pk().is_some(),
                 "seed {seed}: covernode provisioning pk missing"
             );
-            assert!(
-                hierarchy.latest_covernode_id_pk_iter().next().is_some(),
-                "seed {seed}: covernode id pk missing"
-            );
-            assert!(
+            assert_eq!(
                 hierarchy.latest_covernode_msg_pk_iter().next().is_some(),
-                "seed {seed}: covernode msg pk missing"
+                hierarchy.latest_covernode_id_pk_iter().next().is_some(),
+                "seed {seed}: covernode message key availability should follow its identity key"
             );
             assert!(
                 hierarchy.latest_journalist_provisioning_pk().is_some(),
                 "seed {seed}: journalist provisioning pk missing"
             );
-            assert!(
-                hierarchy.latest_journalist_id_pk_iter().next().is_some(),
-                "seed {seed}: journalist id pk missing"
-            );
-            assert!(
+            assert_eq!(
                 hierarchy.latest_journalist_msg_pk_iter().next().is_some(),
-                "seed {seed}: journalist msg pk missing"
+                hierarchy.latest_journalist_id_pk_iter().next().is_some(),
+                "seed {seed}: journalist message key availability should follow its identity key"
             );
             assert!(
                 hierarchy.latest_sentinel_id_pk_iter().next().is_some(),
@@ -300,6 +313,94 @@ mod tests {
         assert!(hierarchy.latest_journalist_id_pk_iter().next().is_some());
         assert!(hierarchy.latest_journalist_msg_pk_iter().next().is_some());
         assert!(hierarchy.latest_sentinel_id_pk_iter().next().is_some());
+    }
+
+    #[test]
+    fn identity_key_verification_requires_signatures_and_checks_legacy_certificate() {
+        let now = Utc::now();
+        let keys = generate_protocol_keys(now);
+        let covernode_identity = CoverNodeIdentity::from_node_id(1);
+        let journalist_identity = JournalistIdentity::new("test_journalist").unwrap();
+
+        let mut covernode_key = keys.covernode_id_pk.to_untrusted();
+        let mut invalid_covernode_certificate = covernode_key.certificate.to_bytes();
+        invalid_covernode_certificate[0] ^= 0xFF;
+        covernode_key.certificate =
+            Signature::from_vec_unchecked(invalid_covernode_certificate.to_vec());
+        assert!(verify_covernode_id_pk(
+            &covernode_key,
+            &keys.covernode_provisioning_pk,
+            now,
+            &covernode_identity,
+        )
+        .is_err());
+
+        let mut journalist_key = keys.journalist_id_pk.to_untrusted();
+        let mut invalid_journalist_certificate = journalist_key.certificate.to_bytes();
+        invalid_journalist_certificate[0] ^= 0xFF;
+        journalist_key.certificate =
+            Signature::from_vec_unchecked(invalid_journalist_certificate.to_vec());
+        assert!(verify_journalist_id_pk(
+            &journalist_key,
+            &keys.journalist_provisioning_pk,
+            now,
+            &journalist_identity,
+        )
+        .is_err());
+
+        covernode_key.signature = None;
+        assert!(verify_covernode_id_pk(
+            &covernode_key,
+            &keys.covernode_provisioning_pk,
+            now,
+            &covernode_identity,
+        )
+        .is_err());
+
+        journalist_key.signature = None;
+        assert!(verify_journalist_id_pk(
+            &journalist_key,
+            &keys.journalist_provisioning_pk,
+            now,
+            &journalist_identity,
+        )
+        .is_err());
+
+        let mut covernode_key_with_invalid_signature = keys.covernode_id_pk.to_untrusted();
+        let mut invalid_covernode_signature = covernode_key_with_invalid_signature
+            .signature
+            .as_ref()
+            .unwrap()
+            .to_bytes();
+        invalid_covernode_signature[0] ^= 0xFF;
+        covernode_key_with_invalid_signature.signature = Some(Signature::from_vec_unchecked(
+            invalid_covernode_signature.to_vec(),
+        ));
+        assert!(verify_covernode_id_pk(
+            &covernode_key_with_invalid_signature,
+            &keys.covernode_provisioning_pk,
+            now,
+            &covernode_identity,
+        )
+        .is_err());
+
+        let mut journalist_key_with_invalid_signature = keys.journalist_id_pk.to_untrusted();
+        let mut invalid_journalist_signature = journalist_key_with_invalid_signature
+            .signature
+            .as_ref()
+            .unwrap()
+            .to_bytes();
+        invalid_journalist_signature[0] ^= 0xFF;
+        journalist_key_with_invalid_signature.signature = Some(Signature::from_vec_unchecked(
+            invalid_journalist_signature.to_vec(),
+        ));
+        assert!(verify_journalist_id_pk(
+            &journalist_key_with_invalid_signature,
+            &keys.journalist_provisioning_pk,
+            now,
+            &journalist_identity,
+        )
+        .is_err());
     }
 
     /// Asserts that if a journalist's identity keys are swapped, the verification fails for the swapped key.

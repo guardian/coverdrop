@@ -22,6 +22,7 @@ use crate::{
             traits::{self, PublicSigningKey},
             SignedPublicSigningKey,
         },
+        KeyVerification,
     },
     protocol::{
         keys::{JournalistIdKeyPair, UntrustedJournalistIdKeyPair},
@@ -166,7 +167,12 @@ pub fn load_covernode_id_key_pairs(
             covernode_provisioning_pks
                 .iter()
                 .flat_map(|covernode_provisioning_pk| {
-                    key_pair.to_trusted_with_identity(covernode_provisioning_pk, now, covernode_id)
+                    key_pair.to_trusted_with_identity(
+                        covernode_provisioning_pk,
+                        now,
+                        covernode_id,
+                        KeyVerification::STRICT_REQUIRE_SIGNATURE,
+                    )
                 })
         })
         .inspect(|key_pair: &CoverNodeIdKeyPair| {
@@ -273,7 +279,12 @@ pub fn load_journalist_id_key_pairs(
     let journalist_id_key_pairs = UntrustedJournalistIdKeyPair::load_from_directory(&keys_path)?
         .iter()
         .flat_map(|key_pair| {
-            key_pair.to_trusted_with_identity(journalist_provisioning_pk, now, journalist_id)
+            key_pair.to_trusted_with_identity(
+                journalist_provisioning_pk,
+                now,
+                journalist_id,
+                KeyVerification::STRICT_REQUIRE_SIGNATURE,
+            )
         })
         .collect::<Vec<_>>();
 
@@ -298,6 +309,7 @@ where
                     org_pk,
                     now,
                     &BackupIdentity::new(BACKUP_IDENTITY_STR),
+                    KeyVerification::ACCEPT_LEGACY_CERTIFICATE,
                 )
             })
         })

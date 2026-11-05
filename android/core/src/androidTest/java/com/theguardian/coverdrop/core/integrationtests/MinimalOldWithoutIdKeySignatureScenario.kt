@@ -23,8 +23,7 @@ import org.junit.Test
 
 
 /**
- * Backwards compatibility: published keys from before id keys carried a `signature` field must
- * still verify.
+ * Published identity keys from before the required `signature` field are no longer accepted.
  */
 class MinimalOldWithoutIdKeySignatureScenario {
 
@@ -62,7 +61,7 @@ class MinimalOldWithoutIdKeySignatureScenario {
     }
 
     @Test
-    fun testOldPublishedKeysWithoutSignature_thenVerify(): Unit = runBlocking {
+    fun testOldPublishedKeysWithoutIdKeySignature_thenDropsIdentityKeys(): Unit = runBlocking {
         val publishedKeys = GsonApiJsonAdapter()
             .parsePublishedPublicKeys(testVectors.readJson("published_keys"))
             .keys
@@ -71,16 +70,22 @@ class MinimalOldWithoutIdKeySignatureScenario {
         val journalistIdPk = publishedKeys.journalistsKeyHierarchy.single()
             .journalists.getValue("static_test_journalist").single().idPk
         assertThat(journalistIdPk.signature).isNull()
+        val coverNodeIdPk = publishedKeys.coverNodesKeyHierarchy.single()
+            .coverNodes.getValue("covernode_001").single().idPk
+        assertThat(coverNodeIdPk.signature).isNull()
 
-        publicDataRepository.initialize()
+        var initializationFailed = false
+        try {
+            publicDataRepository.initialize()
+        } catch (e: IllegalArgumentException) {
+            initializationFailed = true
+            assertThat(e).hasMessageThat().contains("No valid covernode key candidate found at all")
+        }
+        assertThat(initializationFailed).isTrue()
 
         val verifiedKeys = publicDataRepository.getVerifiedKeys()
         val hierarchy = verifiedKeys.keys.single()
-        assertThat(hierarchy.journalistsHierarchies.single().journalists.getValue("static_test_journalist")).hasSize(1)
-        assertThat(hierarchy.coverNodeHierarchies.single().coverNodes.getValue("covernode_001")).hasSize(1)
-
-        val journalistMsgKey = verifiedKeys.mostRecentMessagingKeyForJournalist("static_test_journalist", testClock)
-        assertThat(journalistMsgKey.notValidAfter).isGreaterThan(testClock.now())
-        assertThat(verifiedKeys.mostRecentMessagingKeyForEachCoverNode(testClock)).containsKey("covernode_001")
+        assertThat(hierarchy.journalistsHierarchies.single().journalists.getValue("static_test_journalist")).isEmpty()
+        assertThat(hierarchy.coverNodeHierarchies.single().coverNodes.getValue("covernode_001")).isEmpty()
     }
 }

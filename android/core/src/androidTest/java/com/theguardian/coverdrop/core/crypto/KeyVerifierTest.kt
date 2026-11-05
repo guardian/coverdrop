@@ -73,15 +73,28 @@ class KeyVerifierTest {
     }
 
     @Test
-    fun testVerifyPublishedKeys_whenGivenOldTestVectorWithoutSignatures_thenVerifies() {
+    fun testVerifyPublishedKeys_whenGivenOldTestVectorWithoutIdKeySignatures_thenDropsIdKeys() {
         val testVectors = IntegrationTestVectors(context, TestScenario.MinimalOldWithoutIdKeySignature)
         val publishedKeys = GsonApiJsonAdapter().parsePublishedPublicKeys(testVectors.readJson("published_keys"))
 
         val journalistIdPk = publishedKeys.keys.single().journalistsKeyHierarchy.single()
             .journalists.getValue("static_test_journalist").single().idPk
         assertThat(journalistIdPk.signature).isNull()
+        val coverNodeIdPk = publishedKeys.keys.single().coverNodesKeyHierarchy.single()
+            .coverNodes.getValue("covernode_001").single().idPk
+        assertThat(coverNodeIdPk.signature).isNull()
 
-        verifyAndAssertMinimalScenario(testVectors)
+        val verifiedKeys = instance.verifyPublishedKeysAndProfiles(
+            publishedKeysAndProfiles = publishedKeys,
+            trustedOrgPks = testVectors.getKeys().getTrustedOrganisationKeys(),
+            now = testVectors.getNow()
+        )
+        val hierarchy = verifiedKeys.keys.single()
+        assertThat(hierarchy.orgPk.pk.bytes).isNotEmpty()
+        assertThat(hierarchy.coverNodeHierarchies.single().provisioningPk.pk.bytes).isNotEmpty()
+        assertThat(hierarchy.coverNodeHierarchies.single().coverNodes.values.single()).isEmpty()
+        assertThat(hierarchy.journalistsHierarchies.single().provisioningPk.pk.bytes).isNotEmpty()
+        assertThat(hierarchy.journalistsHierarchies.single().journalists.values.single()).isEmpty()
     }
 
     @Test
@@ -610,6 +623,36 @@ class KeyVerifierTest {
         ).isNull()
     }
 
+    @Test(expected = KeyVerificationException::class)
+    fun testVerifySigningKeyWithExpiryOrThrow_whenSignatureAndCertificateBothMissing_thenThrows() {
+        val candidate = PublishedSignedSigningKey(
+            key = TEST_SIGNING_KEY,
+            certificate = "",
+            notValidAfter = TEST_SIGNING_NOT_VALID_AFTER,
+            signature = null,
+        )
+        instance.verifySigningKeyWithExpiryOrThrow(
+            candidate = candidate,
+            parent = PublicSigningKey(TEST_SIGNING_KEY_PARENT.hexDecode()),
+            now = TEST_SIGNING_NOT_VALID_AFTER
+        )
+    }
+
+    @Test
+    fun testVerifySigningKeyWithExpiryOrThrow_whenSignatureValidAndCertificateMissing_thenVerifies() {
+        val candidate = PublishedSignedSigningKey(
+            key = TEST_SIGNING_KEY,
+            certificate = "",
+            notValidAfter = TEST_SIGNING_NOT_VALID_AFTER,
+            signature = TEST_SIGNING_CERTIFICATE,
+        )
+        instance.verifySigningKeyWithExpiryOrThrow(
+            candidate = candidate,
+            parent = PublicSigningKey(TEST_SIGNING_KEY_PARENT.hexDecode()),
+            now = TEST_SIGNING_NOT_VALID_AFTER
+        )
+    }
+
     @Test
     fun testVerifyEncryptionKeyWithExpiryOrThrow_whenSignaturePresentAndValid_thenVerifies() {
         val candidate = PublishedSignedEncryptionKey(
@@ -708,6 +751,24 @@ class KeyVerifierTest {
     }
 
     @Test(expected = KeyVerificationException::class)
+    fun testVerifyIdSigningKeyWithExpiryOrThrow_whenLegacyCertificateInvalid_thenThrows() {
+        val parent = SigningKeyPair.new(libSodium)
+        val signedCandidate = newSignedSigningKey(
+            parent,
+            signatureIdentity = "journalist_a",
+            signatureRole = IdKeyRole.JOURNALIST_ID,
+        )
+        val candidate = signedCandidate.copy(certificate = signedCandidate.certificate.reversed())
+        instance.verifyIdSigningKeyWithExpiryOrThrow(
+            candidate = candidate,
+            parent = parent.publicSigningKey,
+            role = IdKeyRole.JOURNALIST_ID,
+            identity = "journalist_a",
+            now = idKeyNow
+        )
+    }
+
+    @Test(expected = KeyVerificationException::class)
     fun testVerifyIdSigningKeyWithExpiryOrThrow_whenSignatureForOtherIdentity_thenThrows() {
         val parent = SigningKeyPair.new(libSodium)
         val candidate = newSignedSigningKey(parent, signatureIdentity = "journalist_a")
@@ -771,8 +832,8 @@ class KeyVerifierTest {
         ).isNull()
     }
 
-    @Test
-    fun testVerifyIdSigningKeyWithExpiryOrThrow_whenSignatureAbsent_thenVerifies() {
+    @Test(expected = KeyVerificationException::class)
+    fun testVerifyIdSigningKeyWithExpiryOrThrow_whenSignatureAbsent_thenThrows() {
         val parent = SigningKeyPair.new(libSodium)
         val candidate = newSignedSigningKey(parent, includeSignature = false)
         assertThat(candidate.signature).isNull()
