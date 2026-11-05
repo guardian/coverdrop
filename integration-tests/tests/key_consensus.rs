@@ -8,7 +8,7 @@ use integration_tests::{
         get_and_verify_public_keys, get_journalist_to_user_dead_drops,
         get_user_to_journalist_dead_drops,
     },
-    dev_u2j_mixing_config, save_test_vector,
+    dev_u2j_mixing_config,
     stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
 };
@@ -57,8 +57,6 @@ async fn key_consensus() -> anyhow::Result<()> {
         assert!(journalist_dead_drops.is_empty());
     }
 
-    save_test_vector!("initial_state", &stack);
-
     let initial_epoch = initial_keys_and_profiles.max_epoch;
 
     let journalist_id = {
@@ -86,8 +84,6 @@ async fn key_consensus() -> anyhow::Result<()> {
             assert!(user_dead_drops.is_empty());
             assert!(journalist_dead_drops.is_empty());
         }
-
-        save_test_vector!("initial_state", &stack);
 
         let initial_covernode_msg_pks_count = initial_keys_and_profiles
             .keys
@@ -254,8 +250,6 @@ async fn key_consensus() -> anyhow::Result<()> {
     };
 
     assert!(success);
-
-    save_test_vector!("user_sent_message_and_processed", &stack);
 
     assert!(!stack.do_secrets_exist_in_stack().await);
 

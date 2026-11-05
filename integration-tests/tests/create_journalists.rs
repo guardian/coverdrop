@@ -11,7 +11,6 @@ use integration_tests::{
         generate_test_desk, generate_test_journalist, get_and_verify_public_keys, get_public_keys,
         upload_new_messaging_key,
     },
-    save_test_vector,
     secrets::MAILBOX_PASSWORD,
     stack::{CoverDropStack, StackProfile},
 };
@@ -194,9 +193,6 @@ async fn create_journalists() {
         1
     );
 
-    // Emit state before time travel: keys are valid
-    save_test_vector!("initial_state", &stack);
-
     //
     // Check API still displays keys as they expire
     //
@@ -219,9 +215,6 @@ async fn create_journalists() {
             .count(),
         0
     );
-
-    // Emit state after initial time travel: keys are expired but still displayed
-    save_test_vector!("post_expiry_still_displayed", &stack);
 
     //
     // Check API doesn't display keys 7 days after they're no longer valid (21 days after they were created)
@@ -256,9 +249,6 @@ async fn create_journalists() {
             .count(),
         0
     );
-
-    // Emit state after second time travel: keys are expired so long that they are no longer displayed
-    save_test_vector!("post_display", &stack);
 
     // after 8 weeks, the id key is also deleted
     let post_garbage_collect_id_key = stack.now() + Duration::weeks(5);

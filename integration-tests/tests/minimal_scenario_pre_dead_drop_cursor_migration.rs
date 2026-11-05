@@ -5,7 +5,7 @@ use tokio::time;
 use client::commands::journalist::messages::send_journalist_to_user_cover_message;
 use integration_tests::{
     api_wrappers::{get_and_verify_public_keys, get_journalist_dead_drops, get_user_dead_drops},
-    dev_j2u_mixing_config, dev_u2j_mixing_config, save_test_vector,
+    dev_j2u_mixing_config, dev_u2j_mixing_config,
     stack::{CoverDropStack, StackProfile},
     utils::send_user_to_journalist_cover_messages,
 };
@@ -60,6 +60,4 @@ async fn minimal_scenario() {
     assert_eq!(journalist_dead_drops.len(), 2);
 
     assert!(!stack.do_secrets_exist_in_stack().await);
-    // Only emitting one snapshot at the end to avoid confusion and keep the output minimal
-    save_test_vector!("default", &stack);
 }
