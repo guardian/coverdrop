@@ -18,7 +18,6 @@ pub struct CoverNodeArgs {
     api_port: u16,
     identity_api_ip: IpAddr,
     identity_api_port: u16,
-    checkpoint_dir: String,
     keys_dir: String,
     kinesis_ip: IpAddr,
     kinesis_port: u16,
@@ -46,7 +45,6 @@ impl CoverNodeArgs {
         api_port: u16,
         identity_api_ip: IpAddr,
         identity_api_port: u16,
-        checkpoint_dir: String,
         keys_dir: String,
         kinesis_ip: IpAddr,
         kinesis_port: u16,
@@ -61,7 +59,6 @@ impl CoverNodeArgs {
             api_port,
             identity_api_ip,
             identity_api_port,
-            checkpoint_dir,
             keys_dir,
             kinesis_ip,
             kinesis_port,
@@ -89,8 +86,6 @@ impl CoverNodeArgs {
             "--identity-api-url=http://{}:{}",
             self.identity_api_ip, self.identity_api_port
         );
-
-        let checkpoint_dir_arg = format!("--checkpoint-path={}", self.checkpoint_dir);
 
         let journalist_cache_refresh_period_seconds = "--journalist-cache-refresh-period-seconds=1";
 
@@ -127,11 +122,12 @@ impl CoverNodeArgs {
 
         let command = format!(
             "{set_time_arg} && ./covernode --covernode-id {covernode_id} {db_args} \
-            {api_url_arg} {identity_api_url_arg} {checkpoint_dir_arg} {journalist_cache_refresh_period_seconds} \
+            {api_url_arg} {identity_api_url_arg} {journalist_cache_refresh_period_seconds} \
             {publish_keys_task_period_seconds_args} \
             {kinesis_flags} {u2j_mixing_parameters} \
             {j2u_mixing_parameters} {aws_flags} {runner_mode_arg} \
-            {disable_stream_throttle} {stage}");
+            {disable_stream_throttle} {stage}"
+        );
 
         println!("Starting Covernode with: {command}");
 

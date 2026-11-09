@@ -48,9 +48,6 @@ async fn start(cli: &Cli) -> anyhow::Result<()> {
 
     let db = Database::open(&cli.db_path, &cli.db_password).await?;
 
-    // Migrate checkpoint files from the filesystem into the database (if they exist)
-    covernode::migrate_checkpoint_files_to_db(&cli.checkpoint_path, &db).await?;
-
     let checkpoints = db.select_checkpoints().await?;
 
     let kinesis_client = KinesisClient::new_with_checkpoints(

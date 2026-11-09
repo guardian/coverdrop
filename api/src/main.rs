@@ -17,11 +17,7 @@ use api::controllers::dead_drops_legacy::{get_journalist_dead_drops, get_user_de
 use api::controllers::general::{
     get_healthcheck, get_latest_status, post_reload_tracing, post_status_event,
 };
-#[allow(deprecated)]
-use api::controllers::journalist_message::{
-    post_forward_journalist_to_covernode_msg,
-    post_forward_journalist_to_covernode_msg_with_deduplication_token,
-};
+use api::controllers::journalist_message::post_forward_journalist_to_covernode_msg_with_deduplication_token;
 use api::controllers::journalist_status::patch_journalist_status;
 use api::controllers::keys::{
     delete_journalist, get_journalist_id_pk_rotation_forms, get_journalist_id_pk_with_epoch,
@@ -259,12 +255,6 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/user-to-journalist/dead-drops/recent-summary",
             get(get_user_to_journalist_recent_dead_drop_summary),
-        )
-        // deprecating this endpoint in favor of the one with deduplication token
-        // TODO remove https://github.com/guardian/coverdrop-internal/issues/4087
-        .route(
-            "/journalist-messages",
-            post(post_forward_journalist_to_covernode_msg),
         )
         .route(
             "/journalist-to-covernode-messages",

@@ -266,7 +266,12 @@ pub async fn burst_cover_messages(
         )?;
 
         api_client
-            .post_journalist_msg(j2c_msg, &latest_id_key_pair, now)
+            .post_journalist_msg_with_deduplication_token(
+                j2c_msg,
+                MessageId::new(),
+                &latest_id_key_pair,
+                now,
+            )
             .await
             .context(AnyhowSnafu {
                 failed_to: "send cover message to API",

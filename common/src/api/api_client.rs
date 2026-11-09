@@ -33,8 +33,6 @@ use crate::clients::{
 };
 use crate::system::keys::AdminKeyPair;
 
-#[allow(deprecated)]
-use super::forms::PostJournalistToCoverNodeMessageFormDeprecated;
 use super::forms::{
     DeleteJournalistForm, PatchJournalistForm, PostAdminPublicKeyForm,
     PostCoverNodeIdPublicKeyForm, PostCoverNodeMessagingPublicKeyForm,
@@ -489,26 +487,6 @@ impl ApiClient {
         let epoch = handle_response_json(resp).await?;
 
         Ok(epoch)
-    }
-
-    pub async fn post_journalist_msg(
-        &self,
-        j2c_msg: EncryptedJournalistToCoverNodeMessage,
-        id_key_pair: &JournalistIdKeyPair,
-        now: DateTime<Utc>,
-    ) -> anyhow::Result<()> {
-        let mut url = self.base_url.clone();
-        url.path_segments_mut()
-            .unwrap()
-            .push("v1")
-            .push("journalist-messages");
-
-        #[allow(deprecated)]
-        let form = PostJournalistToCoverNodeMessageFormDeprecated::new(j2c_msg, id_key_pair, now)?;
-
-        let resp = self.client.post(url).json(&form).send().await?;
-
-        handle_response(resp).await
     }
 
     pub async fn post_journalist_msg_with_deduplication_token(

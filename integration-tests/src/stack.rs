@@ -90,7 +90,6 @@ pub struct CoverDropStack {
     api_keys_path: PathBuf,
     stack_keys: StackKeys,
     mailboxes: StackMailboxes,
-    _checkpoints_dir: TempDir,
     covernode_database: Database,
 
     // Time management
@@ -554,9 +553,6 @@ impl CoverDropStackBuilder {
             None => API_PORT,
         };
 
-        let checkpoints_dir =
-            tempdir_in(std::env::current_dir().unwrap()).expect("Create temporary keys directory");
-
         let covernode_future = async {
             if self.enable_covernode {
                 let identity_api_ip = identity_api
@@ -570,7 +566,6 @@ impl CoverDropStackBuilder {
                     covernode_id.clone(),
                     &self.network,
                     &covernode_key_dir,
-                    &checkpoints_dir,
                     api_ip,
                     api_port,
                     identity_api_ip,
@@ -688,7 +683,6 @@ impl CoverDropStackBuilder {
             api_keys_path: api_key_dir,
             stack_keys,
             mailboxes,
-            _checkpoints_dir: checkpoints_dir,
             covernode_database,
             base_time,
             current_time: base_time,

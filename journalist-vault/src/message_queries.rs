@@ -303,11 +303,7 @@ pub(crate) async fn peek_head_queue_message(
     .map(|row| EncryptedJournalistToCoverNodeMessageWithId {
         id: row.id,
         message: EncryptedJournalistToCoverNodeMessage::from_vec_unchecked(row.bytes),
-        // The migration adding deduplication_id might be executed with items in the queue, so
-        // we need to add a default.
-        // TODO make column non-null, remove this.
-        // https://github.com/guardian/coverdrop-internal/issues/4087
-        deduplication_id: row.deduplication_id.unwrap_or_else(MessageId::new),
+        deduplication_id: row.deduplication_id,
     });
 
     Ok(maybe_message)

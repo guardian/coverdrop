@@ -15,14 +15,12 @@ use common::task::RunnerMode;
 use testcontainers::{ContainerAsync, ImageExt};
 
 const CONTAINER_KEYS_DIR: &str = "/var/keys";
-const CONTAINER_CHECKPOINTS_DIR: &str = "/var/checkpoints";
 
 #[allow(clippy::too_many_arguments)]
 pub async fn start_covernode(
     covernode_id: CoverNodeIdentity,
     network: &str,
     keys_path: impl AsRef<Path>,
-    checkpoints_path: impl AsRef<Path>,
     api_ip: IpAddr,
     api_port: u16,
     identity_api_ip: IpAddr,
@@ -31,7 +29,6 @@ pub async fn start_covernode(
     runner_mode: RunnerMode,
 ) -> ContainerAsync<CoverNode> {
     let keys_volume = temp_dir_to_mount(keys_path, CONTAINER_KEYS_DIR);
-    let checkpoints_volume = temp_dir_to_mount(checkpoints_path, CONTAINER_CHECKPOINTS_DIR);
 
     let covernode_image_args = CoverNodeArgs::new(
         covernode_id,
@@ -39,7 +36,6 @@ pub async fn start_covernode(
         api_port,
         identity_api_ip,
         IDENTITY_API_PORT,
-        CONTAINER_CHECKPOINTS_DIR.into(),
         CONTAINER_KEYS_DIR.into(),
         kinesis_ip,
         KINESIS_PORT,
@@ -58,7 +54,6 @@ pub async fn start_covernode(
         CoverNode::default()
             .with_cmd(cmd.clone())
             .with_mount(keys_volume.clone())
-            .with_mount(checkpoints_volume.clone())
             .with_network(network)
             .with_startup_timeout(Duration::from_secs(120))
     })
