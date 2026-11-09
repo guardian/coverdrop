@@ -8,9 +8,9 @@ pub(crate) async fn create_initial_info(
     conn: &mut SqliteConnection,
     journalist_id: &JournalistIdentity,
     sentinel_id: &SentinelIdentity,
-    stage: Option<Stage>,
+    stage: Stage,
 ) -> anyhow::Result<()> {
-    let stage_str = stage.map(|s| s.as_guardian_str().to_owned());
+    let stage_str = stage.as_guardian_str();
     sqlx::query!(
         r#"
             INSERT INTO vault_info
@@ -87,9 +87,8 @@ pub(crate) async fn set_max_dead_drop_created_at(
     Ok(())
 }
 
-/// Returns the stage stored in the vault, if set.
-/// Returns None for vaults created before the stage column was added (migration backfill case).
-pub(crate) async fn stage(conn: &mut SqliteConnection) -> anyhow::Result<Option<Stage>> {
+/// Returns the stage stored in the vault.
+pub(crate) async fn stage(conn: &mut SqliteConnection) -> anyhow::Result<Stage> {
     let row = sqlx::query!(
         r#"
             SELECT
@@ -100,21 +99,7 @@ pub(crate) async fn stage(conn: &mut SqliteConnection) -> anyhow::Result<Option<
     .fetch_one(conn)
     .await?;
 
-    match row.stage.as_deref() {
-        Some(stage_str) => Ok(Some(Stage::from_guardian_str(stage_str)?)),
-        None => Ok(None),
-    }
-}
-
-/// Sets the stage in the vault. This is used to backfill the stage for existing vaults
-/// during migration (when the vault is first opened after the migration).
-pub(crate) async fn set_stage(conn: &mut SqliteConnection, stage: Stage) -> anyhow::Result<()> {
-    let stage_str = stage.as_guardian_str();
-    sqlx::query!("UPDATE vault_info SET stage = ?1", stage_str)
-        .execute(conn)
-        .await?;
-
-    Ok(())
+    Stage::from_guardian_str(&row.stage)
 }
 
 pub(crate) async fn max_delivery_service_message_id(

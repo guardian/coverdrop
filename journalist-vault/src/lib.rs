@@ -76,7 +76,6 @@ use sqlx::migrate::Migrate;
 use sqlx::Acquire;
 use sqlx::SqlitePool;
 use thiserror::Error;
-use tracing::info;
 
 /// Errors that can occur when opening a vault.
 /// These are exposed to the user interface to provide helpful error messages.
@@ -162,33 +161,7 @@ impl JournalistVault {
             journalist_provisioning_pks,
             now,
             trust_anchors,
-            Some(stage),
-        )
-        .await
-    }
-
-    /// Creates a vault without setting a stage in vault_info.
-    /// This simulates a vault created before the stage column was added,
-    /// for testing the migration backfill path.
-    #[cfg(feature = "test-utils")]
-    pub async fn create_without_stage(
-        path: impl AsRef<Path>,
-        password: &str,
-        journalist_id: &JournalistIdentity,
-        sentinel_id: &SentinelIdentity,
-        journalist_provisioning_pks: &[JournalistProvisioningPublicKey],
-        now: DateTime<Utc>,
-        trust_anchors: Vec<AnchorOrganizationPublicKey>,
-    ) -> anyhow::Result<Self> {
-        Self::internal_create(
-            path,
-            password,
-            journalist_id,
-            sentinel_id,
-            journalist_provisioning_pks,
-            now,
-            trust_anchors,
-            None,
+            stage,
         )
         .await
     }
@@ -215,7 +188,7 @@ impl JournalistVault {
             journalist_provisioning_pks,
             now,
             trust_anchors,
-            Some(stage),
+            stage,
         )
         .await
     }
@@ -229,7 +202,7 @@ impl JournalistVault {
         journalist_provisioning_pks: &[JournalistProvisioningPublicKey],
         now: DateTime<Utc>,
         trust_anchors: Vec<AnchorOrganizationPublicKey>,
-        stage: Option<Stage>,
+        stage: Stage,
     ) -> anyhow::Result<Self> {
         let db = Argon2SqlCipher::new(path, password).await?;
         let pool = db.into_sqlite_pool();
@@ -310,32 +283,15 @@ impl JournalistVault {
             .await
             .map_err(OpenVaultError::Other)?;
 
-        // Check the stage stored in the vault.
-        // If the vault was created before the stage column was added, backfill it with the current stage.
-        // If the stage is already set and doesn't match, fail the open.
-        match info_queries::stage(&mut conn)
+        // Check the stage stored in the vault matches the stage being requested.
+        let stored_stage = info_queries::stage(&mut conn)
             .await
-            .map_err(OpenVaultError::Other)?
-        {
-            Some(stored_stage) if stored_stage != stage => {
-                return Err(OpenVaultError::StageMismatch {
-                    stored_stage,
-                    requested_stage: stage,
-                });
-            }
-            Some(_) => {
-                // Stage matches, all good
-            }
-            None => {
-                // Backfill the stage for vaults that were created before the stage column was added
-                info!("The vault has no stage set. Backfilling the stage with the current stage {:?}.", stage);
-                info_queries::set_stage(&mut conn, stage)
-                    .await
-                    .map_err(OpenVaultError::Other)?;
-
-                // TODO: remove after 2026-06-01 when all clients should have been migrated
-                // See: https://github.com/guardian/coverdrop-internal/issues/3910
-            }
+            .map_err(OpenVaultError::Other)?;
+        if stored_stage != stage {
+            return Err(OpenVaultError::StageMismatch {
+                stored_stage,
+                requested_stage: stage,
+            });
         }
 
         Ok(Self {

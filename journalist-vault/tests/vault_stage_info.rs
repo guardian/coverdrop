@@ -8,46 +8,8 @@ use common::{
 use journalist_vault::JournalistVault;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir_in;
-use trust_anchors::get_trust_anchors;
 
 mod test_utils;
-
-/// A vault created without a stage (simulating a pre-migration vault) should have its stage
-/// backfilled on the first open and then enforce that stage on subsequent opens.
-#[tokio::test]
-async fn vault_without_stage_is_backfilled_on_open() {
-    let (db_path, _tmp, journalist_id, provisioning_pks) = setup();
-    let now = Utc::now();
-
-    let trust_anchors = get_trust_anchors(&Stage::Development, now).expect("loaded trust anchors");
-
-    // Create a vault *without* a stage, simulating a pre-migration vault.
-    JournalistVault::create_without_stage(
-        &db_path,
-        test_utils::TEST_PASSPHRASE_VAULT,
-        &journalist_id,
-        &SentinelIdentity::new("test_sentinel").unwrap(),
-        &provisioning_pks,
-        now,
-        trust_anchors,
-    )
-    .await
-    .expect("Create vault without stage");
-
-    // First open: stage is None so it gets backfilled with Development.
-    let vault = open(&db_path, Stage::Development)
-        .await
-        .expect("First open should backfill the stage");
-    assert_eq!(journalist_id, vault.journalist_id().await.unwrap());
-
-    // Second open with same stage: succeeds because it was backfilled.
-    open(&db_path, Stage::Development)
-        .await
-        .expect("Second open with matching stage should succeed");
-
-    // Third open with different stage: fails.
-    assert_open_fails_with_stage_mismatch(&db_path, Stage::Staging).await;
-}
 
 /// A vault created *with* a stage rejects opens using a different stage from the start.
 #[tokio::test]
