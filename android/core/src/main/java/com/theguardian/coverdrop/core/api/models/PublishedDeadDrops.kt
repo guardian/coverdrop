@@ -6,9 +6,6 @@ import java.time.Instant
 
 @Keep // required to survive R8
 data class PublishedJournalistToUserDeadDrop(
-    @SerializedName("id")
-    val id: Int,
-
     @SerializedName("created_at")
     val createdAt: Instant,
 

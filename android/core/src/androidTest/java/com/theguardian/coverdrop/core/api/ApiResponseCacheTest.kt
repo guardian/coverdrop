@@ -6,11 +6,13 @@ import com.theguardian.coverdrop.core.api.models.PublishedJournalistToUserDeadDr
 import com.theguardian.coverdrop.core.api.models.PublishedJournalistToUserDeadDropsList
 import com.theguardian.coverdrop.core.api.models.PublishedKeysAndProfiles
 import com.theguardian.coverdrop.core.api.models.PublishedSignedSigningKey
+import com.theguardian.coverdrop.core.api.models.VerifiedDeadDrop
 import com.theguardian.coverdrop.core.crypto.ED25519_PUBLIC_KEY_BYTES
 import com.theguardian.coverdrop.core.mocks.CoverDropApiClientMock
 import com.theguardian.coverdrop.core.persistence.CoverDropFileManager
 import com.theguardian.coverdrop.core.persistence.CoverDropNamespace
 import com.theguardian.coverdrop.core.persistence.PublicStorage
+import com.theguardian.coverdrop.core.utils.base64Encode
 import com.theguardian.coverdrop.core.utils.hexEncode
 import com.theguardian.coverdrop.testutils.InstantSubject
 import com.theguardian.coverdrop.testutils.IntegrationTestVectors
@@ -19,6 +21,7 @@ import com.theguardian.coverdrop.testutils.TestClock
 import com.theguardian.coverdrop.testutils.TestScenario
 import com.theguardian.coverdrop.testutils.createMinimalCoverDropTestConfigurationWithClock
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.time.Duration
@@ -43,10 +46,17 @@ class ApiResponseCacheTest {
         apiCallProvider = apiCallProvider,
         apiConfiguration = configuration.apiConfiguration,
     )
-    private val instance = ApiResponseCache(apiClient, publicStorage, configuration, clock)
+    // The fake dead drops in these tests are not signed, so the test decides which of the stored dead drops count as
+    // verified (all of them by default).
+    private fun verifiedDeadDrops(isVerified: (PublishedJournalistToUserDeadDrop) -> Boolean = { true }) =
+        publicStorage.readDeadDrops().deadDrops.filter(isVerified).map { VerifiedDeadDrop(it.createdAt, emptyList()) }
+
+    private val instance = ApiResponseCache(apiClient, publicStorage, configuration, clock) { verifiedDeadDrops() }
 
     @Before
-    fun setUp() {
+    @After
+    fun cleanUp() {
+        // the storage is shared with other test classes, which must not see our unsigned fake dead drops
         publicStorage.deleteAll()
     }
 
@@ -79,7 +89,7 @@ class ApiResponseCacheTest {
         val apiClient2 = CoverDropApiClientMock(
             mockedGetPublishedKeysAndProfiles = { publishedKeys2 }
         )
-        val instance2 = ApiResponseCache(apiClient2, publicStorage, configuration, clock)
+        val instance2 = ApiResponseCache(apiClient2, publicStorage, configuration, clock) { verifiedDeadDrops() }
 
         runBlocking {
             instance2.downloadAndUpdateCachedPublishedKeys()
@@ -114,7 +124,8 @@ class ApiResponseCacheTest {
             instance.downloadAndUpdateNewDeadDrops()
         }
 
-        val expected = runBlocking { apiClient.getDeadDrops(Instant.EPOCH) }
+        // dead drops are stored with whole-second precision, which is what the CoverNode signs
+        val expected = instance.normalizeAndDeduplicate(runBlocking { apiClient.getDeadDrops(Instant.EPOCH) })
 
         assertThat(publicStorage.readDeadDrops()).isEqualTo(expected)
         InstantSubject.assertThat(publicStorage.readPublishedDeadDropsLastUpdate())
@@ -127,12 +138,13 @@ class ApiResponseCacheTest {
         assertThat(coveredDuration).isAtMost(configuration.deadDropCacheTTL)
     }
 
-    private fun fakeUserFacingDeadDrop(id: Int, createdAt: Instant) =
+    // The content (data and signature) is derived from the `seed`, so dead drops with different seeds are different
+    // dead drops. Use the same `seed` to create copies of the same signed dead drop.
+    private fun fakeUserFacingDeadDrop(seed: Int, createdAt: Instant) =
         PublishedJournalistToUserDeadDrop(
-            id = id,
             createdAt = createdAt,
-            data = "",
-            signature = ""
+            data = "data-$seed".toByteArray().base64Encode(),
+            signature = "signature-$seed".toByteArray().hexEncode()
         )
 
     @Test
@@ -158,7 +170,9 @@ class ApiResponseCacheTest {
 
         // After merging and trimming we expect that we only have dead drops that range from
         // April 1 to April 10. I.e., all of them
-        existingDeadDrops = instance.mergeAndTrimDeadDrops(existingDeadDrops, newDeadDropsApril10)
+        existingDeadDrops = instance.mergeAndTrimDeadDrops(
+            existingDeadDrops, newDeadDropsApril10, trimReference = deadDropApril10.createdAt
+        )
         assertThat(existingDeadDrops.deadDrops).containsExactly(
             deadDropApril01,
             deadDropApril05,
@@ -173,7 +187,9 @@ class ApiResponseCacheTest {
 
         // After merging and trimming we expect that we only have dead drops that range from
         // April 6 to April 20 (i.e. deadDropCacheTTL).
-        existingDeadDrops = instance.mergeAndTrimDeadDrops(existingDeadDrops, newDeadDropsApril20)
+        existingDeadDrops = instance.mergeAndTrimDeadDrops(
+            existingDeadDrops, newDeadDropsApril20, trimReference = deadDropApril20.createdAt
+        )
         assertThat(existingDeadDrops.deadDrops).containsExactly(
             deadDropApril06,  // just barely in by 1 second because the cut-off-date is inclusive
             deadDropApril10,
@@ -188,7 +204,9 @@ class ApiResponseCacheTest {
 
         // After merging and trimming we expect that we only have dead drops that range from
         // June 1 to June 7.
-        existingDeadDrops = instance.mergeAndTrimDeadDrops(existingDeadDrops, newDeadDropsJune07)
+        existingDeadDrops = instance.mergeAndTrimDeadDrops(
+            existingDeadDrops, newDeadDropsJune07, trimReference = deadDropJune07.createdAt
+        )
         assertThat(existingDeadDrops.deadDrops).containsExactly(
             deadDropJune01,
             deadDropJune07,
@@ -226,13 +244,141 @@ class ApiResponseCacheTest {
                 PublishedJournalistToUserDeadDropsList(listOf(replayedBefore, replayedAtCursor))
             }
         )
-        val replayingInstance = ApiResponseCache(replayingApiClient, publicStorage, configuration, clock)
+        val replayingInstance = ApiResponseCache(replayingApiClient, publicStorage, configuration, clock) {
+            verifiedDeadDrops()
+        }
 
         runBlocking {
             replayingInstance.downloadAndUpdateNewDeadDrops()
         }
 
         assertThat(publicStorage.readDeadDrops()).isEqualTo(existing)
+    }
+
+    @Test
+    fun testNormalizeAndDeduplicate_truncatesAndMergesCopiesOfSameSignedDeadDrop() {
+        val signedSecond = Instant.parse("2023-04-10T12:34:56Z")
+        val original = fakeUserFacingDeadDrop(7, signedSecond)
+
+        // a copy with only the unsigned sub-second part of `createdAt` differing
+        val copyWithSubSecond = original.copy(createdAt = signedSecond.plusNanos(389_000_000))
+
+        // different signed content: whole second, data, and tampered data under the same signature
+        val nextSecond = fakeUserFacingDeadDrop(7, signedSecond.plusSeconds(1))
+        val otherData = fakeUserFacingDeadDrop(8, signedSecond)
+        val tamperedData = original.copy(data = "tampered".toByteArray().base64Encode())
+
+        val normalized = instance.normalizeAndDeduplicate(
+            PublishedJournalistToUserDeadDropsList(
+                listOf(original, copyWithSubSecond, nextSecond, otherData, tamperedData)
+            )
+        )
+
+        assertThat(normalized.deadDrops).containsExactly(original, nextSecond, otherData, tamperedData)
+    }
+
+    @Test
+    fun testDeadDrops_whenApiServesCursorDeadDropAgainWithSubSecondPrecision_thenStorageUnchanged() {
+        // The API returns dead drops with `created_at > cursor` and its `created_at` has sub-second precision.
+        // Because the cursor is truncated to whole seconds, the dead drop that the cursor was taken from is served
+        // again. After truncating it is equal to the cursor, so it is discarded.
+        val cursorSecond = Instant.parse("2023-04-10T00:00:00Z")
+        val existing = PublishedJournalistToUserDeadDropsList(listOf(fakeUserFacingDeadDrop(1, cursorSecond)))
+        publicStorage.writeDeadDrops(existing)
+
+        val servedAgain = fakeUserFacingDeadDrop(1, cursorSecond.plusNanos(389_000_000))
+        val servedAgainResponse = PublishedJournalistToUserDeadDropsList(listOf(servedAgain))
+        val servingAgainInstance = ApiResponseCache(
+            CoverDropApiClientMock(mockedGetDeadDrops = { servedAgainResponse }),
+            publicStorage, configuration, clock
+        ) { verifiedDeadDrops() }
+
+        runBlocking { servingAgainInstance.downloadAndUpdateNewDeadDrops() }
+
+        assertThat(publicStorage.readDeadDrops()).isEqualTo(existing)
+    }
+
+    @Test
+    fun testDeadDrops_whenApiReplaysNewDeadDropWithDifferentTimestamps_thenStoredOnlyOnce() {
+        val cursorSecond = Instant.parse("2023-04-10T00:00:00Z")
+        publicStorage.writeDeadDrops(
+            PublishedJournalistToUserDeadDropsList(listOf(fakeUserFacingDeadDrop(1, cursorSecond)))
+        )
+
+        // a malicious API serves one genuinely signed new dead drop many times with different sub-second timestamps
+        val replayedCopies = (0 until 1000).map {
+            fakeUserFacingDeadDrop(2, cursorSecond.plusSeconds(1).plusNanos(it * 1_000L))
+        }
+        val replayingInstance = ApiResponseCache(
+            CoverDropApiClientMock(mockedGetDeadDrops = { PublishedJournalistToUserDeadDropsList(replayedCopies) }),
+            publicStorage, configuration, clock
+        ) { verifiedDeadDrops() }
+
+        runBlocking { replayingInstance.downloadAndUpdateNewDeadDrops() }
+
+        // the existing dead drop and one copy of the new dead drop
+        assertThat(publicStorage.readDeadDrops().deadDrops).hasSize(2)
+    }
+
+    @Test
+    fun testDeadDrops_whenVerifiedKeysNotAvailable_thenDoesNotDownload() {
+        val existing = PublishedJournalistToUserDeadDropsList(
+            listOf(fakeUserFacingDeadDrop(1, Instant.parse("2023-04-10T00:00:00Z")))
+        )
+        publicStorage.writeDeadDrops(existing)
+
+        // the API mock fails the test if it is called
+        val instanceWithoutKeys = ApiResponseCache(
+            CoverDropApiClientMock(), publicStorage, configuration, clock
+        ) { error("no verified keys") }
+
+        runBlocking { instanceWithoutKeys.downloadAndUpdateNewDeadDrops() }
+
+        assertThat(publicStorage.readDeadDrops()).isEqualTo(existing)
+    }
+
+    @Test
+    fun testDeadDrops_whenForgedFarFutureDeadDropStored_thenGenuineDeadDropsAreNotEvicted() {
+        val t0 = Instant.parse("2023-04-10T00:00:00Z")
+        val genuine = fakeUserFacingDeadDrop(1, t0)
+        // a malicious API served a dead drop that does not verify and whose `createdAt` is far in the future
+        val forged = fakeUserFacingDeadDrop(2, t0.plus(Duration.ofDays(100)))
+        publicStorage.writeDeadDrops(PublishedJournalistToUserDeadDropsList(listOf(genuine, forged)))
+
+        val newGenuine = fakeUserFacingDeadDrop(3, t0.plus(Duration.ofHours(1)))
+        val servingInstance = ApiResponseCache(
+            CoverDropApiClientMock(mockedGetDeadDrops = { PublishedJournalistToUserDeadDropsList(listOf(newGenuine)) }),
+            publicStorage, configuration, clock
+        ) { verifiedDeadDrops { it != forged } }
+
+        runBlocking { servingInstance.downloadAndUpdateNewDeadDrops() }
+
+        // the forged dead drop must not be used as the reference for "now" when trimming
+        assertThat(publicStorage.readDeadDrops().deadDrops).containsAtLeast(genuine, newGenuine)
+        // the forged dead drop ends up in public storage because the cursor is verified but the dead drops are not.
+        assertThat(publicStorage.readDeadDrops().deadDrops).contains(forged)
+    }
+
+    @Test
+    fun testDeadDrops_cursorIgnoresStoredDeadDropsThatDoNotVerify() {
+        val verifiedCreatedAt = Instant.parse("2023-04-10T00:00:00Z")
+        val verified = fakeUserFacingDeadDrop(1, verifiedCreatedAt)
+        // a malicious API served a dead drop with a made-up `createdAt` that does not verify
+        val forged = fakeUserFacingDeadDrop(2, verifiedCreatedAt.plus(Duration.ofDays(100)))
+        publicStorage.writeDeadDrops(PublishedJournalistToUserDeadDropsList(listOf(verified, forged)))
+
+        var requestedCursor: Instant? = null
+        val trackingInstance = ApiResponseCache(
+            CoverDropApiClientMock(mockedGetDeadDrops = {
+                requestedCursor = it
+                PublishedJournalistToUserDeadDropsList(emptyList())
+            }),
+            publicStorage, configuration, clock
+        ) { verifiedDeadDrops { it != forged } }
+
+        runBlocking { trackingInstance.downloadAndUpdateNewDeadDrops() }
+
+        assertThat(requestedCursor).isEqualTo(verifiedCreatedAt)
     }
 
     private val testLastDownload = Instant.now()

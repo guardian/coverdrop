@@ -84,7 +84,6 @@ class DeadDropParserTest {
         assertThat(verifiedDeadDrops).hasSize(3)
 
         for (deadDrop in verifiedDeadDrops) {
-            assertThat(deadDrop.id).isAnyOf(1, 2, 3)
             assertThat(deadDrop.createdAt).isAtLeast(Instant.parse("2000-01-01T00:00:00.000Z"))
             assertThat(deadDrop.messages).isNotEmpty()
         }
@@ -126,8 +125,8 @@ class DeadDropParserTest {
         val keyHierarchy = internalToCoverNodeKeyHierarchyForTest(publishedKeys)
 
         // we alter the signature of the second dead-drop
-        val alteredPublishedDeadDrops = publishedDeadDrops.deadDrops.map { deadDrop ->
-            if (deadDrop.id == 2) {
+        val alteredPublishedDeadDrops = publishedDeadDrops.deadDrops.mapIndexed { index, deadDrop ->
+            if (index == 1) {
                 deadDrop.copy(signature = deadDrop.signature!!.reversed())
             } else {
                 deadDrop
@@ -146,10 +145,58 @@ class DeadDropParserTest {
         assertThat(verifiedDeadDrops).hasSize(3 - 1)
 
         for (deadDrop in verifiedDeadDrops) {
-            assertThat(deadDrop.id).isAnyOf(1, 3)
             assertThat(deadDrop.createdAt).isAtLeast(Instant.parse("2000-01-01T00:00:00.000Z"))
             assertThat(deadDrop.messages).isNotEmpty()
         }
+    }
+
+    @Test
+    fun testVerifyAndParseDeadDropsList_whenOneDataIsMalformedBase64_andIgnoreBehaviour_thenAllOthersOk() {
+        val instance = DeadDropParser(libSodium, VerificationFailureBehaviour.DROP)
+
+        val integrationTestVectors = IntegrationTestVectors(context, TestScenario.Minimal)
+        val publishedDeadDrops =
+            GsonApiJsonAdapter().parsePublishedDeadDrops(integrationTestVectors.readJson("user_dead_drops"))
+        val numPublishedDeadDrops = publishedDeadDrops.deadDrops.size
+
+        val publishedKeys =
+            GsonApiJsonAdapter().parsePublishedPublicKeys(integrationTestVectors.readJson("published_keys"))
+        val keyHierarchy = internalToCoverNodeKeyHierarchyForTest(publishedKeys)
+
+        // a single Base64 character is never valid
+        val alteredList = PublishedJournalistToUserDeadDropsList(
+            deadDrops = publishedDeadDrops.deadDrops.mapIndexed { index, deadDrop ->
+                if (index == 1) deadDrop.copy(data = "A") else deadDrop
+            }
+        )
+
+        val verifiedDeadDrops = instance.verifyAndParseDeadDropsList(
+            candidate = alteredList,
+            coverNodeKeyHierarchies = listOf(keyHierarchy),
+        )
+
+        assertThat(verifiedDeadDrops).hasSize(numPublishedDeadDrops - 1)
+    }
+
+    @Test(expected = DeadDropVerificationException::class)
+    fun testVerifyAndParseDeadDropsList_whenDataIsMalformedBase64_andThrowBehaviour_thenThrowsVerificationException() {
+        val instance = DeadDropParser(libSodium, VerificationFailureBehaviour.THROW)
+
+        val integrationTestVectors = IntegrationTestVectors(context, TestScenario.Minimal)
+        val publishedDeadDrops =
+            GsonApiJsonAdapter().parsePublishedDeadDrops(integrationTestVectors.readJson("user_dead_drops"))
+        val publishedKeys =
+            GsonApiJsonAdapter().parsePublishedPublicKeys(integrationTestVectors.readJson("published_keys"))
+        val keyHierarchy = internalToCoverNodeKeyHierarchyForTest(publishedKeys)
+
+        val alteredList = PublishedJournalistToUserDeadDropsList(
+            deadDrops = listOf(publishedDeadDrops.deadDrops.first().copy(data = "A"))
+        )
+
+        instance.verifyAndParseDeadDropsList(
+            candidate = alteredList,
+            coverNodeKeyHierarchies = listOf(keyHierarchy),
+        )
     }
 
     //

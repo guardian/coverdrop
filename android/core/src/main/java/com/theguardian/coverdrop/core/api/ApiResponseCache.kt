@@ -5,10 +5,12 @@ import androidx.annotation.VisibleForTesting
 import com.theguardian.coverdrop.core.CoverDropConfiguration
 import com.theguardian.coverdrop.core.api.models.PublishedJournalistToUserDeadDropsList
 import com.theguardian.coverdrop.core.api.models.PublishedKeysAndProfiles
+import com.theguardian.coverdrop.core.api.models.VerifiedDeadDrops
 import com.theguardian.coverdrop.core.persistence.PublicStorage
 import com.theguardian.coverdrop.core.utils.IClock
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /**
  * The [ApiResponseCache] is responsible for maintaining the recent versions of [StatusEvent],
@@ -20,6 +22,7 @@ internal class ApiResponseCache(
     private val publicStorage: PublicStorage,
     private val configuration: CoverDropConfiguration,
     private val clock: IClock = configuration.clock,
+    private val getVerifiedDeadDrops: suspend () -> VerifiedDeadDrops,
 ) {
     suspend fun downloadAllUpdates(force: Boolean = false) {
         internalExecute(
@@ -103,11 +106,16 @@ internal class ApiResponseCache(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     @Throws(ApiCallProviderException::class)
     internal suspend fun downloadAndUpdateNewDeadDrops() {
-        val existingDeadDrops = publicStorage.readDeadDrops()
+        // dead-drops cached by earlier app versions can carry sub-second precision or duplicates
+        val existingDeadDrops = normalizeAndDeduplicate(publicStorage.readDeadDrops())
 
-        // download new dead-drops
-        val largestExistingCreatedAt = existingDeadDrops.deadDrops.maxOfOrNull { it.createdAt }
-            ?: Instant.EPOCH
+        // without verified keys we cannot establish a trustworthy cursor, so we do not download
+        val verifiedDeadDrops = runCatching { getVerifiedDeadDrops() }.getOrNull() ?: return
+
+        // the cache can contain dead-drops that do not verify, e.g. ones with a made-up `createdAt`
+        // served by a malicious API; only the verified ones are allowed to move the cursor
+        val largestExistingCreatedAt = verifiedDeadDrops.maxOfOrNull { it.createdAt }
+            ?.truncatedTo(ChronoUnit.SECONDS) ?: Instant.EPOCH
 
         val publishedDeadDrops = try {
             apiClient.getDeadDrops(createdAfter = largestExistingCreatedAt)
@@ -122,24 +130,41 @@ internal class ApiResponseCache(
         // a malicious or buggy API could replay dead drops we've already processed by serving
         // them again at or before the requested cursor, so discard any that don't satisfy
         // `createdAt > cursor`
-        val filteredDeadDrops = filterKeepOnlyDeadDropsAfterCursor(
-            deadDrops = publishedDeadDrops,
+        val filteredPublishedDeadDrops = filterKeepOnlyDeadDropsAfterCursor(
+            deadDrops = normalizeAndDeduplicate(publishedDeadDrops),
             cursor = largestExistingCreatedAt,
         )
 
         // if there are none, we can finish early
-        if (filteredDeadDrops.deadDrops.isEmpty()) {
+        if (filteredPublishedDeadDrops.deadDrops.isEmpty()) {
             return
         }
 
         // merge the existing and new dead-drops; this involves combining them and then removing
-        // those who are older than the set cache TTL based on the most-recent timestamp in the
-        // combined set
-        val mergedTrimmedDeadDropList = mergeAndTrimDeadDrops(existingDeadDrops, filteredDeadDrops)
+        // those that are older than the set cache TTL based on the newest verified timestamp
+        val mergedTrimmedDeadDropList = mergeAndTrimDeadDrops(
+            existingDeadDrops = existingDeadDrops,
+            newDeadDrops = filteredPublishedDeadDrops,
+            trimReference = largestExistingCreatedAt,
+        )
 
         // write back to disk
         publicStorage.writeDeadDrops(mergedTrimmedDeadDropList)
         publicStorage.writePublishedDeadDropsUpdate(clock.now())
+    }
+
+    /**
+     * Truncates every `createdAt` to whole seconds, the precision that is signed by the CoverNode,
+     * and removes duplicates. The sub-second part is not signed, so without this a malicious API
+     * could serve one signed dead-drop many times with different timestamps, and every copy would
+     * be treated as a distinct dead-drop. The first occurrence of a duplicate is kept.
+     */
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun normalizeAndDeduplicate(
+        deadDrops: PublishedJournalistToUserDeadDropsList,
+    ): PublishedJournalistToUserDeadDropsList {
+        val normalized = deadDrops.deadDrops.map { it.copy(createdAt = it.createdAt.truncatedTo(ChronoUnit.SECONDS)) }
+        return PublishedJournalistToUserDeadDropsList(normalized.distinct())
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -157,18 +182,19 @@ internal class ApiResponseCache(
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun mergeAndTrimDeadDrops(
         existingDeadDrops: PublishedJournalistToUserDeadDropsList,
-        newDeadDrops: PublishedJournalistToUserDeadDropsList
+        newDeadDrops: PublishedJournalistToUserDeadDropsList,
+        trimReference: Instant,
     ): PublishedJournalistToUserDeadDropsList {
         // merge both lists
-        val mergedDeadDrops = (existingDeadDrops.deadDrops + newDeadDrops.deadDrops)
-            .sortedBy { it.id }
-            .toList()
+        val mergedDeadDrops = normalizeAndDeduplicate(
+            PublishedJournalistToUserDeadDropsList(existingDeadDrops.deadDrops + newDeadDrops.deadDrops)
+        ).deadDrops.sortedBy { it.createdAt }
 
-        // identify the newest dead-drop timestamp. We use that as a reference for "now" to avoid
-        // using the device clock which might be out-of-sync and could lead to evicting more of
-        // fewer items than intended
-        val mostRecentTimestamp = mergedDeadDrops.maxOf { it.createdAt }
-        val cutOffDate = mostRecentTimestamp - configuration.deadDropCacheTTL
+        // We use the newest verified dead-drop timestamp as a reference for "now" to avoid using the device clock
+        // which might be out of sync leading to the eviction of more or fewer items than intended. The proxy for "now"
+        // must come from a verified dead drop, otherwise a malicious API could serve one with a far-future
+        // `createdAt` and make the client evict all genuine dead drops.
+        val cutOffDate = trimReference - configuration.deadDropCacheTTL
         val mergedAndTrimmedDeadDrops = mergedDeadDrops.filter { it.createdAt >= cutOffDate }
 
         return PublishedJournalistToUserDeadDropsList(mergedAndTrimmedDeadDrops)

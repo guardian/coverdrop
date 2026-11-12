@@ -84,12 +84,20 @@ internal class DeadDropParser(
         candidate: PublishedJournalistToUserDeadDrop,
         coverNodeKeyHierarchies: List<VerifiedCoverNodeKeyHierarchy>,
     ): VerifiedDeadDrop? {
-        val candidateData = candidate.data.base64Decode()
-        val candidateSignatureData = DeadDropSignatureData.from(
-            libSodium = libSodium,
-            data = candidateData,
-            createdAt = candidate.createdAt
-        )
+        // Malformed data (e.g. invalid Base64 in a cached dead-drop) is treated like any other
+        // verification failure of this one candidate, so that it cannot abort the whole list.
+        val candidateData: ByteArray
+        val candidateSignatureData: DeadDropSignatureData
+        try {
+            candidateData = candidate.data.base64Decode()
+            candidateSignatureData = DeadDropSignatureData.from(
+                libSodium = libSodium,
+                data = candidateData,
+                createdAt = candidate.createdAt
+            )
+        } catch (_: Exception) {
+            return verificationFailureBehaviour.onFailure()
+        }
 
         val signingKeys = coverNodeKeyHierarchies.allCoverNodeSigningKeys()
 
@@ -104,7 +112,6 @@ internal class DeadDropParser(
                 // if the signature verifications does not throw, we found a good signing key and
                 // can parse the data
                 return VerifiedDeadDrop(
-                    id = candidate.id,
                     createdAt = candidate.createdAt,
                     messages = parseDeadDropData(candidateData)
                 )

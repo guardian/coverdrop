@@ -131,7 +131,8 @@ internal class CoverDropPublicDataRepository internal constructor(
     private val apiResponseCache = ApiResponseCache(
         apiClient = apiService,
         publicStorage = publicStorage,
-        configuration = configuration
+        configuration = configuration,
+        getVerifiedDeadDrops = { getMostRecentDeadDrops() },
     )
     private val clock = lib.getClock()
     private val configurationTrustedOrgPks = configuration.trustedOrgPks
