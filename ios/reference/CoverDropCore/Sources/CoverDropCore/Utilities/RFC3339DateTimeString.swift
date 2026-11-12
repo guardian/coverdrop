@@ -17,6 +17,11 @@ public struct RFC3339DateTimeString: Codable, Equatable, Comparable {
         Int64(date.timeIntervalSince1970)
     }
 
+    /// The same timestamp truncated to whole seconds, which is the only precision the CoverNode signs for dead drops.
+    public var truncatedToSignedPrecision: RFC3339DateTimeString {
+        RFC3339DateTimeString(date: Date(timeIntervalSince1970: TimeInterval(epochSeconds)))
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)

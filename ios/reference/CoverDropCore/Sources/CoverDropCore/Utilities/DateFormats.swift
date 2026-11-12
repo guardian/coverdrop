@@ -41,30 +41,29 @@ public enum DateFormats {
         return dateFormatter
     }
 
-    /// Formats dates as UTC RFC 3339 strings in the microsecond format the API uses, e.g.
-    /// "2023-04-24T16:04:59.389000Z", so that cursors are comparable to the API's UTC `created_at` dates.
-    /// `DateFormatter` only resolves milliseconds, so the last three digits are always zero, which matches how
-    /// dead drop timestamps are persisted on the device.
+    /// Formats dates as UTC RFC 3339 strings with whole-second precision, e.g. "2023-04-24T16:04:59Z". This is the
+    /// precision that the CoverNode signs for dead drops and so the precision of the `created_after` cursor. Any
+    /// fraction of a second is dropped (not rounded).
     /// The time zone is fixed to UTC and the suffix is a literal `Z`.
-    public static func rfc3339MicrosecondFormatter() -> DateFormatter {
+    public static func rfc3339SecondFormatter() -> DateFormatter {
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "en_US_POSIX")
         dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
         return dateFormatter
     }
 }
 
 public extension Date {
-    /// RFC 3339 string in the microsecond format, e.g. "2023-04-24T16:04:59.389000Z"
-    var rfc3339MicrosecondString: String {
-        DateFormats.rfc3339MicrosecondFormatter().string(from: self)
+    /// RFC 3339 string with whole-second precision, e.g. "2023-04-24T16:04:59Z"
+    var rfc3339SecondString: String {
+        DateFormats.rfc3339SecondFormatter().string(from: self)
     }
 }
 
 public extension RFC3339DateTimeString {
-    /// RFC 3339 string in the microsecond format, e.g. "2023-04-24T16:04:59.389000Z"
-    var rfc3339MicrosecondString: String {
-        date.rfc3339MicrosecondString
+    /// RFC 3339 string with whole-second precision, e.g. "2023-04-24T16:04:59Z"
+    var rfc3339SecondString: String {
+        date.rfc3339SecondString
     }
 }

@@ -223,11 +223,14 @@ public class CoverDropService: ObservableObject {
                     .onAppForeground(publicDataRepository: repositories.publicDataRepository, config: config)
                 async let publicKeysAndStatus: () = repositories.publicDataRepository
                     .pollPublicKeysAndStatusApis()
+
+                // Dead drops are pulled using a cursor that is derived from the dead drops that verify against the
+                // public keys, so we pull them once the keys have been refreshed.
+                try? await publicKeysAndStatus
                 async let deadDrops: Void = repositories.publicDataRepository.fetchDeadDrops()
 
                 try? await logout
                 try? await messageSending
-                try? await publicKeysAndStatus
                 try? await deadDrops
             }
             // It's possible that coverdrop has been enabled remotely while the user still had the app open

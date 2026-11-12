@@ -84,7 +84,10 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
                 return replayed
             }
 
-            let repo = DeadDropRepository(config: StaticConfig.devConfig, urlSession: URLSession.shared)
+            let repo = DeadDropRepository(
+                config: StaticConfig.devConfig,
+                urlSession: URLSession.shared
+            )
             try await repo.localRepository.save(data: replayedDeadDropData)
             try await DeadDropDecryptionService().decryptStoredDeadDrops(
                 publicDataRepository: publicDataRepository,
@@ -92,10 +95,8 @@ final class DeadDropDecryptionServiceTests: XCTestCase {
             )
 
             let matchingMessages = data.messageMailbox.filter {
-                if case let .incomingMessage(message: message) = $0 {
-                    if case let .textMessage(textMessage) = message {
-                        return textMessage.messageText == "This is a test message from the journalist to the user"
-                    }
+                if case let .incomingMessage(message: message) = $0, case let .textMessage(textMessage) = message {
+                    return textMessage.messageText == "This is a test message from the journalist to the user"
                 }
                 return false
             }

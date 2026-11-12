@@ -74,7 +74,8 @@ public enum TestingBridge {
     }
 
     public static func refreshDeadDropAndPublicKeysCacheFiles() async {
-        if let config = try? CoverDropService.getLibrary().config {
+        if let library = try? CoverDropService.getLibrary() {
+            let config = library.config
             let publicKeyRepository = PublicKeyRepository(
                 config: config,
                 urlSession: URLSession.shared
@@ -85,7 +86,9 @@ public enum TestingBridge {
                 config: config,
                 urlSession: URLSession.shared
             )
-            _ = await deadDropRespository.getFromApiAndCache()
+            _ = await deadDropRespository.getFromApiAndCache(
+                verifiedKeys: try? library.publicDataRepository.getVerifiedKeys()
+            )
         }
     }
 

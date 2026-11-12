@@ -23,11 +23,20 @@ public struct DeadDrop: Codable, Equatable, Hashable {
     public var data: Base64EncodedString
     public var signature: HexEncodedString
 
+    /// Two dead drops are the same if everything the CoverNode signature authenticates is the same: the data and the
+    /// whole-second `createdAt`. The API-assigned `id` and the sub-second part of `createdAt` are not signed, so they
+    /// are ignored. Otherwise a malicious API could serve one signed dead drop many times under different ids or
+    /// timestamps, and every copy would be treated as a distinct dead drop.
+    public static func == (lhs: DeadDrop, rhs: DeadDrop) -> Bool {
+        lhs.createdAt.epochSeconds == rhs.createdAt.epochSeconds &&
+            lhs.data.bytes == rhs.data.bytes &&
+            lhs.signature.bytes == rhs.signature.bytes
+    }
+
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-        hasher.combine(createdAt.date)
+        hasher.combine(createdAt.epochSeconds)
         hasher.combine(data.bytes)
-        return hasher.combine(signature.bytes)
+        hasher.combine(signature.bytes)
     }
 
     enum CodingKeys: String, CodingKey {

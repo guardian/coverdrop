@@ -1,6 +1,10 @@
 import Foundation
 
 public class CacheableApiRepository<T: Codable> {
+    /// - Parameter now: the reference time used by `shouldDownload()` to work out the age of the cache file.
+    ///   Subclasses default this to `DateFunction.currentTime()`; it is only injectable so tests can simulate a
+    ///   stale or fresh cache. It is captured once at construction and never updated, so repositories must be
+    ///   short-lived (created per use) or `shouldDownload()` will measure the cache age against a stale time.
     init(
         maxCacheAge: Double,
         now: Date,
@@ -19,6 +23,11 @@ public class CacheableApiRepository<T: Codable> {
 
     var maxCacheAge: TimeInterval
 
+    /// The "current time" used by `shouldDownload()` to compute the cache age and decide whether it exceeds
+    /// `maxCacheAge`, i.e. whether we should pull from the API again. Production code always uses the real
+    /// current time; tests override it to fake the passage of time without waiting.
+    /// This is a snapshot taken when the repository is created and is never refreshed, so don't hold on to a
+    /// repository instance across long periods.
     public var now: Date
     public var urlSession: URLSession
 
@@ -28,11 +37,25 @@ public class CacheableApiRepository<T: Codable> {
     var cacheableWebRepository: any CacheableWebRepository<T>
 
     public func downloadAndUpdateAllCaches(cacheEnabled: Bool = true) async throws -> T? {
+        try await downloadAndUpdateAllCaches(
+            cacheEnabled: cacheEnabled,
+            fromApiOnly: { await self.getFromApiOnly() },
+            fromApiAndCache: { await self.getFromApiAndCache() }
+        )
+    }
+
+    /// The shared download/caching flow. Subclasses whose API fetch needs extra input can call this with closures
+    /// that capture that input, instead of having to hold it as instance state.
+    func downloadAndUpdateAllCaches(
+        cacheEnabled: Bool,
+        fromApiOnly: () async -> T?,
+        fromApiAndCache: () async -> T?
+    ) async throws -> T? {
         // We can provide a default response if the cache or web apis are not available
         let defaultData = defaultResponse
 
         if !cacheEnabled {
-            guard let response = await getFromApiOnly() else {
+            guard let response = await fromApiOnly() else {
                 return defaultData
             }
             return response
@@ -43,12 +66,12 @@ public class CacheableApiRepository<T: Codable> {
 
         // This should only run on first ever load.
         if !hasCache {
-            return await initCache()
+            return await initCache(fromApiAndCache: fromApiAndCache)
         }
 
         let shouldDownload = await shouldDownload()
         if shouldDownload {
-            _ = await getFromApiAndCache()
+            _ = await fromApiAndCache()
         }
 
         return try await localRepository.load()
@@ -80,8 +103,8 @@ public class CacheableApiRepository<T: Codable> {
         return nil
     }
 
-    func initCache() async -> T? {
-        guard let response = await getFromApiAndCache() else {
+    func initCache(fromApiAndCache: () async -> T?) async -> T? {
+        guard let response = await fromApiAndCache() else {
             if let cacheData = defaultResponse {
                 try? await localRepository.save(data: cacheData)
             }

@@ -28,7 +28,7 @@ enum MockUrlData {
         // Subsequent dead drop fetches use the `createdAt` of the highest dead drop in the active fixture as the
         // cursor,
         // so this is derived from the fixture rather than hardcoded, to stay valid if the test vectors are regenerated.
-        let epochCreatedAfter = Date(timeIntervalSince1970: 0).rfc3339MicrosecondString
+        let epochCreatedAfter = Date(timeIntervalSince1970: 0).rfc3339SecondString
         let subsequentFetchCreatedAfter = MockUrlData.highestCreatedAtCursor(for: deadDropData)
             ?? epochCreatedAfter
 
@@ -74,7 +74,7 @@ enum MockUrlData {
         // Some tests seed the dead drop cache using our test keys' generated-at timestamp, so we also need
         // a mock response for a fetch cursored from that date
         if let keysGeneratedAt = (try? PublicKeysHelper.readLocalGeneratedAtFile()) ?? nil {
-            let keysGeneratedAtCreatedAfter = keysGeneratedAt.rfc3339MicrosecondString
+            let keysGeneratedAtCreatedAfter = keysGeneratedAt.rfc3339SecondString
             mockUrls[MockUrlData.deadDropsUrl(createdAfter: keysGeneratedAtCreatedAfter)] =
                 MockUrlData.deadDropsMockResponse(data: deadDropData, createdAfter: keysGeneratedAtCreatedAfter)
         }
@@ -113,7 +113,7 @@ enum MockUrlData {
               let highestCreatedAt = deadDropData.deadDrops.max(by: { $0.createdAt < $1.createdAt })?.createdAt else {
             return nil
         }
-        return highestCreatedAt.rfc3339MicrosecondString
+        return highestCreatedAt.rfc3339SecondString
     }
 
     static func getStatusData() -> Data {

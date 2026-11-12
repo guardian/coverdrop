@@ -4,20 +4,25 @@ import XCTest
 
 final class DeadDropRepositoryTests: XCTestCase {
     let config: StaticConfig = .devConfig
+    let testKeys = PublicKeysHelper.shared.testKeys
 
     override func setUp() async throws {
         try StorageManager.shared.deleteFile(file: CoverDropFiles.deadDropId)
         try StorageManager.shared.deleteFile(file: CoverDropFiles.deadDropCache)
     }
 
-    func fakeUserFacingDeadDrop(id: Int, createdAt: Date) -> DeadDrop {
-        let emptyMessage = Base64EncodedString(bytes: "".asBytes())
-        let emptySignature = HexEncodedString(bytes: "".asBytes())
+    /// By default the content (data and signature) is derived from the `id`, so dead drops with different ids are
+    /// different dead drops. Pass the same `contentSeed` to create copies of the same signed dead drop under
+    /// different ids.
+    func fakeUserFacingDeadDrop(id: Int, createdAt: Date, contentSeed: Int? = nil) -> DeadDrop {
+        let seed = contentSeed ?? id
+        let message = Base64EncodedString(bytes: "data-\(seed)".asBytes())
+        let signature = HexEncodedString(bytes: "signature-\(seed)".asBytes())
         return DeadDrop(
             id: id,
             createdAt: RFC3339DateTimeString(date: createdAt),
-            data: emptyMessage,
-            signature: emptySignature
+            data: message,
+            signature: signature
         )
     }
 
@@ -25,7 +30,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         let urlSession = mockApiResponseFailure()
 
         let results = try await DeadDropRepository(config: config, urlSession: urlSession)
-            .downloadAndUpdateAllCaches(cacheEnabled: true)
+            .downloadAndUpdateAllCaches(cacheEnabled: true, verifiedKeys: testKeys)
 
         XCTAssertTrue(try XCTUnwrap(results?.deadDrops.isEmpty))
     }
@@ -34,7 +39,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         let urlSession = mockApiResponseFailure()
 
         let results = try await DeadDropRepository(config: config, urlSession: urlSession)
-            .downloadAndUpdateAllCaches(cacheEnabled: false)
+            .downloadAndUpdateAllCaches(cacheEnabled: false, verifiedKeys: testKeys)
 
         XCTAssertTrue(try XCTUnwrap(results?.deadDrops.isEmpty))
     }
@@ -47,7 +52,7 @@ final class DeadDropRepositoryTests: XCTestCase {
             now: Date(timeIntervalSinceNow: 60 * 60 * 48),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches(cacheEnabled: false)
+        ).downloadAndUpdateAllCaches(cacheEnabled: false, verifiedKeys: testKeys)
 
         guard let actualResults = results else {
             XCTFail("Failed to get results")
@@ -65,7 +70,7 @@ final class DeadDropRepositoryTests: XCTestCase {
             now: Date(timeIntervalSinceNow: 60 * 60 * 48),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
+        ).downloadAndUpdateAllCaches(verifiedKeys: testKeys)
 
         if let validResults = results {
             XCTAssertFalse(validResults.deadDrops.isEmpty)
@@ -83,7 +88,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         )
 
         // note we are intside the cache window
-        let results = try await repo.downloadAndUpdateAllCaches()
+        let results = try await repo.downloadAndUpdateAllCaches(verifiedKeys: testKeys)
         let cache = try await repo.localRepository.load()
         XCTAssertEqual(results?.deadDrops, cache.deadDrops)
     }
@@ -97,7 +102,7 @@ final class DeadDropRepositoryTests: XCTestCase {
         )
 
         // note we are outside the cache window
-        let results = try await repo.downloadAndUpdateAllCaches()
+        let results = try await repo.downloadAndUpdateAllCaches(verifiedKeys: testKeys)
 
         let cache = try await repo.localRepository.load()
         XCTAssertEqual(results?.deadDrops, cache.deadDrops)
@@ -111,7 +116,7 @@ final class DeadDropRepositoryTests: XCTestCase {
             now: Date(timeIntervalSinceNow: 60 * 50),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches(cacheEnabled: false)
+        ).downloadAndUpdateAllCaches(cacheEnabled: false, verifiedKeys: testKeys)
 
         guard let actualResults = results else {
             XCTFail("Failed to get results")
@@ -128,12 +133,12 @@ final class DeadDropRepositoryTests: XCTestCase {
             now: Date(timeIntervalSinceNow: 60 * 90),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
+        ).downloadAndUpdateAllCaches(verifiedKeys: testKeys)
         let results2 = try await DeadDropRepository(
             now: Date(timeIntervalSinceNow: 60 * 90),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
+        ).downloadAndUpdateAllCaches(verifiedKeys: testKeys)
 
         XCTAssertEqual(results?.deadDrops, results2?.deadDrops)
     }
@@ -160,113 +165,77 @@ final class DeadDropRepositoryTests: XCTestCase {
             now: Date(timeIntervalSinceNow: 60 * 90),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
+        ).downloadAndUpdateAllCaches(verifiedKeys: testKeys)
         XCTAssertEqual(results?.deadDrops.count, 4)
 
         let results2 = try await DeadDropRepository(
             now: Date(timeIntervalSinceNow: 60 * 90),
             config: config,
             urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
+        ).downloadAndUpdateAllCaches(verifiedKeys: testKeys)
         XCTAssertEqual(results2?.deadDrops.count, 4)
     }
 
     func testCacheFileDoesNotGetTooLarge() async throws {
-        // fill the cache file with 1000 deadDrops
-        let maxDeadDropId = 1000
-        let twoWeeksInSeconds = 60 * 60 * 24 * 14
-        // add a dead drop every 3 mins over 14 days but 2 weeks in the past
+        let verifiedKeys = try IntegrationTestScenarioContext(scenario: .messaging)
+            .loadKeysVerified(step: "003_journalist_replied_and_processed")
+        // These verify, so the newest one is the cursor and the reference for trimming
+        let genuineDeadDrops = try DeadDropDataHelper.shared.readLocalDataFile().deadDrops
+        let newestGenuine = try XCTUnwrap(genuineDeadDrops.map(\.createdAt).max())
+
+        let ttl = TimeInterval(Constants.clientDeadDropCacheTtlSeconds)
         let threeMinsInSeconds = TimeInterval(3 * 60)
+        let fakeCount = 1000
 
-        let cachedDeadDrops: [DeadDrop] = generateBulkDeadDrops(
-            maxDeadDropId: maxDeadDropId,
-            idOffset: 0,
-            timeSpan: threeMinsInSeconds,
-            timeOffset: TimeInterval(twoWeeksInSeconds)
-        )
+        // fakes that do not verify, one every 3 mins, all just outside the TTL (plus a margin, because timestamps are
+        // truncated to whole seconds) relative to the newest genuine dead drop
+        let staleDeadDrops = (0 ... fakeCount).map { index in
+            fakeUserFacingDeadDrop(
+                id: index,
+                createdAt: newestGenuine.date.addingTimeInterval(-(ttl + 10 + Double(index) * threeMinsInSeconds))
+            )
+        }
 
-        // store the dead drops in the cache
-        let cached = DeadDropData(deadDrops: cachedDeadDrops)
         let repo = DeadDropRepository(config: config, urlSession: mockApiResponse())
-        try await repo.localRepository.save(data: cached)
+        try await repo.localRepository.save(data: DeadDropData(deadDrops: genuineDeadDrops + staleDeadDrops))
 
         // validate the dead drops were saved correctly
         let cachedDeadDropFromFile = try await repo.localRepository.load()
-        XCTAssertEqual(cachedDeadDropFromFile.deadDrops.count, 1001)
+        XCTAssertEqual(cachedDeadDropFromFile.deadDrops.count, genuineDeadDrops.count + staleDeadDrops.count)
 
-        // generate more dead drops to be returned as part of the dead drop api mock response
+        // the api returns more dead drops that are newer than the cursor
         let apiResponseDeadDropIdOffset = 2000
-        let apiResponseDeadDrops: [DeadDrop] = generateBulkDeadDrops(
-            maxDeadDropId: maxDeadDropId,
-            idOffset: apiResponseDeadDropIdOffset,
-            timeSpan: threeMinsInSeconds,
-            timeOffset: TimeInterval(0)
-        )
-        guard let deadDropJsonResponse = try? JSONEncoder().encode(DeadDropData(deadDrops: apiResponseDeadDrops)) else {
-            XCTFail("Unable to create mock json dead drop response")
-            return
+        let apiResponseDeadDrops = (0 ... fakeCount).map { index in
+            fakeUserFacingDeadDrop(
+                id: apiResponseDeadDropIdOffset + index,
+                createdAt: newestGenuine.date.addingTimeInterval(1 + Double(index) * threeMinsInSeconds)
+            )
         }
+        let deadDropJsonResponse = try JSONEncoder().encode(DeadDropData(deadDrops: apiResponseDeadDrops))
 
-        // This sets up the mock api response
-        // In the DeadDropWebRepository we use the `createdAt` of the highest cached dead drop as the `created_after`
-        // cursor, so this sets up a mock response for that specific request
-        guard let highestCachedCreatedAt = cachedDeadDropFromFile.deadDrops.max(by: { $0.createdAt < $1.createdAt })?
-            .createdAt else {
-            XCTFail("Could not get highest cached createdAt")
-            return
-        }
-        let createdAfter = highestCachedCreatedAt.rfc3339MicrosecondString
+        // This sets up the mock api response for the `created_after` cursor of the newest genuine dead drop
         let baseUrl = DevConfig().apiBaseUrl
-        guard let deadDropAPIPath = DeadDropWebRepository.API
-            .allDeadDrops(params: ["created_after": createdAfter]).path else {
-            XCTFail("Could not get path")
-            return
-        }
-
-        let deadDropDataResponse = Data(deadDropJsonResponse)
-        let deadDropMockApiResponse = try [XCTUnwrap(URL(string: "\(baseUrl + deadDropAPIPath)")): MockResponse(
+        let deadDropAPIPath = try XCTUnwrap(DeadDropWebRepository.API
+            .allDeadDrops(params: ["created_after": newestGenuine.rfc3339SecondString]).path)
+        let mockUrl = try XCTUnwrap(URL(string: "\(baseUrl + deadDropAPIPath)"))
+        let deadDropMockApiResponse = try [mockUrl: MockResponse(
             error: nil,
-            data: deadDropDataResponse,
-            response: XCTUnwrap(try HTTPURLResponse(
-                url: XCTUnwrap(URL(string: "\(baseUrl + deadDropAPIPath)")),
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            ))
+            data: deadDropJsonResponse,
+            response: XCTUnwrap(HTTPURLResponse(url: mockUrl, statusCode: 200, httpVersion: nil, headerFields: nil))
         )]
-
-        let urlSession = mockApiResponse(mockData: deadDropMockApiResponse)
-
-        // check the file size stays consistant, we do this by checking that
-        // the count of dead drops stays at 1001, because all the previous dead drops will have been removed
-        // as they are 2 weeks older that the most recent loaded dead drop
-        // We check that the highest dead drop id is 3000, which means the files in cache also have the most recent from
-        // the api response.
 
         let results = try await DeadDropRepository(
             now: Date(timeIntervalSinceNow: 60 * 90),
             config: config,
-            urlSession: urlSession
-        ).downloadAndUpdateAllCaches()
-        XCTAssertEqual(results?.deadDrops.count, 1001)
-        let highestStoredDeadDrop = results?.deadDrops.max(by: { $0.id < $1.id })?.id
-        XCTAssertEqual(highestStoredDeadDrop, 3000)
-    }
+            urlSession: mockApiResponse(mockData: deadDropMockApiResponse)
+        ).downloadAndUpdateAllCaches(verifiedKeys: verifiedKeys)
 
-    func generateBulkDeadDrops(
-        maxDeadDropId: Int,
-        idOffset: Int,
-        timeSpan: TimeInterval,
-        timeOffset: TimeInterval
-    ) -> [DeadDrop] {
-        var cachedDeadDrops: [DeadDrop] = []
-        for deadDropId in Array(0 ... maxDeadDropId) {
-            let deadDropDate = Date(timeIntervalSinceNow: -((Double(deadDropId) * timeSpan) + timeOffset))
-
-            let deadDrop = fakeUserFacingDeadDrop(id: deadDropId + idOffset, createdAt: deadDropDate)
-            cachedDeadDrops.append(deadDrop)
-        }
-        return cachedDeadDrops
+        // the stale dead drops are evicted, so the cache holds the genuine and the newly downloaded dead drops
+        let resultingDeadDrops = try XCTUnwrap(results?.deadDrops)
+        XCTAssertEqual(resultingDeadDrops.count, genuineDeadDrops.count + apiResponseDeadDrops.count)
+        XCTAssertTrue(genuineDeadDrops.allSatisfy { resultingDeadDrops.contains($0) })
+        XCTAssertTrue(staleDeadDrops.allSatisfy { !resultingDeadDrops.contains($0) })
+        XCTAssertEqual(resultingDeadDrops.map(\.id).max(), apiResponseDeadDropIdOffset + fakeCount)
     }
 
     /// This overrides the default UrlSessionConfig in our global Config Object, so that calls to our public keys
@@ -333,7 +302,8 @@ final class DeadDropRepositoryTests: XCTestCase {
         // April 1 to April 10. I.e., all of them
         existingDeadDrops = DeadDropRepository.mergeAndTrim(
             existingDeadDrops: existingDeadDrops,
-            newDeadDrops: newDeadDropsApril10
+            newDeadDrops: newDeadDropsApril10,
+            trimReference: deadDropApril10.createdAt
         )
         XCTAssertTrue(existingDeadDrops.deadDrops.containsExactly([
             deadDropApril01,
@@ -350,7 +320,8 @@ final class DeadDropRepositoryTests: XCTestCase {
         // April 6 to April 20 (i.e. deadDropCacheTTL).
         existingDeadDrops = DeadDropRepository.mergeAndTrim(
             existingDeadDrops: existingDeadDrops,
-            newDeadDrops: newDeadDropsApril20
+            newDeadDrops: newDeadDropsApril20,
+            trimReference: deadDropApril20.createdAt
         )
         XCTAssertTrue(existingDeadDrops.deadDrops.containsExactly(
             [deadDropApril06, // just barely in by 1 second because the cut-off-date is inclusive
@@ -367,7 +338,8 @@ final class DeadDropRepositoryTests: XCTestCase {
         // June 1 to June 7.
         existingDeadDrops = DeadDropRepository.mergeAndTrim(
             existingDeadDrops: existingDeadDrops,
-            newDeadDrops: newDeadDropsJune07
+            newDeadDrops: newDeadDropsJune07,
+            trimReference: deadDropJune07.createdAt
         )
         XCTAssertTrue(existingDeadDrops.deadDrops.containsExactly(
             [deadDropJune01,
@@ -395,5 +367,191 @@ final class DeadDropRepositoryTests: XCTestCase {
         )
 
         XCTAssertTrue(filtered.deadDrops.containsExactly([deadDropAfterCursor]))
+    }
+
+    // MARK: - Second precision and deduplication by signed content
+
+    func testNormalizeAndDeduplicate_truncatesCreatedAtToWholeSeconds() throws {
+        let createdAt = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T12:34:56.789000Z"))
+        let deadDropData = DeadDropData(deadDrops: [fakeUserFacingDeadDrop(id: 1, createdAt: createdAt)])
+
+        let normalized = DeadDropRepository.normalizeAndDeduplicate(deadDropData)
+
+        let normalizedCreatedAt = try XCTUnwrap(normalized.deadDrops.first?.createdAt)
+        XCTAssertEqual(normalizedCreatedAt.date.timeIntervalSince1970, createdAt.timeIntervalSince1970.rounded(.down))
+        XCTAssertEqual(normalizedCreatedAt.rfc3339SecondString, "2023-04-10T12:34:56Z")
+    }
+
+    func testDeadDropIdentity_ignoresIdAndSubSecondTimestamp() throws {
+        let createdAt = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+        let original = fakeUserFacingDeadDrop(id: 1, createdAt: createdAt, contentSeed: 7)
+
+        let differentId = fakeUserFacingDeadDrop(id: 2, createdAt: createdAt, contentSeed: 7)
+        let differentSubSecond = fakeUserFacingDeadDrop(
+            id: 1,
+            createdAt: createdAt.addingTimeInterval(0.389),
+            contentSeed: 7
+        )
+
+        XCTAssertEqual(original, differentId)
+        XCTAssertEqual(original.hashValue, differentId.hashValue)
+        XCTAssertEqual(original, differentSubSecond)
+        XCTAssertEqual(original.hashValue, differentSubSecond.hashValue)
+    }
+
+    func testDeadDropIdentity_distinguishesSignedContent() throws {
+        let createdAt = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+        let original = fakeUserFacingDeadDrop(id: 1, createdAt: createdAt, contentSeed: 7)
+
+        // different whole second
+        let nextSecond = fakeUserFacingDeadDrop(id: 1, createdAt: createdAt.addingTimeInterval(1), contentSeed: 7)
+        XCTAssertNotEqual(original, nextSecond)
+        // different data and signature
+        XCTAssertNotEqual(original, fakeUserFacingDeadDrop(id: 1, createdAt: createdAt, contentSeed: 8))
+
+        // same signature but tampered data: this must not be mistaken for the genuine dead drop, otherwise serving it
+        // first would block the genuine dead drop
+        var tamperedData = original
+        tamperedData.data = Base64EncodedString(bytes: "tampered".asBytes())
+        XCTAssertNotEqual(original, tamperedData)
+    }
+
+    func testMergeAndTrim_mergesCopiesOfSameSignedDeadDropWithDifferentIds() throws {
+        let createdAt = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+
+        // identical data, signature and `createdAt`; only the unsigned `id` differs
+        let replayedCopies = (0 ..< 1000).map { index in
+            fakeUserFacingDeadDrop(id: 1000 + index, createdAt: createdAt, contentSeed: 0)
+        }
+
+        let merged = DeadDropRepository.mergeAndTrim(
+            existingDeadDrops: DeadDropData(deadDrops: []),
+            newDeadDrops: DeadDropData(deadDrops: replayedCopies),
+            trimReference: RFC3339DateTimeString(date: createdAt)
+        )
+
+        XCTAssertEqual(merged.deadDrops.count, 1)
+    }
+
+    func testMergeAndTrim_mergesCopiesOfSameSignedDeadDropWithDifferentSubSecondTimestamps() throws {
+        let signedSecond = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+
+        // identical id, data and signature; only the unsigned sub-second part of `createdAt` differs
+        let replayedCopies = (0 ..< 1000).map { millisecond in
+            fakeUserFacingDeadDrop(
+                id: 1,
+                createdAt: signedSecond.addingTimeInterval(TimeInterval(millisecond) / 1000),
+                contentSeed: 0
+            )
+        }
+
+        let merged = DeadDropRepository.mergeAndTrim(
+            existingDeadDrops: DeadDropData(deadDrops: []),
+            newDeadDrops: DeadDropData(deadDrops: replayedCopies),
+            trimReference: RFC3339DateTimeString(date: signedSecond)
+        )
+
+        XCTAssertEqual(merged.deadDrops.count, 1)
+        XCTAssertEqual(merged.deadDrops.first?.createdAt.rfc3339SecondString, "2023-04-10T00:00:00Z")
+    }
+
+    func testMergeAndTrim_normalizesLegacyCachedDeadDropsWithSubSecondPrecision() throws {
+        let signedSecond = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T12:34:56Z"))
+        let legacyCached = DeadDropData(deadDrops: [
+            fakeUserFacingDeadDrop(id: 1, createdAt: signedSecond.addingTimeInterval(0.389), contentSeed: 0)
+        ])
+        let sameDeadDropServedAgain = DeadDropData(deadDrops: [
+            fakeUserFacingDeadDrop(id: 2, createdAt: signedSecond, contentSeed: 0)
+        ])
+
+        let merged = DeadDropRepository.mergeAndTrim(
+            existingDeadDrops: legacyCached,
+            newDeadDrops: sameDeadDropServedAgain,
+            trimReference: RFC3339DateTimeString(date: signedSecond)
+        )
+
+        XCTAssertEqual(merged.deadDrops.count, 1)
+        XCTAssertEqual(merged.deadDrops.first?.createdAt.rfc3339SecondString, "2023-04-10T12:34:56Z")
+    }
+
+    func testCursorFilterAndMergeAndTrim_acceptReplayedCopiesAfterCursorOnlyOnce() throws {
+        let cursorDate = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+        let cursor = RFC3339DateTimeString(date: cursorDate)
+        let existing = DeadDropData(deadDrops: [fakeUserFacingDeadDrop(id: 1, createdAt: cursorDate)])
+
+        // A malicious API serves one genuinely signed new dead drop many times under different ids
+        let newCreatedAt = cursorDate.addingTimeInterval(1)
+        let replayedCopies = (0 ..< 1000).map { index in
+            fakeUserFacingDeadDrop(id: 2 + index, createdAt: newCreatedAt, contentSeed: 2)
+        }
+
+        // This is the sequence used by `getFromApiAndCache`
+        let filtered = DeadDropRepository.discardDeadDropsAtOrBeforeCursor(
+            deadDrops: DeadDropRepository.normalizeAndDeduplicate(DeadDropData(deadDrops: replayedCopies)),
+            cursor: cursor
+        )
+        let merged = DeadDropRepository.mergeAndTrim(
+            existingDeadDrops: existing,
+            newDeadDrops: filtered,
+            trimReference: cursor
+        )
+
+        XCTAssertEqual(filtered.deadDrops.count, 1)
+        // the existing dead drop and one copy of the new dead drop
+        XCTAssertEqual(merged.deadDrops.count, 2)
+    }
+
+    func testCursorFilter_discardsCursorDeadDropServedAgainWithSubSecondPrecision() throws {
+        // The API returns dead drops with `created_at > cursor` and its `created_at` has sub-second precision.
+        // Because the cursor is truncated to whole seconds, the dead drop that the cursor was taken from is served
+        // again. After truncating it is equal to the cursor, so it is discarded.
+        let cursorDate = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+        let servedAgain = fakeUserFacingDeadDrop(id: 1, createdAt: cursorDate.addingTimeInterval(0.389))
+
+        let filtered = DeadDropRepository.discardDeadDropsAtOrBeforeCursor(
+            deadDrops: DeadDropRepository.normalizeAndDeduplicate(DeadDropData(deadDrops: [servedAgain])),
+            cursor: RFC3339DateTimeString(date: cursorDate)
+        )
+
+        XCTAssertTrue(filtered.deadDrops.isEmpty)
+    }
+
+    // MARK: - Verification of the cursor
+
+    func testGetFromApiAndCache_withoutVerifiedKeys_doesNotPullAndKeepsCache() async throws {
+        let createdAt = try XCTUnwrap(DateFormats.validateDate(date: "2023-04-10T00:00:00Z"))
+        let cachedDeadDrop = fakeUserFacingDeadDrop(id: 1, createdAt: createdAt)
+
+        // every request fails, so pulling would replace the cache content with the default response
+        let repo = DeadDropRepository(config: config, urlSession: mockApiResponseFailure())
+        try await repo.localRepository.save(data: DeadDropData(deadDrops: [cachedDeadDrop]))
+
+        let results = await repo.getFromApiAndCache(verifiedKeys: nil)
+
+        XCTAssertEqual(results?.deadDrops, [cachedDeadDrop])
+    }
+
+    func testGetFromApiAndCache_cursorIgnoresCachedDeadDropsThatDoNotVerify() async throws {
+        let verifiedKeys = try IntegrationTestScenarioContext(scenario: .messaging)
+            .loadKeysVerified(step: "003_journalist_replied_and_processed")
+        let genuineDeadDrops = try DeadDropDataHelper.shared.readLocalDataFile().deadDrops
+
+        // A malicious API served a dead drop with a made-up `createdAt`. It is part of what is signed, so the dead drop
+        // does not verify.
+        var forgedDeadDrop = try XCTUnwrap(genuineDeadDrops.max(by: { $0.createdAt < $1.createdAt }))
+        forgedDeadDrop.createdAt = RFC3339DateTimeString(
+            date: forgedDeadDrop.createdAt.date.addingTimeInterval(24 * 60 * 60)
+        )
+
+        let repo = DeadDropRepository(config: config, urlSession: mockApiResponse())
+        try await repo.localRepository.save(data: DeadDropData(deadDrops: genuineDeadDrops + [forgedDeadDrop]))
+
+        let results = await repo.getFromApiAndCache(verifiedKeys: verifiedKeys)
+
+        // The mock API only answers requests that use the `createdAt` of the newest genuine dead drop (or the epoch)
+        // as the cursor. If the forged dead drop had moved the cursor, the request would have failed and the result
+        // would be empty.
+        let resultingDeadDrops = try XCTUnwrap(results?.deadDrops)
+        XCTAssertTrue(genuineDeadDrops.allSatisfy { resultingDeadDrops.contains($0) })
     }
 }

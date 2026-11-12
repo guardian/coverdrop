@@ -59,8 +59,10 @@ public class PublicDataRepository: ObservableObject, PublicDataRepositoryProtoco
     }
 
     public func fetchDeadDrops() async throws {
-        let deadDropsOpt = try await DeadDropRepository(config: config, urlSession: urlSession)
-            .downloadAndUpdateAllCaches(cacheEnabled: config.cacheEnabled)
+        let deadDropsOpt = try await DeadDropRepository(
+            config: config,
+            urlSession: urlSession
+        ).downloadAndUpdateAllCaches(cacheEnabled: config.cacheEnabled, verifiedKeys: verifiedPublicKeys)
 
         guard deadDropsOpt != nil else {
             throw PublicDataRepositoryError.failedToLoadDeadDrops

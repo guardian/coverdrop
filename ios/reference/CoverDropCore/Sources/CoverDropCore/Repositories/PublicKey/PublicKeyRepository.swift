@@ -9,6 +9,9 @@ protocol PublicKeyRepositoryProtocol {
 /// web api
 /// and store the results to file before returning them
 public class PublicKeyRepository: CacheableApiRepository<PublicKeysData> {
+    /// - Parameter now: only overridden in tests, to fake the current time so the superclass's cache-age check
+    ///   (`shouldDownload()`) can be exercised without waiting for the cache to age. The default is evaluated
+    ///   once per instance, so create a new repository per use rather than keeping one around.
     init(now: Date = DateFunction.currentTime(), config: CoverDropConfig, urlSession: URLSession) {
         super.init(
             maxCacheAge: TimeInterval(Constants.clientDefaultDownloadRateSeconds),
