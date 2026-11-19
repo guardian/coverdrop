@@ -41,15 +41,36 @@ DB_PASSWORD=$(aws secretsmanager get-secret-value \
     --profile secure-collaboration                \
     --region eu-west-1 | jq -r '.password')
 
-SSH_COMMAND=$(ssm ssh --raw -t secure-collaboration,api,PROD --oldest --profile secure-collaboration)
+INSTANCE_ID=$(aws ec2 describe-instances                                      \
+  --filters Name=tag:Stack,Values=secure-collaboration                        \
+            Name=tag:App,Values=api                                           \
+            Name=tag:Stage,Values=PROD                                        \
+            Name=instance-state-name,Values=running                           \
+  --query 'sort_by(Reservations[].Instances[], &LaunchTime)[0].InstanceId'    \
+  --output text                                                               \
+  --region eu-west-1                                                          \
+  --profile secure-collaboration)
 
-# -f to run in background
-# sleep 10 to give time for tunnel to be established before psql connects.
-#  Once psql connects, ssh will keep the tunnel open as long as there is
-# at least one open connection, so until you exit psql.
-eval "${SSH_COMMAND}" -L 15432:"$DB_HOSTNAME":5432 -o ExitOnForwardFailure=yes -f sleep 10
+if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+  echo "No running instance found to tunnel through"
+  exit 1
+fi
 
-# For some reason the terminal gets messed up after running the SSH command
-reset
+# Open a port forwarding session through the oldest matching instance, in the background.
+# Requires the session-manager-plugin (brew install session-manager-plugin).
+aws ssm start-session                                                         \
+  --target "$INSTANCE_ID"                                                     \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost                  \
+  --parameters "host=$DB_HOSTNAME,portNumber=5432,localPortNumber=15432"      \
+  --region eu-west-1                                                          \
+  --profile secure-collaboration > /dev/null &
+SSM_PID=$!
+trap 'pkill -P $SSM_PID 2> /dev/null || true; kill $SSM_PID 2> /dev/null || true' EXIT
+
+# Wait for the tunnel to be established before psql connects.
+for _ in $(seq 1 30); do
+  nc -z localhost 15432 2> /dev/null && break
+  sleep 1
+done
 
 PGPASSWORD=$DB_PASSWORD psql -h localhost -p 15432 -U "$DB_USERNAME" -d "$DB_NAME" "$@"
